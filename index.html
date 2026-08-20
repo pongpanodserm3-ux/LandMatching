@@ -20,7 +20,7 @@
 
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI with backend</h1>
+            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
@@ -43,6 +43,7 @@
     </div>
 
     <script>
+        // อย่าลืมเปลี่ยน BACKEND_WS_URL เป็น URL จริงของคุณ
         const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
@@ -79,23 +80,52 @@
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
-                    const setupData = {
-                        setup: {
-                            model: "models/gemini-3.1-flash-live-preview", // หมายเหตุ: หาก Gemini ปฏิเสธ 3.1 Live API ให้ใช้ 2.0-flash-exp สำหรับ Live Bidi Websocket
-                            generationConfig: {
-                                responseModalities: ["AUDIO"],
-                                speechConfig: {
-                                    voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
+                    if (webSocket.readyState === WebSocket.OPEN) {
+                        const setupData = {
+                            setup: {
+                                model: "models/gemini-3.1-flash-live-preview", // ใช้เวอร์ชัน 3.1 ตามที่คุณระบุ
+                                generationConfig: {
+                                    responseModalities: ["AUDIO"],
+                                    speechConfig: {
+                                        voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
+                                    }
+                                },
+                                systemInstruction: {
+                                    parts: [{
+                                        text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
+                                        หน้าที่ของคุณคือพูดคุยสอบถามความต้องการจากผู้ใช้ด้วยเสียงภาษาไทยอย่างเป็นกันเอง:
+                                        1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
+                                        2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก (เช่น สระว่ายน้ำ)
+                                        3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
+                                        
+                                        เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
+                                        {
+                                          "isFinished": true,
+                                          "userData": {
+                                            "demandType": "ซื้อ",
+                                            "location": "เขตลาดพร้าว",
+                                            "amenities": "มีสระว่ายน้ำ",
+                                            "familyType": "ครอบครัว 3 คน",
+                                            "career": "พนักงานเอกชน",
+                                            "income": "50000",
+                                            "expense": "20000",
+                                            "debts": "ไม่มี",
+                                            "creditBureaux": "ปกติ",
+                                            "paymentType": "กู้แบงก์",
+                                            "loanPeriod": "30"
+                                          },
+                                          "criteria": {
+                                            "province": "กทม",
+                                            "district": "ลาดพร้าว",
+                                            "propertyType": "บ้าน"
+                                          }
+                                        }`
+                                    }]
                                 }
-                            },
-                            systemInstruction: {
-                                parts: [{
-                                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching...`
-                                }]
                             }
-                        }
-                    };
-                    webSocket.send(JSON.stringify(setupData));
+                        };
+                        webSocket.send(JSON.stringify(setupData));
+                    }
 
                     isSessionActive = true;
                     btnText.innerText = "วางสาย / จบการสนทนา";
@@ -108,7 +138,6 @@
                     try {
                         const response = JSON.parse(event.data);
                         
-                        // รอให้ Setup สมบูรณ์ก่อนส่งเสียงเปิดไมโครโฟน
                         if (response.setupComplete) {
                             isSetupReady = true;
                             statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
@@ -175,14 +204,13 @@
                     const pcm16 = convertFloat32ToPCM16(inputData);
                     const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
+                    // 🛠️ แก้ไข Error 1007 เปลี่ยนจากการใช้ mediaChunks เป็นออบเจกต์ audio เดี่ยวๆ
                     webSocket.send(JSON.stringify({
                         realtimeInput: {
-                            mediaChunks: [
-                                {
-                                    mimeType: "audio/pcm;rate=16000",
-                                    data: base64Audio
-                                }
-                            ]
+                            audio: {
+                                mimeType: "audio/pcm;rate=16000",
+                                data: base64Audio
+                            }
                         }
                     }));
                 };
@@ -244,7 +272,6 @@
                 mediaStream = null;
             }
 
-            // ตรวจสอบสถานะก่อนปิด ป้องกัน InvalidStateError
             if (audioContext && audioContext.state !== 'closed') {
                 await audioContext.close().catch(() => {});
                 audioContext = null;
