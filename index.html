@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Land Matching - คุยเสียงกับ AI หาบ้าน</title>
-    <!-- ใช้ Tailwind CSS Compiled แทน CDN Script เพื่อแก้ Warning -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <!-- ใช้ Tailwind CSS Minified Production Build แทน Play CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
     <style>
         .pulse-animation {
             animation: pulse 1.5s infinite;
@@ -26,7 +26,7 @@
             <p class="text-gray-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
-        <!-- Visualizer & Status Area -->
+        <!-- Visualizer & Status -->
         <div class="my-6 flex flex-col items-center justify-center">
             <div id="avatarCircle" class="w-28 h-28 rounded-full bg-gray-700 border-4 border-green-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300 mb-4">
                 🤖
@@ -100,7 +100,7 @@
                     updateStatus("🟡 กำลังส่งการตั้งค่า AI...", "text-yellow-300", "border-yellow-400 border-opacity-50");
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live-preview",
+                            model: "models/gemini-2.0-flash-exp",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -189,7 +189,7 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
             }
 
-            // โหลด AudioWorklet แบบ Inline แทน ScriptProcessorNode เพื่อขจัด Deprecation Warning
+            // ใช้ AudioWorklet ในรูปแบบ Inline Blob เพื่อแทนที่ ScriptProcessorNode
             const workletCode = `
                 class RecorderProcessor extends AudioWorkletProcessor {
                     process(inputs) {
@@ -313,6 +313,7 @@
             btn.className = "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
             avatar.classList.remove('pulse-animation', 'border-red-500');
             avatar.classList.add('border-green-500');
+            updateStatus("กดปุ่มด้านล่างเพื่อเริ่มสนทนา", "text-yellow-300", "border-yellow-400 border-opacity-50");
         }
 
         function updateStatus(text, textColorClass, borderColorClass) {
