@@ -203,9 +203,9 @@
                 // โครงสร้าง Payload ล่าสุดตาม WebSocket Bidi Standard
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mediaChunks: [
+                        inputs: [
                             {
-                                mimeType: "audio/pcm",
+                                mimeType: "audio/pcm;rate=16000",
                                 data: base64Audio
                             }
                         ]
