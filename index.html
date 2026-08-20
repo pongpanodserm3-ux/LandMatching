@@ -50,9 +50,9 @@
 
     <script>
         // ==========================================
-        // ⚙️ ตั้งค่า API KEY และ GAS Web App URL
+        // ⚙️ ตั้งค่า Backend Server และ GAS Web App URL
         // ==========================================
-        const GEMINI_API_KEY = "AQ.Ab8RN6IVIoy47Isgl9kM7iPOsb9O_dWajmHq9HOO57pHDGaPUg"; // 👈 ใส่ API Key ของคุณ
+        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
@@ -80,9 +80,8 @@
             try {
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
                 
-                // 1. เชื่อมต่อ WebSocket Gemini Live API
-                const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
-                webSocket = new WebSocket(wsUrl);
+                // 1. เชื่อมต่อ WebSocket ไปยัง Backend Proxy Server
+                webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
                     // ส่ง Setup Configuration กำหนดบทบาท AI
@@ -142,7 +141,7 @@
                     statusText.innerText = "🟢 AI กำลังฟัง... พูดคุยได้เลยครับ";
                 };
 
-                // รับข้อมูลเสียง/ข้อความตอบกลับจาก Gemini
+                // รับข้อมูลเสียง/ข้อความตอบกลับจาก Gemini ผ่าน Backend
                 webSocket.onmessage = async (event) => {
                     try {
                         const response = JSON.parse(event.data);
@@ -188,7 +187,7 @@
             }
         }
 
-        // ดึงเสียงจากไมโครโฟนส่งไปหา Gemini
+        // ดึงเสียงจากไมโครโฟนส่งไปหา Backend
         async function initMicrophone() {
             mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
             audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
