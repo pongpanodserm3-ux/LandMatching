@@ -21,7 +21,7 @@
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
+            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI with backend</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
@@ -76,24 +76,18 @@
 
             try {
                 isSetupReady = false;
-                statusText.innerText = "กำลังปลุกระบบ Server...";
+                statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // สร้าง Audio Context สำหรับลำโพง และรับประกันว่าบราวเซอร์เปิดใช้งานแล้ว
-                if (!audioOutputContext || audioOutputContext.state === 'closed') {
-                    audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-                }
+                // ปลดล็อกการเล่นเสียงเมื่อผู้ใช้กดปุ่ม
+                audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 if (audioOutputContext.state === 'suspended') {
                     await audioOutputContext.resume();
                 }
                 nextPlayTime = audioOutputContext.currentTime;
 
-                // ขอสิทธิ์ไมโครโฟนก่อนเปิด WebSocket
-                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
-                    statusText.innerText = "กำลังตั้งค่า AI...";
                     const setupData = {
                         setup: {
                             model: "models/gemini-2.0-flash-exp",
@@ -106,12 +100,40 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    ทำหน้าที่พูดคุยเป็นภาษาไทย ถามข้อมูลทีละข้ออย่างเป็นกันเองเกี่ยวกับทำเล งบประมาณ และสถานะการเงินเพื่อหาบ้านที่เหมาะสม`
+                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา เช่น "สวัสดีครับ Land Matching AI ยินดีให้บริการครับ กำลังมองหาบ้านแถวไหนอยู่ครับ?" 
+                                    จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
+                                    1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
+                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
+                                    3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
+                                    
+                                    เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
+                                    {
+                                      "isFinished": true,
+                                      "userData": {
+                                        "demandType": "ซื้อ",
+                                        "location": "เขตลาดพร้าว",
+                                        "amenities": "มีสระว่ายน้ำ",
+                                        "familyType": "ครอบครัว 3 คน",
+                                        "career": "พนักงานเอกชน",
+                                        "income": "50000",
+                                        "expense": "20000",
+                                        "debts": "ไม่มี",
+                                        "creditBureaux": "ปกติ",
+                                        "paymentType": "กู้แบงก์",
+                                        "loanPeriod": "30"
+                                      },
+                                      "criteria": {
+                                        "province": "กทม",
+                                        "district": "ลาดพร้าว",
+                                        "propertyType": "บ้าน"
+                                      }
+                                    }`
                                 }]
                             }
                         }
                     };
                     webSocket.send(JSON.stringify(setupData));
+                    initMicrophone();
 
                     isSessionActive = true;
                     btnText.innerText = "วางสาย / จบการสนทนา";
@@ -130,20 +152,16 @@
                             response = JSON.parse(event.data);
                         }
                         
-                        // รอรับสัญญาณ Setup Complete ก่อนส่งข้อมูลเสียงใดๆ
                         if (response.setupComplete) {
                             isSetupReady = true;
                             statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดคุยกับ AI ได้เลยครับ";
-                            
-                            // เริ่มต้นสตรีมไมโครโฟนหลังจาก Setup สมบูรณ์เท่านั้น
-                            initMicrophoneStream();
                             return;
                         }
 
                         const parts = response.serverContent?.modelTurn?.parts;
                         if (parts) {
                             for (let part of parts) {
-                                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
+                                if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
                                     statusText.innerText = "🔊 AI กำลังตอบกลับ...";
                                     playPCMData(part.inlineData.data);
                                 }
@@ -167,7 +185,7 @@
 
                 webSocket.onerror = (err) => {
                     console.error("WebSocket Error:", err);
-                    statusText.innerText = "❌ ไม่สามารถเชื่อมต่อกับ Server ได้";
+                    statusText.innerText = "❌ การเชื่อมต่อผิดพลาด";
                 };
 
                 webSocket.onclose = (event) => {
@@ -181,13 +199,10 @@
             }
         }
 
-        function initMicrophoneStream() {
-            if (!mediaStream) return;
-
-            if (!audioContext || audioContext.state === 'closed') {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-            }
-
+        async function initMicrophone() {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            
             const source = audioContext.createMediaStreamSource(mediaStream);
             processor = audioContext.createScriptProcessor(4096, 1, 1);
 
@@ -195,19 +210,11 @@
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
-                // ป้องกันการส่ง Data ถ้า WebSocket ยังไม่รับ SetupComplete
                 if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
-                
-                let binary = '';
-                const bytes = new Uint8Array(pcm16.buffer);
-                const len = bytes.byteLength;
-                for (let i = 0; i < len; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                const base64Audio = btoa(binary);
+                const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
@@ -232,7 +239,7 @@
         }
 
         function playPCMData(base64Audio) {
-            if (!audioOutputContext || audioOutputContext.state === 'closed') return;
+            if (!audioOutputContext) return;
 
             const rawBinary = atob(base64Audio);
             const len = rawBinary.length;
@@ -266,26 +273,10 @@
         function stopVoiceSession() {
             isSessionActive = false;
             isSetupReady = false;
-            
-            if (webSocket && (webSocket.readyState === WebSocket.OPEN || webSocket.readyState === WebSocket.CONNECTING)) {
-                webSocket.close();
-            }
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
-            
-            if (processor) {
-                processor.disconnect();
-                processor = null;
-            }
-
-            if (audioContext && audioContext.state !== 'closed') {
-                audioContext.close().catch(() => {});
-            }
-            if (audioOutputContext && audioOutputContext.state !== 'closed') {
-                audioOutputContext.close().catch(() => {});
-            }
+            if (webSocket) webSocket.close();
+            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            if (audioContext) audioContext.close();
+            if (audioOutputContext) audioOutputContext.close();
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
