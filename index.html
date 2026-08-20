@@ -190,7 +190,7 @@
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
-                // ปรับปรุงโครงสร้าง JSON Payload ตามมาตรฐานใหม่
+                // ปรับเปลี่ยน Payload เป็น Direct Media Object ตามมาตรฐาน Gemini WebSocket API ล่าสุด
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
                         mediaChunks: [
