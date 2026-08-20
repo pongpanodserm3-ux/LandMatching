@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Land Matching - คุยเสียงกับ AI หาบ้าน</title>
-    <!-- ใช้ Tailwind CSS Minified Production Build แก้ Warning Play CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
     <style>
         .pulse-animation {
@@ -99,7 +98,6 @@
                 webSocket.onopen = () => {
                     updateStatus("🟡 กำลังส่งการตั้งค่า AI...", "text-yellow-300", "border-yellow-400 border-opacity-50");
                     
-                    // Setup Payload สำหรับ Gemini 3.1 Live API
                     const setupData = {
                         setup: {
                             model: "models/gemini-3.1-flash-live-preview",
@@ -191,7 +189,6 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
             }
 
-            // ใช้ AudioWorklet ประมวลผลเสียงเพื่อเลิกใช้ ScriptProcessorNode
             const workletCode = `
                 class RecorderProcessor extends AudioWorkletProcessor {
                     process(inputs) {
@@ -226,11 +223,15 @@
                 }
                 const base64Audio = btoa(binary);
 
-                // ปรับโครงสร้าง Payload ตามข้อกำหนดใหม่ล่าสุดของ Gemini Live API (ยกเลิก media_chunks)
+                // โครงสร้าง Payload แบบใหม่ ป้องกันปัญหา Code 1007
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mimeType: "audio/pcm;rate=16000",
-                        data: base64Audio
+                        inputs: [
+                            {
+                                mimeType: "audio/pcm;rate=16000",
+                                data: base64Audio
+                            }
+                        ]
                     }
                 }));
             };
