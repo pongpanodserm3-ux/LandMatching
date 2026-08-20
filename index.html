@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Land Matching SS- คุยเสียงกับ AI หาบ้าน</title>
+    <title>Land Matching - คุยเสียงกับ AI หาบ้าน</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .pulse-animation {
@@ -22,7 +22,7 @@
         <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
-            <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน SS และประเมินสินเชื่อ</p>
+            <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
         <!-- Visualizer & Status -->
@@ -30,7 +30,7 @@
             <div id="avatarCircle" class="w-32 h-32 rounded-full bg-slate-700 border-4 border-emerald-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300">
                 🤖
             </div>
-            <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม SS สนทนาด้วยเสียง</p>
+            <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง</p>
         </div>
 
         <!-- Control Button -->
@@ -53,7 +53,7 @@
         // ⚙️ ตั้งค่า API KEY และ GAS Web App URL
         // ==========================================
         const GEMINI_API_KEY = "AQ.Ab8RN6IVIoy47Isgl9kM7iPOsb9O_dWajmHq9HOO57pHDGaPUg"; // 👈 ใส่ API Key ของคุณ
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec"; //SSมั้ง 👈 ใส่ Web App URL ของ GAS
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
         let webSocket = null;
@@ -85,10 +85,10 @@
                 webSocket = new WebSocket(wsUrl);
 
                 webSocket.onopen = () => {
-                    // ส่ง Setup Instruction กำหนดบทบาท AI
+                    // ส่ง Setup Configuration กำหนดบทบาท AI
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live",
+                            model: "models/gemini-2.0-flash-exp",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -144,27 +144,31 @@
 
                 // รับข้อมูลเสียง/ข้อความตอบกลับจาก Gemini
                 webSocket.onmessage = async (event) => {
-                    const response = JSON.parse(event.data);
-                    
-                    // หากมีข้อมูลงวดเสียงกลับมาจาก AI ให้เล่นเสียง
-                    if (response.serverContent?.modelTurn?.parts) {
-                        for (let part of response.serverContent.modelTurn.parts) {
-                            if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                playAudioChunk(part.inlineData.data);
-                            }
-                            // ตรวจสอบว่า AI สรุปข้อมูลจบหรือยัง
-                            if (part.text) {
-                                try {
-                                    const jsonMatch = part.text.match(/\{[\s\S]*\}/);
-                                    if (jsonMatch) {
-                                        const resultData = JSON.parse(jsonMatch[0]);
-                                        if (resultData.isFinished) {
-                                            sendDataToGAS(resultData.userData, resultData.criteria);
+                    try {
+                        const response = JSON.parse(event.data);
+                        
+                        // เล่นเสียงเมื่อ AI ส่ง Audio Response กลับมา
+                        if (response.serverContent?.modelTurn?.parts) {
+                            for (let part of response.serverContent.modelTurn.parts) {
+                                if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
+                                    playAudioChunk(part.inlineData.data);
+                                }
+                                // ตรวจสอบการสรุปข้อมูล JSON เมื่อสนทนาจบ
+                                if (part.text) {
+                                    try {
+                                        const jsonMatch = part.text.match(/\{[\s\S]*\}/);
+                                        if (jsonMatch) {
+                                            const resultData = JSON.parse(jsonMatch[0]);
+                                            if (resultData.isFinished) {
+                                                sendDataToGAS(resultData.userData, resultData.criteria);
+                                            }
                                         }
-                                    }
-                                } catch (e) { }
+                                    } catch (e) { }
+                                }
                             }
                         }
+                    } catch (e) {
+                        console.error("Error parsing message:", e);
                     }
                 };
 
@@ -173,7 +177,8 @@
                     statusText.innerText = "❌ การเชื่อมต่อผิดพลาด";
                 };
 
-                webSocket.onclose = () => {
+                webSocket.onclose = (event) => {
+                    console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
                     stopVoiceSession();
                 };
 
@@ -203,7 +208,10 @@
 
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mediaChunks: [{ mimeType: "audio/pcm", data: base64Audio }]
+                        mediaChunks: [{
+                            mimeType: "audio/pcm;rate=16000",
+                            data: base64Audio
+                        }]
                     }
                 }));
             };
@@ -227,10 +235,7 @@
             for (let i = 0; i < audioData.length; i++) {
                 view[i] = audioData.charCodeAt(i);
             }
-            
-            // เล่น PCM Audio ใน Browser
             const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
-            // หมายเหตุ: การเล่น PCM แบบต่อเนื่องสามารถเพิ่มเติม Web Audio API AudioBufferSourceNode ได้
         }
 
         // จบการสนทนา
