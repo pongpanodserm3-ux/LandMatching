@@ -52,13 +52,11 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
-        let isSetupReady = false;
+        let isSetupReady = false; // สถานะรอ Setup Complete จาก Gemini
         let webSocket = null;
         let audioContext = null;
         let mediaStream = null;
         let processor = null;
-        let audioOutputContext = null;
-        let nextPlayTime = 0;
 
         async function toggleVoiceSession() {
             if (!isSessionActive) {
@@ -77,20 +75,13 @@
             try {
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-
-                // ปลดล็อกการเล่นเสียงเมื่อผู้ใช้กดปุ่ม
-                audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-                if (audioOutputContext.state === 'suspended') {
-                    await audioOutputContext.resume();
-                }
-                nextPlayTime = audioOutputContext.currentTime;
-
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
+                    // โครงสร้าง Setup Handshake ล่าสุด
                     const setupData = {
                         setup: {
-                            model: "models/gemini-2.0-flash-exp",
+                            model: "models/gemini-3.1-flash-live-preview",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -100,10 +91,9 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา เช่น "สวัสดีครับ Land Matching AI ยินดีให้บริการครับ กำลังมองหาบ้านแถวไหนอยู่ครับ?" 
-                                    จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
+                                    หน้าที่ของคุณคือพูดคุยสอบถามความต้องการจากผู้ใช้ด้วยเสียงภาษาไทยอย่างเป็นกันเอง:
                                     1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
-                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
+                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก (เช่น สระว่ายน้ำ)
                                     3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
                                     
                                     เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
@@ -144,26 +134,19 @@
 
                 webSocket.onmessage = async (event) => {
                     try {
-                        let response;
-                        if (event.data instanceof Blob) {
-                            const text = await event.data.text();
-                            response = JSON.parse(text);
-                        } else {
-                            response = JSON.parse(event.data);
-                        }
+                        const response = JSON.parse(event.data);
                         
+                        // ปรับสถานะพร้อมส่งเสียงเมื่อ Gemini ตอบรับ Setup
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดคุยกับ AI ได้เลยครับ";
+                            statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
                             return;
                         }
 
-                        const parts = response.serverContent?.modelTurn?.parts;
-                        if (parts) {
-                            for (let part of parts) {
+                        if (response.serverContent?.modelTurn?.parts) {
+                            for (let part of response.serverContent.modelTurn.parts) {
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังตอบกลับ...";
-                                    playPCMData(part.inlineData.data);
+                                    playAudioChunk(part.inlineData.data);
                                 }
                                 if (part.text) {
                                     try {
@@ -210,12 +193,14 @@
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
+                // ต้องรอให้ Setup เสร็จสมบูรณ์ (isSetupReady = true) ก่อนส่งข้อความเสียง
                 if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
+                // โครงสร้าง Payload ล่าสุดตาม WebSocket Bidi Standard
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
                         mediaChunks: [
@@ -238,36 +223,14 @@
             return buf;
         }
 
-        function playPCMData(base64Audio) {
-            if (!audioOutputContext) return;
-
-            const rawBinary = atob(base64Audio);
-            const len = rawBinary.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = rawBinary.charCodeAt(i);
+        function playAudioChunk(base64Audio) {
+            const audioData = atob(base64Audio);
+            const arrayBuffer = new ArrayBuffer(audioData.length);
+            const view = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < audioData.length; i++) {
+                view[i] = audioData.charCodeAt(i);
             }
-
-            const int16Array = new Int16Array(bytes.buffer);
-            const float32Array = new Float32Array(int16Array.length);
-
-            for (let i = 0; i < int16Array.length; i++) {
-                float32Array[i] = int16Array[i] / 32768.0;
-            }
-
-            const buffer = audioOutputContext.createBuffer(1, float32Array.length, 24000);
-            buffer.getChannelData(0).set(float32Array);
-
-            const source = audioOutputContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioOutputContext.destination);
-
-            if (nextPlayTime < audioOutputContext.currentTime) {
-                nextPlayTime = audioOutputContext.currentTime;
-            }
-
-            source.start(nextPlayTime);
-            nextPlayTime += buffer.duration;
+            const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
         }
 
         function stopVoiceSession() {
@@ -276,7 +239,6 @@
             if (webSocket) webSocket.close();
             if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
             if (audioContext) audioContext.close();
-            if (audioOutputContext) audioOutputContext.close();
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
