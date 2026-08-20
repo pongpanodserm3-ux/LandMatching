@@ -21,7 +21,7 @@
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
+            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AIv1-1</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
@@ -83,7 +83,7 @@
                 webSocket.onopen = async () => {
                     const setupData = {
                         setup: {
-                            model: "models/gemini-2.0-flash-exp",
+                            model: "models/gemini-3.0-flash-live",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
