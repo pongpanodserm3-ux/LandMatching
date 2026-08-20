@@ -2,14 +2,102 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>LandMatching - ตัวกลางจับคู่ ซื้อขายเช่าอสังหาริมทรัพย์และงานช่าง ทั่วประเทศ</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 100px; background-color: #f0f2f5; }
-        h1 { color: #0070f3; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI ผู้ช่วยหาบ้านอัจฉริยะ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>ยินดีต้อนรับสู่ LandMatching 🏡</h1>
-    <p>เว็บไซต์แรกของฉันบน Vercel กำลังจะออนไลน์แล้ว!</p>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl p-6 shadow-2xl text-center border border-slate-700">
+        <h1 class="text-2xl font-bold mb-2 text-emerald-400">🏡 ผู้ช่วยหาบ้าน AI</h1>
+        <p class="text-slate-400 text-sm mb-6">แตะปุ่มด้านล่างเพื่อพูดคุยความต้องการของคุณกับ AI ได้ทันทีครับ</p>
+
+        <!-- ปุ่มควบคุมเสียง -->
+        <button id="toggleVoiceBtn" onclick="toggleVoiceSession()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 flex items-center justify-center space-x-2">
+            <span id="btnText">🎙️ เริ่มคุยกับ AI</span>
+        </button>
+
+        <!-- ส่วนแสดงผลข้อมูลบ้านที่ค้นหาเจอจาก GAS -->
+        <div id="resultContainer" class="mt-6 text-left hidden">
+            <h3 class="text-sm font-semibold text-slate-300 mb-2">บ้านที่แนะนำสำหรับคุณ:</h3>
+            <div id="propertyCard" class="bg-slate-700 p-4 rounded-xl border border-slate-600 text-sm">
+                <!-- ข้อมูลบ้านจะแสดงตรงนี้ -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSessionActive = false;
+
+        function toggleVoiceSession() {
+            const btnText = document.getElementById('btnText');
+            const btn = document.getElementById('toggleVoiceBtn');
+            
+            isSessionActive = !isSessionActive;
+
+            if (isSessionActive) {
+                btnText.innerText = "🔴 กำลังฟัง... (แตะเพื่อจบ)";
+                btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
+                btn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                // [จุดเชื่อมต่อ] เริ่มต้นเชื่อมต่อ Gemini Live API ที่นี่
+                startGeminiLive();
+            } else {
+                btnText.innerText = "🎙️ เริ่มคุยกับ AI";
+                btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                
+                // [จุดเชื่อมต่อ] ปิดการเชื่อมต่อ
+                stopGeminiLive();
+            }
+        }
+
+        function startGeminiLive() {
+            console.log("Starting Gemini Live Voice Session...");
+            // โค้ดเชื่อมต่อ WebSocket / WebRTC ไปยัง Gemini Live API
+            // เมื่อ AI ได้ยินความต้องการ เช่น "หาบ้านเดี่ยวบางนา 5 ล้าน" 
+            // ให้ดึงข้อมูลนั้นมาเรียกใช้งานฟังก์ชัน fetchToGAS(criteria) ด้านล่าง
+        }
+
+        function stopGeminiLive() {
+            console.log("Stopping Session...");
+        }
+
+        // ฟังก์ชันสำหรับส่งข้อมูลไปคุยกับ Google Apps Script (ข้อ 3)
+        async function fetchToGAS(userCriteria) {
+            const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'cors', // สำคัญมาก เพื่อป้องกันปัญหา CORS
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'searchHouse',
+                        criteria: userCriteria
+                    })
+                });
+
+                const data = await response.json();
+                displayProperty(data);
+            } catch (error) {
+                console.error("Error connecting to GAS:", error);
+            }
+        }
+
+        function displayProperty(houseData) {
+            const container = document.getElementById('resultContainer');
+            const card = document.getElementById('propertyCard');
+            
+            container.classList.remove('hidden');
+            card.innerHTML = `
+                <p class="font-bold text-emerald-300">${houseData.name}</p>
+                <p class="text-slate-300">📍 โซน: ${houseData.zone}</p>
+                <p class="text-slate-300">💰 ราคา: ${houseData.price} บาท</p>
+            `;
+        }
+    </script>
 </body>
 </html>
