@@ -78,7 +78,7 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // สร้าง Audio Context สำหรับเล่นเสียงตอบกลับ (ลำโพง)
+                // ปลดล็อกการเล่นเสียงเมื่อผู้ใช้กดปุ่ม
                 audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 if (audioOutputContext.state === 'suspended') {
                     await audioOutputContext.resume();
@@ -100,9 +100,10 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    หน้าที่ของคุณคือพูดคุยสอบถามความต้องการจากผู้ใช้ด้วยเสียงภาษาไทยอย่างเป็นกันเอง:
+                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา เช่น "สวัสดีครับ Land Matching AI ยินดีให้บริการครับ กำลังมองหาบ้านแถวไหนอยู่ครับ?" 
+                                    จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
                                     1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
-                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก (เช่น สระว่ายน้ำ)
+                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
                                     3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
                                     
                                     เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
@@ -153,27 +154,15 @@
                         
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 AI พร้อมแล้ว... กำลังเริ่มทักทาย";
-                            
-                            // ส่งข้อความสะกิดให้ AI เริ่มพูดเป็นคำแรก
-                            webSocket.send(JSON.stringify({
-                                clientContent: {
-                                    turns: [{
-                                        role: "user",
-                                        parts: [{ text: "สวัสดีครับ แนะนำตัวและเริ่มสอบถามความต้องการซื้อบ้านให้หน่อยครับ" }]
-                                    }],
-                                    turnComplete: true
-                                }
-                            }));
+                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดคุยกับ AI ได้เลยครับ";
                             return;
                         }
 
-                        // ดึงข้อมูล Audio จากโครงสร้าง ServerContent
                         const parts = response.serverContent?.modelTurn?.parts;
                         if (parts) {
                             for (let part of parts) {
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังพูดตอบกลับ...";
+                                    statusText.innerText = "🔊 AI กำลังตอบกลับ...";
                                     playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
