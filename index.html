@@ -78,8 +78,11 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // สร้าง Audio Context สำหรับเล่นเสียงตอบกลับ
+                // สร้าง Audio Context สำหรับเล่นเสียงตอบกลับ (ลำโพง)
                 audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                if (audioOutputContext.state === 'suspended') {
+                    await audioOutputContext.resume();
+                }
                 nextPlayTime = audioOutputContext.currentTime;
 
                 webSocket = new WebSocket(BACKEND_WS_URL);
@@ -87,7 +90,7 @@
                 webSocket.onopen = () => {
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live-preview",
+                            model: "models/gemini-2.0-flash-exp",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -140,21 +143,37 @@
 
                 webSocket.onmessage = async (event) => {
                     try {
-                        const response = JSON.parse(event.data);
+                        let response;
+                        if (event.data instanceof Blob) {
+                            const text = await event.data.text();
+                            response = JSON.parse(text);
+                        } else {
+                            response = JSON.parse(event.data);
+                        }
                         
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
+                            statusText.innerText = "🟢 AI พร้อมแล้ว... กำลังเริ่มทักทาย";
+                            
+                            // ส่งข้อความสะกิดให้ AI เริ่มพูดเป็นคำแรก
+                            webSocket.send(JSON.stringify({
+                                clientContent: {
+                                    turns: [{
+                                        role: "user",
+                                        parts: [{ text: "สวัสดีครับ แนะนำตัวและเริ่มสอบถามความต้องการซื้อบ้านให้หน่อยครับ" }]
+                                    }],
+                                    turnComplete: true
+                                }
+                            }));
                             return;
                         }
 
-                        // รองรับทั้งโครงสร้าง serverContent และ realtimeOutput
-                        const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
-
+                        // ดึงข้อมูล Audio จากโครงสร้าง ServerContent
+                        const parts = response.serverContent?.modelTurn?.parts;
                         if (parts) {
                             for (let part of parts) {
-                                // เล่นเสียงที่ AI ส่งกลับมา
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
+                                    statusText.innerText = "🔊 AI กำลังพูดตอบกลับ...";
                                     playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
@@ -210,9 +229,9 @@
 
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        inputs: [
+                        mediaChunks: [
                             {
-                                mimeType: "audio/pcm;rate=16000",
+                                mimeType: "audio/pcm",
                                 data: base64Audio
                             }
                         ]
@@ -230,7 +249,6 @@
             return buf;
         }
 
-        // ฟังก์ชันถอดรหัส Base64 PCM 24kHz และส่งไปเล่นที่ลำโพง
         function playPCMData(base64Audio) {
             if (!audioOutputContext) return;
 
