@@ -78,7 +78,7 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // ปลดล็อก ลำโพง สำหรับเล่นเสียงตอบกลับ
+                // เตรียม Audio Context สำหรับเล่นเสียง
                 if (!audioOutputContext || audioOutputContext.state === 'closed') {
                     audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 }
@@ -102,7 +102,7 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา
+                                    เมื่อเริ่มการสนทนา ให้ทักทายผู้ใช้เป็นภาษาไทยทันที
                                     จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
                                     1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
                                     2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
@@ -156,27 +156,15 @@
                         
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 AI กำลังทักทายคุณ...";
-                            
-                            // ส่งข้อความกระตุ้นให้ AI เป็นฝ่ายเริ่มพูดคำแรกทันที
-                            const triggerGreeting = {
-                                clientContent: {
-                                    turns: [{
-                                        role: "user",
-                                        parts: [{ text: "สวัสดีครับ เริ่มต้นแนะนำตัวและสอบถามผมได้เลยครับ" }]
-                                    }],
-                                    turnComplete: true
-                                }
-                            };
-                            webSocket.send(JSON.stringify(triggerGreeting));
+                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดใส่ไมค์ได้เลยครับ...";
                             return;
                         }
 
                         const parts = response.serverContent?.modelTurn?.parts;
                         if (parts) {
                             for (let part of parts) {
-                                if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังพูด...";
+                                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
+                                    statusText.innerText = "🔊 AI กำลังพูดตอบกลับ...";
                                     playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
@@ -203,6 +191,7 @@
                 };
 
                 webSocket.onclose = (event) => {
+                    console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
                     stopVoiceSession();
                 };
 
@@ -234,7 +223,6 @@
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 
-                // แปลง Int16Array เป็น Base64 string ป้องกัน Array overflow
                 let binary = '';
                 const bytes = new Uint8Array(pcm16.buffer);
                 const len = bytes.byteLength;
@@ -243,11 +231,12 @@
                 }
                 const base64Audio = btoa(binary);
 
+                // ส่ง realtimeInput เสียง PCM ตามมาตรฐาน Gemini Live API
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
                         mediaChunks: [
                             {
-                                mimeType: "audio/pcm;rate=16000",
+                                mimeType: "audio/pcm",
                                 data: base64Audio
                             }
                         ]
@@ -308,7 +297,6 @@
                 mediaStream.getTracks().forEach(track => track.stop());
             }
             
-            // ตรวจสอบสถานะก่อนสั่ง close ป้องกัน Uncaught InvalidStateError
             if (audioContext && audioContext.state !== 'closed') {
                 audioContext.close().catch(() => {});
             }
