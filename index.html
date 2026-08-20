@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Land Matching - คุยเสียงกับ AI หาบ้าน</title>
+    <title>Land Matching SS- คุยเสียงกับ AI หาบ้าน</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .pulse-animation {
@@ -22,7 +22,7 @@
         <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
-            <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
+            <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน SS และประเมินสินเชื่อ</p>
         </div>
 
         <!-- Visualizer & Status -->
@@ -30,7 +30,7 @@
             <div id="avatarCircle" class="w-32 h-32 rounded-full bg-slate-700 border-4 border-emerald-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300">
                 🤖
             </div>
-            <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง</p>
+            <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม SS สนทนาด้วยเสียง</p>
         </div>
 
         <!-- Control Button -->
@@ -88,7 +88,7 @@
                     // ส่ง Setup Instruction กำหนดบทบาท AI
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live-preview",
+                            model: "models/gemini-3.1-flash-live",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
