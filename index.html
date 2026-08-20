@@ -21,7 +21,7 @@
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI with backend</h1>
+            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
@@ -78,7 +78,7 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // ป้องกัน AudioContext ซ้ำซ้อน
+                // ปลดล็อก ลำโพง สำหรับเล่นเสียงตอบกลับ
                 if (!audioOutputContext || audioOutputContext.state === 'closed') {
                     audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 }
@@ -102,13 +102,13 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา เช่น "สวัสดีครับ Land Matching AI ยินดีให้บริการครับ กำลังมองหาบ้านแถวไหนอยู่ครับ?" 
+                                    หน้าที่ของคุณคือ พูดทักทายผู้ใช้เป็นภาษาไทยทันทีเมื่อเริ่มการสนทนา
                                     จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
                                     1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
                                     2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
                                     3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
                                     
-                                    เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
+                                    เมื่อได้ข้อมูลครบถ้วนแล้ว ให้ตอบกลับด้วย JSON รูปแบบนี้:
                                     {
                                       "isFinished": true,
                                       "userData": {
@@ -156,7 +156,19 @@
                         
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดคุยกับ AI ได้เลยครับ";
+                            statusText.innerText = "🟢 AI กำลังทักทายคุณ...";
+                            
+                            // ส่งข้อความกระตุ้นให้ AI เป็นฝ่ายเริ่มพูดคำแรกทันที
+                            const triggerGreeting = {
+                                clientContent: {
+                                    turns: [{
+                                        role: "user",
+                                        parts: [{ text: "สวัสดีครับ เริ่มต้นแนะนำตัวและสอบถามผมได้เลยครับ" }]
+                                    }],
+                                    turnComplete: true
+                                }
+                            };
+                            webSocket.send(JSON.stringify(triggerGreeting));
                             return;
                         }
 
@@ -164,7 +176,7 @@
                         if (parts) {
                             for (let part of parts) {
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังตอบกลับ...";
+                                    statusText.innerText = "🔊 AI กำลังพูด...";
                                     playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
@@ -191,7 +203,6 @@
                 };
 
                 webSocket.onclose = (event) => {
-                    console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
                     stopVoiceSession();
                 };
 
@@ -203,7 +214,13 @@
 
         async function initMicrophone() {
             mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            
+            if (!audioContext || audioContext.state === 'closed') {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            }
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
             
             const source = audioContext.createMediaStreamSource(mediaStream);
             processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -216,13 +233,21 @@
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
-                const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+                
+                // แปลง Int16Array เป็น Base64 string ป้องกัน Array overflow
+                let binary = '';
+                const bytes = new Uint8Array(pcm16.buffer);
+                const len = bytes.byteLength;
+                for (let i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                const base64Audio = btoa(binary);
 
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
                         mediaChunks: [
                             {
-                                mimeType: "audio/pcm",
+                                mimeType: "audio/pcm;rate=16000",
                                 data: base64Audio
                             }
                         ]
@@ -282,11 +307,13 @@
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
             }
+            
+            // ตรวจสอบสถานะก่อนสั่ง close ป้องกัน Uncaught InvalidStateError
             if (audioContext && audioContext.state !== 'closed') {
-                audioContext.close();
+                audioContext.close().catch(() => {});
             }
             if (audioOutputContext && audioOutputContext.state !== 'closed') {
-                audioOutputContext.close();
+                audioOutputContext.close().catch(() => {});
             }
 
             const btn = document.getElementById('toggleBtn');
