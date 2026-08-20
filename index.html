@@ -100,7 +100,7 @@
                     updateStatus("🟡 กำลังส่งการตั้งค่า AI...", "text-yellow-300", "border-yellow-400 border-opacity-50");
                     const setupData = {
                         setup: {
-                            model: "models/models/gemini-2.0-flash-exp",
+                            model: "models/gemini-3.1-flash-live-preview",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -110,7 +110,7 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    ทำหน้าที่พูดคุยเป็นภาษาไทย ถามข้อมูลทีละข้ออย่างเป็นกันเองเกี่ยวกับทำเล งบประมาณ และสถานะการเงินเพื่อหาบ้านที่เหมาะสม`
+                                    ทำหน้าที่พูดคุย เพื่อหาบ้านที่เหมาะสม`
                                 }]
                             }
                         }
