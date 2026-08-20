@@ -48,297 +48,148 @@
     </div>
 
     <script>
-        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
-        let isSetupReady = false;
-        let webSocket = null;
-        let audioContext = null;
-        let mediaStream = null;
-        let processor = null;
-        let audioOutputContext = null;
-        let nextPlayTime = 0;
+        let recognition = null;
+        let synth = window.speechSynthesis;
 
-        async function toggleVoiceSession() {
+        // ตรวจสอบการรองรับ Web Speech API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function toggleVoiceSession() {
             if (!isSessionActive) {
-                await startVoiceSession();
+                startVoiceSession();
             } else {
                 stopVoiceSession();
             }
         }
 
-        async function startVoiceSession() {
-            const btn = document.getElementById('toggleBtn');
-            const btnText = document.getElementById('btnText');
-            const avatar = document.getElementById('avatarCircle');
-            const statusText = document.getElementById('statusText');
-
-            try {
-                isSetupReady = false;
-                statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-
-                // เตรียม Audio Context สำหรับเล่นเสียง
-                if (!audioOutputContext || audioOutputContext.state === 'closed') {
-                    audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-                }
-                if (audioOutputContext.state === 'suspended') {
-                    await audioOutputContext.resume();
-                }
-                nextPlayTime = audioOutputContext.currentTime;
-
-                webSocket = new WebSocket(BACKEND_WS_URL);
-
-                webSocket.onopen = () => {
-                    const setupData = {
-                        setup: {
-                            model: "models/gemini-2.0-flash-exp",
-                            generationConfig: {
-                                responseModalities: ["AUDIO"],
-                                speechConfig: {
-                                    voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } }
-                                }
-                            },
-                            systemInstruction: {
-                                parts: [{
-                                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    เมื่อเริ่มการสนทนา ให้ทักทายผู้ใช้เป็นภาษาไทยทันที
-                                    จากนั้นสอบถามข้อมูลผู้ใช้ทีละข้ออย่างเป็นกันเอง:
-                                    1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
-                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก
-                                    3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
-                                    
-                                    เมื่อได้ข้อมูลครบถ้วนแล้ว ให้ตอบกลับด้วย JSON รูปแบบนี้:
-                                    {
-                                      "isFinished": true,
-                                      "userData": {
-                                        "demandType": "ซื้อ",
-                                        "location": "เขตลาดพร้าว",
-                                        "amenities": "มีสระว่ายน้ำ",
-                                        "familyType": "ครอบครัว 3 คน",
-                                        "career": "พนักงานเอกชน",
-                                        "income": "50000",
-                                        "expense": "20000",
-                                        "debts": "ไม่มี",
-                                        "creditBureaux": "ปกติ",
-                                        "paymentType": "กู้แบงก์",
-                                        "loanPeriod": "30"
-                                      },
-                                      "criteria": {
-                                        "province": "กทม",
-                                        "district": "ลาดพร้าว",
-                                        "propertyType": "บ้าน"
-                                      }
-                                    }`
-                                }]
-                            }
-                        }
-                    };
-                    webSocket.send(JSON.stringify(setupData));
-                    initMicrophone();
-
-                    isSessionActive = true;
-                    btnText.innerText = "วางสาย / จบการสนทนา";
-                    btn.className = "w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
-                    avatar.classList.add('pulse-animation', 'border-rose-500');
-                    avatar.classList.remove('border-emerald-500');
-                };
-
-                webSocket.onmessage = async (event) => {
-                    try {
-                        let response;
-                        if (event.data instanceof Blob) {
-                            const text = await event.data.text();
-                            response = JSON.parse(text);
-                        } else {
-                            response = JSON.parse(event.data);
-                        }
-                        
-                        if (response.setupComplete) {
-                            isSetupReady = true;
-                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดใส่ไมค์ได้เลยครับ...";
-                            return;
-                        }
-
-                        const parts = response.serverContent?.modelTurn?.parts;
-                        if (parts) {
-                            for (let part of parts) {
-                                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังพูดตอบกลับ...";
-                                    playPCMData(part.inlineData.data);
-                                }
-                                if (part.text) {
-                                    try {
-                                        const jsonMatch = part.text.match(/\{[\s\S]*\}/);
-                                        if (jsonMatch) {
-                                            const resultData = JSON.parse(jsonMatch[0]);
-                                            if (resultData.isFinished) {
-                                                sendDataToGAS(resultData.userData, resultData.criteria);
-                                            }
-                                        }
-                                    } catch (e) { }
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error parsing message:", e);
-                    }
-                };
-
-                webSocket.onerror = (err) => {
-                    console.error("WebSocket Error:", err);
-                    statusText.innerText = "❌ การเชื่อมต่อผิดพลาด";
-                };
-
-                webSocket.onclose = (event) => {
-                    console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
-                    stopVoiceSession();
-                };
-
-            } catch (err) {
-                console.error(err);
-                statusText.innerText = "❌ ไม่สามารถเข้าถึงไมโครโฟนได้";
+        function startVoiceSession() {
+            if (!SpeechRecognition) {
+                alert("เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง กรุณาใช้ Google Chrome หรือ Safari");
+                return;
             }
-        }
 
-        async function initMicrophone() {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-            
-            if (!audioContext || audioContext.state === 'closed') {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-            }
-            if (audioContext.state === 'suspended') {
-                await audioContext.resume();
-            }
-            
-            const source = audioContext.createMediaStreamSource(mediaStream);
-            processor = audioContext.createScriptProcessor(4096, 1, 1);
+            isSessionActive = true;
+            updateUI(true);
 
-            source.connect(processor);
-            processor.connect(audioContext.destination);
+            recognition = new SpeechRecognition();
+            recognition.lang = 'th-TH';
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-            processor.onaudioprocess = (e) => {
-                if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
-                
-                const inputData = e.inputBuffer.getChannelData(0);
-                const pcm16 = convertFloat32ToPCM16(inputData);
-                
-                let binary = '';
-                const bytes = new Uint8Array(pcm16.buffer);
-                const len = bytes.byteLength;
-                for (let i = 0; i < len; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                const base64Audio = btoa(binary);
-
-                // ส่ง realtimeInput เสียง PCM ตามมาตรฐาน Gemini Live API
-                webSocket.send(JSON.stringify({
-                    realtimeInput: {
-                        mediaChunks: [
-                            {
-                                mimeType: "audio/pcm",
-                                data: base64Audio
-                            }
-                        ]
-                    }
-                }));
+            recognition.onstart = () => {
+                setStatus("🟢 กำลังฟังเสียงของคุณ... (พูดได้เลยครับ)");
             };
+
+            recognition.onresult = async (event) => {
+                const userSpeech = event.results[0][0].transcript;
+                setStatus(`💬 คุณพูดว่า: "${userSpeech}"`);
+                
+                // สั่งให้ AI ประมวลผลคำตอบ
+                await processAIResponse(userSpeech);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech Recognition Error:", event.error);
+                if (isSessionActive) {
+                    setStatus("❓ ไม่ได้ยินเสียง ลองพูดใหม่อีกครั้งครับ");
+                    setTimeout(() => { if (isSessionActive) recognition.start(); }, 1500);
+                }
+            };
+
+            recognition.onend = () => {
+                // ถ้ายังเปิดสายอยู่ ให้เริ่มฟังต่อหลังจาก AI พูดจบ
+                if (isSessionActive && !synth.speaking) {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            // ทักทายคำแรก
+            speakText("สวัสดีครับ Land Matching AI ยินดีให้บริการครับ กำลังมองหาบ้านหรืออสังหาฯ แถวไหนอยู่ครับ?", () => {
+                if (isSessionActive) recognition.start();
+            });
         }
 
-        function convertFloat32ToPCM16(buffer) {
-            let l = buffer.length;
-            let buf = new Int16Array(l);
-            while (l--) {
-                buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
-            }
-            return buf;
-        }
-
-        function playPCMData(base64Audio) {
-            if (!audioOutputContext || audioOutputContext.state === 'closed') return;
-
-            const rawBinary = atob(base64Audio);
-            const len = rawBinary.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = rawBinary.charCodeAt(i);
-            }
-
-            const int16Array = new Int16Array(bytes.buffer);
-            const float32Array = new Float32Array(int16Array.length);
-
-            for (let i = 0; i < int16Array.length; i++) {
-                float32Array[i] = int16Array[i] / 32768.0;
-            }
-
-            const buffer = audioOutputContext.createBuffer(1, float32Array.length, 24000);
-            buffer.getChannelData(0).set(float32Array);
-
-            const source = audioOutputContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioOutputContext.destination);
-
-            if (nextPlayTime < audioOutputContext.currentTime) {
-                nextPlayTime = audioOutputContext.currentTime;
-            }
-
-            source.start(nextPlayTime);
-            nextPlayTime += buffer.duration;
-        }
-
-        function stopVoiceSession() {
-            isSessionActive = false;
-            isSetupReady = false;
-            
-            if (webSocket && webSocket.readyState === WebSocket.OPEN) {
-                webSocket.close();
-            }
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-            }
-            
-            if (audioContext && audioContext.state !== 'closed') {
-                audioContext.close().catch(() => {});
-            }
-            if (audioOutputContext && audioOutputContext.state !== 'closed') {
-                audioOutputContext.close().catch(() => {});
-            }
-
-            const btn = document.getElementById('toggleBtn');
-            const btnText = document.getElementById('btnText');
-            const avatar = document.getElementById('avatarCircle');
-            const statusText = document.getElementById('statusText');
-
-            btnText.innerText = "เริ่มคุยกับ AI";
-            btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
-            avatar.classList.remove('pulse-animation', 'border-rose-500');
-            avatar.classList.add('border-emerald-500');
-            statusText.innerText = "กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง";
-        }
-
-        async function sendDataToGAS(userData, criteria) {
-            const statusText = document.getElementById('statusText');
-            statusText.innerText = "💾 กำลังบันทึกข้อมูลและค้นหาบ้าน...";
+        async function processAIResponse(inputText) {
+            setStatus("🧠 AI กำลังคิดคำตอบ...");
 
             try {
+                // ส่งข้อมูลไปหา Google Apps Script หรือ Gemini Direct
                 const res = await fetch(GAS_WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({
-                        action: 'saveUserAndSearch',
-                        userData: userData,
-                        criteria: criteria
+                        action: 'chatAI',
+                        message: inputText
                     })
                 });
 
                 const data = await res.json();
-                if (data.status === "success") {
+                const aiReply = data.reply || "ขออภัยครับ ระบบไม่สามารถประมวลผลได้ในขณะนี้";
+
+                speakText(aiReply, () => {
+                    if (isSessionActive) {
+                        try { recognition.start(); } catch(e){}
+                    }
+                });
+
+                if (data.results) {
                     displayResults(data.results);
-                    statusText.innerText = `✅ บันทึกสำเร็จ! พบบ้าน ${data.results.length} รายการ`;
                 }
+
             } catch (err) {
-                console.error("Error sending to GAS:", err);
-                statusText.innerText = "❌ บันทึกข้อมูลไม่สำเร็จ";
+                console.error("AI Fetch Error:", err);
+                speakText("ขออภัยครับ เกิดข้อผิดพลาดในการเชื่อมต่อ", () => {
+                    if (isSessionActive) try { recognition.start(); } catch(e){}
+                });
+            }
+        }
+
+        function speakText(text, onEndCallback) {
+            if (synth.speaking) synth.cancel();
+
+            setStatus(`🔊 AI กำลังพูด...`);
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 1.0;
+
+            utterance.onend = () => {
+                if (onEndCallback) onEndCallback();
+            };
+
+            synth.speak(utterance);
+        }
+
+        function stopVoiceSession() {
+            isSessionActive = false;
+            if (recognition) recognition.stop();
+            if (synth) synth.cancel();
+
+            updateUI(false);
+            setStatus("กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง");
+        }
+
+        function setStatus(text) {
+            document.getElementById('statusText').innerText = text;
+        }
+
+        function updateUI(active) {
+            const btn = document.getElementById('toggleBtn');
+            const btnText = document.getElementById('btnText');
+            const avatar = document.getElementById('avatarCircle');
+
+            if (active) {
+                btnText.innerText = "วางสาย / จบการสนทนา";
+                btn.className = "w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
+                avatar.classList.add('pulse-animation', 'border-rose-500');
+                avatar.classList.remove('border-emerald-500');
+            } else {
+                btnText.innerText = "เริ่มคุยกับ AI";
+                btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
+                avatar.classList.remove('pulse-animation', 'border-rose-500');
+                avatar.classList.add('border-emerald-500');
             }
         }
 
