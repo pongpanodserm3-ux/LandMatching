@@ -52,11 +52,13 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
-        let isSetupReady = false; // สถานะรอ Setup Complete จาก Gemini
+        let isSetupReady = false;
         let webSocket = null;
         let audioContext = null;
         let mediaStream = null;
         let processor = null;
+        let audioOutputContext = null;
+        let nextPlayTime = 0;
 
         async function toggleVoiceSession() {
             if (!isSessionActive) {
@@ -75,10 +77,14 @@
             try {
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+
+                // สร้าง Audio Context สำหรับเล่นเสียงตอบกลับ
+                audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                nextPlayTime = audioOutputContext.currentTime;
+
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
-                    // โครงสร้าง Setup Handshake ล่าสุด
                     const setupData = {
                         setup: {
                             model: "models/gemini-3.1-flash-live-preview",
@@ -136,17 +142,20 @@
                     try {
                         const response = JSON.parse(event.data);
                         
-                        // ปรับสถานะพร้อมส่งเสียงเมื่อ Gemini ตอบรับ Setup
                         if (response.setupComplete) {
                             isSetupReady = true;
                             statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
                             return;
                         }
 
-                        if (response.serverContent?.modelTurn?.parts) {
-                            for (let part of response.serverContent.modelTurn.parts) {
+                        // รองรับทั้งโครงสร้าง serverContent และ realtimeOutput
+                        const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
+
+                        if (parts) {
+                            for (let part of parts) {
+                                // เล่นเสียงที่ AI ส่งกลับมา
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
-                                    playAudioChunk(part.inlineData.data);
+                                    playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
                                     try {
@@ -193,19 +202,17 @@
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
-                // ต้องรอให้ Setup เสร็จสมบูรณ์ (isSetupReady = true) ก่อนส่งข้อความเสียง
                 if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
-                // โครงสร้าง Payload ล่าสุดตาม WebSocket Bidi Standard
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mediaChunks: [
+                        inputs: [
                             {
-                                mimeType: "audio/pcm",
+                                mimeType: "audio/pcm;rate=16000",
                                 data: base64Audio
                             }
                         ]
@@ -223,14 +230,37 @@
             return buf;
         }
 
-        function playAudioChunk(base64Audio) {
-            const audioData = atob(base64Audio);
-            const arrayBuffer = new ArrayBuffer(audioData.length);
-            const view = new Uint8Array(arrayBuffer);
-            for (let i = 0; i < audioData.length; i++) {
-                view[i] = audioData.charCodeAt(i);
+        // ฟังก์ชันถอดรหัส Base64 PCM 24kHz และส่งไปเล่นที่ลำโพง
+        function playPCMData(base64Audio) {
+            if (!audioOutputContext) return;
+
+            const rawBinary = atob(base64Audio);
+            const len = rawBinary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = rawBinary.charCodeAt(i);
             }
-            const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
+
+            const int16Array = new Int16Array(bytes.buffer);
+            const float32Array = new Float32Array(int16Array.length);
+
+            for (let i = 0; i < int16Array.length; i++) {
+                float32Array[i] = int16Array[i] / 32768.0;
+            }
+
+            const buffer = audioOutputContext.createBuffer(1, float32Array.length, 24000);
+            buffer.getChannelData(0).set(float32Array);
+
+            const source = audioOutputContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioOutputContext.destination);
+
+            if (nextPlayTime < audioOutputContext.currentTime) {
+                nextPlayTime = audioOutputContext.currentTime;
+            }
+
+            source.start(nextPlayTime);
+            nextPlayTime += buffer.duration;
         }
 
         function stopVoiceSession() {
@@ -239,6 +269,7 @@
             if (webSocket) webSocket.close();
             if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
             if (audioContext) audioContext.close();
+            if (audioOutputContext) audioOutputContext.close();
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
