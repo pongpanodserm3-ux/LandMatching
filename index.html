@@ -81,7 +81,7 @@
                 webSocket.onopen = () => {
                     const setupData = {
                         setup: {
-                            model: "models/gemini-2.0-flash-exp", // หมายเหตุ: หาก Gemini ปฏิเสธ 3.1 Live API ให้ใช้ 2.0-flash-exp สำหรับ Live Bidi Websocket
+                            model: "models/gemini-3.1-flash-live-preview", // หมายเหตุ: หาก Gemini ปฏิเสธ 3.1 Live API ให้ใช้ 2.0-flash-exp สำหรับ Live Bidi Websocket
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
