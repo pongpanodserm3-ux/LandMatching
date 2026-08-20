@@ -25,12 +25,19 @@
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
-        <!-- Visualizer & Status -->
-        <div class="my-8 flex flex-col items-center justify-center">
-            <div id="avatarCircle" class="w-32 h-32 rounded-full bg-slate-700 border-4 border-emerald-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300">
+        <!-- Visualizer & Status Area (ปรับให้ชัดเจนขึ้น) -->
+        <div class="my-6 flex flex-col items-center justify-center">
+            <div id="avatarCircle" class="w-28 h-28 rounded-full bg-slate-700 border-4 border-emerald-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300 mb-4">
                 🤖
             </div>
-            <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง</p>
+            
+            <!-- กล่องแสดงสถานะแบบเน้นพิเศษ -->
+            <div class="w-full bg-slate-950 border-2 border-yellow-400/50 rounded-2xl p-4 shadow-inner">
+                <p class="text-xs text-slate-400 mb-1 font-semibold uppercase tracking-wider">สถานะระบบ</p>
+                <p id="statusText" class="text-lg font-extrabold text-yellow-300 leading-snug">
+                    กดปุ่มด้านล่างเพื่อเริ่มสนทนา
+                </p>
+            </div>
         </div>
 
         <!-- Control Button -->
@@ -40,7 +47,7 @@
         </button>
 
         <!-- Result Container -->
-        <div id="resultArea" class="mt-8 text-left hidden">
+        <div id="resultArea" class="mt-6 text-left hidden">
             <h2 class="text-md font-bold text-emerald-400 mb-3 border-b border-slate-700 pb-2">🏡 รายการบ้านที่แนะนำสำหรับคุณ</h2>
             <div id="propertyList" class="space-y-3 max-h-60 overflow-y-auto pr-1">
             </div>
@@ -72,13 +79,11 @@
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
             const avatar = document.getElementById('avatarCircle');
-            const statusText = document.getElementById('statusText');
 
             try {
                 isSetupReady = false;
-                statusText.innerText = "กำลังปลุกระบบ Server...";
+                updateStatus("🟡 กำลังเชื่อมต่อ Server...", "text-yellow-300", "border-yellow-400/50");
 
-                // สร้าง Audio Context สำหรับลำโพง และรับประกันว่าบราวเซอร์เปิดใช้งานแล้ว
                 if (!audioOutputContext || audioOutputContext.state === 'closed') {
                     audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 }
@@ -87,16 +92,15 @@
                 }
                 nextPlayTime = audioOutputContext.currentTime;
 
-                // ขอสิทธิ์ไมโครโฟนก่อนเปิด WebSocket
                 mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
 
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
-                    statusText.innerText = "กำลังตั้งค่า AI...";
+                    updateStatus("🟡 กำลังส่งการตั้งค่า AI...", "text-yellow-300", "border-yellow-400/50");
                     const setupData = {
                         setup: {
-                            model: "gemini-3.1-flash-live-preview",
+                            model: "models/gemini-3.1-flash-live-preview",
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -130,12 +134,9 @@
                             response = JSON.parse(event.data);
                         }
                         
-                        // รอรับสัญญาณ Setup Complete ก่อนส่งข้อมูลเสียงใดๆ
                         if (response.setupComplete) {
                             isSetupReady = true;
-                            statusText.innerText = "🟢 พร้อมแล้ว! ลองพูดคุยกับ AI ได้เลยครับ";
-                            
-                            // เริ่มต้นสตรีมไมโครโฟนหลังจาก Setup สมบูรณ์เท่านั้น
+                            updateStatus("🟢 พร้อมแล้ว! ลองพูดใส่ไมค์ได้เลยครับ", "text-emerald-400", "border-emerald-500");
                             initMicrophoneStream();
                             return;
                         }
@@ -144,7 +145,7 @@
                         if (parts) {
                             for (let part of parts) {
                                 if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
-                                    statusText.innerText = "🔊 AI กำลังตอบกลับ...";
+                                    updateStatus("🔊 AI กำลังพูดตอบกลับ...", "text-cyan-300", "border-cyan-400");
                                     playPCMData(part.inlineData.data);
                                 }
                                 if (part.text) {
@@ -167,17 +168,20 @@
 
                 webSocket.onerror = (err) => {
                     console.error("WebSocket Error:", err);
-                    statusText.innerText = "❌ ไม่สามารถเชื่อมต่อกับ Server ได้";
+                    updateStatus("❌ การเชื่อมต่อผิดพลาด", "text-rose-400", "border-rose-500");
                 };
 
                 webSocket.onclose = (event) => {
                     console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
+                    if (event.code === 1005) {
+                        updateStatus("❌ ตัดการเชื่อมต่อ (ชื่อโมเดลไม่ถูกต้อง)", "text-rose-400", "border-rose-500");
+                    }
                     stopVoiceSession();
                 };
 
             } catch (err) {
                 console.error(err);
-                statusText.innerText = "❌ ไม่สามารถเข้าถึงไมโครโฟนได้";
+                updateStatus("❌ ไม่สามารถเข้าถึงไมโครโฟนได้", "text-rose-400", "border-rose-500");
             }
         }
 
@@ -195,7 +199,6 @@
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
-                // ป้องกันการส่ง Data ถ้า WebSocket ยังไม่รับ SetupComplete
                 if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
@@ -290,18 +293,24 @@
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
             const avatar = document.getElementById('avatarCircle');
-            const statusText = document.getElementById('statusText');
 
             btnText.innerText = "เริ่มคุยกับ AI";
             btn.className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
             avatar.classList.remove('pulse-animation', 'border-rose-500');
             avatar.classList.add('border-emerald-500');
-            statusText.innerText = "กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง";
+        }
+
+        function updateStatus(text, textColorClass, borderColorClass) {
+            const statusText = document.getElementById('statusText');
+            const statusBox = statusText.parentElement;
+            
+            statusText.innerText = text;
+            statusText.className = `text-lg font-extrabold leading-snug ${textColorClass}`;
+            statusBox.className = `w-full bg-slate-950 border-2 rounded-2xl p-4 shadow-inner transition-all duration-300 ${borderColorClass}`;
         }
 
         async function sendDataToGAS(userData, criteria) {
-            const statusText = document.getElementById('statusText');
-            statusText.innerText = "💾 กำลังบันทึกข้อมูลและค้นหาบ้าน...";
+            updateStatus("💾 กำลังค้นหาบ้านที่เหมาะสม...", "text-sky-300", "border-sky-400");
 
             try {
                 const res = await fetch(GAS_WEB_APP_URL, {
@@ -317,11 +326,11 @@
                 const data = await res.json();
                 if (data.status === "success") {
                     displayResults(data.results);
-                    statusText.innerText = `✅ บันทึกสำเร็จ! พบบ้าน ${data.results.length} รายการ`;
+                    updateStatus(`✅ บันทึกสำเร็จ! พบบ้าน ${data.results.length} รายการ`, "text-emerald-400", "border-emerald-500");
                 }
             } catch (err) {
                 console.error("Error sending to GAS:", err);
-                statusText.innerText = "❌ บันทึกข้อมูลไม่สำเร็จ";
+                updateStatus("❌ บันทึกข้อมูลไม่สำเร็จ", "text-rose-400", "border-rose-500");
             }
         }
 
