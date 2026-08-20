@@ -21,7 +21,7 @@
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI</h1>
+            <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI with backend</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
@@ -56,9 +56,6 @@
         let audioContext = null;
         let mediaStream = null;
         let processor = null;
-        let audioQueue = [];
-        let isPlayingAudio = false;
-        let nextPlayTime = 0;
 
         async function toggleVoiceSession() {
             if (!isSessionActive) {
@@ -76,11 +73,9 @@
 
             try {
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-                
-                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
-                webSocket.onopen = async () => {
+                webSocket.onopen = () => {
                     const setupData = {
                         setup: {
                             model: "models/gemini-3.1-flash-live-preview",
@@ -126,7 +121,7 @@
                     };
                     webSocket.send(JSON.stringify(setupData));
 
-                    await initMicrophone();
+                    initMicrophone();
 
                     isSessionActive = true;
                     btnText.innerText = "วางสาย / จบการสนทนา";
@@ -139,7 +134,6 @@
                 webSocket.onmessage = async (event) => {
                     try {
                         const response = JSON.parse(event.data);
-                        
                         if (response.serverContent?.modelTurn?.parts) {
                             for (let part of response.serverContent.modelTurn.parts) {
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
@@ -169,6 +163,7 @@
                 };
 
                 webSocket.onclose = (event) => {
+                    console.log("WebSocket Closed Code:", event.code, "Reason:", event.reason);
                     stopVoiceSession();
                 };
 
@@ -180,27 +175,30 @@
 
         async function initMicrophone() {
             mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-            const micAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
             
-            const source = micAudioContext.createMediaStreamSource(mediaStream);
-            processor = micAudioContext.createScriptProcessor(4096, 1, 1);
+            const source = audioContext.createMediaStreamSource(mediaStream);
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
 
             source.connect(processor);
-            processor.connect(micAudioContext.destination);
+            processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
                 if (!isSessionActive || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
-                const base64Audio = arrayBufferToBase64(pcm16.buffer);
+                const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
+                // ปรับปรุงโครงสร้าง JSON Payload ตามมาตรฐานใหม่
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mediaChunks: [{
-                            mimeType: "audio/pcm",
-                            data: base64Audio
-                        }]
+                        mediaChunks: [
+                            {
+                                mimeType: "audio/pcm",
+                                data: base64Audio
+                            }
+                        ]
                     }
                 }));
             };
@@ -215,49 +213,21 @@
             return buf;
         }
 
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return window.btoa(binary);
-        }
-
         function playAudioChunk(base64Audio) {
-            const binaryString = atob(base64Audio);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
+            const audioData = atob(base64Audio);
+            const arrayBuffer = new ArrayBuffer(audioData.length);
+            const view = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < audioData.length; i++) {
+                view[i] = audioData.charCodeAt(i);
             }
-
-            const pcm16Data = new Int16Array(bytes.buffer);
-            const float32Data = new Float32Array(pcm16Data.length);
-            for (let i = 0; i < pcm16Data.length; i++) {
-                float32Data[i] = pcm16Data[i] / 32768.0;
-            }
-
-            const audioBuffer = audioContext.createBuffer(1, float32Data.length, 24000);
-            audioBuffer.getChannelData(0).set(float32Data);
-
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioContext.destination);
-
-            const currentTime = audioContext.currentTime;
-            if (nextPlayTime < currentTime) {
-                nextPlayTime = currentTime;
-            }
-            source.start(nextPlayTime);
-            nextPlayTime += audioBuffer.duration;
+            const blob = new Blob([arrayBuffer], { type: 'audio/pcm' });
         }
 
         function stopVoiceSession() {
             isSessionActive = false;
             if (webSocket) webSocket.close();
             if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            if (audioContext) audioContext.close();
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
