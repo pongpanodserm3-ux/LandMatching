@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Land Matching - คุยเสียงกับ AI หาบ้าน</title>
-    <!-- ใช้ Tailwind CSS Minified Production Build แทน Play CDN -->
+    <!-- ใช้ Tailwind CSS Minified Production Build เพื่อแก้ Warning เรื่อง Play CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
     <style>
         .pulse-animation {
@@ -26,7 +26,7 @@
             <p class="text-gray-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
-        <!-- Visualizer & Status -->
+        <!-- Visualizer & Status Area -->
         <div class="my-6 flex flex-col items-center justify-center">
             <div id="avatarCircle" class="w-28 h-28 rounded-full bg-gray-700 border-4 border-green-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300 mb-4">
                 🤖
@@ -98,6 +98,8 @@
 
                 webSocket.onopen = () => {
                     updateStatus("🟡 กำลังส่งการตั้งค่า AI...", "text-yellow-300", "border-yellow-400 border-opacity-50");
+                    
+                    // ตั้งค่า Payload ให้กับ Gemini 3.1 Live API
                     const setupData = {
                         setup: {
                             model: "models/gemini-3.1-flash-live-preview",
@@ -110,7 +112,7 @@
                             systemInstruction: {
                                 parts: [{
                                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    ทำหน้าที่พูดคุย เพื่อหาบ้านที่เหมาะสม`
+                                    ทำหน้าที่พูดคุยเป็นภาษาไทย ถามข้อมูลทีละข้ออย่างเป็นกันเองเกี่ยวกับทำเล งบประมาณ และสถานะการเงินเพื่อหาบ้านที่เหมาะสม`
                                 }]
                             }
                         }
@@ -189,7 +191,7 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
             }
 
-            // ใช้ AudioWorklet ในรูปแบบ Inline Blob เพื่อแทนที่ ScriptProcessorNode
+            // ใช้ AudioWorklet ประมวลผลเสียงแทน ScriptProcessorNode ที่ถูกยกเลิกใช้งาน
             const workletCode = `
                 class RecorderProcessor extends AudioWorkletProcessor {
                     process(inputs) {
@@ -224,14 +226,13 @@
                 }
                 const base64Audio = btoa(binary);
 
+                // ปรับเปลี่ยนโครงสร้าง Payload ให้ใช้ realtimeInput.audio เพื่อรองรับ API ล่าสุด (แก้ปัญหา Code 1007)
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        mediaChunks: [
-                            {
-                                mimeType: "audio/pcm",
-                                data: base64Audio
-                            }
-                        ]
+                        audio: {
+                            mimeType: "audio/pcm",
+                            data: base64Audio
+                        }
                     }
                 }));
             };
