@@ -48,7 +48,7 @@
     </div>
 
     <script>
-        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
+        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com"; // เปลี่ยนเป็น URL Backend จริงของคุณ
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
@@ -87,7 +87,7 @@
                 webSocket.onopen = () => {
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live-preview",
+                            model: "models/gemini-3.1-flash-live-preview", // ใช้โมเดลที่ต้องการ
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
