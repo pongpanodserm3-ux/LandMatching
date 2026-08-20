@@ -78,8 +78,10 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // ปลดล็อกการเล่นเสียงเมื่อผู้ใช้กดปุ่ม
-                audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                // ป้องกัน AudioContext ซ้ำซ้อน
+                if (!audioOutputContext || audioOutputContext.state === 'closed') {
+                    audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+                }
                 if (audioOutputContext.state === 'suspended') {
                     await audioOutputContext.resume();
                 }
@@ -239,7 +241,7 @@
         }
 
         function playPCMData(base64Audio) {
-            if (!audioOutputContext) return;
+            if (!audioOutputContext || audioOutputContext.state === 'closed') return;
 
             const rawBinary = atob(base64Audio);
             const len = rawBinary.length;
@@ -273,10 +275,19 @@
         function stopVoiceSession() {
             isSessionActive = false;
             isSetupReady = false;
-            if (webSocket) webSocket.close();
-            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
-            if (audioContext) audioContext.close();
-            if (audioOutputContext) audioOutputContext.close();
+            
+            if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+                webSocket.close();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close();
+            }
+            if (audioOutputContext && audioOutputContext.state !== 'closed') {
+                audioOutputContext.close();
+            }
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
