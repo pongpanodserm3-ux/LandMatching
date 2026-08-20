@@ -19,13 +19,11 @@
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
     <div class="max-w-md w-full bg-slate-800 rounded-3xl p-6 shadow-2xl text-center border border-slate-700">
-        <!-- Header -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-emerald-400">🎙️ Land Matching AI with backend</h1>
             <p class="text-slate-400 text-sm mt-1">ผู้ช่วยเสียงค้นหาบ้าน และประเมินสินเชื่อ</p>
         </div>
 
-        <!-- Visualizer & Status -->
         <div class="my-8 flex flex-col items-center justify-center">
             <div id="avatarCircle" class="w-32 h-32 rounded-full bg-slate-700 border-4 border-emerald-500 flex items-center justify-center text-5xl shadow-lg transition-all duration-300">
                 🤖
@@ -33,22 +31,19 @@
             <p id="statusText" class="mt-4 text-sm font-medium text-slate-300">กดปุ่มด้านล่างเพื่อเริ่ม สนทนาด้วยเสียง</p>
         </div>
 
-        <!-- Control Button -->
         <button id="toggleBtn" onclick="toggleVoiceSession()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg">
             <span id="btnIcon">🎙️</span>
             <span id="btnText">เริ่มคุยกับ AI</span>
         </button>
 
-        <!-- Result Container -->
         <div id="resultArea" class="mt-8 text-left hidden">
             <h2 class="text-md font-bold text-emerald-400 mb-3 border-b border-slate-700 pb-2">🏡 รายการบ้านที่แนะนำสำหรับคุณ</h2>
-            <div id="propertyList" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-            </div>
+            <div id="propertyList" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
         </div>
     </div>
 
     <script>
-        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com"; // เปลี่ยนเป็น URL Backend จริงของคุณ
+        const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
@@ -64,7 +59,7 @@
             if (!isSessionActive) {
                 await startVoiceSession();
             } else {
-                stopVoiceSession();
+                await stopVoiceSession();
             }
         }
 
@@ -78,7 +73,6 @@
                 isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
 
-                // สร้าง Audio Context สำหรับเล่นเสียงตอบกลับ
                 audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
                 nextPlayTime = audioOutputContext.currentTime;
 
@@ -87,7 +81,7 @@
                 webSocket.onopen = () => {
                     const setupData = {
                         setup: {
-                            model: "models/gemini-3.1-flash-live-preview", // ใช้โมเดลที่ต้องการ
+                            model: "models/gemini-2.0-flash-exp", // หมายเหตุ: หาก Gemini ปฏิเสธ 3.1 Live API ให้ใช้ 2.0-flash-exp สำหรับ Live Bidi Websocket
                             generationConfig: {
                                 responseModalities: ["AUDIO"],
                                 speechConfig: {
@@ -96,40 +90,12 @@
                             },
                             systemInstruction: {
                                 parts: [{
-                                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching
-                                    หน้าที่ของคุณคือพูดคุยสอบถามความต้องการจากผู้ใช้ด้วยเสียงภาษาไทยอย่างเป็นกันเอง:
-                                    1. สอบถามความต้องการ (ซื้อ/ขาย/ซ่อม)
-                                    2. สอบถามทำเลที่ต้องการ (เช่น เขตใน กทม.), สิ่งอำนวยความสะดวก (เช่น สระว่ายน้ำ)
-                                    3. สอบถามสถานะการเงิน (อาชีพ, รายได้/เดือน, รายจ่าย/เดือน, ภาระหนี้สิน, เครดิตบูโร, ซื้อสดหรือกู้ผ่อน)
-                                    
-                                    เมื่อได้ข้อมูลครบถ้วนแล้ว ให้คุณทำการประมวลผล แล้วตอบกลับด้วยโครงสร้าง JSON ท้ายสุดในรูปแบบนี้เท่านั้น:
-                                    {
-                                      "isFinished": true,
-                                      "userData": {
-                                        "demandType": "ซื้อ",
-                                        "location": "เขตลาดพร้าว",
-                                        "amenities": "มีสระว่ายน้ำ",
-                                        "familyType": "ครอบครัว 3 คน",
-                                        "career": "พนักงานเอกชน",
-                                        "income": "50000",
-                                        "expense": "20000",
-                                        "debts": "ไม่มี",
-                                        "creditBureaux": "ปกติ",
-                                        "paymentType": "กู้แบงก์",
-                                        "loanPeriod": "30"
-                                      },
-                                      "criteria": {
-                                        "province": "กทม",
-                                        "district": "ลาดพร้าว",
-                                        "propertyType": "บ้าน"
-                                      }
-                                    }`
+                                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ของ Land Matching...`
                                 }]
                             }
                         }
                     };
                     webSocket.send(JSON.stringify(setupData));
-                    initMicrophone();
 
                     isSessionActive = true;
                     btnText.innerText = "วางสาย / จบการสนทนา";
@@ -142,18 +108,18 @@
                     try {
                         const response = JSON.parse(event.data);
                         
+                        // รอให้ Setup สมบูรณ์ก่อนส่งเสียงเปิดไมโครโฟน
                         if (response.setupComplete) {
                             isSetupReady = true;
                             statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
+                            await initMicrophone(); 
                             return;
                         }
 
-                        // รองรับทั้งโครงสร้าง serverContent และ realtimeOutput
                         const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
 
                         if (parts) {
                             for (let part of parts) {
-                                // เล่นเสียงที่ AI ส่งกลับมา
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
                                     playPCMData(part.inlineData.data);
                                 }
@@ -192,33 +158,37 @@
         }
 
         async function initMicrophone() {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-            
-            const source = audioContext.createMediaStreamSource(mediaStream);
-            processor = audioContext.createScriptProcessor(4096, 1, 1);
-
-            source.connect(processor);
-            processor.connect(audioContext.destination);
-
-            processor.onaudioprocess = (e) => {
-                if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
                 
-                const inputData = e.inputBuffer.getChannelData(0);
-                const pcm16 = convertFloat32ToPCM16(inputData);
-                const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
 
-                webSocket.send(JSON.stringify({
-                    realtimeInput: {
-                        inputs: [
-                            {
-                                mimeType: "audio/pcm;rate=16000",
-                                data: base64Audio
-                            }
-                        ]
-                    }
-                }));
-            };
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                processor.onaudioprocess = (e) => {
+                    if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+                    
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    const pcm16 = convertFloat32ToPCM16(inputData);
+                    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+
+                    webSocket.send(JSON.stringify({
+                        realtimeInput: {
+                            mediaChunks: [
+                                {
+                                    mimeType: "audio/pcm;rate=16000",
+                                    data: base64Audio
+                                }
+                            ]
+                        }
+                    }));
+                };
+            } catch (err) {
+                console.error("Microphone initialization error:", err);
+            }
         }
 
         function convertFloat32ToPCM16(buffer) {
@@ -230,9 +200,8 @@
             return buf;
         }
 
-        // ฟังก์ชันถอดรหัส Base64 PCM 24kHz และส่งไปเล่นที่ลำโพง
         function playPCMData(base64Audio) {
-            if (!audioOutputContext) return;
+            if (!audioOutputContext || audioOutputContext.state === 'closed') return;
 
             const rawBinary = atob(base64Audio);
             const len = rawBinary.length;
@@ -263,13 +232,27 @@
             nextPlayTime += buffer.duration;
         }
 
-        function stopVoiceSession() {
+        async function stopVoiceSession() {
             isSessionActive = false;
             isSetupReady = false;
-            if (webSocket) webSocket.close();
-            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
-            if (audioContext) audioContext.close();
-            if (audioOutputContext) audioOutputContext.close();
+
+            if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+                webSocket.close();
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            // ตรวจสอบสถานะก่อนปิด ป้องกัน InvalidStateError
+            if (audioContext && audioContext.state !== 'closed') {
+                await audioContext.close().catch(() => {});
+                audioContext = null;
+            }
+            if (audioOutputContext && audioOutputContext.state !== 'closed') {
+                await audioOutputContext.close().catch(() => {});
+                audioOutputContext = null;
+            }
 
             const btn = document.getElementById('toggleBtn');
             const btnText = document.getElementById('btnText');
