@@ -52,6 +52,7 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
         let isSessionActive = false;
+        let isSetupReady = false; // สถานะรอ Setup Complete จาก Gemini
         let webSocket = null;
         let audioContext = null;
         let mediaStream = null;
@@ -72,10 +73,12 @@
             const statusText = document.getElementById('statusText');
 
             try {
+                isSetupReady = false;
                 statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
                 webSocket = new WebSocket(BACKEND_WS_URL);
 
                 webSocket.onopen = () => {
+                    // โครงสร้าง Setup Handshake ล่าสุด
                     const setupData = {
                         setup: {
                             model: "models/gemini-3.1-flash-live-preview",
@@ -120,7 +123,6 @@
                         }
                     };
                     webSocket.send(JSON.stringify(setupData));
-
                     initMicrophone();
 
                     isSessionActive = true;
@@ -128,12 +130,19 @@
                     btn.className = "w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2 text-lg";
                     avatar.classList.add('pulse-animation', 'border-rose-500');
                     avatar.classList.remove('border-emerald-500');
-                    statusText.innerText = "🟢 AI กำลังฟัง... พูดคุยได้เลยครับ";
                 };
 
                 webSocket.onmessage = async (event) => {
                     try {
                         const response = JSON.parse(event.data);
+                        
+                        // ปรับสถานะพร้อมส่งเสียงเมื่อ Gemini ตอบรับ Setup
+                        if (response.setupComplete) {
+                            isSetupReady = true;
+                            statusText.innerText = "🟢 AI พร้อมแล้ว... พูดคุยได้เลยครับ";
+                            return;
+                        }
+
                         if (response.serverContent?.modelTurn?.parts) {
                             for (let part of response.serverContent.modelTurn.parts) {
                                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
@@ -184,19 +193,22 @@
             processor.connect(audioContext.destination);
 
             processor.onaudioprocess = (e) => {
-                if (!isSessionActive || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+                // ต้องรอให้ Setup เสร็จสมบูรณ์ (isSetupReady = true) ก่อนส่งข้อความเสียง
+                if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
                 
                 const inputData = e.inputBuffer.getChannelData(0);
                 const pcm16 = convertFloat32ToPCM16(inputData);
                 const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
-                // แก้ไขโครงสร้างส่งเสียงใหม่ใช้ 'audio' แทน 'mediaChunks' 
+                // โครงสร้าง Payload ล่าสุดตาม WebSocket Bidi Standard
                 webSocket.send(JSON.stringify({
                     realtimeInput: {
-                        audio: {
-                            mimeType: "audio/pcm;rate=16000",
-                            data: base64Audio
-                        }
+                        mediaChunks: [
+                            {
+                                mimeType: "audio/pcm",
+                                data: base64Audio
+                            }
+                        ]
                     }
                 }));
             };
@@ -223,6 +235,7 @@
 
         function stopVoiceSession() {
             isSessionActive = false;
+            isSetupReady = false;
             if (webSocket) webSocket.close();
             if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
             if (audioContext) audioContext.close();
