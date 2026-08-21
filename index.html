@@ -162,7 +162,7 @@
     <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
     <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์โดยไม่ต้องรอ AI พูดจบ -->
     <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
-      🧪 กดปุ่มนี้เพื่อทดสอบแสดงลิสต์บ้านทันที
+      🧪 ทดสอบดึงข้อมูลจาก Database
     </button>
   </div>
 
@@ -243,7 +243,6 @@
           if (webSocket.readyState === WebSocket.OPEN) {
             const setupData = {
               setup: {
-                // อัปเดตโมเดลตามคำสั่งอย่างเคร่งครัด
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
                   responseModalities: ["AUDIO"],
@@ -295,7 +294,6 @@
                 // เช็ค JSON เพื่อดึง Database
                 if (part.text) {
                   try {
-                    // ทำความสะอาดข้อความ เผื่อ AI ส่ง ```json มาด้วย
                     let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
                     const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
                     
@@ -306,7 +304,7 @@
                       }
                     }
                   } catch (e) {
-                    console.error("JSON Parse Error:", e); // แสดง Error ใน Console ถ้าอ่านรูปแบบไม่ออก
+                    console.error("JSON Parse Error:", e);
                   }
                 }
               }
@@ -379,8 +377,19 @@
       isSetupReady = false;
       if (webSocket) webSocket.close();
       if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-      if (audioContext) audioContext.close();
-      if (audioOutputContext) audioOutputContext.close();
+      
+      // ✅ เพิ่มการเช็ค state ว่าปิดไปแล้วหรือยัง เพื่อป้องกัน Error InvalidStateError
+      try {
+        if (audioContext && audioContext.state !== 'closed') {
+          await audioContext.close();
+        }
+      } catch (e) { console.warn("AudioContext close warn:", e); }
+      
+      try {
+        if (audioOutputContext && audioOutputContext.state !== 'closed') {
+          await audioOutputContext.close();
+        }
+      } catch (e) { console.warn("AudioOutputContext close warn:", e); }
 
       document.getElementById('toggleBtn').innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
       document.getElementById('toggleBtn').classList.remove('active');
@@ -398,7 +407,6 @@
             const res = await fetch(GAS_WEB_APP_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain' },
-              // แก้ไข action จาก saveUserAndSearch เป็น searchAll ตรงนี้ครับ
               body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria })
             });
             const data = await res.json();
@@ -421,7 +429,7 @@
           // นำข้อมูลไปสร้างเป็นลิสต์บนหน้าจอ
           renderListView(currentProperties);
           
-          // สั่งให้ AI พูดสรุป
+          // สั่งให้ AI พูดสรุป (จะทำงานต่อเมื่อกดผ่านการคุยด้วยเสียงเท่านั้น)
           sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
           statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
         }
@@ -457,18 +465,13 @@
           `;
         });
       }
-  // ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
-    function testShowList() {
-      const mockData = [
-        { propertyType: "บ้านเดี่ยว (ทดสอบ)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
-        { propertyType: "ทาวน์โฮม (ทดสอบ)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
-        { propertyType: "คอนโด (ทดสอบ)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
-      ];
       
-      currentProperties = mockData;
-      renderListView(currentProperties);
-      document.getElementById('statusText').innerText = "✅ โชว์ลิสต์จำลองสำเร็จแล้ว!";
+    // ✅ ฟังก์ชันทดสอบดึงข้อมูลจาก Database จริงผ่านปุ่ม โดยไม่ต้องคุยกับ AI
+    function testShowList() {
+      // เรียกใช้ fetchDatabase() ตรงๆ เพื่อดึงข้อมูลมาจาก Google Sheet 
+      fetchDatabase({}, {}); 
     }
+
     // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
@@ -487,8 +490,8 @@
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
-        // หาก Database มี Array รูปภาพ ให้วนลูปจาก Array แทน
-        const imgUrl = property[`image${i}`] || `[https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$](https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$){i}`;
+        // ✅ แก้ไขลิงก์ 404 โดยลบรูปแบบมาร์กดาวน์ผิดๆ ออก
+        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
