@@ -293,7 +293,6 @@
                   playPCMData(part.inlineData.data);
                 }
                 // เช็ค JSON เพื่อดึง Database
-                // เช็ค JSON เพื่อดึง Database
                 if (part.text) {
                   try {
                     // ทำความสะอาดข้อความ เผื่อ AI ส่ง ```json มาด้วย
@@ -399,7 +398,8 @@
             const res = await fetch(GAS_WEB_APP_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain' },
-              body: JSON.stringify({ action: 'saveUserAndSearch', userData: userData, criteria: criteria })
+              // แก้ไข action จาก saveUserAndSearch เป็น searchAll ตรงนี้ครับ
+              body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria })
             });
             const data = await res.json();
             
@@ -457,7 +457,7 @@
           `;
         });
       }
-  //SS ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
+  // ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
     function testShowList() {
       const mockData = [
         { propertyType: "บ้านเดี่ยว (ทดสอบ)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
@@ -488,7 +488,7 @@
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
         // หาก Database มี Array รูปภาพ ให้วนลูปจาก Array แทน
-        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        const imgUrl = property[`image${i}`] || `[https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$](https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$){i}`;
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
