@@ -26,7 +26,7 @@
       overflow: hidden; 
     }
 
-    /* --- ส่วนบน: AI Voice --- */
+    /* --- ส่วนบน: AI Voice (สูงไม่เกิน 1/3) --- */
     #ai-section {
       height: 33vh;
       min-height: 220px;
@@ -43,21 +43,21 @@
       flex-shrink: 0;
     }
 
-    .mascot-img { height: 50px; object-fit: contain; margin-bottom: 5px; }
+    .mascot-img { height: 60px; object-fit: contain; margin-bottom: 5px; }
     
     .ai-avatar {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: #fff;
       border: 3px solid var(--btn-blue);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
+      font-size: 35px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .pulse-animation { animation: pulse 1.5s infinite; border-color: #ff6b81; }
     @keyframes pulse {
@@ -71,8 +71,8 @@
       color: white;
       border: none;
       border-radius: 20px;
-      padding: 8px 18px;
-      font-size: 15px;
+      padding: 12px 25px;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -80,7 +80,7 @@
     }
     .voice-btn.active { background: #ff6b81; }
 
-    #statusText { font-size: 13px; color: #555; margin-top: 6px; font-weight: bold; text-align: center; }
+    #statusText { font-size: 14px; color: #555; margin-top: 8px; font-weight: bold; }
 
     /* --- ส่วนล่าง: List View --- */
     #list-section {
@@ -102,11 +102,11 @@
     }
     .compact-card:active { transform: scale(0.98); }
     
-    .card-title { font-size: 17px; font-weight: bold; color: var(--text-main); }
-    .card-price { font-size: 15px; font-weight: bold; color: #d9534f; float: right; }
-    .card-desc { font-size: 13px; color: #555; margin-top: 5px; line-height: 1.4; }
+    .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); }
+    .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
+    .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
     
-    /* --- Modal Detail View --- */
+    /* --- Modal สำหรับ Detail View (Step 2) --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
@@ -129,6 +129,7 @@
       font-size: 30px; color: #888; cursor: pointer; font-weight: bold;
     }
 
+    /* Slider รูปภาพ */
     .image-slider {
       display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
       gap: 10px; padding-bottom: 10px; margin-top: 20px;
@@ -142,47 +143,68 @@
     }
 
     .detail-content { flex: 1; overflow-y: auto; margin-top: 15px; }
-    .detail-title { font-size: 20px; font-weight: bold; color: var(--text-main); }
-    .detail-price { font-size: 18px; font-weight: bold; color: #d9534f; margin-bottom: 10px; }
+    .detail-title { font-size: 22px; font-weight: bold; color: var(--text-main); }
+    .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; margin-bottom: 10px; }
+    
+    .ai-detail-box {
+      background: #e6f2ff; border-radius: 15px; padding: 15px;
+      margin-top: 15px; display: flex; align-items: center; gap: 15px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- ส่วนบน: AI Voice -->
+  <!-- ส่วนบน: AI Voice (1/3 ของหน้าจอ) -->
   <div id="ai-section">
     <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
     <div id="avatarCircle" class="ai-avatar">🤖</div>
-    <div style="display: flex; gap: 8px;">
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
-      <button onclick="triggerShowList()" style="background: var(--btn-green); border: none; border-radius: 20px; padding: 8px 15px; font-size: 14px; font-weight: bold; cursor: pointer; color: #333; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">🏠 แสดงบ้าน</button>
-    </div>
-    <div id="statusText">กด "คุยกับ AI" หรือกด "แสดงบ้าน" เพื่อดูรายการทรัพย์</div>
+    <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
+    <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
+    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์โดยไม่ต้องรอ AI พูดจบ -->
+    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
+      🧪 กดปุ่มนี้เพื่อทดสอบแสดงลิสต์บ้านทันที
+    </button>
   </div>
 
-  <!-- ส่วนล่าง: List View -->
+  <!-- ส่วนล่าง: List View (2/3 ของหน้าจอ) -->
   <div id="list-section">
     <div id="resultsContainer">
       <div style="text-align:center; padding: 40px 20px; color: #888;">
         <h3 style="margin:0;">ยินดีต้อนรับสู่ Land Matching</h3>
-        <p style="font-size: 14px;">กดปุ่ม "แสดงบ้าน" ด้านบนเพื่อดูรายการบ้านทั้งหมดได้เลยครับ</p>
+        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน เพื่อให้เราคัดเลือกบ้านที่ใช่สำหรับคุณ</p>
       </div>
     </div>
   </div>
 
-  <!-- Popup Modal -->
+  <!-- Popup Modal (Step 2) -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
-      <div class="image-slider" id="modalSlider"></div>
+      
+      <!-- Slide รูปภาพ 5-6 รูป -->
+      <div class="image-slider" id="modalSlider">
+        <!-- รูปภาพจะถูก Render ผ่าน JS -->
+      </div>
+
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
         <div id="modalPrice" class="detail-price">-</div>
-        <p id="modalDesc" style="font-size: 14px; color: #444; line-height: 1.5;"></p>
+        <p id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5;"></p>
+
+        <!-- กล่องสำหรับคุย AI ในบริบทของบ้านหลังนี้ -->
+        <div class="ai-detail-box">
+          <div style="font-size: 30px;">🤖</div>
+          <div>
+            <div style="font-weight: bold; font-size: 14px; color: var(--btn-blue);">AI สแตนด์บายพร้อมให้ข้อมูลเชิงลึก</div>
+            <div style="font-size: 12px; color: #666;">"สงสัยเรื่องส่วนกลาง การกู้ หรือรายละเอียดเพิ่มเติม ถามผมได้เลยครับ"</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // การตั้งค่า Backend
     const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
@@ -195,17 +217,9 @@
     let audioOutputContext = null;
     let nextPlayTime = 0;
     
-    let currentProperties = [];
+    let currentProperties = []; // เก็บข้อมูลที่ได้จาก Database
 
-    // เริ่มต้น LIFF และเปิดหน้าเว็บ
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        await liff.init({ liffId: "2011006139-Wn6PhY6D" });
-      } catch (err) {
-        console.log("LIFF Init error: ", err);
-      }
-    });
-
+    // --- ฟังก์ชันหลักควบคุม AI Voice ---
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -218,7 +232,8 @@
 
       try {
         isSetupReady = false;
-        statusText.innerText = "กำลังเชื่อมต่อ AI...";
+        statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+
         audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         nextPlayTime = audioOutputContext.currentTime;
 
@@ -226,18 +241,35 @@
 
         webSocket.onopen = () => {
           if (webSocket.readyState === WebSocket.OPEN) {
-            webSocket.send(JSON.stringify({
+            const setupData = {
               setup: {
+                // อัปเดตโมเดลตามคำสั่งอย่างเคร่งครัด
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
                   responseModalities: ["AUDIO"],
                   speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
+                },
+                systemInstruction: {
+                  parts: [{
+                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
+                    1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
+                    2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON รูปแบบนี้:
+                    {
+                      "isFinished": true,
+                      "userData": { "demandType": "ซื้อ", "location": "ลาดพร้าว", "budget": "5000000" },
+                      "criteria": { "propertyType": "บ้าน", "province": "กทม" }
+                    }
+                    3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที แล้วสแตนด์บายรอผู้ใช้ถามต่อ
+                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้คุณเปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1`
+                  }]
                 }
               }
-            }));
+            };
+            webSocket.send(JSON.stringify(setupData));
           }
+
           isSessionActive = true;
-          btn.innerHTML = "⏹️ ปิดเสียง";
+          btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
@@ -245,23 +277,46 @@
         webSocket.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
+            
             if (response.setupComplete) {
               isSetupReady = true;
-              statusText.innerText = "🟢 AI พร้อมฟังแล้วครับ พูดได้เลย";
+              statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
               await initMicrophone(); 
               return;
             }
+
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
+                // เล่นเสียง
                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
+                }
+                // เช็ค JSON เพื่อดึง Database
+                // เช็ค JSON เพื่อดึง Database
+                if (part.text) {
+                  try {
+                    // ทำความสะอาดข้อความ เผื่อ AI ส่ง ```json มาด้วย
+                    let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+                    
+                    if (jsonMatch) {
+                      const resultData = JSON.parse(jsonMatch[0]);
+                      if (resultData.isFinished) {
+                        fetchDatabase(resultData.userData, resultData.criteria);
+                      }
+                    }
+                  } catch (e) {
+                    console.error("JSON Parse Error:", e); // แสดง Error ใน Console ถ้าอ่านรูปแบบไม่ออก
+                  }
                 }
               }
             }
           } catch (e) {}
         };
+
         webSocket.onclose = () => stopVoiceSession();
+
       } catch (err) {
         statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้";
       }
@@ -270,8 +325,10 @@
     async function initMicrophone() {
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
       audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      
       const source = audioContext.createMediaStreamSource(mediaStream);
       processor = audioContext.createScriptProcessor(4096, 1, 1);
+
       source.connect(processor);
       processor.connect(audioContext.destination);
 
@@ -280,7 +337,12 @@
         const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = convertFloat32ToPCM16(inputData);
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-        webSocket.send(JSON.stringify({ realtimeInput: { audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio } } }));
+
+        webSocket.send(JSON.stringify({
+          realtimeInput: {
+            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+          }
+        }));
       };
     }
 
@@ -296,15 +358,18 @@
       const raw = atob(base64Audio);
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+
       const int16 = new Int16Array(bytes.buffer);
       const float32 = new Float32Array(int16.length);
       for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
 
       const buffer = audioOutputContext.createBuffer(1, float32.length, 24000);
       buffer.getChannelData(0).set(float32);
+
       const source = audioOutputContext.createBufferSource();
       source.buffer = buffer;
       source.connect(audioOutputContext.destination);
+
       if (nextPlayTime < audioOutputContext.currentTime) nextPlayTime = audioOutputContext.currentTime;
       source.start(nextPlayTime);
       nextPlayTime += buffer.duration;
@@ -318,102 +383,151 @@
       if (audioContext) audioContext.close();
       if (audioOutputContext) audioOutputContext.close();
 
-      document.getElementById('toggleBtn').innerHTML = "🎙️ คุยกับ AI";
+      document.getElementById('toggleBtn').innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
       document.getElementById('toggleBtn').classList.remove('active');
       document.getElementById('avatarCircle').classList.remove('pulse-animation');
       document.getElementById('statusText').innerText = "AI หยุดทำงานชั่วคราว";
     }
 
-    // --- ฟังก์ชันดึงข้อมูลจาก Database (พร้อม Fallback กันเหนียว) ---
-    async function triggerShowList() {
-      const statusText = document.getElementById('statusText');
-      statusText.innerText = "กำลังดึงข้อมูลจาก Database...";
-      document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังโหลดข้อมูลบ้าน ⏳</div>";
-
-      try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'getAll' })
-        });
-        const data = await res.json();
-        
-        if (data.status === "success" && data.results && data.results.length > 0) {
-          currentProperties = data.results;
-        } else {
-          throw new Error("ไม่มีข้อมูลใน Sheet หรือโครงสร้างไม่ตรง");
+    // --- ฟังก์ชันดึง Database และสร้าง List View (Step 1) ---
+    async function fetchDatabase(userData, criteria) {
+          const statusText = document.getElementById('statusText');
+          statusText.innerText = "กำลังค้นหาบ้านในระบบ...";
+          document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังสแกนฐานข้อมูล ⏳</div>";
+    
+          try {
+            const res = await fetch(GAS_WEB_APP_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({ action: 'saveUserAndSearch', userData: userData, criteria: criteria })
+            });
+            const data = await res.json();
+            
+            if (data.status === "success" && data.results && data.results.length > 0) {
+              currentProperties = data.results;
+            } else {
+              throw new Error("หาไม่พบ หรือ ต่อ Database ไม่ติด"); // โยนไปเข้า catch เพื่อใช้ข้อมูลจำลอง
+            }
+          } catch (err) {
+            console.warn("ดึงข้อมูลจริงไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน", err);
+            // ข้อมูลจำลอง เพื่อให้ระบบเดินต่อได้และโชว์หน้า List
+            currentProperties = [
+              { propertyType: "บ้านเดี่ยว (จำลอง)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
+              { propertyType: "ทาวน์โฮม (จำลอง)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
+              { propertyType: "คอนโด (จำลอง)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
+            ];
+          }
+    
+          // นำข้อมูลไปสร้างเป็นลิสต์บนหน้าจอ
+          renderListView(currentProperties);
+          
+          // สั่งให้ AI พูดสรุป
+          sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
+          statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
         }
-      } catch (err) {
-        console.warn("ดึงจาก Google Sheet ไม่สำเร็จ กำลังใช้ข้อมูลสำรองแทน:", err);
-        // ข้อมูลจำลองสำรอง เพื่อให้หน้าจอแสดงผลได้ทันที
-        currentProperties = [
-          { propertyType: "บ้านเดี่ยว", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก", details: "บ้านเดี่ยว 2 ชั้น สวยพร้อมอยู่ บิ้วอินครบ" },
-          { propertyType: "ทาวน์โฮม", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่", details: "ทาวน์โฮมทำเลดี ใจกลางเมือง" },
-          { propertyType: "คอนโด", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย", details: "คอนโดแต่งครบ หิ้วกระเป๋าเข้าอยู่ได้เลย" }
-        ];
-      }
 
+  function renderListView(properties) {
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = '';
+  
+        if (properties.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขครับ</div>';
+          return;
+        }
+  
+        properties.forEach((p, index) => {
+          const safeType = p.propertyType || 'อสังหาฯ';
+          const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
+          const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
+          const safeSize = p.size || 'ไม่ระบุขนาด';
+          const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
+  
+          container.innerHTML += `
+            <div class="compact-card" onclick="openDetailModal(${index})">
+              <div style="margin-bottom: 8px;">
+                <span class="card-title">${index + 1}. ${safeType}</span>
+                <span class="card-price">฿ ${safePrice}</span>
+              </div>
+              <div class="card-desc">
+                📍 <b>ทำเล:</b> ${safeLoc}<br>
+                📐 <b>ขนาด:</b> ${safeSize}<br>
+                ✨ <b>จุดเด่น:</b> ${highlight}
+              </div>
+            </div>
+          `;
+        });
+      }
+  //SS ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
+    function testShowList() {
+      const mockData = [
+        { propertyType: "บ้านเดี่ยว (ทดสอบ)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
+        { propertyType: "ทาวน์โฮม (ทดสอบ)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
+        { propertyType: "คอนโด (ทดสอบ)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
+      ];
+      
+      currentProperties = mockData;
       renderListView(currentProperties);
-      statusText.innerText = `✨ แสดงรายการบ้านสำเร็จ (${currentProperties.length} หลัง)`;
+      document.getElementById('statusText').innerText = "✅ โชว์ลิสต์จำลองสำเร็จแล้ว!";
     }
-
-    function renderListView(properties) {
-      const container = document.getElementById('resultsContainer');
-      container.innerHTML = '';
-
-      if (!properties || properties.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ในระบบครับ</div>';
-        return;
-      }
-
-      properties.forEach((p, index) => {
-        const safeType = p.propertyType || p['ประเภททรัพย์'] || 'อสังหาฯ';
-        const safePrice = p.price || p['ราคา'] ? Number(p.price || p['ราคา']).toLocaleString() : '-';
-        const safeLoc = `${p.district || p['เขต'] || ''} ${p.province || p['จังหวัด'] || ''}`.trim();
-        const safeSize = p.size || p['ขนาด'] || 'ไม่ระบุ';
-        const highlight = p.highlight || p.project || p['จุดเด่น'] || 'ทำเลดี น่าอยู่';
-
-        container.innerHTML += `
-          <div class="compact-card" onclick="openDetailModal(${index})">
-            <div style="margin-bottom: 5px;">
-              <span class="card-title">${index + 1}. ${safeType}</span>
-              <span class="card-price">฿ ${safePrice}</span>
-            </div>
-            <div class="card-desc">
-              📍 <b>ทำเล:</b> ${safeLoc}<br>
-              📐 <b>ขนาด:</b> ${safeSize}<br>
-              ✨ <b>จุดเด่น:</b> ${highlight}
-            </div>
-          </div>
-        `;
-      });
-    }
-
+    // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
       if (!property) return;
 
-      document.getElementById('modalTitle').innerText = `${property.propertyType || property['ประเภททรัพย์'] || 'บ้าน'} ${property.project ? '- '+property.project : ''}`;
-      document.getElementById('modalPrice').innerText = `ราคา: ${property.price || property['ราคา'] || '-'} บาท`;
+      // 1. นำข้อมูลใส่ Modal
+      document.getElementById('modalTitle').innerText = `${property.propertyType} ${property.project ? '- '+property.project : ''}`;
+      document.getElementById('modalPrice').innerText = `ราคา: ${property.price} บาท`;
       document.getElementById('modalDesc').innerHTML = `
-        <b>ทำเล:</b> ${property.district || property['เขต'] || ''} ${property.province || property['จังหวัด'] || ''}<br>
-        <b>ขนาด:</b> ${property.size || property['ขนาด'] || '-'}<br>
-        <b>รายละเอียด:</b> ${property.details || property['รายละเอียด'] || 'ไม่มีข้อมูลเพิ่มเติม'}
+        <b>ทำเล:</b> ${property.road || '-'} ${property.district || '-'} ${property.province || '-'}<br>
+        <b>ขนาด:</b> ${property.size || '-'}<br>
+        <b>รายละเอียด:</b> ${property.details || 'ไม่มีข้อมูลเพิ่มเติม'}
       `;
 
+      // 2. สร้าง Slide รูปภาพ 5-6 รูป (จำลองรูป Placeholder แบบสไลด์)
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
-      for (let i = 1; i <= 3; i++) {
-        const imgUrl = property[`image${i}`] || property[`รูปภาพ${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Property+Image+${i}`;
-        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน">`;
+      for (let i = 1; i <= 5; i++) {
+        // หาก Database มี Array รูปภาพ ให้วนลูปจาก Array แทน
+        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
+      // 3. แสดง Modal
       document.getElementById('detailModalOverlay').classList.add('active');
+
+      // 4. ส่งข้อมูลบ้านหลังนี้ไปให้ AI เพื่อสวมบทอธิบายเจาะลึกอ้างอิง Sheet1
+      const contextData = JSON.stringify(property);
+      sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
+      (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
+      กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
     }
 
     function closeDetailModal() {
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
+
+    // ฟังก์ชันสำหรับส่งข้อความเงียบ (Client Content) ไปแทรกแซง AI
+    function sendTextToAI(textMessage) {
+      if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+        const message = {
+          clientContent: {
+            turns: [
+              {
+                role: "user",
+                parts: [{ text: textMessage }]
+              }
+            ],
+            turnComplete: true
+          }
+        };
+        webSocket.send(JSON.stringify(message));
+      }
+    }
+
+    // Liff Init (ถ้ามี)
+    try {
+      liff.init({ liffId: "2011006139-Wn6PhY6D" }).catch(() => {});
+    } catch(e) {}
   </script>
 </body>
 </html>
