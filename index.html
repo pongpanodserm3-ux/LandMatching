@@ -71,8 +71,8 @@
       color: white;
       border: none;
       border-radius: 20px;
-      padding: 12px 25px;
-      font-size: 18px;
+      padding: 10px 20px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -80,7 +80,7 @@
     }
     .voice-btn.active { background: #ff6b81; }
 
-    #statusText { font-size: 14px; color: #555; margin-top: 8px; font-weight: bold; }
+    #statusText { font-size: 13px; color: #555; margin-top: 6px; font-weight: bold; text-align: center; }
 
     /* --- ส่วนล่าง: List View --- */
     #list-section {
@@ -129,7 +129,6 @@
       font-size: 30px; color: #888; cursor: pointer; font-weight: bold;
     }
 
-    /* Slider รูปภาพ */
     .image-slider {
       display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
       gap: 10px; padding-bottom: 10px; margin-top: 20px;
@@ -158,13 +157,11 @@
   <div id="ai-section">
     <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
     <div id="avatarCircle" class="ai-avatar">🤖</div>
-    <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
-    <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
-    
-    <!-- ปุ่มสั่งแสดงรายการบ้านหลังจากคุยกับ AI เสร็จ -->
-    <button onclick="triggerShowList()" style="margin-top: 10px; background: #bcece0; border: none; padding: 10px 20px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-      🏠 ค้นหาและแสดงบ้านที่ตรงสเปก
-    </button>
+    <div style="display: flex; gap: 8px;">
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
+      <button onclick="triggerShowList()" style="background: var(--btn-green); border: none; border-radius: 20px; padding: 10px 15px; font-size: 15px; font-weight: bold; cursor: pointer; color: #333; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">🏠 แสดงบ้าน</button>
+    </div>
+    <div id="statusText">กดปุ่ม "คุยกับ AI" หรือกด "แสดงบ้าน" เพื่อดูรายการ</div>
   </div>
 
   <!-- ส่วนล่าง: List View (2/3 ของหน้าจอ) -->
@@ -172,7 +169,7 @@
     <div id="resultsContainer">
       <div style="text-align:center; padding: 40px 20px; color: #888;">
         <h3 style="margin:0;">ยินดีต้อนรับสู่ Land Matching</h3>
-        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน เพื่อให้เราคัดเลือกบ้านที่ใช่สำหรับคุณ</p>
+        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน หรือกดปุ่ม "แสดงบ้าน" เพื่อดูรายการทรัพย์</p>
       </div>
     </div>
   </div>
@@ -182,17 +179,13 @@
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
       
-      <!-- Slide รูปภาพ 5-6 รูป -->
-      <div class="image-slider" id="modalSlider">
-        <!-- รูปภาพจะถูก Render ผ่าน JS -->
-      </div>
+      <div class="image-slider" id="modalSlider"></div>
 
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
         <div id="modalPrice" class="detail-price">-</div>
         <p id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5;"></p>
 
-        <!-- กล่องสำหรับคุย AI ในบริบทของบ้านหลังนี้ -->
         <div class="ai-detail-box">
           <div style="font-size: 30px;">🤖</div>
           <div>
@@ -205,7 +198,6 @@
   </div>
 
   <script>
-    // การตั้งค่า Backend
     const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7uTBwJDuyoV4bSVEAEuwG6EqAIR2GZNYz7qKT6jGnr6irNAzqWqr5z211jD1lkTw/exec";
 
@@ -218,9 +210,20 @@
     let audioOutputContext = null;
     let nextPlayTime = 0;
     
-    let currentProperties = []; // เก็บข้อมูลที่ได้จาก Database
+    let currentProperties = [];
 
-    // --- ฟังก์ชันหลักควบคุม AI Voice ---
+    // --- เริ่มต้น LIFF และเปิดหน้าเว็บให้เชื่อมต่ออัตโนมัติ ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await liff.init({ liffId: "2011006139-Wn6PhY6D" });
+        if (!liff.isLoggedIn()) {
+          // ถ้ายังไม่ login ใน LINE สามารถเลือกเปิดให้ล็อกอินได้ หรือปล่อยผ่าน
+        }
+      } catch (err) {
+        console.log("LIFF Init error: ", err);
+      }
+    });
+
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -244,7 +247,6 @@
           if (webSocket.readyState === WebSocket.OPEN) {
             const setupData = {
               setup: {
-                // อัปเดตโมเดลตามคำสั่งอย่างเคร่งครัด
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
                   responseModalities: ["AUDIO"],
@@ -252,16 +254,7 @@
                 },
                 systemInstruction: {
                   parts: [{
-                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
-                    1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
-                    2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON รูปแบบนี้:
-                    {
-                      "isFinished": true,
-                      "userData": { "demandType": "ซื้อ", "location": "ลาดพร้าว", "budget": "5000000" },
-                      "criteria": { "propertyType": "บ้าน", "province": "กทม" }
-                    }
-                    3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที แล้วสแตนด์บายรอผู้ใช้ถามต่อ
-                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้คุณเปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1`
+                    text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือพูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')`
                   }]
                 }
               }
@@ -270,7 +263,7 @@
           }
 
           isSessionActive = true;
-          btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
+          btn.innerHTML = "⏹️ ปิดเสียง";
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
@@ -278,10 +271,9 @@
         webSocket.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
-            
             if (response.setupComplete) {
               isSetupReady = true;
-              statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+              statusText.innerText = "🟢 AI พร้อมฟังแล้วครับ พูดได้เลย";
               await initMicrophone(); 
               return;
             }
@@ -289,25 +281,8 @@
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
-                // เล่นเสียง
                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
-                }
-                // เช็ค JSON เพื่อดึง Database
-                if (part.text) {
-                  try {
-                    let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
-                    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-                    
-                    if (jsonMatch) {
-                      const resultData = JSON.parse(jsonMatch[0]);
-                      if (resultData.isFinished) {
-                        fetchDatabase(resultData.userData, resultData.criteria);
-                      }
-                    }
-                  } catch (e) {
-                    console.error("JSON Parse Error:", e);
-                  }
                 }
               }
             }
@@ -315,7 +290,6 @@
         };
 
         webSocket.onclose = () => stopVoiceSession();
-
       } catch (err) {
         statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้";
       }
@@ -382,43 +356,42 @@
       if (audioContext) audioContext.close();
       if (audioOutputContext) audioOutputContext.close();
 
-      document.getElementById('toggleBtn').innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+      document.getElementById('toggleBtn').innerHTML = "🎙️ คุยกับ AI";
       document.getElementById('toggleBtn').classList.remove('active');
       document.getElementById('avatarCircle').classList.remove('pulse-animation');
       document.getElementById('statusText').innerText = "AI หยุดทำงานชั่วคราว";
     }
 
-    // --- ฟังก์ชันดึง Database และสร้าง List View (Step 1) ---
-    async function fetchDatabase(userData, criteria) {
+    // --- ปุ่มกดแสดงรายการบ้าน (ดึงจาก GAS หรือข้อมูลจำลองสำรอง) ---
+    async function triggerShowList() {
       const statusText = document.getElementById('statusText');
-      statusText.innerText = "กำลังค้นหาบ้านในระบบ...";
-      document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังสแกนฐานข้อมูล ⏳</div>";
+      statusText.innerText = "กำลังดึงข้อมูลบ้าน...";
+      document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังโหลดรายการบ้าน ⏳</div>";
 
       try {
         const res = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'saveUserAndSearch', userData: userData, criteria: criteria })
+          body: JSON.stringify({ action: 'searchAll' })
         });
         const data = await res.json();
         
         if (data.status === "success" && data.results && data.results.length > 0) {
           currentProperties = data.results;
         } else {
-          throw new Error("หาไม่พบ หรือ ต่อ Database ไม่ติด");
+          throw new Error("ใช้ข้อมูลจำลอง");
         }
       } catch (err) {
-        console.warn("ดึงข้อมูลจริงไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน", err);
+        // ข้อมูลจำลองเพื่อให้แสดงผลได้ทันที
         currentProperties = [
-          { propertyType: "บ้านเดี่ยว (จำลอง)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
-          { propertyType: "ทาวน์โฮม (จำลอง)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
-          { propertyType: "คอนโด (จำลอง)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
+          { propertyType: "บ้านเดี่ยว", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
+          { propertyType: "ทาวน์โฮม", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
+          { propertyType: "คอนโด", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
         ];
       }
 
       renderListView(currentProperties);
-      sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
-      statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
+      statusText.innerText = `✨ แสดงรายการบ้าน ${currentProperties.length} หลัง`;
     }
 
     function renderListView(properties) {
@@ -453,27 +426,6 @@
       });
     }
 
-    // --- ฟังก์ชันกดแสดงรายการบ้านหลังจากคุยกับ AI เสร็จ ---
-    async function triggerShowList() {
-      const statusText = document.getElementById('statusText');
-      statusText.innerText = "กำลังดึงข้อมูลบ้านที่ตรงสเปก...";
-      
-      setTimeout(() => {
-        const properties = [
-          { propertyType: "บ้านเดี่ยว", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
-          { propertyType: "ทาวน์โฮม", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
-          { propertyType: "คอนโด", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
-        ];
-        
-        currentProperties = properties;
-        renderListView(currentProperties);
-        
-        statusText.innerText = `✨ คัดบ้านมาให้ ${properties.length} หลังแล้วครับ`;
-        sendTextToAI(`ผู้ใช้ได้กดดูรายการบ้านแล้ว กรุณาพูดสั้นๆ ว่า "ผมคัดบ้านมาให้เรียบร้อยแล้วครับ ลองเลือกดูรายการด้านล่างได้เลย ชอบหลังไหนกดดูรายละเอียดได้ครับ"`);
-      }, 500);
-    }
-
-    // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
       if (!property) return;
@@ -494,39 +446,11 @@
       }
 
       document.getElementById('detailModalOverlay').classList.add('active');
-
-      const contextData = JSON.stringify(property);
-      sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
-      (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
-      กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
     }
 
     function closeDetailModal() {
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
-
-    // ฟังก์ชันสำหรับส่งข้อความเงียบ (Client Content) ไปแทรกแซง AI
-    function sendTextToAI(textMessage) {
-      if (webSocket && webSocket.readyState === WebSocket.OPEN) {
-        const message = {
-          clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [{ text: textMessage }]
-              }
-            ],
-            turnComplete: true
-          }
-        };
-        webSocket.send(JSON.stringify(message));
-      }
-    }
-
-    // Liff Init (ถ้ามี)
-    try {
-      liff.init({ liffId: "2011006139-Wn6PhY6D" }).catch(() => {});
-    } catch(e) {}
   </script>
 </body>
 </html>
