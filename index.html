@@ -160,6 +160,10 @@
     <div id="avatarCircle" class="ai-avatar">🤖</div>
     <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
+    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์โดยไม่ต้องรอ AI พูดจบ -->
+    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
+      🧪 กดปุ่มนี้เพื่อทดสอบแสดงลิสต์บ้านทันที
+    </button>
   </div>
 
   <!-- ส่วนล่าง: List View (2/3 ของหน้าจอ) -->
@@ -453,7 +457,18 @@
           `;
         });
       }
-
+  //SS ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
+    function testShowList() {
+      const mockData = [
+        { propertyType: "บ้านเดี่ยว (ทดสอบ)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
+        { propertyType: "ทาวน์โฮม (ทดสอบ)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
+        { propertyType: "คอนโด (ทดสอบ)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
+      ];
+      
+      currentProperties = mockData;
+      renderListView(currentProperties);
+      document.getElementById('statusText').innerText = "✅ โชว์ลิสต์จำลองสำเร็จแล้ว!";
+    }
     // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
