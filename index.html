@@ -390,41 +390,50 @@
 
     // --- ฟังก์ชันดึง Database และสร้าง List View (Step 1) ---
     async function fetchDatabase(userData, criteria) {
-          const statusText = document.getElementById('statusText');
-          statusText.innerText = "กำลังค้นหาบ้านในระบบ...";
-          document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังสแกนฐานข้อมูล ⏳</div>";
+      const statusText = document.getElementById('statusText');
+      statusText.innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
+      
+      // จุดแสดงผล (หาว่าคุณใช้ resultsContainer หรือ propertyList)
+      const container = document.getElementById('resultsContainer') || document.getElementById('propertyList');
+      if(container) {
+        container.innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังเชื่อมต่อ Google Sheets...</div>";
+      }
     
-          try {
-            const res = await fetch(GAS_WEB_APP_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain' },
-              body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria }),
-              redirect: 'follow' // เพิ่มการยอมรับ Redirect ของ Google
-            });
-            const data = await res.json();
-            
-            if (data.status === "success" && data.results && data.results.length > 0) {
-              currentProperties = data.results;
-            } else {
-              throw new Error("หาไม่พบ หรือ ต่อ Database ไม่ติด"); // โยนไปเข้า catch เพื่อใช้ข้อมูลจำลอง
-            }
-          } catch (err) {
-            console.warn("ดึงข้อมูลจริงไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน", err);
-            // ข้อมูลจำลอง เพื่อให้ระบบเดินต่อได้และโชว์หน้า List
-            currentProperties = [
-              { propertyType: "บ้านเดี่ยว (จำลอง)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
-              { propertyType: "ทาวน์โฮม (จำลอง)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
-              { propertyType: "คอนโด (จำลอง)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
-            ];
-          }
-    
-          // นำข้อมูลไปสร้างเป็นลิสต์บนหน้าจอ
-          renderListView(currentProperties);
-          
-          // สั่งให้ AI พูดสรุป
-          sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
-          statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          // ส่งคำสั่ง searchAll พร้อมตัวแปรตามโค้ดเดิมของคุณ
+          body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria }),
+          redirect: 'follow' 
+        });
+        
+        const data = await res.json();
+        
+        // เช็คว่าสำเร็จและมีข้อมูลหรือไม่
+        if (data.status === "success" && data.results && data.results.length > 0) {
+          currentProperties = data.results;
+          renderListView(currentProperties); // วาด UI ลิสต์บ้าน
+          statusText.innerText = "✅ ดึงข้อมูลสำเร็จ!";
+        } else {
+          throw new Error(data.message || "ดึงข้อมูลสำเร็จ แต่ไม่พบรายการบ้านใน Database");
         }
+        
+      } catch (error) {
+        console.error("Database Error:", error);
+        
+        // ❌ แสดง Error สีแดงตรงๆ บนหน้าจอ (ไม่ใช้ข้อมูลจำลองแล้ว)
+        statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ!";
+        if(container) {
+          container.innerHTML = `
+            <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 15px; background: #fff9f9;">
+              <b>เกิดข้อผิดพลาดในการเชื่อมต่อ Database:</b><br><br>
+              <span style="color: #333;">${error.message}</span><br><br>
+              <span style="color: #888; font-size: 13px;">(คำแนะนำ: เลื่อนขึ้นไปดูตัวแปร GAS_WEB_APP_URL ด้านบนสุดของไฟล์ ว่าใส่ลิงก์ถูกต้อง และตั้งค่าสิทธิ์ Anyone แล้วหรือยัง)</span>
+            </div>`;
+        }
+      }
+    }
 
   function renderListView(properties) {
         const container = document.getElementById('resultsContainer');
@@ -524,5 +533,8 @@
       liff.init({ liffId: "2011006139-Wn6PhY6D" }).catch(() => {});
     } catch(e) {}
   </script>
+  <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
+    🟢 Version: 1.0.1 (กำลังเชื่อมต่อ Database จริง)
+  </div>
 </body>
 </html>
