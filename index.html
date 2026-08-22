@@ -181,7 +181,7 @@
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
       
-      <!-- Slide รูปภาพ 5-6 รูป -->
+      <!-- Slide รูปภาพ 5 รูป -->
       <div class="image-slider" id="modalSlider">
         <!-- รูปภาพจะถูก Render ผ่าน JS -->
       </div>
@@ -473,6 +473,7 @@
       // เรียกฟังก์ชันดึงข้อมูลจริงจาก GAS โดยส่งค่าพารามิเตอร์ว่างไปเพื่อดึงข้อมูลทั้งหมด
       await fetchDatabase({}, {}); 
     }
+
     // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
@@ -487,13 +488,13 @@
         <b>รายละเอียด:</b> ${property.details || 'ไม่มีข้อมูลเพิ่มเติม'}
       `;
 
-      // 2. สร้าง Slide รูปภาพ 5-6 รูป (จำลองรูป Placeholder แบบสไลด์)
+      // 2. สร้าง Slide รูปภาพ 5 รูป (ใส่ภาพบ้านจำลองภาพเดิมวนซ้ำ 5 รูป)
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
+      const fakeHouseImgUrl = '[https://images.unsplash.com/photo-1518780602961-8fea52d26f63?auto=format&fit=crop&w=400&h=300&q=80](https://images.unsplash.com/photo-1518780602961-8fea52d26f63?auto=format&fit=crop&w=400&h=300&q=80)'; // ลิงก์รูปบ้านจำลองแบบปลอมๆ
+      
       for (let i = 1; i <= 5; i++) {
-        // หาก Database มี Array รูปภาพ ให้วนลูปจาก Array แทน
-        const imgUrl = property[`image${i}`] || `[https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$](https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$){i}`;
-        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
+        slider.innerHTML += `<img src="${fakeHouseImgUrl}" alt="รูปบ้านจำลอง ${i}">`;
       }
 
       // 3. แสดง Modal
