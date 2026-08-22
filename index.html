@@ -160,9 +160,10 @@
     <div id="avatarCircle" class="ai-avatar">🤖</div>
     <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
-    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์โดยไม่ต้องรอ AI พูดจบ -->
-    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
-      🧪 กดปุ่มนี้เพื่อทดสอบดึงลิสต์บ้านทันที (เชื่อมต่อฐานข้อมูล)
+    
+    <!-- เปลี่ยนจากปุ่ม Test เป็นปุ่มดึงข้อมูลจาก Database จริงตามหลักการไฟล์ 1 -->
+    <button onclick="manualSearchDatabase()" style="margin-top: 10px; background: #bcece0; border: none; padding: 10px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 15px; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+      🔍 ค้นหาข้อมูลจากฐานข้อมูลทั้งหมด
     </button>
   </div>
 
@@ -171,7 +172,7 @@
     <div id="resultsContainer">
       <div style="text-align:center; padding: 40px 20px; color: #888;">
         <h3 style="margin:0;">ยินดีต้อนรับสู่ Land Matching</h3>
-        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน เพื่อให้เราคัดเลือกบ้านที่ใช่สำหรับคุณ</p>
+        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน เพื่อให้เราคัดเลือกบ้านที่ใช่สำหรับคุณ หรือกดค้นหาข้อมูลทั้งหมด</p>
       </div>
     </div>
   </div>
@@ -215,8 +216,9 @@
     let audioOutputContext = null;
     let nextPlayTime = 0;
     
-    let currentProperties = []; 
+    let currentProperties = []; // เก็บข้อมูลที่ได้จาก Database
 
+    // --- ฟังก์ชันหลักควบคุม AI Voice (ไม่มีการเปลี่ยนแปลง คงไว้ 100%) ---
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -381,11 +383,12 @@
       document.getElementById('statusText').innerText = "AI หยุดทำงานชั่วคราว";
     }
 
+    // --- ฟังก์ชันดึง Database สำหรับ AI Voice (Step 1) ---
     async function fetchDatabase(userData, criteria) {
       const statusText = document.getElementById('statusText');
       statusText.innerText = "กำลังค้นหาบ้านในระบบ...";
       document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังสแกนฐานข้อมูล ⏳</div>";
-    
+
       try {
         const res = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
@@ -400,15 +403,69 @@
           throw new Error("หาไม่พบ หรือ ต่อ Database ไม่ติด");
         }
       } catch (err) {
-        console.warn("ดึงข้อมูลจริงไม่สำเร็จ ระบบจะใช้ข้อมูลจำลองแทน", err);
-        currentProperties = [
-          { propertyType: "บ้านเดี่ยว (จำลอง)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" }
-        ];
+        console.warn("ดึงข้อมูลไม่สำเร็จ ข้อมูลไม่ตรงหรือ Network มีปัญหา", err);
+        currentProperties = [];
       }
-    
+
       renderListView(currentProperties);
-      sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
-      statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
+      
+      if (currentProperties.length > 0) {
+        sendTextToAI(`ระบบค้นหาพบ ${currentProperties.length} หลัง กรุณาพูดสั้นๆว่า "ผมคัดบ้านที่ตรงสเปกมาให้ ${currentProperties.length} หลังแล้วครับ ลองดูรายการด้านล่างได้เลย ชอบหลังไหนกดเลือกได้เลย" จากนั้นรอสแตนด์บาย`);
+        statusText.innerText = `พบ ${currentProperties.length} รายการ (AI รอคำสั่ง)`;
+      } else {
+        sendTextToAI(`ระบบไม่พบอสังหาฯ ที่ตรงตามสเปก กรุณาแจ้งลูกค้าด้วยความสุภาพ`);
+        statusText.innerText = `ไม่พบข้อมูลที่ตรงเงื่อนไข`;
+      }
+    }
+
+    // --- (เพิ่มใหม่) ดึงข้อมูลทั้งหมดจาก Database โดยตรงผ่านการคลิกปุ่ม ---
+    async function manualSearchDatabase() {
+      const statusText = document.getElementById('statusText');
+      statusText.innerText = "กำลังโหลดข้อมูลจากฐานข้อมูล...";
+      document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>เชื่อมต่อฐานข้อมูล... ⏳</div>";
+      
+      // ใช้ระบบ google.script.run ถ้าแอปรันอยู่บนหน้า Google Apps Script
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(data) {
+            if (data && data.length > 0) {
+              currentProperties = data;
+              renderListView(currentProperties);
+              statusText.innerText = `✅ ดึงข้อมูลสำเร็จ พบ ${currentProperties.length} รายการ`;
+            } else {
+              document.getElementById('resultsContainer').innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ในระบบครับ</div>';
+              statusText.innerText = "ข้อมูลเป็นศูนย์";
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.error("Error from script:", err);
+            statusText.innerText = "❌ เกิดข้อผิดพลาดในการโหลดข้อมูล";
+          })
+          .getRealEstateData();
+      } else {
+        // ใช้ fetch API เป็น Fallback สำหรับทดสอบรันภายนอกหรือ LIFF
+        try {
+          const res = await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'getAll' })
+          });
+          const data = await res.json();
+          
+          if (data.status === "success" && data.results && data.results.length > 0) {
+            currentProperties = data.results;
+            renderListView(currentProperties);
+            statusText.innerText = `✅ ดึงข้อมูลสำเร็จ พบ ${currentProperties.length} รายการ`;
+          } else {
+            document.getElementById('resultsContainer').innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ในระบบครับ</div>';
+            statusText.innerText = "ข้อมูลเป็นศูนย์";
+          }
+        } catch (err) {
+          console.warn("การเชื่อมต่อผ่าน Fetch ล้มเหลว", err);
+          document.getElementById('resultsContainer').innerHTML = '<div style="text-align:center; padding: 20px; color:#d9534f;">❌ ล้มเหลว กรุณาตรวจสอบ URL หรือเปิดใน Web App</div>';
+          statusText.innerText = "❌ เชื่อมต่อฐานข้อมูลล้มเหลว";
+        }
+      }
     }
 
     function renderListView(properties) {
@@ -416,7 +473,7 @@
       container.innerHTML = '';
 
       if (properties.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขครับ</div>';
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ในระบบครับ</div>';
         return;
       }
 
@@ -443,56 +500,7 @@
       });
     }
 
-    // --- (แก้ไขใหม่) ฟังก์ชันทดสอบดึงลิสต์บ้านทันที โดยเชื่อมกับดาต้าเบสแล้ว ---
-    async function testShowList() {
-      const statusText = document.getElementById('statusText');
-      const resultsContainer = document.getElementById('resultsContainer');
-      
-      statusText.innerText = "กำลังเชื่อมต่อฐานข้อมูล...";
-      resultsContainer.innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังดึงข้อมูลจาก Database ⏳</div>";
-
-      try {
-        // อ้างอิงหลักการจากไฟล์ 1 (ถ้าเปิดผ่าน GAS Web App)
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-          google.script.run
-            .withSuccessHandler(function(data) {
-              if (data && data.length > 0) {
-                currentProperties = data;
-                renderListView(currentProperties);
-                statusText.innerText = `✅ โหลดข้อมูลจาก DB สำเร็จ ${currentProperties.length} รายการ`;
-              } else {
-                resultsContainer.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบข้อมูลในระบบ</div>';
-                statusText.innerText = "ไม่พบข้อมูล";
-              }
-            })
-            .withFailureHandler(function(err) {
-              throw new Error(err.message || err);
-            })
-            .getRealEstateData();
-        } else {
-          // ถ้าเปิดผ่าน LIFF/Hosting ภายนอก (ใช้ Fetch ชี้ไปที่ไฟล์ 4)
-          const res = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'getAll' })
-          });
-          const data = await res.json();
-          
-          if (data.status === "success" && data.results && data.results.length > 0) {
-            currentProperties = data.results;
-            renderListView(currentProperties);
-            statusText.innerText = `✅ โหลดข้อมูลจาก DB สำเร็จ ${currentProperties.length} รายการ`;
-          } else {
-            throw new Error(data.message || "ไม่พบข้อมูล");
-          }
-        }
-      } catch (err) {
-        console.warn("ดึงข้อมูลจาก DB ล้มเหลว", err);
-        resultsContainer.innerHTML = "<div style='text-align:center; padding: 20px; color:#d9534f;'>ดึงข้อมูลล้มเหลว โปรดตรวจสอบ Web App URL</div>";
-        statusText.innerText = "❌ เกิดข้อผิดพลาดในการโหลดข้อมูล";
-      }
-    }
-
+    // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
       const property = currentProperties[index];
       if (!property) return;
@@ -516,6 +524,7 @@
 
       const contextData = JSON.stringify(property);
       sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
+      (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
       กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
     }
 
