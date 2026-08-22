@@ -457,17 +457,12 @@
           `;
         });
       }
-  // ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
-    function testShowList() {
-      const mockData = [
-        { propertyType: "บ้านเดี่ยว (ทดสอบ)", price: "5000000", district: "ลาดพร้าว", province: "กทม", size: "50 ตร.ว.", highlight: "ใกล้รถไฟฟ้า เดินทางสะดวก" },
-        { propertyType: "ทาวน์โฮม (ทดสอบ)", price: "3200000", district: "จตุจักร", province: "กทม", size: "22 ตร.ว.", highlight: "รีโนเวทใหม่ พร้อมอยู่" },
-        { propertyType: "คอนโด (ทดสอบ)", price: "1850000", district: "ห้วยขวาง", province: "กทม", size: "35 ตร.ม.", highlight: "ส่วนกลางใหญ่ สระว่ายน้ำสวย" }
-      ];
+    // ฟังก์ชันสำหรับกดทดสอบแสดงลิสต์บ้านทันที (ใช้ตอนเทสระบบหน้าจอ)
+    async function testShowList() {
+      document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
       
-      currentProperties = mockData;
-      renderListView(currentProperties);
-      document.getElementById('statusText').innerText = "✅ โชว์ลิสต์จำลองสำเร็จแล้ว!";
+      // เรียกฟังก์ชันดึงข้อมูลจริงจาก GAS โดยส่งค่าพารามิเตอร์ว่างไปเพื่อดึงข้อมูลทั้งหมด
+      await fetchDatabase({}, {}); 
     }
     // --- ฟังก์ชัน Popup Modal และพูดคุยเจาะลึก (Step 2) ---
     function openDetailModal(index) {
