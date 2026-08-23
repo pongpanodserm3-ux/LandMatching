@@ -488,6 +488,26 @@
                     if (jsonMatch) {
                       const resultData = JSON.parse(jsonMatch[0]);
                       if (resultData.isFinished) {
+                        
+                        // --- คำสั่ง: นำข้อสรุปเขียนลงบนกล่อง edit ---
+                        // รวบรวมข้อมูลทั้งหมดที่ AI สรุปมาให้เพื่อแสดงเป็นข้อความบนกล่อง
+                        const summaryObj = { ...(resultData.userData || {}), ...(resultData.criteria || {}) };
+                        const summaryText = Object.values(summaryObj).filter(Boolean).join(' ');
+                        const editBox = document.querySelector('.custom-edit');
+                        if (editBox) {
+                          editBox.value = summaryText;
+                        }
+
+                        // --- คำสั่ง: reset ปุ่มกด dropdown ทั้งหมดให้เป็น default ---
+                        // ดึงข้อความตั้งต้นออกมาจากชื่อหัวข้อที่อยู่ใน onclick เพื่อความแม่นยำ
+                        const filterBtns = document.querySelectorAll('.filter-btn');
+                        filterBtns.forEach(btn => {
+                          const match = btn.getAttribute('onclick')?.match(/'([^']+)'/);
+                          if (match && match[1]) {
+                            btn.innerText = match[1] + " ▾";
+                          }
+                        });
+
                         fetchDatabase(resultData.userData, resultData.criteria);
                       }
                     }
