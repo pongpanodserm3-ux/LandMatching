@@ -140,9 +140,7 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    .filter-scroll-row::-webkit-scrollbar {
-      display: none;
-    }
+    .filter-scroll-row::-webkit-scrollbar { display: none; }
     .filter-btn {
       background: #ffffff;
       border: 1px solid var(--btn-blue);
@@ -156,10 +154,7 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       transition: all 0.2s;
     }
-    .filter-btn:active {
-      background: var(--btn-blue);
-      color: #fff;
-    }
+    .filter-btn:active { background: var(--btn-blue); color: #fff; }
 
     /* --- ส่วนล่าง: List View --- */
     #list-section {
@@ -335,9 +330,6 @@
     let processor = null;
     let audioOutputContext = null;
     let nextPlayTime = 0;
-    
-    // ตัวแปรสะสม Text จาก AI
-    let accumulatedText = ""; 
     let isFetchingDB = false;
     let currentProperties = [];
 
@@ -352,7 +344,6 @@
     function openDropdownModal(topic) {
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       const optionsContainer = document.getElementById('dropdownOptions');
-      
       let options = [];
       if (topic === 'ขาย/เช่า') {
         options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
@@ -381,9 +372,7 @@
     }
 
     function selectDropdownOption(topic, value) {
-      console.log(`User selected -> ${topic}: ${value}`);
       closeDropdownModal();
-
       const filterBtns = document.querySelectorAll('.filter-btn');
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
@@ -405,7 +394,6 @@
 
       try {
         isSetupReady = false;
-        accumulatedText = "";
         isFetchingDB = false;
         
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
@@ -422,25 +410,47 @@
               setup: {
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
-                  /* --- คำสั่งแก้ Error 2: บังคับให้ AI ส่งกลับทั้งเสียงและ Text ข้อความ --- */
-                  responseModalities: ["AUDIO", "TEXT"],
+                  responseModalities: ["AUDIO"],
                   speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
                 },
                 systemInstruction: {
                   parts: [{
                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
                     1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
-                    2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON และส่งกลับมาเป็นรูปแบบข้อความ (Text) ควบคู่กับเสียงเสมอ รูปแบบ JSON คือ:
-                    {
-                      "isFinished": true,
-                      "userData": { "demandType": "ซื้อ", "location": "ลาดพร้าว", "budget": "5000000" },
-                      "criteria": { "propertyType": "บ้าน", "province": "กทม" }
-                    }
+                    2. เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
                     3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
                     4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
                     5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา`
                   }]
-                }
+                },
+                /* --- แก้ไข Error 2: ใช้ Function Calling ส่งข้อมูลสรุปเข้า Edit Box ชัวร์ 100% --- */
+                tools: [{
+                  functionDeclarations: [{
+                    name: "submit_user_summary",
+                    description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเมื่อได้ข้อมูลครบถ้วนแล้ว",
+                    parameters: {
+                      type: "OBJECT",
+                      properties: {
+                        userData: {
+                          type: "OBJECT",
+                          properties: {
+                            demandType: { type: "STRING" },
+                            location: { type: "STRING" },
+                            budget: { type: "STRING" }
+                          }
+                        },
+                        criteria: {
+                          type: "OBJECT",
+                          properties: {
+                            propertyType: { type: "STRING" },
+                            province: { type: "STRING" }
+                          }
+                        }
+                      },
+                      required: ["userData", "criteria"]
+                    }
+                  }]
+                }]
               }
             };
             webSocket.send(JSON.stringify(setupData));
@@ -464,59 +474,55 @@
               return;
             }
 
+            // 1. ตรวจจับการเล่นเสียง PCM
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
-                // เล่นเสียงที่ได้รับ
                 if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
                 }
-                
-                // --- ส่วนประมวลผล Text (ดักข้อมูล JSON ไปใส่ที่ช่อง Edit) ---
-                if (part.text) {
-                  accumulatedText += part.text;
-                  const editBox = document.getElementById('customEditBox');
-                  
-                  // ตัดแท็ก ```json ออกเพื่อให้ตรวจสอบง่ายขึ้น
-                  let cleanText = accumulatedText.replace(/```json/g, '').replace(/```/g, '').trim();
-                  
-                  // ค้นหาโครงสร้าง JSON จากข้อความ
-                  const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-                  
-                  if (jsonMatch) {
-                    try {
-                      const parsed = JSON.parse(jsonMatch[0]);
-                      
-                      // นำ Value ใน JSON มาต่อกันเพื่อแสดงผลในช่อง Edit
-                      let summaryParts = [];
-                      if (parsed.userData) summaryParts.push(...Object.values(parsed.userData));
-                      if (parsed.criteria) summaryParts.push(...Object.values(parsed.criteria));
-                      
-                      if (editBox && summaryParts.length > 0) {
-                        editBox.value = summaryParts.filter(Boolean).join(' ');
-                      }
-                      
-                      // ถ้า AI ส่ง isFinished: true หมายถึงสรุปจบแล้ว ให้เรียกฐานข้อมูล
-                      if (parsed.isFinished && !isFetchingDB) {
-                        isFetchingDB = true; // ป้องกันการเรียกซ้ำซ้อน
-                        
-                        // เคลียร์ปุ่มฟิลเตอร์
-                        const filterBtns = document.querySelectorAll('.filter-btn');
-                        filterBtns.forEach(b => {
-                          const match = b.getAttribute('onclick')?.match(/'([^']+)'/);
-                          if (match && match[1]) b.innerText = match[1] + " ▾";
-                        });
+              }
+            }
 
-                        fetchDatabase(parsed.userData, parsed.criteria);
-                        accumulatedText = ""; // เคลียร์ text ที่สะสมไว้หลังจากดึงข้อมูลแล้ว
+            // 2. ตรวจจับ Function Calling เมื่อ AI สรุปข้อมูลสำเร็จ
+            const toolCall = response.toolCall || response.serverContent?.interrupted === false && response.serverContent?.modelTurn?.parts?.find(p => p.functionCall);
+            const functionCalls = response.toolCall?.functionCalls || (toolCall?.functionCall ? [toolCall.functionCall] : null);
+
+            if (functionCalls && functionCalls.length > 0) {
+              for (let call of functionCalls) {
+                if (call.name === "submit_user_summary") {
+                  const args = call.args || {};
+                  const userData = args.userData || {};
+                  const criteria = args.criteria || {};
+
+                  // พิมพ์สรุปผลลงช่อง Edit
+                  const editBox = document.getElementById('customEditBox');
+                  let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
+                  if (editBox && summaryParts.length > 0) {
+                    editBox.value = summaryParts.filter(Boolean).join(' ');
+                  }
+
+                  // ดึงข้อมูล Database
+                  if (!isFetchingDB) {
+                    isFetchingDB = true;
+                    fetchDatabase(userData, criteria);
+                  }
+
+                  // ส่ง Response ยืนยันกลับไปที่ AI
+                  if (webSocket && webSocket.readyState === WebSocket.OPEN && call.id) {
+                    webSocket.send(JSON.stringify({
+                      toolResponse: {
+                        functionResponses: [{
+                          response: { output: { success: true } },
+                          id: call.id
+                        }]
                       }
-                    } catch (err) {
-                      // รอข้อมูลมาต่อให้ครบวงเล็บ
-                    }
+                    }));
                   }
                 }
               }
             }
+
           } catch (e) {}
         };
 
@@ -584,7 +590,6 @@
     async function stopVoiceSession() {
       isSessionActive = false;
       isSetupReady = false;
-      accumulatedText = "";
       isFetchingDB = false;
       
       if (webSocket) webSocket.close();
@@ -639,7 +644,6 @@
         
       } catch (error) {
         console.error("Database Error:", error);
-        
         statusText.classList.remove('loading-pulse');
         statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ!";
         if(container) {
@@ -647,7 +651,6 @@
             <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
               <b>เกิดข้อผิดพลาดในการเชื่อมต่อ Database:</b><br><br>
               <span style="color: #333;">${error.message}</span><br><br>
-              <span style="color: #888; font-size: 13px;">(คำแนะนำ: ตรวจสอบการตั้งค่า Google Apps Script)</span>
             </div>`;
         }
       }
@@ -705,7 +708,7 @@
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
-        const imgUrl = property[`image${i}`] || `[https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$](https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$){i}`;
+        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
@@ -743,7 +746,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.4 (Fixed Audio/Text Modalities for JSON Summary)
+    🟢 Version: 1.0.5 (Fixed Tool Calling for Edit Box Text Output)
   </div>
 </body>
 </html>
