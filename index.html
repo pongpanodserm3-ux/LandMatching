@@ -337,7 +337,6 @@
     let processor = null;
     let audioOutputContext = null;
     let nextPlayTime = 0;
-    let accumulatedText = ""; 
     
     let currentProperties = [];
 
@@ -381,7 +380,6 @@
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
 
-    /* --- แก้ไข Error 1: อัปเดตข้อความที่เลือกไปโชว์บนปุ่ม Dropdown นั้นๆ --- */
     function selectDropdownOption(topic, value) {
       console.log(`User selected -> ${topic}: ${value}`);
       closeDropdownModal();
@@ -407,7 +405,6 @@
 
       try {
         isSetupReady = false;
-        accumulatedText = "";
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
         statusText.classList.add('loading-pulse'); 
 
@@ -470,50 +467,31 @@
                   playPCMData(part.inlineData.data);
                 }
                 
-                /* --- แก้ไข Error 2: สะสมข้อความ JSON แบบ Chunk แล้วนำข้อมูลสรุปพิมพ์ใส่ช่อง custom-edit --- */
+                /* --- แก้ไข Error 2: นำข้อความที่ AI ตอบ/สรุปผลมาพิมพ์ลงช่อง edit ทันที --- */
                 if (part.text) {
-                  accumulatedText += part.text;
-                  try {
-                    let cleanText = accumulatedText.replace(/```json/g, '').replace(/```/g, '').trim();
-                    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+                  const editBox = document.querySelector('.custom-edit');
+                  if (editBox) {
+                    // ตัด tag โค้ดออกหาก AI ส่งมาเป็น JSON หรือข้อความดิบ
+                    let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
                     
-                    if (jsonMatch) {
-                      const resultData = JSON.parse(jsonMatch[0]);
-                      if (resultData.isFinished) {
-                        accumulatedText = ""; 
-                        
+                    try {
+                      const parsed = JSON.parse(cleanText);
+                      if (parsed.userData || parsed.criteria) {
                         let summaryParts = [];
-                        if (resultData.userData) {
-                          if (typeof resultData.userData === 'string') summaryParts.push(resultData.userData);
-                          else if (typeof resultData.userData === 'object') summaryParts.push(...Object.values(resultData.userData));
-                        }
-                        if (resultData.criteria) {
-                          if (typeof resultData.criteria === 'string') summaryParts.push(resultData.criteria);
-                          else if (typeof resultData.criteria === 'object') summaryParts.push(...Object.values(resultData.criteria));
-                        }
-                        if (resultData.summary) {
-                          summaryParts.push(resultData.summary);
-                        }
-
-                        const summaryText = summaryParts.filter(Boolean).join(' ');
-                        const editBox = document.querySelector('.custom-edit');
-                        if (editBox && summaryText) {
-                          editBox.value = summaryText;
-                        }
-
-                        const filterBtns = document.querySelectorAll('.filter-btn');
-                        filterBtns.forEach(btn => {
-                          const match = btn.getAttribute('onclick')?.match(/'([^']+)'/);
-                          if (match && match[1]) {
-                            btn.innerText = match[1] + " ▾";
-                          }
-                        });
-
-                        fetchDatabase(resultData.userData, resultData.criteria);
+                        if (parsed.userData) summaryParts.push(...Object.values(parsed.userData));
+                        if (parsed.criteria) summaryParts.push(...Object.values(parsed.criteria));
+                        editBox.value = summaryParts.filter(Boolean).join(' ');
+                      } else {
+                        editBox.value = cleanText;
                       }
+                      
+                      if (parsed.isFinished) {
+                        fetchDatabase(parsed.userData, parsed.criteria);
+                      }
+                    } catch (err) {
+                      // หากไม่ใช่ JSON ให้พิมพ์ข้อความดิบลงช่อง edit ได้เลย
+                      editBox.value = cleanText;
                     }
-                  } catch (e) {
-                    // รอรับข้อมูล JSON ให้ครบใน Chunk ถัดไป
                   }
                 }
               }
@@ -585,11 +563,9 @@
     async function stopVoiceSession() {
       isSessionActive = false;
       isSetupReady = false;
-      accumulatedText = "";
       if (webSocket) webSocket.close();
       if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
       
-      /* ป้องกัน Error InvalidStateError: Cannot close a closed AudioContext */
       if (audioContext && audioContext.state !== 'closed') {
         try { await audioContext.close(); } catch(e) {}
       }
@@ -743,7 +719,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.3 (Added Filters & Negotiator AI Mode)
+    🟢 Version: 1.0.4 (Added Filters & Negotiator AI Mode)
   </div>
 </body>
 </html>
