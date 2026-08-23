@@ -246,7 +246,6 @@
       margin-top: 8px; display: flex; align-items: center; gap: 10px;
     }
 
-    /* Custom scrollbar สำหรับช่องรายละเอียด */
     #modalDesc::-webkit-scrollbar { width: 6px; }
     #modalDesc::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
   </style>
@@ -788,7 +787,6 @@
           
           let priceMatch = true;
           if (maxPrice !== null || minPrice !== null) {
-            // รองรับดึงข้อมูลราคาหลากหลายคีย์
             const propPrice = p.price || p.Price || p['ราคา'] || '';
             let pPrice = propPrice ? parseInt(String(propPrice).replace(/[^0-9]/g, ''), 10) : 0;
             if (maxPrice !== null && pPrice > maxPrice) priceMatch = false;
@@ -820,7 +818,6 @@
         const originalIndex = properties.indexOf(p);
         const cardBg = bgColors[index % 3]; 
 
-        // ดักจับคีย์ทุกรูปแบบเพื่อแก้บั๊กข้อมูลไม่แสดง
         const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
         const price = p.price || p.Price || p['ราคา'] || '-';
         const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
@@ -841,23 +838,19 @@
         
         const safeDemand = p.demandType || p.DemandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || p['ประเภทประกาศ'] || 'ขาย/เช่า';
         
-        // รูปแบบข้อความเนื้อที่ (ถ้ามีข้อมูลเนื้อที่จะเอามาต่อท้ายทันที)
         const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
 
         container.innerHTML += `
           <div style="background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;" onclick="openDetailModal(${originalIndex})">
-            <!-- บรรทัดบนสุด: ประเภทบ้าน + เนื้อที่ (ซ้าย) / ราคา (ขวา) -->
             <div style="display:flex; justify-content:space-between; align-items: center; font-weight:bold; font-size:18px; margin-bottom: 8px;">
               <div style="color:#111;">${safeType}${displaySize}</div>
               <div style="color:#d9534f; white-space: nowrap; margin-left: 10px;">${safePrice}</div>
             </div>
             
-            <!-- บรรทัดกลาง: ชื่อโครงการหมู่บ้าน -->
             <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
               ${safeProject}
             </div>
             
-            <!-- บรรทัดล่างสุด: ถนน เขต จังหวัด (ซ้าย) / ประเภท ซื้อ-เช่า พร้อมปุ่ม (ขวา) -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:14px; color:#555;">
               <div style="flex:1; padding-right:10px;">
                 ${safeLoc}
@@ -876,7 +869,6 @@
       const p = currentProperties[index];
       if (!p) return;
 
-      // ฟังก์ชันช่วยหา key ใน object แบบยืดหยุ่น ครอบคลุมการตั้งชื่อคอลัมน์ทุกรูปแบบที่อาจคาดเคลื่อน
       const findValue = (keywords, defaultVal) => {
         const keys = Object.keys(p);
         for (let kw of keywords) {
@@ -896,42 +888,32 @@
       const prov = findValue(['province', 'จังหวัด'], '');
       const size = findValue(['size', 'area', 'ขนาด', 'พื้นที่', 'เนื้อที่'], '');
       
-      // [แก้ไขบั๊กส่วนที่ 1] ดึงข้อมูลรายละเอียด แบบยืดหยุ่น และจัดการค่าว่างให้แน่ใจว่าไม่ว่างเปล่า
       let detailsColU = findValue(['รายละเอียดสั้นๆ', 'รายละเอียด', 'detail', 'ข้อมูลเพิ่มเติม'], 'ไม่มีข้อมูลเพิ่มเติม');
       if (String(detailsColU).trim() === '') {
           detailsColU = 'ไม่มีข้อมูลเพิ่มเติม';
       }
 
-      // [แก้ไขบั๊กส่วนที่ 2] ดึงข้อมูลลิงก์จาก Google Sheets ที่คอลัมน์ S (Index 18) เพื่อใช้เป็น URL
       const keys = Object.keys(p);
-      let urlColS = '#';
-      if (keys.length > 18 && p[keys[18]] && String(p[keys[18]]).trim() !== '') {
-          urlColS = String(p[keys[18]]).trim();
+      let rawUrlColS = '#';
+      if (keys.length > 18 && p[keys[18]] !== undefined && p[keys[18]] !== null) {
+          rawUrlColS = String(p[keys[18]]).trim();
       } else {
-          // สำรองเผื่อข้อมูลเปลี่ยนแปลงโครงสร้าง
-          urlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'link'], '#');
-      }
-      
-      if (String(urlColS).trim() === '') {
-          urlColS = '#';
+          rawUrlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'link'], '#');
       }
 
-      // ตรวจสอบและเติม http:// หากข้อมูลในคอลัมน์ S ไม่มี เพื่อให้เปิดลิงก์ได้จริง
-      if (urlColS !== '#' && !urlColS.startsWith('http')) {
-          urlColS = 'https://' + urlColS;
+      let clickableUrl = rawUrlColS;
+      if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
+          clickableUrl = 'https://' + clickableUrl;
       }
 
       document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
       document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
       
       const btnDeepLink = document.getElementById('modalDeepLink');
-      btnDeepLink.href = urlColS;
-      
-      // [แก้ไขบั๊กส่วนที่ 2] บังคับแสดงปุ่มเสมอ แก้ปัญหาปุ่มหายไป
+      btnDeepLink.href = clickableUrl;
       btnDeepLink.style.display = 'inline-block';
       
-      // เพิ่มการแจ้งเตือนหากไม่มีลิงก์ (แทนการซ่อนปุ่ม)
-      if (urlColS === '#') {
+      if (rawUrlColS === '#' || rawUrlColS === '') {
         btnDeepLink.style.opacity = '0.6';
         btnDeepLink.onclick = (e) => { 
           e.preventDefault(); 
@@ -942,10 +924,15 @@
         btnDeepLink.onclick = null;
       }
 
+      // แสดงค่าลิงก์ดิบที่ดึงมาจากคอลัมน์ S ต่อท้ายในกล่องรายละเอียดเพื่อให้ตรวจสอบได้ชัดเจน
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
         <b>ขนาด:</b> ${size || '-'}<br>
         <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-all; font-size: 13px; color: #d9534f;">
+          <b>🔗 ข้อมูลดิบจากคอลัมน์ S (ลิงก์ที่ได้รับ):</b><br>
+          <span>${rawUrlColS}</span>
+        </div>
       `;
 
       const slider = document.getElementById('modalSlider');
@@ -989,7 +976,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.2 (Fixed Deep Link from Column S index 18)
+    🟢 Version: 1.2.3 (Added Raw Column S Link Preview)
   </div>
 </body>
 </html>
