@@ -223,7 +223,7 @@
     }
     .dropdown-options-container {
       display: flex; flex-direction: column; gap: 6px;
-      margin-top: 15px; max-height: 50vh; overflow-y: auto;
+      margin-top: 10px; max-height: 50vh; overflow-y: auto;
     }
     .dropdown-option-btn {
       background: #f0f4f8; border: none; padding: 12px;
@@ -240,7 +240,7 @@
 
     .image-slider {
       display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-      gap: 6px; padding-bottom: 10px; margin-top: 20px;
+      gap: 6px; padding-bottom: 10px; margin-top: 10px;
     }
     .image-slider::-webkit-scrollbar { height: 6px; }
     .image-slider::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -250,13 +250,13 @@
       background: #eee;
     }
 
-    .detail-content { flex: 1; overflow-y: auto; margin-top: 15px; }
+    .detail-content { flex: 1; overflow-y: auto; margin-top: 8px; }
     .detail-title { font-size: 22px; font-weight: bold; color: var(--text-main); }
     .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; margin-bottom: 10px; }
     
     .ai-detail-box {
       background: #e6f2ff; border-radius: 15px; padding: 15px;
-      margin-top: 15px; display: flex; align-items: center; gap: 10px;
+      margin-top: 8px; display: flex; align-items: center; gap: 10px;
     }
   </style>
 </head>
@@ -294,7 +294,7 @@
     </div>
     
     <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ (คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 20 px) -->
-    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 20px; color: #333;">
+    <button onclick="testShowList()" style="margin-top: 6px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 20px; color: #333;">
       🧪 กดปุ่มนี้ แสดงลิสต์บ้าน
     </button>
   </div>
@@ -616,7 +616,7 @@
         statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ!";
         if(container) {
           container.innerHTML = `
-            <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 15px; background: #fff9f9;">
+            <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
               <b>เกิดข้อผิดพลาดในการเชื่อมต่อ Database:</b><br><br>
               <span style="color: #333;">${error.message}</span><br><br>
               <span style="color: #888; font-size: 13px;">(คำแนะนำ: เลื่อนขึ้นไปดูตัวแปร GAS_WEB_APP_URL ด้านบนสุดของไฟล์ ว่าใส่ลิงก์ถูกต้อง และตั้งค่าสิทธิ์ Anyone แล้วหรือยัง)</span>
