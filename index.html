@@ -86,7 +86,7 @@
       border: none;
       border-radius: 20px;
       padding: 10px 18px;
-      font-size: 20px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 20 px */
+      font-size: 20px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -94,7 +94,6 @@
     }
     .voice-btn.active { background: #ff6b81; }
 
-    /* คำสั่ง 2: จัดแถวสำหรับช่อง edit และ ข้อความสถานะให้อยู่คู่กัน */
     .input-status-row {
       display: flex;
       flex-direction: row;
@@ -104,7 +103,6 @@
       gap: 4px;
     }
     
-    /* คำสั่ง 2: ช่อง edit สำหรับกรอกข้อความ กว้าง 2/3 */
     .custom-edit {
       width: 66.66%; 
       padding: 10px;
@@ -114,7 +112,6 @@
       box-sizing: border-box;
     }
 
-    /* คำสั่ง 2: ข้อความแสดงสถานะ AI ชิดขวาสุด ต่อจากช่อง edit */
     #statusText { 
       font-size: 14px; 
       color: #555; 
@@ -123,7 +120,6 @@
       text-align: right; 
     }
 
-    /* --- ลูกเล่นความเคลื่อนไหวตอนโหลดไฟล์ --- */
     .loading-pulse {
       animation: loadingAnim 1.5s infinite ease-in-out;
       color: var(--btn-blue) !important;
@@ -134,7 +130,6 @@
       100% { opacity: 0.4; transform: scale(0.98); }
     }
 
-    /* --- CSS สำหรับ Dropdown เลื่อนซ้ายขวา --- */
     .filter-scroll-row {
       display: flex;
       flex-direction: row;
@@ -143,12 +138,11 @@
       width: 100%;
       padding: 10px 5px;
       margin-top: 5px;
-      /* ซ่อน Scrollbar เพื่อความสวยงาม */
-      -ms-overflow-style: none;  /* IE/Edge */
-      scrollbar-width: none;  /* Firefox */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
     .filter-scroll-row::-webkit-scrollbar {
-      display: none; /* Safari/Chrome */
+      display: none;
     }
     .filter-btn {
       background: #ffffff;
@@ -156,7 +150,7 @@
       color: var(--btn-blue);
       border-radius: 20px;
       padding: 6px 14px;
-      font-size: 20px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 20 px */
+      font-size: 20px;
       font-weight: bold;
       white-space: nowrap;
       cursor: pointer;
@@ -168,7 +162,6 @@
       color: #fff;
     }
 
-    /* --- ส่วนล่าง: List View --- */
     #list-section {
       flex: 1;
       overflow-y: auto;
@@ -192,7 +185,6 @@
     .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
     .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
     
-    /* --- Modal สำหรับ Detail View และ Dropdown --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
@@ -211,7 +203,6 @@
       position: relative;
     }
     
-    /* --- Modal สำหรับ Dropdown (Pop up กลางจอ) --- */
     .dropdown-modal {
       background: #fff;
       width: 90%; max-width: 400px;
@@ -219,7 +210,7 @@
       padding: 20px; box-sizing: border-box;
       display: flex; flex-direction: column;
       position: relative;
-      margin: auto; /* ให้อยู่กลางจอ */
+      margin: auto;
     }
     .dropdown-options-container {
       display: flex; flex-direction: column; gap: 6px;
@@ -227,7 +218,7 @@
     }
     .dropdown-option-btn {
       background: #f0f4f8; border: none; padding: 12px;
-      border-radius: 10px; text-align: left; font-size: 20px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 20 px */
+      border-radius: 10px; text-align: left; font-size: 20px;
       cursor: pointer; transition: background 0.2s;
     }
     .dropdown-option-btn:active { background: #d0e0f0; }
@@ -263,20 +254,17 @@
 <body>
 
   <div id="ai-section">
-    <!-- เรียงทั้งหมดในบรรทัดเดียวกันผ่านคลาส ai-controls-row -->
     <div class="ai-controls-row">
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
       <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     </div>
     
-    <!-- คำสั่ง 2: ช่อง edit ความกว้าง 2/3 และข้อความสถานะทางขวา -->
     <div class="input-status-row">
       <input type="text" class="custom-edit" placeholder="พิมพ์ที่ต้องการ">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
-    <!-- ช่อง Dropdown แบบแถบเลื่อนซ้ายขวา -->
     <div class="filter-scroll-row">
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
@@ -293,7 +281,6 @@
       <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
     </div>
     
-    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ (คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 20 px) -->
     <button onclick="testShowList()" style="margin-top: 6px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 20px; color: #333;">
       🧪 กดปุ่มนี้ แสดงลิสต์บ้าน
     </button>
@@ -308,7 +295,6 @@
     </div>
   </div>
 
-  <!-- Modal สำหรับหน้าดูรายละเอียด -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
@@ -331,14 +317,11 @@
     </div>
   </div>
 
-  <!-- Modal สำหรับ Pop up เลือก Dropdown -->
   <div class="modal-overlay" id="dropdownModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
       <h3 id="dropdownModalTitle" style="color: var(--text-main); margin-top: 0; margin-bottom: 5px;">เลือกข้อมูล</h3>
-      <div id="dropdownOptions" class="dropdown-options-container">
-        <!-- ตัวเลือกจะถูกสร้างที่นี่โดยอัตโนมัติจาก JavaScript -->
-      </div>
+      <div id="dropdownOptions" class="dropdown-options-container"></div>
     </div>
   </div>
 
@@ -354,10 +337,10 @@
     let processor = null;
     let audioOutputContext = null;
     let nextPlayTime = 0;
+    let accumulatedText = ""; 
     
     let currentProperties = [];
 
-    // เมื่อเริ่มเปิดหน้านี้ ให้ลิงก์กับ AI Voice ทันที
     window.addEventListener('load', () => {
       setTimeout(() => {
         if (!isSessionActive) {
@@ -366,7 +349,6 @@
       }, 1000);
     });
 
-    // --- คำสั่ง 3: ฟังก์ชันสำหรับจัดการ Dropdown Pop-up เพิ่มตัวเลือกตามหัวข้อที่กด ---
     function openDropdownModal(topic) {
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       const optionsContainer = document.getElementById('dropdownOptions');
@@ -384,7 +366,6 @@
       } else if (topic === 'เขต/อำเภอ') {
         options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
       } else {
-        // กรณีปุ่มอื่นๆ ที่ยังไม่มีข้อมูลระบุไว้
         options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
       }
       
@@ -400,12 +381,19 @@
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
 
+    /* --- แก้ไข Error 1: อัปเดตข้อความที่เลือกไปโชว์บนปุ่ม Dropdown นั้นๆ --- */
     function selectDropdownOption(topic, value) {
       console.log(`User selected -> ${topic}: ${value}`);
       closeDropdownModal();
-      // หากมีการผูกตัวแปรกรองข้อมูล สามารถสั่งงานเพิ่มเติมตรงนี้ได้เลย
+
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        const onClickAttr = btn.getAttribute('onclick') || '';
+        if (onClickAttr.includes(`'${topic}'`)) {
+          btn.innerText = `${value} ▾`;
+        }
+      });
     }
-    // -----------------------------------------------------
 
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
@@ -419,6 +407,7 @@
 
       try {
         isSetupReady = false;
+        accumulatedText = "";
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
         statusText.classList.add('loading-pulse'); 
 
@@ -477,29 +466,41 @@
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
-                if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
+                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
                 }
+                
+                /* --- แก้ไข Error 2: สะสมข้อความ JSON แบบ Chunk แล้วนำข้อมูลสรุปพิมพ์ใส่ช่อง custom-edit --- */
                 if (part.text) {
+                  accumulatedText += part.text;
                   try {
-                    let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
+                    let cleanText = accumulatedText.replace(/```json/g, '').replace(/```/g, '').trim();
                     const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
                     
                     if (jsonMatch) {
                       const resultData = JSON.parse(jsonMatch[0]);
                       if (resultData.isFinished) {
+                        accumulatedText = ""; 
                         
-                        // --- คำสั่ง: นำข้อสรุปเขียนลงบนกล่อง edit ---
-                        // รวบรวมข้อมูลทั้งหมดที่ AI สรุปมาให้เพื่อแสดงเป็นข้อความบนกล่อง
-                        const summaryObj = { ...(resultData.userData || {}), ...(resultData.criteria || {}) };
-                        const summaryText = Object.values(summaryObj).filter(Boolean).join(' ');
+                        let summaryParts = [];
+                        if (resultData.userData) {
+                          if (typeof resultData.userData === 'string') summaryParts.push(resultData.userData);
+                          else if (typeof resultData.userData === 'object') summaryParts.push(...Object.values(resultData.userData));
+                        }
+                        if (resultData.criteria) {
+                          if (typeof resultData.criteria === 'string') summaryParts.push(resultData.criteria);
+                          else if (typeof resultData.criteria === 'object') summaryParts.push(...Object.values(resultData.criteria));
+                        }
+                        if (resultData.summary) {
+                          summaryParts.push(resultData.summary);
+                        }
+
+                        const summaryText = summaryParts.filter(Boolean).join(' ');
                         const editBox = document.querySelector('.custom-edit');
-                        if (editBox) {
+                        if (editBox && summaryText) {
                           editBox.value = summaryText;
                         }
 
-                        // --- คำสั่ง: reset ปุ่มกด dropdown ทั้งหมดให้เป็น default ---
-                        // ดึงข้อความตั้งต้นออกมาจากชื่อหัวข้อที่อยู่ใน onclick เพื่อความแม่นยำ
                         const filterBtns = document.querySelectorAll('.filter-btn');
                         filterBtns.forEach(btn => {
                           const match = btn.getAttribute('onclick')?.match(/'([^']+)'/);
@@ -512,7 +513,7 @@
                       }
                     }
                   } catch (e) {
-                    console.error("JSON Parse Error:", e);
+                    // รอรับข้อมูล JSON ให้ครบใน Chunk ถัดไป
                   }
                 }
               }
@@ -584,10 +585,17 @@
     async function stopVoiceSession() {
       isSessionActive = false;
       isSetupReady = false;
+      accumulatedText = "";
       if (webSocket) webSocket.close();
       if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
-      if (audioContext) audioContext.close();
-      if (audioOutputContext) audioOutputContext.close();
+      
+      /* ป้องกัน Error InvalidStateError: Cannot close a closed AudioContext */
+      if (audioContext && audioContext.state !== 'closed') {
+        try { await audioContext.close(); } catch(e) {}
+      }
+      if (audioOutputContext && audioOutputContext.state !== 'closed') {
+        try { await audioOutputContext.close(); } catch(e) {}
+      }
 
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
