@@ -317,7 +317,6 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 id="dropdownModalTitle" style="color: var(--text-main); margin: 0;">เลือกข้อมูล</h3>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <!-- ปุ่มเคลียร์ค่าย้ายมาบรรทัดบนสุด ขวาสุด ตามคำสั่ง -->
           <button onclick="selectDropdownOption(currentDropdownTopic, 'เคลียร์ค่า')" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
           <span onclick="closeDropdownModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
         </div>
@@ -359,7 +358,6 @@
       document.getElementById('dropdownSearchInput').value = '';
       
       let options = [];
-      // เอาคำว่า "เคลียร์ค่า" ออกจาก Array ด้านล่างทั้งหมด เพื่อแยกปุ่มขึ้นด้านบน
       if (topic === 'ขาย/เช่า') {
         options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       } else if (topic === 'คอนโด/บ้าน') {
@@ -736,7 +734,7 @@
       let dropdownFilters = [];
       let maxPrice = null;
       let minPrice = null;
-      let exactPropertyType = null; // เพิ่มตัวแปรสำหรับจับคู่เป๊ะๆ (คำสั่ง 1)
+      let exactPropertyType = null;
       
       const filterBtns = document.querySelectorAll('.filter-btn');
       filterBtns.forEach(btn => {
@@ -758,7 +756,6 @@
                 maxPrice = priceNum;
               }
             } else if (topic === 'คอนโด/บ้าน') {
-              // เก็บค่าเฉพาะสำหรับบังคับการกรองแบบตรงตัว
               exactPropertyType = val; 
             } else {
               dropdownFilters.push(val.toLowerCase());
@@ -773,7 +770,6 @@
       if (filterText) textKeywords.push(...filterText.split(/\s+/).filter(k => k.length > 0));
       if (dropdownFilters.length > 0) textKeywords.push(...dropdownFilters);
 
-      // กรองผลลัพธ์
       if (textKeywords.length > 0 || maxPrice !== null || minPrice !== null || exactPropertyType !== null) {
         displayProps = properties.filter(p => {
           const fullText = Object.values(p).map(v => v ? String(v).toLowerCase() : '').join(' ');
@@ -782,18 +778,20 @@
           
           let priceMatch = true;
           if (maxPrice !== null || minPrice !== null) {
-            let pPrice = p.price ? parseInt(String(p.price).replace(/[^0-9]/g, ''), 10) : 0;
+            // รองรับดึงข้อมูลราคาหลากหลายคีย์
+            const propPrice = p.price || p.Price || p['ราคา'] || '';
+            let pPrice = propPrice ? parseInt(String(propPrice).replace(/[^0-9]/g, ''), 10) : 0;
             if (maxPrice !== null && pPrice > maxPrice) priceMatch = false;
             if (minPrice !== null && pPrice < minPrice) priceMatch = false;
           }
           
-          // ระบบกรองแบบบังคับเป๊ะตามที่เลือก (แก้ไขตามคำสั่ง 1)
           let typeMatch = true;
           if (exactPropertyType !== null) {
-            if (!p.propertyType) {
+            const propType = p.propertyType || p.PropertyType || p['ประเภท'] || '';
+            if (!propType) {
               typeMatch = false;
             } else {
-              typeMatch = String(p.propertyType).includes(exactPropertyType);
+              typeMatch = String(propType).includes(exactPropertyType);
             }
           }
           
@@ -806,31 +804,42 @@
         return;
       }
 
-      // วนลูปและจัดโครงสร้าง UI การ์ดตาม (คำสั่ง 3)
       const bgColors = ['#fbeceb', '#eef5ff', '#fdf6e7'];
 
       displayProps.forEach((p, index) => {
         const originalIndex = properties.indexOf(p);
-        const cardBg = bgColors[index % 3]; // สลับสีพื้นหลัง 3 สีตามรูปภาพตัวอย่าง
+        const cardBg = bgColors[index % 3]; 
 
-        const safeType = p.propertyType || 'อสังหาฯ';
-        const safePrice = p.price ? p.price : '-'; 
-        const safeProject = p.project ? `โครงการ: ${p.project}` : 'โครงการ: -';
+        // ดักจับคีย์ทุกรูปแบบเพื่อแก้บั๊กข้อมูลไม่แสดง
+        const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
+        const price = p.price || p.Price || p['ราคา'] || '-';
+        const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'];
+        const road = p.road || p.Road || p.roadName || p['ถนน'];
+        const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
+        const prov = p.province || p.Province || p['จังหวัด'];
+        const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || '';
+
+        const safeType = type;
+        const safePrice = price; 
+        const safeProject = proj ? `โครงการ: ${proj}` : 'โครงการ: -';
         
         const locParts = [];
-        if (p.road) locParts.push(p.road);
-        if (p.district) locParts.push(p.district);
-        if (p.province) locParts.push(p.province);
+        if (road) locParts.push(road);
+        if (dist) locParts.push(dist);
+        if (prov) locParts.push(prov);
         const safeLoc = locParts.length > 0 ? locParts.join(', ') : '-';
         
-        const safeDemand = p.demandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || 'ขาย/เช่า';
+        const safeDemand = p.demandType || p.DemandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || p['ประเภทประกาศ'] || 'ขาย/เช่า';
+        
+        // รูปแบบข้อความเนื้อที่ (ถ้ามีข้อมูลเนื้อที่จะเอามาต่อท้ายทันที)
+        const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
 
         container.innerHTML += `
           <div style="background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;" onclick="openDetailModal(${originalIndex})">
-            <!-- บรรทัดบนสุด: ประเภทบ้าน (ซ้าย) / ราคา (ขวา) -->
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px; margin-bottom: 8px;">
-              <span style="color:#111;">${safeType}</span>
-              <span style="color:#d9534f;">${safePrice}</span>
+            <!-- บรรทัดบนสุด: ประเภทบ้าน + เนื้อที่ (ซ้าย) / ราคา (ขวา) -->
+            <div style="display:flex; justify-content:space-between; align-items: center; font-weight:bold; font-size:18px; margin-bottom: 8px;">
+              <div style="color:#111;">${safeType}${displaySize}</div>
+              <div style="color:#d9534f; white-space: nowrap; margin-left: 10px;">${safePrice}</div>
             </div>
             
             <!-- บรรทัดกลาง: ชื่อโครงการหมู่บ้าน -->
@@ -854,27 +863,37 @@
     }
 
     function openDetailModal(index) {
-      const property = currentProperties[index];
-      if (!property) return;
+      const p = currentProperties[index];
+      if (!p) return;
 
-      document.getElementById('modalTitle').innerText = `${property.propertyType} ${property.project ? '- '+property.project : ''}`;
-      document.getElementById('modalPrice').innerText = `ราคา: ${property.price} บาท`;
+      // ดักจับคีย์แบบครบถ้วนเผื่อการดึงข้อมูลผิดพลาด
+      const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
+      const price = p.price || p.Price || p['ราคา'] || '-';
+      const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'];
+      const road = p.road || p.Road || p.roadName || p['ถนน'];
+      const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
+      const prov = p.province || p.Province || p['จังหวัด'];
+      const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || '';
+      const details = p.details || p.Details || p['รายละเอียด'] || 'ไม่มีข้อมูลเพิ่มเติม';
+
+      document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
+      document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
       document.getElementById('modalDesc').innerHTML = `
-        <b>ทำเล:</b> ${property.road || '-'} ${property.district || '-'} ${property.province || '-'}<br>
-        <b>ขนาด:</b> ${property.size || '-'}<br>
-        <b>รายละเอียด:</b> ${property.details || 'ไม่มีข้อมูลเพิ่มเติม'}
+        <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
+        <b>ขนาด:</b> ${size || '-'}<br>
+        <b>รายละเอียด:</b> ${details}
       `;
 
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
-        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        const imgUrl = p[`image${i}`] || p[`Image${i}`] || p[`รูป${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
       document.getElementById('detailModalOverlay').classList.add('active');
 
-      const contextData = JSON.stringify(property);
+      const contextData = JSON.stringify(p);
       sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
       (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
       กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
@@ -906,7 +925,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.9 (Fixed List Rendering, strict exact Match, clear UI placement)
+    🟢 Version: 1.1.0 (Fixed Missing Project/Road names via full mapping, Added Area Size on Top Line)
   </div>
 </body>
 </html>
