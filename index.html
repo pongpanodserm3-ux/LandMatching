@@ -813,7 +813,7 @@
         // ดักจับคีย์ทุกรูปแบบเพื่อแก้บั๊กข้อมูลไม่แสดง
         const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
         const price = p.price || p.Price || p['ราคา'] || '-';
-        const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'];
+        const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
         const road = p.road || p.Road || p.roadName || p['ถนน'];
         const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
         const prov = p.province || p.Province || p['จังหวัด'];
@@ -869,7 +869,7 @@
       // ดักจับคีย์แบบครบถ้วนเผื่อการดึงข้อมูลผิดพลาด
       const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
       const price = p.price || p.Price || p['ราคา'] || '-';
-      const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'];
+      const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
       const road = p.road || p.Road || p.roadName || p['ถนน'];
       const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
       const prov = p.province || p.Province || p['จังหวัด'];
