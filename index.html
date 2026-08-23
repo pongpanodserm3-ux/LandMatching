@@ -28,22 +28,22 @@
 
     /* --- ส่วนบน: AI Voice --- */
     #ai-section {
-      height: 33vh;
-      min-height: 220px;
-      max-height: 33vh;
+      height: auto;
+      min-height: 250px;
+      max-height: 45vh;
       background: var(--bg-gradient);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 15px;
+      padding: 15px 15px 20px 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       z-index: 10;
       border-radius: 0 0 30px 30px;
       flex-shrink: 0;
     }
 
-    /* --- คำสั่ง 1: จัดกลุ่มรูปภาพและปุ่มให้อยู่บรรทัดเดียวกัน --- */
+    /* --- จัดกลุ่มรูปภาพและปุ่มให้อยู่บรรทัดเดียวกัน --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
@@ -55,7 +55,7 @@
     }
 
     .mascot-img { 
-      height: 50px; /* ปรับขนาดลงเล็กน้อยเพื่อให้อยู่บรรทัดเดียวกันได้สวยงาม */
+      height: 50px; 
       object-fit: contain; 
     }
     
@@ -96,7 +96,7 @@
 
     #statusText { font-size: 14px; color: #555; margin-top: 8px; font-weight: bold; }
 
-    /* --- คำสั่ง 3: เพิ่มลูกเล่นความเคลื่อนไหวตอนโหลดไฟล์ --- */
+    /* --- ลูกเล่นความเคลื่อนไหวตอนโหลดไฟล์ --- */
     .loading-pulse {
       animation: loadingAnim 1.5s infinite ease-in-out;
       color: var(--btn-blue) !important;
@@ -105,6 +105,40 @@
       0% { opacity: 0.4; transform: scale(0.98); }
       50% { opacity: 1; transform: scale(1.02); }
       100% { opacity: 0.4; transform: scale(0.98); }
+    }
+
+    /* --- คำสั่ง 1: CSS สำหรับ Dropdown เลื่อนซ้ายขวา --- */
+    .filter-scroll-row {
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 5px;
+      margin-top: 5px;
+      /* ซ่อน Scrollbar เพื่อความสวยงาม */
+      -ms-overflow-style: none;  /* IE/Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    .filter-scroll-row::-webkit-scrollbar {
+      display: none; /* Safari/Chrome */
+    }
+    .filter-btn {
+      background: #ffffff;
+      border: 1px solid var(--btn-blue);
+      color: var(--btn-blue);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+    .filter-btn:active {
+      background: var(--btn-blue);
+      color: #fff;
     }
 
     /* --- ส่วนล่าง: List View --- */
@@ -131,7 +165,7 @@
     .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
     .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
     
-    /* --- Modal สำหรับ Detail View --- */
+    /* --- Modal สำหรับ Detail View และ Dropdown --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
@@ -149,9 +183,32 @@
       display: flex; flex-direction: column;
       position: relative;
     }
+    
+    /* --- Modal สำหรับ Dropdown (Pop up กลางจอ) --- */
+    .dropdown-modal {
+      background: #fff;
+      width: 90%; max-width: 400px;
+      border-radius: 20px;
+      padding: 20px; box-sizing: border-box;
+      display: flex; flex-direction: column;
+      position: relative;
+      margin: auto; /* ให้อยู่กลางจอ */
+    }
+    .dropdown-options-container {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-top: 15px; max-height: 50vh; overflow-y: auto;
+    }
+    .dropdown-option-btn {
+      background: #f0f4f8; border: none; padding: 12px;
+      border-radius: 10px; text-align: left; font-size: 15px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .dropdown-option-btn:active { background: #d0e0f0; }
+
     .close-modal {
       position: absolute; top: 15px; right: 20px;
       font-size: 30px; color: #888; cursor: pointer; font-weight: bold;
+      line-height: 1;
     }
 
     .image-slider {
@@ -179,19 +236,36 @@
 <body>
 
   <div id="ai-section">
-    <!-- คำสั่ง 1: เรียงทั้งหมดในบรรทัดเดียวกันผ่านคลาส ai-controls-row -->
+    <!-- เรียงทั้งหมดในบรรทัดเดียวกันผ่านคลาส ai-controls-row -->
     <div class="ai-controls-row">
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
       <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     </div>
     
-    <!-- คำสั่ง 2 และ 3: ลบข้อความเดิม และใส่ข้อความพร้อมเอฟเฟกต์ loading -->
+    <!-- ข้อความพร้อมเอฟเฟกต์ loading -->
     <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
+
+    <!-- คำสั่ง 1: ช่อง Dropdown แบบแถบเลื่อนซ้ายขวา -->
+    <div class="filter-scroll-row">
+      <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ราคา')">ราคา ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('เขต/อำเภอ')">เขต/อำเภอ ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('พิกัด')">พิกัด ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ขนาด')">ขนาด ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
+    </div>
     
     <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ -->
     <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
-      🧪 ปุ่มนี้แสดงลิสต์บ้านทันที
+      🧪 กดปุ่มนี้เพื่อแสดงลิสต์บ้าน
     </button>
   </div>
 
@@ -204,6 +278,7 @@
     </div>
   </div>
 
+  <!-- Modal สำหรับหน้าดูรายละเอียด -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
@@ -226,6 +301,17 @@
     </div>
   </div>
 
+  <!-- Modal สำหรับ Pop up เลือก Dropdown -->
+  <div class="modal-overlay" id="dropdownModalOverlay" style="align-items: center;">
+    <div class="dropdown-modal">
+      <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
+      <h3 id="dropdownModalTitle" style="color: var(--text-main); margin-top: 0; margin-bottom: 5px;">เลือกข้อมูล</h3>
+      <div id="dropdownOptions" class="dropdown-options-container">
+        <!-- ตัวเลือกจะถูกสร้างที่นี่โดยอัตโนมัติจาก JavaScript -->
+      </div>
+    </div>
+  </div>
+
   <script>
     const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec";
@@ -241,15 +327,41 @@
     
     let currentProperties = [];
 
-    // --- คำสั่ง 4: เมื่อเริ่มเปิดหน้านี้ ให้ลิงก์กับ AI Voice ทันที ---
+    // เมื่อเริ่มเปิดหน้านี้ ให้ลิงก์กับ AI Voice ทันที
     window.addEventListener('load', () => {
-      // ให้เวลาแสดงอนิเมชันตอนโหลด 1 วินาที จากนั้นทริกเกอร์ฟังก์ชันเปิดเสียง
       setTimeout(() => {
         if (!isSessionActive) {
           startVoiceSession();
         }
       }, 1000);
     });
+
+    // --- ฟังก์ชันสำหรับจัดการ Dropdown Pop-up (คำสั่ง 1) ---
+    function openDropdownModal(topic) {
+      document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
+      const optionsContainer = document.getElementById('dropdownOptions');
+      
+      // ตัวอย่างการสร้างตัวเลือก (Mock-up พื้นฐาน) สามารถปรับแก้ตาม Database ทีหลังได้
+      const mockOptions = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      
+      optionsContainer.innerHTML = '';
+      mockOptions.forEach(opt => {
+        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${topic}', '${opt}')">${opt}</button>`;
+      });
+
+      document.getElementById('dropdownModalOverlay').classList.add('active');
+    }
+
+    function closeDropdownModal() {
+      document.getElementById('dropdownModalOverlay').classList.remove('active');
+    }
+
+    function selectDropdownOption(topic, value) {
+      console.log(`User selected -> ${topic}: ${value}`);
+      closeDropdownModal();
+      // หากมีการผูกตัวแปรกรองข้อมูล สามารถสั่งงานเพิ่มเติมตรงนี้ได้เลย
+    }
+    // -----------------------------------------------------
 
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
@@ -264,7 +376,7 @@
       try {
         isSetupReady = false;
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-        statusText.classList.add('loading-pulse'); // เพิ่มลูกเล่นโหลด
+        statusText.classList.add('loading-pulse'); 
 
         audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         nextPlayTime = audioOutputContext.currentTime;
@@ -282,6 +394,7 @@
                 },
                 systemInstruction: {
                   parts: [{
+                    // คำสั่ง 2: เพิ่มแนวคิดข้อ 5 ให้ AI เป็นเซลล์มือหนึ่งตามคำสั่ง
                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
                     1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
                     2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON รูปแบบนี้:
@@ -291,7 +404,8 @@
                       "criteria": { "propertyType": "บ้าน", "province": "กทม" }
                     }
                     3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที แล้วสแตนด์บายรอผู้ใช้ถามต่อ
-                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้คุณเปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1`
+                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้คุณเปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
+                    5. ถ้าลูกค้าสอบถามข้อมูลบ้านหลังใด ให้คุณทำตัวเป็นเซลล์มือหนึ่ง ติดตาม ต่อรองกับลูกค้า อย่างมีชั้นเชิง สอบถาม อยากได้ เงื่อน ไข อะไรเพิ่ม ไหม ถ้าเขาเริ่มไม่สนใจ ให้ AI ถามอยากต่อรองราคาบ้านหลังนี้ไหม ท่านอยากได้ราคาประมาณเท่าไหร่ ราคาอาจต่อรองได้ ขึ้นอยู่กับเจ้าของ`
                   }]
                 }
               }
@@ -311,7 +425,7 @@
             
             if (response.setupComplete) {
               isSetupReady = true;
-              statusText.classList.remove('loading-pulse'); // ปิดลูกเล่นโหลดเมื่อระบบพร้อม
+              statusText.classList.remove('loading-pulse');
               statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
               await initMicrophone(); 
               return;
@@ -558,7 +672,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.2 (Automated AI Voice & Layout Updated)
+    🟢 Version: 1.0.3 (Added Filters & Negotiator AI Mode)
   </div>
 </body>
 </html>
