@@ -257,10 +257,9 @@
     </div>
     
     <div class="input-status-row">
-      <!-- เพิ่ม oninput สำหรับกรองข้อมูลเรียลไทม์ และ onkeypress สำหรับกดปุ่ม Enter ค้นหาจากฐานข้อมูลใหม่ -->
       <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ" 
              oninput="if(currentProperties && currentProperties.length > 0) renderListView(currentProperties);"
-             onkeypress="if(event.key === 'Enter') { fetchDatabase({}, {}); }">
+             onkeypress="if(event.key === 'Enter') { testShowList(); }">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
@@ -289,7 +288,7 @@
     <div id="resultsContainer">
       <div style="text-align:center; padding: 20px 20px; color: #888;">
         <h3 style="margin:0;">ยินดีต้อนรับสู่ Land Matching</h3>
-        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน เพื่อให้เราคัดเลือกบ้านที่ใช่สำหรับคุณ</p>
+        <p style="font-size: 14px;">พูดคุยกับ AI ด้านบน หรือเลือกเงื่อนไขเพื่อดูรายการบ้านที่ใช่สำหรับคุณ</p>
       </div>
     </div>
   </div>
@@ -349,17 +348,17 @@
       const optionsContainer = document.getElementById('dropdownOptions');
       let options = [];
       if (topic === 'ขาย/เช่า') {
-        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
+        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า", "เคลียร์ค่า"];
       } else if (topic === 'คอนโด/บ้าน') {
-        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
+        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด", "เคลียร์ค่า"];
       } else if (topic === 'ราคา') {
-        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป"];
+        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป", "เคลียร์ค่า"];
       } else if (topic === 'จังหวัด') {
-        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
+        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา", "เคลียร์ค่า"];
       } else if (topic === 'เขต/อำเภอ') {
-        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
+        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี", "เคลียร์ค่า"];
       } else {
-        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`, "เคลียร์ค่า"];
       }
       
       optionsContainer.innerHTML = '';
@@ -380,9 +379,17 @@
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
         if (onClickAttr.includes(`'${topic}'`)) {
-          btn.innerText = `${value} ▾`;
+          if (value === "เคลียร์ค่า") {
+            btn.innerText = `${topic} ▾`;
+          } else {
+            btn.innerText = `${value} ▾`;
+          }
         }
       });
+      // เรียกเรนเดอร์ใหม่ทันทีหากมีข้อมูลอยู่แล้ว เพื่อประสบการณ์เรียลไทม์
+      if(currentProperties && currentProperties.length > 0) {
+        renderListView(currentProperties);
+      }
     }
 
     async function toggleVoiceSession() {
@@ -476,7 +483,6 @@
               return;
             }
 
-            // 1. ตรวจจับการเล่นเสียง PCM
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
@@ -486,7 +492,6 @@
               }
             }
 
-            // 2. ตรวจจับ Function Calling เมื่อ AI สรุปข้อมูลสำเร็จ
             const toolCall = response.toolCall || response.serverContent?.interrupted === false && response.serverContent?.modelTurn?.parts?.find(p => p.functionCall);
             const functionCalls = response.toolCall?.functionCalls || (toolCall?.functionCall ? [toolCall.functionCall] : null);
 
@@ -497,20 +502,17 @@
                   const userData = args.userData || {};
                   const criteria = args.criteria || {};
 
-                  // พิมพ์สรุปผลลงช่อง Edit
                   const editBox = document.getElementById('customEditBox');
                   let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
                   if (editBox && summaryParts.length > 0) {
                     editBox.value = summaryParts.filter(Boolean).join(' '); 
                   }
 
-                  // ดึงข้อมูล Database ทันทีหลังจากพิมพ์ลง editBox
                   if (!isFetchingDB) {
                     isFetchingDB = true;
                     fetchDatabase(userData, criteria);
                   }
 
-                  // ส่ง Response ยืนยันกลับไปที่ AI
                   if (webSocket && webSocket.readyState === WebSocket.OPEN && call.id) {
                     webSocket.send(JSON.stringify({
                       toolResponse: {
@@ -615,6 +617,37 @@
       statusText.innerText = "AI หยุดทำงานชั่วคราว";
     }
 
+    // ฟังก์ชันรวบรวมค่าจาก Dropdown เพื่อส่งเข้า API และใช้เป็น Local Filter
+    async function testShowList() {
+      document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
+      
+      let criteria = {};
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
+      filterBtns.forEach(btn => {
+        const topicMatch = btn.getAttribute('onclick').match(/'([^']+)'/);
+        if (topicMatch) {
+          const topic = topicMatch[1];
+          let val = btn.innerText.replace(' ▾', '').trim();
+          
+          if (val !== topic && val !== 'เคลียร์ค่า') { 
+            if (topic === 'ราคา') {
+              // แปลงเงื่อนไขราคาให้เป็นตัวเลขล้วนๆ ตามคำสั่ง
+              let priceNum = val.replace(/[^0-9]/g, '');
+              if (val.includes('ล้าน') && priceNum) {
+                priceNum = String(parseInt(priceNum, 10) * 1000000);
+              }
+              criteria.price = priceNum; 
+            } else {
+              criteria[topic] = val;
+            }
+          }
+        }
+      });
+
+      await fetchDatabase({}, criteria); 
+    }
+
     async function fetchDatabase(userData, criteria) {
       const statusText = document.getElementById('statusText');
       const editBox = document.getElementById('customEditBox');
@@ -632,7 +665,6 @@
         const res = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
-          // แนบ searchText จากช่อง editBox ไปด้วยเสมอ
           body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria, searchText: searchText }),
           redirect: 'follow' 
         });
@@ -641,6 +673,7 @@
         
         if (data.status === "success" && data.results && data.results.length > 0) {
           currentProperties = data.results;
+          // เรนเดอร์ใหม่ พร้อมกับใช้ Filter ของช่อง Edit และ Dropdown ทั้งหมด
           renderListView(currentProperties); 
           statusText.classList.remove('loading-pulse');
           statusText.innerText = "✅ ดึงข้อมูลสำเร็จ!";
@@ -660,62 +693,103 @@
             </div>`;
         }
       } finally {
-        // แก้ไข: ต้องเคลียร์ค่า isFetchingDB เพื่อให้สามารถค้นหาครั้งต่อไปหรือค้นหาซ้ำได้อย่างสมบูรณ์
         isFetchingDB = false;
       }
     }
 
     function renderListView(properties) {
-        const container = document.getElementById('resultsContainer');
-        container.innerHTML = '';
-        
-        // 1. ดึงข้อความจากช่อง Edit มาใช้เป็นเงื่อนไขกรองเพิ่มเติม (Local Filter)
-        // เพื่อให้แน่ใจว่าหน้าจอจะแสดงรายการตรงตามที่พิมพ์อยู่ใน edit ทันที
-        const editBox = document.getElementById('customEditBox');
-        const filterText = editBox ? editBox.value.trim().toLowerCase() : "";
-        
-        let displayProps = properties;
-        if (filterText) {
-          const keywords = filterText.split(/\s+/).filter(k => k.length > 0);
-          displayProps = properties.filter(p => {
-            const fullText = Object.values(p).map(v => v ? String(v).toLowerCase() : '').join(' ');
-            return keywords.every(kw => fullText.includes(kw));
-          });
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = '';
+      
+      // ดึงข้อความจากช่อง Edit Box
+      const editBox = document.getElementById('customEditBox');
+      const filterText = editBox ? editBox.value.trim().toLowerCase() : "";
+      
+      // ดึงค่าจากปุ่ม Dropdown ทั้งหมด
+      let dropdownFilters = [];
+      let maxPrice = null;
+      let minPrice = null;
+      
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        const topicMatch = btn.getAttribute('onclick').match(/'([^']+)'/);
+        if (topicMatch) {
+          const topic = topicMatch[1];
+          let val = btn.innerText.replace(' ▾', '').trim();
+          if (val !== topic && val !== 'เคลียร์ค่า') {
+            if (topic === 'ราคา') {
+              let priceNum = parseInt(val.replace(/[^0-9]/g, ''), 10);
+              if (val.includes('ล้าน') && priceNum) {
+                priceNum = priceNum * 1000000;
+              }
+              if (val.includes('ไม่เกิน')) {
+                maxPrice = priceNum;
+              } else if (val.includes('ตั้งแต่')) {
+                minPrice = priceNum;
+              } else {
+                maxPrice = priceNum;
+              }
+            } else {
+              dropdownFilters.push(val.toLowerCase());
+            }
+          }
         }
-  
-        if (displayProps.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไข: ' + (filterText ? `<b>${filterText}</b>` : 'ที่ระบุ') + '</div>';
-          return;
-        }
-  
-        displayProps.forEach((p) => {
-          // เก็บ Index ดั้งเดิมเอาไว้ เพื่อให้กดดู Detail ได้ถูกต้อง
-          const originalIndex = properties.indexOf(p);
-          const safeType = p.propertyType || 'อสังหาฯ';
-          const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
-          const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
-          const safeSize = p.size || 'ไม่ระบุขนาด';
-          const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
-  
-          container.innerHTML += `
-            <div class="compact-card" onclick="openDetailModal(${originalIndex})">
-              <div style="margin-bottom: 8px;">
-                <span class="card-title">${safeType}</span>
-                <span class="card-price">฿ ${safePrice}</span>
-              </div>
-              <div class="card-desc">
-                📍 <b>ทำเล:</b> ${safeLoc}<br>
-                📐 <b>ขนาด:</b> ${safeSize}<br>
-                ✨ <b>จุดเด่น:</b> ${highlight}
-              </div>
-            </div>
-          `;
+      });
+
+      let displayProps = properties;
+      
+      // รวมคีย์เวิร์ดจาก Edit box และ Dropdown
+      const textKeywords = [];
+      if (filterText) textKeywords.push(...filterText.split(/\s+/).filter(k => k.length > 0));
+      if (dropdownFilters.length > 0) textKeywords.push(...dropdownFilters);
+
+      // กรองผลลัพธ์จากเงื่อนไขทั้งหมดรวมถึงราคา
+      if (textKeywords.length > 0 || maxPrice !== null || minPrice !== null) {
+        displayProps = properties.filter(p => {
+          const fullText = Object.values(p).map(v => v ? String(v).toLowerCase() : '').join(' ');
+          
+          // เช็คเงื่อนไขข้อความ
+          const textMatch = textKeywords.length === 0 || textKeywords.every(kw => fullText.includes(kw));
+          
+          // เช็คเงื่อนไขราคา (แปลงจาก Database เป็นตัวเลข)
+          let priceMatch = true;
+          if (maxPrice !== null || minPrice !== null) {
+            let pPrice = p.price ? parseInt(String(p.price).replace(/[^0-9]/g, ''), 10) : 0;
+            if (maxPrice !== null && pPrice > maxPrice) priceMatch = false;
+            if (minPrice !== null && pPrice < minPrice) priceMatch = false;
+          }
+          
+          return textMatch && priceMatch;
         });
       }
 
-    async function testShowList() {
-      document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
-      await fetchDatabase({}, {}); 
+      if (displayProps.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขที่เลือก</div>';
+        return;
+      }
+
+      displayProps.forEach((p) => {
+        const originalIndex = properties.indexOf(p);
+        const safeType = p.propertyType || 'อสังหาฯ';
+        const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
+        const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
+        const safeSize = p.size || 'ไม่ระบุขนาด';
+        const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
+
+        container.innerHTML += `
+          <div class="compact-card" onclick="openDetailModal(${originalIndex})">
+            <div style="margin-bottom: 8px;">
+              <span class="card-title">${safeType}</span>
+              <span class="card-price">฿ ${safePrice}</span>
+            </div>
+            <div class="card-desc">
+              📍 <b>ทำเล:</b> ${safeLoc}<br>
+              📐 <b>ขนาด:</b> ${safeSize}<br>
+              ✨ <b>จุดเด่น:</b> ${highlight}
+            </div>
+          </div>
+        `;
+      });
     }
 
     function openDetailModal(index) {
@@ -771,7 +845,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.6 (Fixed Immediate Searching by Edit Box & Reset DB State)
+    🟢 Version: 1.0.7 (Search with Dropdowns + Edit Box & Exact Numeric Price Filter)
   </div>
 </body>
 </html>
