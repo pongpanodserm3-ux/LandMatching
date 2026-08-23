@@ -208,9 +208,25 @@
       position: relative;
       margin: auto;
     }
+    
+    .dropdown-search-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid var(--btn-blue);
+      border-radius: 10px;
+      box-sizing: border-box;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    .dropdown-search-input:focus {
+      outline: none;
+      box-shadow: 0 0 5px rgba(74, 131, 204, 0.5);
+    }
+
     .dropdown-options-container {
       display: flex; flex-direction: column; gap: 6px;
-      margin-top: 10px; max-height: 50vh; overflow-y: auto;
+      margin-top: 10px; max-height: 45vh; overflow-y: auto;
     }
     .dropdown-option-btn {
       background: #f0f4f8; border: none; padding: 12px;
@@ -316,6 +332,8 @@
     <div class="dropdown-modal">
       <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
       <h3 id="dropdownModalTitle" style="color: var(--text-main); margin-top: 0; margin-bottom: 5px;">เลือกข้อมูล</h3>
+      <!-- เพิ่มช่องค้นหาสำหรับ Filterable Dropdown Autocomplete -->
+      <input type="text" id="dropdownSearchInput" class="dropdown-search-input" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" onkeyup="filterDropdownOptions()">
       <div id="dropdownOptions" class="dropdown-options-container"></div>
     </div>
   </div>
@@ -334,6 +352,10 @@
     let nextPlayTime = 0;
     let isFetchingDB = false;
     let currentProperties = [];
+    
+    // ตัวแปรสำหรับเก็บข้อมูล Dropdown ไว้ใช้ค้นหา (Autocomplete)
+    let currentDropdownTopic = "";
+    let currentDropdownOptionsList = [];
 
     window.addEventListener('load', () => {
       setTimeout(() => {
@@ -344,8 +366,10 @@
     });
 
     function openDropdownModal(topic) {
+      currentDropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
-      const optionsContainer = document.getElementById('dropdownOptions');
+      document.getElementById('dropdownSearchInput').value = ''; // เคลียร์ช่องค้นหาเมื่อเปิดใหม่
+      
       let options = [];
       if (topic === 'ขาย/เช่า') {
         options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า", "เคลียร์ค่า"];
@@ -361,12 +385,34 @@
         options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`, "เคลียร์ค่า"];
       }
       
-      optionsContainer.innerHTML = '';
-      options.forEach(opt => {
-        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${topic}', '${opt}')">${opt}</button>`;
-      });
+      currentDropdownOptionsList = options;
+      renderDropdownOptions(currentDropdownOptionsList);
 
       document.getElementById('dropdownModalOverlay').classList.add('active');
+    }
+
+    // ฟังก์ชันสำหรับ Render รายการตัวเลือก Dropdown
+    function renderDropdownOptions(optionsToRender) {
+      const optionsContainer = document.getElementById('dropdownOptions');
+      optionsContainer.innerHTML = '';
+      
+      if(optionsToRender.length === 0) {
+        optionsContainer.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">ไม่พบตัวเลือกที่ค้นหา</div>';
+        return;
+      }
+      
+      optionsToRender.forEach(opt => {
+        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${currentDropdownTopic}', '${opt}')">${opt}</button>`;
+      });
+    }
+
+    // ฟังก์ชันสำหรับ Filter ตัวเลือก (Autocomplete Search)
+    function filterDropdownOptions() {
+      const searchText = document.getElementById('dropdownSearchInput').value.toLowerCase();
+      const filteredOptions = currentDropdownOptionsList.filter(opt => 
+        opt.toLowerCase().includes(searchText) || opt === "เคลียร์ค่า" // ให้มีปุ่มเคลียร์ค่าเสมอ
+      );
+      renderDropdownOptions(filteredOptions);
     }
 
     function closeDropdownModal() {
@@ -845,7 +891,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.7 (Search with Dropdowns + Edit Box & Exact Numeric Price Filter)
+    🟢 Version: 1.0.8 (Search with Dropdowns + Edit Box & Exact Numeric Price Filter)
   </div>
 </body>
 </html>
