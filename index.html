@@ -499,7 +499,8 @@
                   const editBox = document.getElementById('customEditBox');
                   let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
                   if (editBox && summaryParts.length > 0) {
-                    editBox.value = summaryParts.filter(Boolean).join(' ');
+                    // แก้ไขจุดนี้: กรองค่าที่ว่างออก แล้วเชื่อมทุกคำด้วยคำว่า " และ "
+                    editBox.value = summaryParts.filter(Boolean).join(' และ '); 
                   }
 
                   // ดึงข้อมูล Database
