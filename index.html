@@ -26,7 +26,7 @@
       overflow: hidden; 
     }
 
-    /* --- ส่วนบน: AI Voice (สูงไม่เกิน 1/3) -- */
+    /* --- ส่วนบน: AI Voice --- */
     #ai-section {
       height: 33vh;
       min-height: 220px;
@@ -43,22 +43,36 @@
       flex-shrink: 0;
     }
 
-    .mascot-img { height: 60px; object-fit: contain; margin-bottom: 5px; }
+    /* --- คำสั่ง 1: จัดกลุ่มรูปภาพและปุ่มให้อยู่บรรทัดเดียวกัน --- */
+    .ai-controls-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .mascot-img { 
+      height: 50px; /* ปรับขนาดลงเล็กน้อยเพื่อให้อยู่บรรทัดเดียวกันได้สวยงาม */
+      object-fit: contain; 
+    }
     
     .ai-avatar {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       background: #fff;
       border: 3px solid var(--btn-blue);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 35px;
+      font-size: 28px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
-      margin-bottom: 10px;
     }
+    
     .pulse-animation { animation: pulse 1.5s infinite; border-color: #ff6b81; }
     @keyframes pulse {
       0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
@@ -71,8 +85,8 @@
       color: white;
       border: none;
       border-radius: 20px;
-      padding: 12px 25px;
-      font-size: 18px;
+      padding: 10px 18px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -81,6 +95,17 @@
     .voice-btn.active { background: #ff6b81; }
 
     #statusText { font-size: 14px; color: #555; margin-top: 8px; font-weight: bold; }
+
+    /* --- คำสั่ง 3: เพิ่มลูกเล่นความเคลื่อนไหวตอนโหลดไฟล์ --- */
+    .loading-pulse {
+      animation: loadingAnim 1.5s infinite ease-in-out;
+      color: var(--btn-blue) !important;
+    }
+    @keyframes loadingAnim {
+      0% { opacity: 0.4; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 0.4; transform: scale(0.98); }
+    }
 
     /* --- ส่วนล่าง: List View --- */
     #list-section {
@@ -106,7 +131,7 @@
     .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
     .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
     
-    /* --- Modal สำหรับ Detail View (Step 2) --- */
+    /* --- Modal สำหรับ Detail View --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
@@ -129,7 +154,6 @@
       font-size: 30px; color: #888; cursor: pointer; font-weight: bold;
     }
 
-    /* Slider รูปภาพ */
     .image-slider {
       display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
       gap: 10px; padding-bottom: 10px; margin-top: 20px;
@@ -154,19 +178,23 @@
 </head>
 <body>
 
-  <!-- ส่วนบน: AI Voice (1/3 ของหน้าจอ) -->
   <div id="ai-section">
-    <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
-    <div id="avatarCircle" class="ai-avatar">🤖</div>
-    <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
-    <div id="statusText">กดปุ่มเพื่อบอกสเปกบ้านที่ต้องการ</div>
-    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์โดยไม่ต้องรอ AI พูดจบ -->
+    <!-- คำสั่ง 1: เรียงทั้งหมดในบรรทัดเดียวกันผ่านคลาส ai-controls-row -->
+    <div class="ai-controls-row">
+      <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
+      <div id="avatarCircle" class="ai-avatar">🤖</div>
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
+    </div>
+    
+    <!-- คำสั่ง 2 และ 3: ลบข้อความเดิม และใส่ข้อความพร้อมเอฟเฟกต์ loading -->
+    <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
+    
+    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ -->
     <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
       🧪 กดปุ่มนี้เพื่อทดสอบแสดงลิสต์บ้านทันที
     </button>
   </div>
 
-  <!-- ส่วนล่าง: List View (2/3 ของหน้าจอ) -->
   <div id="list-section">
     <div id="resultsContainer">
       <div style="text-align:center; padding: 40px 20px; color: #888;">
@@ -176,22 +204,17 @@
     </div>
   </div>
 
-  <!-- Popup Modal (Step 2) -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
       
-      <!-- Slide รูปภาพ 5 รูป -->
-      <div class="image-slider" id="modalSlider">
-        <!-- รูปภาพจะถูก Render ผ่าน JS -->
-      </div>
+      <div class="image-slider" id="modalSlider"></div>
 
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
         <div id="modalPrice" class="detail-price">-</div>
         <p id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5;"></p>
 
-        <!-- กล่องสำหรับคุย AI ในบริบทของบ้านหลังนี้ -->
         <div class="ai-detail-box">
           <div style="font-size: 30px;">🤖</div>
           <div>
@@ -204,7 +227,6 @@
   </div>
 
   <script>
-    // การตั้งค่า Backend
     const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec";
 
@@ -217,9 +239,18 @@
     let audioOutputContext = null;
     let nextPlayTime = 0;
     
-    let currentProperties = []; // เก็บข้อมูลที่ได้จาก Database
+    let currentProperties = [];
 
-    // --- ฟังก์ชันหลักควบคุม AI Voice ---
+    // --- คำสั่ง 4: เมื่อเริ่มเปิดหน้านี้ ให้ลิงก์กับ AI Voice ทันที ---
+    window.addEventListener('load', () => {
+      // ให้เวลาแสดงอนิเมชันตอนโหลด 1 วินาที จากนั้นทริกเกอร์ฟังก์ชันเปิดเสียง
+      setTimeout(() => {
+        if (!isSessionActive) {
+          startVoiceSession();
+        }
+      }, 1000);
+    });
+
     async function toggleVoiceSession() {
       if (!isSessionActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -233,6 +264,7 @@
       try {
         isSetupReady = false;
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+        statusText.classList.add('loading-pulse'); // เพิ่มลูกเล่นโหลด
 
         audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         nextPlayTime = audioOutputContext.currentTime;
@@ -243,7 +275,6 @@
           if (webSocket.readyState === WebSocket.OPEN) {
             const setupData = {
               setup: {
-                // อัปเดตโมเดลตามคำสั่งอย่างเคร่งครัด
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
                   responseModalities: ["AUDIO"],
@@ -280,6 +311,7 @@
             
             if (response.setupComplete) {
               isSetupReady = true;
+              statusText.classList.remove('loading-pulse'); // ปิดลูกเล่นโหลดเมื่อระบบพร้อม
               statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
               await initMicrophone(); 
               return;
@@ -288,14 +320,11 @@
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
-                // เล่นเสียง
                 if (part.inlineData && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
                 }
-                // เช็ค JSON เพื่อดึง Database
                 if (part.text) {
                   try {
-                    // ทำความสะอาดข้อความ เผื่อ AI ส่ง ```json มาด้วย
                     let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
                     const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
                     
@@ -306,7 +335,7 @@
                       }
                     }
                   } catch (e) {
-                    console.error("JSON Parse Error:", e); // แสดง Error ใน Console ถ้าอ่านรูปแบบไม่ออก
+                    console.error("JSON Parse Error:", e);
                   }
                 }
               }
@@ -317,7 +346,8 @@
         webSocket.onclose = () => stopVoiceSession();
 
       } catch (err) {
-        statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้";
+        statusText.classList.remove('loading-pulse');
+        statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
       }
     }
 
@@ -382,18 +412,23 @@
       if (audioContext) audioContext.close();
       if (audioOutputContext) audioOutputContext.close();
 
-      document.getElementById('toggleBtn').innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
-      document.getElementById('toggleBtn').classList.remove('active');
-      document.getElementById('avatarCircle').classList.remove('pulse-animation');
-      document.getElementById('statusText').innerText = "AI หยุดทำงานชั่วคราว";
+      const btn = document.getElementById('toggleBtn');
+      const avatar = document.getElementById('avatarCircle');
+      const statusText = document.getElementById('statusText');
+
+      btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+      btn.classList.remove('active');
+      avatar.classList.remove('pulse-animation');
+      statusText.classList.remove('loading-pulse');
+      statusText.innerText = "AI หยุดทำงานชั่วคราว";
     }
 
-    // --- ฟังก์ชันดึง Database และสร้าง List View (Step 1) ---
     async function fetchDatabase(userData, criteria) {
       const statusText = document.getElementById('statusText');
       statusText.innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
+      statusText.classList.add('loading-pulse');
       
-      const container = document.getElementById('resultsContainer') || document.getElementById('propertyList');
+      const container = document.getElementById('resultsContainer');
       if(container) {
         container.innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังเชื่อมต่อ Google Sheets...</div>";
       }
@@ -410,7 +445,8 @@
         
         if (data.status === "success" && data.results && data.results.length > 0) {
           currentProperties = data.results;
-          renderListView(currentProperties);
+          renderListView(currentProperties); 
+          statusText.classList.remove('loading-pulse');
           statusText.innerText = "✅ ดึงข้อมูลสำเร็จ!";
         } else {
           throw new Error(data.message || "ดึงข้อมูลสำเร็จ แต่ไม่พบรายการบ้านใน Database");
@@ -419,6 +455,7 @@
       } catch (error) {
         console.error("Database Error:", error);
         
+        statusText.classList.remove('loading-pulse');
         statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ!";
         if(container) {
           container.innerHTML = `
@@ -432,71 +469,63 @@
     }
 
     function renderListView(properties) {
-      const container = document.getElementById('resultsContainer');
-      container.innerHTML = '';
-
-      if (properties.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขครับ</div>';
-        return;
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = '';
+  
+        if (properties.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขครับ</div>';
+          return;
+        }
+  
+        properties.forEach((p, index) => {
+          const safeType = p.propertyType || 'อสังหาฯ';
+          const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
+          const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
+          const safeSize = p.size || 'ไม่ระบุขนาด';
+          const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
+  
+          container.innerHTML += `
+            <div class="compact-card" onclick="openDetailModal(${index})">
+              <div style="margin-bottom: 8px;">
+                <span class="card-title">${index + 1}. ${safeType}</span>
+                <span class="card-price">฿ ${safePrice}</span>
+              </div>
+              <div class="card-desc">
+                📍 <b>ทำเล:</b> ${safeLoc}<br>
+                📐 <b>ขนาด:</b> ${safeSize}<br>
+                ✨ <b>จุดเด่น:</b> ${highlight}
+              </div>
+            </div>
+          `;
+        });
       }
-
-      properties.forEach((p, index) => {
-        const safeType = p.propertyType || 'อสังหาฯ';
-        const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
-        const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
-        const safeSize = p.size || 'ไม่ระบุขนาด';
-        const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
-
-        container.innerHTML += `
-          <div class="compact-card" onclick="openDetailModal(${index})">
-            <div style="margin-bottom: 8px;">
-              <span class="card-title">${index + 1}. ${safeType}</span>
-              <span class="card-price">฿ ${safePrice}</span>
-            </div>
-            <div class="card-desc">
-              📍 <b>ทำเล:</b> ${safeLoc}<br>
-              📐 <b>ขนาด:</b> ${safeSize}<br>
-              ✨ <b>จุดเด่น:</b> ${highlight}
-            </div>
-          </div>
-        `;
-      });
-    }
 
     async function testShowList() {
       document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
       await fetchDatabase({}, {}); 
     }
 
-    // --- ฟังก์ชัน Popup Modal และใส่รูปภาพปลอม 5 รูปวนซ้ำ ---
     function openDetailModal(index) {
       const property = currentProperties[index];
       if (!property) return;
 
-      // 1. นำข้อมูลใส่ Modal
-      document.getElementById('modalTitle').innerText = `${property.propertyType || 'อสังหาฯ'} ${property.project ? '- '+property.project : ''}`;
-      document.getElementById('modalPrice').innerText = `ราคา: ${property.price || '-'} บาท`;
+      document.getElementById('modalTitle').innerText = `${property.propertyType} ${property.project ? '- '+property.project : ''}`;
+      document.getElementById('modalPrice').innerText = `ราคา: ${property.price} บาท`;
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${property.road || '-'} ${property.district || '-'} ${property.province || '-'}<br>
         <b>ขนาด:</b> ${property.size || '-'}<br>
         <b>รายละเอียด:</b> ${property.details || 'ไม่มีข้อมูลเพิ่มเติม'}
       `;
 
-      // 2. ใส่รูปภาพบ้านปลอม 5 รูปวนซ้ำกัน (พร้อม SVG Fallback ในกรณีที่รูปจากลิงก์โหลดไม่ได้)
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
-      
-      const fakeHouseImgUrl = "[https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80](https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80)";
-      const svgFallback = "data:image/svg+xml;utf8,<svg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' width='400' height='250' viewBox='0 0 400 250'><rect width='400' height='250' fill='%234a83cc'/><path d='M200 40 L320 130 L300 130 L300 210 L100 210 L100 130 L80 130 Z' fill='%23ffffff'/><rect x='170' y='140' width='60' height='70' fill='%234a83cc'/><text x='200' y='235' text-anchor='middle' fill='%23ffffff' font-size='14' font-family='sans-serif'>รูปภาพบ้านตัวอย่าง</text></svg>";
-
       for (let i = 1; i <= 5; i++) {
-        slider.innerHTML += `<img src="${fakeHouseImgUrl}" alt="รูปบ้าน ${i}" onerror="this.onerror=null; this.src='${svgFallback}';">`;
+        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
-      // 3. แสดง Modal
       document.getElementById('detailModalOverlay').classList.add('active');
 
-      // 4. ส่งข้อมูลบ้านหลังนี้ไปให้ AI
       const contextData = JSON.stringify(property);
       sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
       (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
@@ -524,13 +553,12 @@
       }
     }
 
-    // Liff Init (ถ้ามี)
     try {
       liff.init({ liffId: "2011006139-Wn6PhY6D" }).catch(() => {});
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.1 (กำลังเชื่อมต่อ Database จริง)
+    🟢 Version: 1.0.2 (Automated AI Voice & Layout Updated)
   </div>
 </body>
 </html>
