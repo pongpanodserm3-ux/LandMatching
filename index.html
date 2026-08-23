@@ -257,7 +257,10 @@
     </div>
     
     <div class="input-status-row">
-      <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ">
+      <!-- เพิ่ม oninput สำหรับกรองข้อมูลเรียลไทม์ และ onkeypress สำหรับกดปุ่ม Enter ค้นหาจากฐานข้อมูลใหม่ -->
+      <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ" 
+             oninput="if(currentProperties && currentProperties.length > 0) renderListView(currentProperties);"
+             onkeypress="if(event.key === 'Enter') { fetchDatabase({}, {}); }">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
@@ -423,7 +426,6 @@
                     5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา`
                   }]
                 },
-                /* --- แก้ไข Error 2: ใช้ Function Calling ส่งข้อมูลสรุปเข้า Edit Box ชัวร์ 100% --- */
                 tools: [{
                   functionDeclarations: [{
                     name: "submit_user_summary",
@@ -499,11 +501,10 @@
                   const editBox = document.getElementById('customEditBox');
                   let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
                   if (editBox && summaryParts.length > 0) {
-                    // แก้ไขจุดนี้: กรองค่าที่ว่างออก แล้วเชื่อมทุกคำด้วยคำว่า " และ "
                     editBox.value = summaryParts.filter(Boolean).join(' '); 
                   }
 
-                  // ดึงข้อมูล Database
+                  // ดึงข้อมูล Database ทันทีหลังจากพิมพ์ลง editBox
                   if (!isFetchingDB) {
                     isFetchingDB = true;
                     fetchDatabase(userData, criteria);
@@ -616,6 +617,9 @@
 
     async function fetchDatabase(userData, criteria) {
       const statusText = document.getElementById('statusText');
+      const editBox = document.getElementById('customEditBox');
+      const searchText = editBox ? editBox.value : "";
+      
       statusText.innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
       statusText.classList.add('loading-pulse');
       
@@ -628,7 +632,8 @@
         const res = await fetch(GAS_WEB_APP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria }),
+          // แนบ searchText จากช่อง editBox ไปด้วยเสมอ
+          body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria, searchText: searchText }),
           redirect: 'follow' 
         });
         
@@ -646,27 +651,46 @@
       } catch (error) {
         console.error("Database Error:", error);
         statusText.classList.remove('loading-pulse');
-        statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ!";
+        statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ หรือไม่พบข้อมูล";
         if(container) {
           container.innerHTML = `
             <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
-              <b>เกิดข้อผิดพลาดในการเชื่อมต่อ Database:</b><br><br>
+              <b>ข้อผิดพลาด/ผลการค้นหา:</b><br><br>
               <span style="color: #333;">${error.message}</span><br><br>
             </div>`;
         }
+      } finally {
+        // แก้ไข: ต้องเคลียร์ค่า isFetchingDB เพื่อให้สามารถค้นหาครั้งต่อไปหรือค้นหาซ้ำได้อย่างสมบูรณ์
+        isFetchingDB = false;
       }
     }
 
     function renderListView(properties) {
         const container = document.getElementById('resultsContainer');
         container.innerHTML = '';
+        
+        // 1. ดึงข้อความจากช่อง Edit มาใช้เป็นเงื่อนไขกรองเพิ่มเติม (Local Filter)
+        // เพื่อให้แน่ใจว่าหน้าจอจะแสดงรายการตรงตามที่พิมพ์อยู่ใน edit ทันที
+        const editBox = document.getElementById('customEditBox');
+        const filterText = editBox ? editBox.value.trim().toLowerCase() : "";
+        
+        let displayProps = properties;
+        if (filterText) {
+          const keywords = filterText.split(/\s+/).filter(k => k.length > 0);
+          displayProps = properties.filter(p => {
+            const fullText = Object.values(p).map(v => v ? String(v).toLowerCase() : '').join(' ');
+            return keywords.every(kw => fullText.includes(kw));
+          });
+        }
   
-        if (properties.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขครับ</div>';
+        if (displayProps.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไข: ' + (filterText ? `<b>${filterText}</b>` : 'ที่ระบุ') + '</div>';
           return;
         }
   
-        properties.forEach((p, index) => {
+        displayProps.forEach((p) => {
+          // เก็บ Index ดั้งเดิมเอาไว้ เพื่อให้กดดู Detail ได้ถูกต้อง
+          const originalIndex = properties.indexOf(p);
           const safeType = p.propertyType || 'อสังหาฯ';
           const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
           const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
@@ -674,9 +698,9 @@
           const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
   
           container.innerHTML += `
-            <div class="compact-card" onclick="openDetailModal(${index})">
+            <div class="compact-card" onclick="openDetailModal(${originalIndex})">
               <div style="margin-bottom: 8px;">
-                <span class="card-title">${index + 1}. ${safeType}</span>
+                <span class="card-title">${safeType}</span>
                 <span class="card-price">฿ ${safePrice}</span>
               </div>
               <div class="card-desc">
@@ -747,7 +771,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.5 (Fixed Tool Calling for Edit Box Text Output)
+    🟢 Version: 1.0.6 (Fixed Immediate Searching by Edit Box & Reset DB State)
   </div>
 </body>
 </html>
