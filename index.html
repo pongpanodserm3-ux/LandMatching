@@ -164,22 +164,6 @@
       background-color: #ffffff;
     }
 
-    .compact-card {
-      background: #fff;
-      border-radius: 15px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-left: 5px solid var(--btn-blue);
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .compact-card:active { transform: scale(0.98); }
-    
-    .card-title { font-size: 18px; font-weight: bold; color: var(--text-main); }
-    .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
-    .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
-    
     /* --- Modal --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -216,7 +200,7 @@
       border: 1px solid var(--btn-blue);
       border-radius: 10px;
       box-sizing: border-box;
-      margin-top: 10px;
+      margin-top: 0;
       margin-bottom: 5px;
     }
     .dropdown-search-input:focus {
@@ -330,9 +314,14 @@
 
   <div class="modal-overlay" id="dropdownModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
-      <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
-      <h3 id="dropdownModalTitle" style="color: var(--text-main); margin-top: 0; margin-bottom: 5px;">เลือกข้อมูล</h3>
-      <!-- เพิ่มช่องค้นหาสำหรับ Filterable Dropdown Autocomplete -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 id="dropdownModalTitle" style="color: var(--text-main); margin: 0;">เลือกข้อมูล</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <!-- ปุ่มเคลียร์ค่าย้ายมาบรรทัดบนสุด ขวาสุด ตามคำสั่ง -->
+          <button onclick="selectDropdownOption(currentDropdownTopic, 'เคลียร์ค่า')" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
+          <span onclick="closeDropdownModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
+        </div>
+      </div>
       <input type="text" id="dropdownSearchInput" class="dropdown-search-input" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" onkeyup="filterDropdownOptions()">
       <div id="dropdownOptions" class="dropdown-options-container"></div>
     </div>
@@ -353,7 +342,6 @@
     let isFetchingDB = false;
     let currentProperties = [];
     
-    // ตัวแปรสำหรับเก็บข้อมูล Dropdown ไว้ใช้ค้นหา (Autocomplete)
     let currentDropdownTopic = "";
     let currentDropdownOptionsList = [];
 
@@ -368,21 +356,22 @@
     function openDropdownModal(topic) {
       currentDropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
-      document.getElementById('dropdownSearchInput').value = ''; // เคลียร์ช่องค้นหาเมื่อเปิดใหม่
+      document.getElementById('dropdownSearchInput').value = '';
       
       let options = [];
+      // เอาคำว่า "เคลียร์ค่า" ออกจาก Array ด้านล่างทั้งหมด เพื่อแยกปุ่มขึ้นด้านบน
       if (topic === 'ขาย/เช่า') {
-        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า", "เคลียร์ค่า"];
+        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       } else if (topic === 'คอนโด/บ้าน') {
-        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด", "เคลียร์ค่า"];
+        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
       } else if (topic === 'ราคา') {
-        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป", "เคลียร์ค่า"];
+        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป"];
       } else if (topic === 'จังหวัด') {
-        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา", "เคลียร์ค่า"];
+        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
       } else if (topic === 'เขต/อำเภอ') {
-        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี", "เคลียร์ค่า"];
+        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
       } else {
-        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`, "เคลียร์ค่า"];
+        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
       }
       
       currentDropdownOptionsList = options;
@@ -391,7 +380,6 @@
       document.getElementById('dropdownModalOverlay').classList.add('active');
     }
 
-    // ฟังก์ชันสำหรับ Render รายการตัวเลือก Dropdown
     function renderDropdownOptions(optionsToRender) {
       const optionsContainer = document.getElementById('dropdownOptions');
       optionsContainer.innerHTML = '';
@@ -406,11 +394,10 @@
       });
     }
 
-    // ฟังก์ชันสำหรับ Filter ตัวเลือก (Autocomplete Search)
     function filterDropdownOptions() {
       const searchText = document.getElementById('dropdownSearchInput').value.toLowerCase();
       const filteredOptions = currentDropdownOptionsList.filter(opt => 
-        opt.toLowerCase().includes(searchText) || opt === "เคลียร์ค่า" // ให้มีปุ่มเคลียร์ค่าเสมอ
+        opt.toLowerCase().includes(searchText)
       );
       renderDropdownOptions(filteredOptions);
     }
@@ -432,7 +419,6 @@
           }
         }
       });
-      // เรียกเรนเดอร์ใหม่ทันทีหากมีข้อมูลอยู่แล้ว เพื่อประสบการณ์เรียลไทม์
       if(currentProperties && currentProperties.length > 0) {
         renderListView(currentProperties);
       }
@@ -663,7 +649,6 @@
       statusText.innerText = "AI หยุดทำงานชั่วคราว";
     }
 
-    // ฟังก์ชันรวบรวมค่าจาก Dropdown เพื่อส่งเข้า API และใช้เป็น Local Filter
     async function testShowList() {
       document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
       
@@ -678,7 +663,6 @@
           
           if (val !== topic && val !== 'เคลียร์ค่า') { 
             if (topic === 'ราคา') {
-              // แปลงเงื่อนไขราคาให้เป็นตัวเลขล้วนๆ ตามคำสั่ง
               let priceNum = val.replace(/[^0-9]/g, '');
               if (val.includes('ล้าน') && priceNum) {
                 priceNum = String(parseInt(priceNum, 10) * 1000000);
@@ -719,7 +703,6 @@
         
         if (data.status === "success" && data.results && data.results.length > 0) {
           currentProperties = data.results;
-          // เรนเดอร์ใหม่ พร้อมกับใช้ Filter ของช่อง Edit และ Dropdown ทั้งหมด
           renderListView(currentProperties); 
           statusText.classList.remove('loading-pulse');
           statusText.innerText = "✅ ดึงข้อมูลสำเร็จ!";
@@ -747,14 +730,13 @@
       const container = document.getElementById('resultsContainer');
       container.innerHTML = '';
       
-      // ดึงข้อความจากช่อง Edit Box
       const editBox = document.getElementById('customEditBox');
       const filterText = editBox ? editBox.value.trim().toLowerCase() : "";
       
-      // ดึงค่าจากปุ่ม Dropdown ทั้งหมด
       let dropdownFilters = [];
       let maxPrice = null;
       let minPrice = null;
+      let exactPropertyType = null; // เพิ่มตัวแปรสำหรับจับคู่เป๊ะๆ (คำสั่ง 1)
       
       const filterBtns = document.querySelectorAll('.filter-btn');
       filterBtns.forEach(btn => {
@@ -775,6 +757,9 @@
               } else {
                 maxPrice = priceNum;
               }
+            } else if (topic === 'คอนโด/บ้าน') {
+              // เก็บค่าเฉพาะสำหรับบังคับการกรองแบบตรงตัว
+              exactPropertyType = val; 
             } else {
               dropdownFilters.push(val.toLowerCase());
             }
@@ -784,20 +769,17 @@
 
       let displayProps = properties;
       
-      // รวมคีย์เวิร์ดจาก Edit box และ Dropdown
       const textKeywords = [];
       if (filterText) textKeywords.push(...filterText.split(/\s+/).filter(k => k.length > 0));
       if (dropdownFilters.length > 0) textKeywords.push(...dropdownFilters);
 
-      // กรองผลลัพธ์จากเงื่อนไขทั้งหมดรวมถึงราคา
-      if (textKeywords.length > 0 || maxPrice !== null || minPrice !== null) {
+      // กรองผลลัพธ์
+      if (textKeywords.length > 0 || maxPrice !== null || minPrice !== null || exactPropertyType !== null) {
         displayProps = properties.filter(p => {
           const fullText = Object.values(p).map(v => v ? String(v).toLowerCase() : '').join(' ');
           
-          // เช็คเงื่อนไขข้อความ
           const textMatch = textKeywords.length === 0 || textKeywords.every(kw => fullText.includes(kw));
           
-          // เช็คเงื่อนไขราคา (แปลงจาก Database เป็นตัวเลข)
           let priceMatch = true;
           if (maxPrice !== null || minPrice !== null) {
             let pPrice = p.price ? parseInt(String(p.price).replace(/[^0-9]/g, ''), 10) : 0;
@@ -805,7 +787,17 @@
             if (minPrice !== null && pPrice < minPrice) priceMatch = false;
           }
           
-          return textMatch && priceMatch;
+          // ระบบกรองแบบบังคับเป๊ะตามที่เลือก (แก้ไขตามคำสั่ง 1)
+          let typeMatch = true;
+          if (exactPropertyType !== null) {
+            if (!p.propertyType) {
+              typeMatch = false;
+            } else {
+              typeMatch = String(p.propertyType).includes(exactPropertyType);
+            }
+          }
+          
+          return textMatch && priceMatch && typeMatch;
         });
       }
 
@@ -814,24 +806,47 @@
         return;
       }
 
-      displayProps.forEach((p) => {
+      // วนลูปและจัดโครงสร้าง UI การ์ดตาม (คำสั่ง 3)
+      const bgColors = ['#fbeceb', '#eef5ff', '#fdf6e7'];
+
+      displayProps.forEach((p, index) => {
         const originalIndex = properties.indexOf(p);
+        const cardBg = bgColors[index % 3]; // สลับสีพื้นหลัง 3 สีตามรูปภาพตัวอย่าง
+
         const safeType = p.propertyType || 'อสังหาฯ';
-        const safePrice = p.price ? Number(p.price).toLocaleString() : '-';
-        const safeLoc = `${p.district || ''} ${p.province || ''}`.trim();
-        const safeSize = p.size || 'ไม่ระบุขนาด';
-        const highlight = p.highlight || p.project || 'ทำเลดี น่าอยู่';
+        const safePrice = p.price ? p.price : '-'; 
+        const safeProject = p.project ? `โครงการ: ${p.project}` : 'โครงการ: -';
+        
+        const locParts = [];
+        if (p.road) locParts.push(p.road);
+        if (p.district) locParts.push(p.district);
+        if (p.province) locParts.push(p.province);
+        const safeLoc = locParts.length > 0 ? locParts.join(', ') : '-';
+        
+        const safeDemand = p.demandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || 'ขาย/เช่า';
 
         container.innerHTML += `
-          <div class="compact-card" onclick="openDetailModal(${originalIndex})">
-            <div style="margin-bottom: 8px;">
-              <span class="card-title">${safeType}</span>
-              <span class="card-price">฿ ${safePrice}</span>
+          <div style="background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;" onclick="openDetailModal(${originalIndex})">
+            <!-- บรรทัดบนสุด: ประเภทบ้าน (ซ้าย) / ราคา (ขวา) -->
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:18px; margin-bottom: 8px;">
+              <span style="color:#111;">${safeType}</span>
+              <span style="color:#d9534f;">${safePrice}</span>
             </div>
-            <div class="card-desc">
-              📍 <b>ทำเล:</b> ${safeLoc}<br>
-              📐 <b>ขนาด:</b> ${safeSize}<br>
-              ✨ <b>จุดเด่น:</b> ${highlight}
+            
+            <!-- บรรทัดกลาง: ชื่อโครงการหมู่บ้าน -->
+            <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
+              ${safeProject}
+            </div>
+            
+            <!-- บรรทัดล่างสุด: ถนน เขต จังหวัด (ซ้าย) / ประเภท ซื้อ-เช่า พร้อมปุ่ม (ขวา) -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:14px; color:#555;">
+              <div style="flex:1; padding-right:10px;">
+                ${safeLoc}
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px; white-space:nowrap;">
+                <span style="font-size:12px; color:#777;">ประเภท: ${safeDemand}</span>
+                <button style="background:#4a83cc; color:#fff; border:none; border-radius:15px; padding:6px 14px; cursor:pointer; font-size:12px;">ดูรายละเอียด</button>
+              </div>
             </div>
           </div>
         `;
@@ -891,7 +906,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.8 (Search with Dropdowns + Edit Box & Exact Numeric Price Filter)
+    🟢 Version: 1.0.9 (Fixed List Rendering, strict exact Match, clear UI placement)
   </div>
 </body>
 </html>
