@@ -239,16 +239,12 @@
 
     .detail-content { flex: 1; overflow-y: auto; margin-top: 8px; }
     .detail-title { font-size: 22px; font-weight: bold; color: var(--text-main); }
-    .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; }
+    .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; margin-bottom: 10px; }
     
     .ai-detail-box {
       background: #e6f2ff; border-radius: 15px; padding: 15px;
       margin-top: 8px; display: flex; align-items: center; gap: 10px;
     }
-
-    /* Custom scrollbar สำหรับช่องรายละเอียด */
-    #modalDesc::-webkit-scrollbar { width: 6px; }
-    #modalDesc::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
   </style>
 </head>
 <body>
@@ -303,16 +299,8 @@
       <div class="image-slider" id="modalSlider"></div>
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
-        
-        <!-- แก้ไข: จัดปุ่มดูข้อมูลเชิงลึกไว้ขวามือ และราคาไว้ซ้ายมือ -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; margin-bottom: 10px;">
-          <div id="modalPrice" class="detail-price" style="margin-bottom: 0;">-</div>
-          <a id="modalDeepLink" href="#" target="_blank" style="background: var(--btn-blue); color: white; border: none; border-radius: 15px; padding: 8px 16px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15); text-decoration: none;">ดูข้อมูลเชิงลึก 🔍</a>
-        </div>
-        
-        <!-- แก้ไข: ทำให้รายละเอียดสามารถสไลด์เลื่อนได้ (Scrollable) -->
-        <div id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5; max-height: 180px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee;"></div>
-        
+        <div id="modalPrice" class="detail-price">-</div>
+        <p id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5;"></p>
         <div class="ai-detail-box">
           <div style="font-size: 20px;">🤖</div>
           <div>
@@ -320,6 +308,8 @@
             <div style="font-size: 12px; color: #666;">"สงสัยเรื่องส่วนกลาง การกู้ หรือรายละเอียดเพิ่มเติม ถามผมได้เลยครับ"</div>
           </div>
         </div>
+        <!-- เพิ่มปุ่มลิงก์ ดูข้อมูลเชิงลึก (ลิงก์เดิมของประกาศ) ตามคำสั่ง -->
+        <a id="modalUrlBtn" href="#" target="_blank" style="display: block; text-align: center; background: var(--btn-blue); color: white; padding: 12px 18px; border-radius: 15px; text-decoration: none; font-weight: bold; margin-top: 15px; margin-bottom: 15px; font-size: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">ดูข้อมูลเชิงลึก (ลิงก์ต้นทางประกาศ)</a>
       </div>
     </div>
   </div>
@@ -790,7 +780,6 @@
           
           let priceMatch = true;
           if (maxPrice !== null || minPrice !== null) {
-            // รองรับดึงข้อมูลราคาหลากหลายคีย์
             const propPrice = p.price || p.Price || p['ราคา'] || '';
             let pPrice = propPrice ? parseInt(String(propPrice).replace(/[^0-9]/g, ''), 10) : 0;
             if (maxPrice !== null && pPrice > maxPrice) priceMatch = false;
@@ -822,7 +811,6 @@
         const originalIndex = properties.indexOf(p);
         const cardBg = bgColors[index % 3]; 
 
-        // ดักจับคีย์ทุกรูปแบบเพื่อแก้บั๊กข้อมูลไม่แสดง
         const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
         const price = p.price || p.Price || p['ราคา'] || '-';
         const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
@@ -843,23 +831,19 @@
         
         const safeDemand = p.demandType || p.DemandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || p['ประเภทประกาศ'] || 'ขาย/เช่า';
         
-        // รูปแบบข้อความเนื้อที่ (ถ้ามีข้อมูลเนื้อที่จะเอามาต่อท้ายทันที)
         const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
 
         container.innerHTML += `
           <div style="background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;" onclick="openDetailModal(${originalIndex})">
-            <!-- บรรทัดบนสุด: ประเภทบ้าน + เนื้อที่ (ซ้าย) / ราคา (ขวา) -->
             <div style="display:flex; justify-content:space-between; align-items: center; font-weight:bold; font-size:18px; margin-bottom: 8px;">
               <div style="color:#111;">${safeType}${displaySize}</div>
               <div style="color:#d9534f; white-space: nowrap; margin-left: 10px;">${safePrice}</div>
             </div>
             
-            <!-- บรรทัดกลาง: ชื่อโครงการหมู่บ้าน -->
             <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
               ${safeProject}
             </div>
             
-            <!-- บรรทัดล่างสุด: ถนน เขต จังหวัด (ซ้าย) / ประเภท ซื้อ-เช่า พร้อมปุ่ม (ขวา) -->
             <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:14px; color:#555;">
               <div style="flex:1; padding-right:10px;">
                 ${safeLoc}
@@ -878,7 +862,6 @@
       const p = currentProperties[index];
       if (!p) return;
 
-      // ดักจับคีย์แบบครบถ้วนเผื่อการดึงข้อมูลผิดพลาด
       const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
       const price = p.price || p.Price || p['ราคา'] || '-';
       const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
@@ -887,25 +870,26 @@
       const prov = p.province || p.Province || p['จังหวัด'];
       const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || '';
       
-      // ดึงข้อมูล Column U (รายละเอียดสั้นๆ) พร้อมรองรับ Key อื่นๆ ในกรณีที่ชื่อคอลัมน์เปลี่ยน
-      const detailsColU = p['รายละเอียดสั้นๆ ไม่เกิน 400 คำ (เน้นคำที่คนดูอยากดู ไม่เป็นข้อความขยะ)'] || p['รายละเอียดสั้นๆ ไม่เกิน 400 คำ'] || p['รายละเอียดสั้นๆ'] || p['รายละเอียด'] || p.details || p.Details || 'ไม่มีข้อมูลเพิ่มเติม';
+      // แก้ไขบั๊กส่วนที่ 1: ดักจับคีย์ข้อมูลรายละเอียดให้ครบถ้วนทุกรูปแบบคอลัมน์จาก Sheet
+      const details = p.details || p.Details || p['รายละเอียด'] || p['รายละเอียดสั้นๆ'] || p['รายละเอียดสั้นๆ ไม่เกิน 400 คำ'] || (Object.keys(p).find(k => k.includes('รายละเอียด')) ? p[Object.keys(p).find(k => k.includes('รายละเอียด'))] : '') || 'ไม่มีข้อมูลเพิ่มเติม';
 
-      // ดึงข้อมูล Column S (ลิงก์ต้นทาง)
-      const urlColS = p['ลิงก์ต้นทาง'] || p.url || p.Url || p.URL || p['ลิงก์'] || p.link || '#';
+      // แก้ไขบั๊กส่วนที่ 2: ดึงค่า URL ต้นทางของประกาศ
+      const detailUrl = p.url || p.URL || p['ลิงก์ต้นทาง'] || p['Url'] || '#';
 
       document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
       document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
-      
-      // อัปเดตลิงก์ "ดูข้อมูลเชิงลึก" และซ่อนหากไม่มี URL
-      const btnDeepLink = document.getElementById('modalDeepLink');
-      btnDeepLink.href = urlColS;
-      btnDeepLink.style.display = (urlColS !== '#' && urlColS) ? 'inline-block' : 'none';
-
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
         <b>ขนาด:</b> ${size || '-'}<br>
-        <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
+        <b>รายละเอียด:</b> ${details}
       `;
+
+      // อัปเดตลิงก์ปุ่ม "ดูข้อมูลเชิงลึก" ให้ลิงก์ไปยัง URL เดิมของประกาศ
+      const urlBtn = document.getElementById('modalUrlBtn');
+      if (urlBtn) {
+        urlBtn.href = detailUrl;
+        urlBtn.style.display = (detailUrl && detailUrl !== '#') ? 'block' : 'none';
+      }
 
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
@@ -948,7 +932,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.0 (Added Scrollable Details & Deep Insight Link Button)
+    🟢 Version: 1.1.1 (Fixed Modal Details Text Bug & Restored Deep Link URL Button)
   </div>
 </body>
 </html>
