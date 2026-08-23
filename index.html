@@ -86,7 +86,7 @@
       border: none;
       border-radius: 20px;
       padding: 10px 18px;
-      font-size: 16px;
+      font-size: 40px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 40 px */
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -94,7 +94,34 @@
     }
     .voice-btn.active { background: #ff6b81; }
 
-    #statusText { font-size: 14px; color: #555; margin-top: 8px; font-weight: bold; }
+    /* คำสั่ง 2: จัดแถวสำหรับช่อง edit และ ข้อความสถานะให้อยู่คู่กัน */
+    .input-status-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      margin: 10px 0;
+      gap: 10px;
+    }
+    
+    /* คำสั่ง 2: ช่อง edit สำหรับกรอกข้อความ กว้าง 2/3 */
+    .custom-edit {
+      width: 66.66%; 
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid var(--btn-blue);
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+
+    /* คำสั่ง 2: ข้อความแสดงสถานะ AI ชิดขวาสุด ต่อจากช่อง edit */
+    #statusText { 
+      font-size: 14px; 
+      color: #555; 
+      font-weight: bold; 
+      flex: 1; 
+      text-align: right; 
+    }
 
     /* --- ลูกเล่นความเคลื่อนไหวตอนโหลดไฟล์ --- */
     .loading-pulse {
@@ -107,7 +134,7 @@
       100% { opacity: 0.4; transform: scale(0.98); }
     }
 
-    /* --- คำสั่ง 1: CSS สำหรับ Dropdown เลื่อนซ้ายขวา --- */
+    /* --- CSS สำหรับ Dropdown เลื่อนซ้ายขวา --- */
     .filter-scroll-row {
       display: flex;
       flex-direction: row;
@@ -129,7 +156,7 @@
       color: var(--btn-blue);
       border-radius: 20px;
       padding: 6px 14px;
-      font-size: 13px;
+      font-size: 40px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 40 px */
       font-weight: bold;
       white-space: nowrap;
       cursor: pointer;
@@ -200,7 +227,7 @@
     }
     .dropdown-option-btn {
       background: #f0f4f8; border: none; padding: 12px;
-      border-radius: 10px; text-align: left; font-size: 15px;
+      border-radius: 10px; text-align: left; font-size: 40px; /* คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 40 px */
       cursor: pointer; transition: background 0.2s;
     }
     .dropdown-option-btn:active { background: #d0e0f0; }
@@ -243,10 +270,13 @@
       <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     </div>
     
-    <!-- ข้อความพร้อมเอฟเฟกต์ loading -->
-    <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
+    <!-- คำสั่ง 2: ช่อง edit ความกว้าง 2/3 และข้อความสถานะทางขวา -->
+    <div class="input-status-row">
+      <input type="text" class="custom-edit" placeholder="พิมพ์ที่ต้องการ">
+      <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
+    </div>
 
-    <!-- คำสั่ง 1: ช่อง Dropdown แบบแถบเลื่อนซ้ายขวา -->
+    <!-- ช่อง Dropdown แบบแถบเลื่อนซ้ายขวา -->
     <div class="filter-scroll-row">
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
@@ -263,8 +293,8 @@
       <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
     </div>
     
-    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ -->
-    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: #333;">
+    <!-- ปุ่มสำหรับกดทดสอบแสดงลิสต์ (คำสั่ง 1: ปรับขนาดตัวอักษรเป็น 40 px) -->
+    <button onclick="testShowList()" style="margin-top: 10px; background: #ffdfba; border: none; padding: 8px 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 40px; color: #333;">
       🧪 กดปุ่มนี้เพื่อแสดงลิสต์บ้าน
     </button>
   </div>
@@ -336,16 +366,30 @@
       }, 1000);
     });
 
-    // --- ฟังก์ชันสำหรับจัดการ Dropdown Pop-up (คำสั่ง 1) ---
+    // --- คำสั่ง 3: ฟังก์ชันสำหรับจัดการ Dropdown Pop-up เพิ่มตัวเลือกตามหัวข้อที่กด ---
     function openDropdownModal(topic) {
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       const optionsContainer = document.getElementById('dropdownOptions');
       
-      // ตัวอย่างการสร้างตัวเลือก (Mock-up พื้นฐาน) สามารถปรับแก้ตาม Database ทีหลังได้
-      const mockOptions = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      let options = [];
+      
+      if (topic === 'ขาย/เช่า') {
+        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
+      } else if (topic === 'คอนโด/บ้าน') {
+        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
+      } else if (topic === 'ราคา') {
+        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป"];
+      } else if (topic === 'จังหวัด') {
+        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
+      } else if (topic === 'เขต/อำเภอ') {
+        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
+      } else {
+        // กรณีปุ่มอื่นๆ ที่ยังไม่มีข้อมูลระบุไว้
+        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      }
       
       optionsContainer.innerHTML = '';
-      mockOptions.forEach(opt => {
+      options.forEach(opt => {
         optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${topic}', '${opt}')">${opt}</button>`;
       });
 
@@ -394,7 +438,6 @@
                 },
                 systemInstruction: {
                   parts: [{
-                    // คำสั่ง 2: เพิ่มแนวคิดข้อ 5 ให้ AI เป็นเซลล์มือหนึ่งตามคำสั่ง
                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
                     1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
                     2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON รูปแบบนี้:
