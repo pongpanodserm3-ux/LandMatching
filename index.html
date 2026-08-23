@@ -902,10 +902,23 @@
           detailsColU = 'ไม่มีข้อมูลเพิ่มเติม';
       }
 
-      // [แก้ไขบั๊กส่วนที่ 2] ดึงข้อมูลลิงก์ แบบยืดหยุ่น 
-      let urlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'link'], '#');
+      // [แก้ไขบั๊กส่วนที่ 2] ดึงข้อมูลลิงก์จาก Google Sheets ที่คอลัมน์ S (Index 18) เพื่อใช้เป็น URL
+      const keys = Object.keys(p);
+      let urlColS = '#';
+      if (keys.length > 18 && p[keys[18]] && String(p[keys[18]]).trim() !== '') {
+          urlColS = String(p[keys[18]]).trim();
+      } else {
+          // สำรองเผื่อข้อมูลเปลี่ยนแปลงโครงสร้าง
+          urlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'link'], '#');
+      }
+      
       if (String(urlColS).trim() === '') {
           urlColS = '#';
+      }
+
+      // ตรวจสอบและเติม http:// หากข้อมูลในคอลัมน์ S ไม่มี เพื่อให้เปิดลิงก์ได้จริง
+      if (urlColS !== '#' && !urlColS.startsWith('http')) {
+          urlColS = 'https://' + urlColS;
       }
 
       document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
@@ -976,7 +989,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.1 (Fixed Modal Details & Persistent Deep Link Button)
+    🟢 Version: 1.2.2 (Fixed Deep Link from Column S index 18)
   </div>
 </body>
 </html>
