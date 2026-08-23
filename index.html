@@ -500,7 +500,7 @@
                   let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
                   if (editBox && summaryParts.length > 0) {
                     // แก้ไขจุดนี้: กรองค่าที่ว่างออก แล้วเชื่อมทุกคำด้วยคำว่า " และ "
-                    editBox.value = summaryParts.filter(Boolean).join(' และ '); 
+                    editBox.value = summaryParts.filter(Boolean).join(' '); 
                   }
 
                   // ดึงข้อมูล Database
