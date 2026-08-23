@@ -43,7 +43,6 @@
       flex-shrink: 0;
     }
 
-    /* --- จัดกลุ่มรูปภาพและปุ่มให้อยู่บรรทัดเดียวกัน --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
@@ -162,6 +161,7 @@
       color: #fff;
     }
 
+    /* --- ส่วนล่าง: List View --- */
     #list-section {
       flex: 1;
       overflow-y: auto;
@@ -185,6 +185,7 @@
     .card-price { font-size: 16px; font-weight: bold; color: #d9534f; float: right; }
     .card-desc { font-size: 14px; color: #555; margin-top: 5px; line-height: 1.4; }
     
+    /* --- Modal --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
@@ -261,7 +262,7 @@
     </div>
     
     <div class="input-status-row">
-      <input type="text" class="custom-edit" placeholder="พิมพ์ที่ต้องการ">
+      <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
@@ -298,14 +299,11 @@
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
-      
       <div class="image-slider" id="modalSlider"></div>
-
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
         <div id="modalPrice" class="detail-price">-</div>
         <p id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5;"></p>
-
         <div class="ai-detail-box">
           <div style="font-size: 20px;">🤖</div>
           <div>
@@ -338,6 +336,9 @@
     let audioOutputContext = null;
     let nextPlayTime = 0;
     
+    // ตัวแปรสะสม Text จาก AI
+    let accumulatedText = ""; 
+    let isFetchingDB = false;
     let currentProperties = [];
 
     window.addEventListener('load', () => {
@@ -353,7 +354,6 @@
       const optionsContainer = document.getElementById('dropdownOptions');
       
       let options = [];
-      
       if (topic === 'ขาย/เช่า') {
         options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       } else if (topic === 'คอนโด/บ้าน') {
@@ -405,6 +405,9 @@
 
       try {
         isSetupReady = false;
+        accumulatedText = "";
+        isFetchingDB = false;
+        
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
         statusText.classList.add('loading-pulse'); 
 
@@ -419,22 +422,23 @@
               setup: {
                 model: "models/gemini-3.1-flash-live-preview", 
                 generationConfig: {
-                  responseModalities: ["AUDIO"],
+                  /* --- คำสั่งแก้ Error 2: บังคับให้ AI ส่งกลับทั้งเสียงและ Text ข้อความ --- */
+                  responseModalities: ["AUDIO", "TEXT"],
                   speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
                 },
                 systemInstruction: {
                   parts: [{
                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
                     1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
-                    2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON รูปแบบนี้:
+                    2. เมื่อได้ข้อมูลครบ ให้สรุปข้อมูลเป็น JSON และส่งกลับมาเป็นรูปแบบข้อความ (Text) ควบคู่กับเสียงเสมอ รูปแบบ JSON คือ:
                     {
                       "isFinished": true,
                       "userData": { "demandType": "ซื้อ", "location": "ลาดพร้าว", "budget": "5000000" },
                       "criteria": { "propertyType": "บ้าน", "province": "กทม" }
                     }
-                    3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที แล้วสแตนด์บายรอผู้ใช้ถามต่อ
-                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้คุณเปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
-                    5. ถ้าลูกค้าสอบถามข้อมูลบ้านหลังใด ให้คุณทำตัวเป็นเซลล์มือหนึ่ง ติดตาม ต่อรองกับลูกค้า อย่างมีชั้นเชิง สอบถาม อยากได้ เงื่อน ไข อะไรเพิ่ม ไหม ถ้าเขาเริ่มไม่สนใจ ให้ AI ถามอยากต่อรองราคาบ้านหลังนี้ไหม ท่านอยากได้ราคาประมาณเท่าไหร่ ราคาอาจต่อรองได้ ขึ้นอยู่กับเจ้าของ`
+                    3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
+                    4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
+                    5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา`
                   }]
                 }
               }
@@ -463,34 +467,51 @@
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
+                // เล่นเสียงที่ได้รับ
                 if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
                   playPCMData(part.inlineData.data);
                 }
                 
-                /* --- แก้ไข Error 2: นำข้อความที่ AI ตอบ/สรุปผลมาพิมพ์ลงช่อง edit ทันที --- */
+                // --- ส่วนประมวลผล Text (ดักข้อมูล JSON ไปใส่ที่ช่อง Edit) ---
                 if (part.text) {
-                  const editBox = document.querySelector('.custom-edit');
-                  if (editBox) {
-                    // ตัด tag โค้ดออกหาก AI ส่งมาเป็น JSON หรือข้อความดิบ
-                    let cleanText = part.text.replace(/```json/g, '').replace(/```/g, '').trim();
-                    
+                  accumulatedText += part.text;
+                  const editBox = document.getElementById('customEditBox');
+                  
+                  // ตัดแท็ก ```json ออกเพื่อให้ตรวจสอบง่ายขึ้น
+                  let cleanText = accumulatedText.replace(/```json/g, '').replace(/```/g, '').trim();
+                  
+                  // ค้นหาโครงสร้าง JSON จากข้อความ
+                  const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+                  
+                  if (jsonMatch) {
                     try {
-                      const parsed = JSON.parse(cleanText);
-                      if (parsed.userData || parsed.criteria) {
-                        let summaryParts = [];
-                        if (parsed.userData) summaryParts.push(...Object.values(parsed.userData));
-                        if (parsed.criteria) summaryParts.push(...Object.values(parsed.criteria));
+                      const parsed = JSON.parse(jsonMatch[0]);
+                      
+                      // นำ Value ใน JSON มาต่อกันเพื่อแสดงผลในช่อง Edit
+                      let summaryParts = [];
+                      if (parsed.userData) summaryParts.push(...Object.values(parsed.userData));
+                      if (parsed.criteria) summaryParts.push(...Object.values(parsed.criteria));
+                      
+                      if (editBox && summaryParts.length > 0) {
                         editBox.value = summaryParts.filter(Boolean).join(' ');
-                      } else {
-                        editBox.value = cleanText;
                       }
                       
-                      if (parsed.isFinished) {
+                      // ถ้า AI ส่ง isFinished: true หมายถึงสรุปจบแล้ว ให้เรียกฐานข้อมูล
+                      if (parsed.isFinished && !isFetchingDB) {
+                        isFetchingDB = true; // ป้องกันการเรียกซ้ำซ้อน
+                        
+                        // เคลียร์ปุ่มฟิลเตอร์
+                        const filterBtns = document.querySelectorAll('.filter-btn');
+                        filterBtns.forEach(b => {
+                          const match = b.getAttribute('onclick')?.match(/'([^']+)'/);
+                          if (match && match[1]) b.innerText = match[1] + " ▾";
+                        });
+
                         fetchDatabase(parsed.userData, parsed.criteria);
+                        accumulatedText = ""; // เคลียร์ text ที่สะสมไว้หลังจากดึงข้อมูลแล้ว
                       }
                     } catch (err) {
-                      // หากไม่ใช่ JSON ให้พิมพ์ข้อความดิบลงช่อง edit ได้เลย
-                      editBox.value = cleanText;
+                      // รอข้อมูลมาต่อให้ครบวงเล็บ
                     }
                   }
                 }
@@ -563,6 +584,9 @@
     async function stopVoiceSession() {
       isSessionActive = false;
       isSetupReady = false;
+      accumulatedText = "";
+      isFetchingDB = false;
+      
       if (webSocket) webSocket.close();
       if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
       
@@ -623,7 +647,7 @@
             <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
               <b>เกิดข้อผิดพลาดในการเชื่อมต่อ Database:</b><br><br>
               <span style="color: #333;">${error.message}</span><br><br>
-              <span style="color: #888; font-size: 13px;">(คำแนะนำ: เลื่อนขึ้นไปดูตัวแปร GAS_WEB_APP_URL ด้านบนสุดของไฟล์ ว่าใส่ลิงก์ถูกต้อง และตั้งค่าสิทธิ์ Anyone แล้วหรือยัง)</span>
+              <span style="color: #888; font-size: 13px;">(คำแนะนำ: ตรวจสอบการตั้งค่า Google Apps Script)</span>
             </div>`;
         }
       }
@@ -681,7 +705,7 @@
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
-        const imgUrl = property[`image${i}`] || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        const imgUrl = property[`image${i}`] || `[https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$](https://via.placeholder.com/400x300/e0e0e0/888?text=Image+$){i}`;
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
@@ -719,7 +743,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.0.4 (Added Filters & Negotiator AI Mode)
+    🟢 Version: 1.0.4 (Fixed Audio/Text Modalities for JSON Summary)
   </div>
 </body>
 </html>
