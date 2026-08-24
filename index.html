@@ -893,13 +893,8 @@
           detailsColU = 'ไม่มีข้อมูลเพิ่มเติม';
       }
 
-      const keys = Object.keys(p);
-      let rawUrlColS = '#';
-      if (keys.length > 18 && p[keys[18]] !== undefined && p[keys[18]] !== null) {
-          rawUrlColS = String(p[keys[18]]).trim();
-      } else {
-          rawUrlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'URL', 'link'], '#');
-      }
+      // แก้ไขปัญหา URL กลายเป็นวันที่ โดยใช้การหาคำว่า 'url', 'ลิงก์' แทนการ fix ลำดับคอลัมน์
+      let rawUrlColS = findValue(['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
 
       let clickableUrl = rawUrlColS;
       if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
@@ -924,15 +919,20 @@
         btnDeepLink.onclick = null;
       }
 
-      // ดึงข้อมูลดิบทั้งหมดเพื่อนำมาแสดง
-      const allRawDataHtml = Object.entries(p).map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined ? val : '-'}`).join('<br>');
+      // กรอง Key ที่เป็นภาษาอังกฤษที่สร้างซ้ำจาก Backend ออก เพื่อให้แสดงผลเนียนตา
+      const duplicateEngKeys = ['propertytype', 'province', 'district', 'price', 'size'];
+      
+      const allRawDataHtml = Object.entries(p)
+        .filter(([key, val]) => !duplicateEngKeys.includes(key.toLowerCase())) // ซ่อนตัวที่ซ้ำ
+        .map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined ? val : '-'}`)
+        .join('<br>');
 
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
         <b>ขนาด:</b> ${size || '-'}<br>
         <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-word; font-size: 13px; color: #555;">
-          <b>📋 ข้อมูลดิบทั้งหมด (ทุก Column):</b><br>
+          <b>📋 ข้อมูลดิบจากฐานข้อมูล:</b><br>
           <span style="display: block; margin-top: 5px;">
             ${allRawDataHtml}
           </span>
@@ -980,7 +980,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.4 (Added All Raw Data Columns Preview)
+    🟢 Version: 1.2.5 (Fixed URL Index Bug & Cleaned Raw Data)
   </div>
 </body>
 </html>
