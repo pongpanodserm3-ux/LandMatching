@@ -818,13 +818,13 @@
         const originalIndex = properties.indexOf(p);
         const cardBg = bgColors[index % 3]; 
 
-        const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหาฯ';
+        const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหา';
         const price = p.price || p.Price || p['ราคา'] || '-';
         const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
         const road = p.road || p.Road || p.roadName || p['ถนน'];
         const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
         const prov = p.province || p.Province || p['จังหวัด'];
-        const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || '';
+        const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || p['เนื้อที่'] || '';
 
         const safeType = type;
         const safePrice = price; 
@@ -880,7 +880,7 @@
         return defaultVal;
       };
 
-      const type = findValue(['propertytype', 'ประเภทอสังหา', 'ประเภท'], 'อสังหาฯ');
+      const type = findValue(['propertytype', 'ประเภทอสังหา', 'ประเภท'], 'อสังหา');
       const price = findValue(['price', 'ราคา'], '-');
       const proj = findValue(['project', 'โครงการ'], '');
       const road = findValue(['road', 'ถนน'], '');
@@ -898,7 +898,7 @@
       if (keys.length > 18 && p[keys[18]] !== undefined && p[keys[18]] !== null) {
           rawUrlColS = String(p[keys[18]]).trim();
       } else {
-          rawUrlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'link'], '#');
+          rawUrlColS = findValue(['ลิงก์ต้นทาง', 'ลิงก์', 'url', 'URL', 'link'], '#');
       }
 
       let clickableUrl = rawUrlColS;
@@ -924,14 +924,18 @@
         btnDeepLink.onclick = null;
       }
 
-      // แสดงค่าลิงก์ดิบที่ดึงมาจากคอลัมน์ S ต่อท้ายในกล่องรายละเอียดเพื่อให้ตรวจสอบได้ชัดเจน
+      // ดึงข้อมูลดิบทั้งหมดเพื่อนำมาแสดง
+      const allRawDataHtml = Object.entries(p).map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined ? val : '-'}`).join('<br>');
+
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
         <b>ขนาด:</b> ${size || '-'}<br>
         <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
-        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-all; font-size: 13px; color: #d9534f;">
-          <b>🔗 ข้อมูลดิบจากคอลัมน์ S (ลิงก์ที่ได้รับ):</b><br>
-          <span>${rawUrlColS}</span>
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-word; font-size: 13px; color: #555;">
+          <b>📋 ข้อมูลดิบทั้งหมด (ทุก Column):</b><br>
+          <span style="display: block; margin-top: 5px;">
+            ${allRawDataHtml}
+          </span>
         </div>
       `;
 
@@ -976,7 +980,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.3 (Added Raw Column S Link Preview)
+    🟢 Version: 1.2.4 (Added All Raw Data Columns Preview)
   </div>
 </body>
 </html>
