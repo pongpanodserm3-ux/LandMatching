@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<! n t GAS_RichM_IndexHtml-voice-1-4 >
+<!-- nt GAS_RichM_IndexHtml-voice-1-4 -->
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -262,7 +262,7 @@
     
     <div class="input-status-row">
       <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ" 
-             oninput="if(currentProperties && currentProperties.length > 0) renderListView(currentProperties);"
+             oninput="if(AppState.data.properties && AppState.data.properties.length > 0) renderListView(AppState.data.properties);"
              onkeypress="if(event.key === 'Enter') { testShowList(); }">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
@@ -327,7 +327,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 id="dropdownModalTitle" style="color: var(--text-main); margin: 0;">เลือกข้อมูล</h3>
         <div style="display: flex; align-items: center; gap: 10px;">
-          <button onclick="selectDropdownOption(currentDropdownTopic, 'เคลียร์ค่า')" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
+          <button onclick="selectDropdownOption(AppState.ui.dropdownTopic, 'เคลียร์ค่า')" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
           <span onclick="closeDropdownModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
         </div>
       </div>
@@ -337,33 +337,72 @@
   </div>
 
   <script>
-    const BACKEND_WS_URL = "wss://land-matching-backend.onrender.com";
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec";
+    // ==========================================
+    // 1. CONFIGURATION & CONSTANTS
+    // ==========================================
+    const CONFIG = {
+      BACKEND_WS_URL: "wss://land-matching-backend.onrender.com",
+      GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
+      LIFF_ID: "2011006139-Wn6PhY6D"
+    };
 
-    let isSessionActive = false;
-    let isSetupReady = false;
-    let webSocket = null;
-    let audioContext = null;
-    let mediaStream = null;
-    let processor = null;
-    let audioOutputContext = null;
-    let nextPlayTime = 0;
-    let isFetchingDB = false;
-    let currentProperties = [];
-    
-    let currentDropdownTopic = "";
-    let currentDropdownOptionsList = [];
+    // Standardized 23 Columns Schema Standard Mapping
+    const SHEET_COLUMNS = [
+      'ชื่อ Facebook ผู้โพสต์', 'โครงการ', 'ประเภทอสังหา', 'จังหวัด', 'เขต/อำเภอ',
+      'ถนน', 'แบบราคา', 'ราคาขาย', 'ราคาเช่า', 'เนื้อที่', 'เนื้อที่ ตัวเลข',
+      'เบอร์', 'line id', 'date', 'use', 'use2', 'use3', 'use4', 'url',
+      'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
+    ];
 
+    // ==========================================
+    // 2. CENTRALIZED APPLICATION STATE
+    // ==========================================
+    const AppState = {
+      voice: {
+        isActive: false,
+        isSetupReady: false,
+        ws: null,
+        audioCtx: null,
+        mediaStream: null,
+        processor: null,
+        audioOutCtx: null,
+        nextPlayTime: 0
+      },
+      data: {
+        isFetching: false,
+        properties: []
+      },
+      ui: {
+        dropdownTopic: "",
+        dropdownOptions: []
+      }
+    };
+
+    // Helper: Safely extract property values matching exact sheet columns with fallback options
+    function getPropValue(item, possibleKeys, defaultVal = '') {
+      if (!item) return defaultVal;
+      const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
+      for (const k of keys) {
+        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '') {
+          return item[k];
+        }
+      }
+      return defaultVal;
+    }
+
+    // ==========================================
+    // 3. UI & DROPDOWN MANAGEMENT
+    // ==========================================
     window.addEventListener('load', () => {
       setTimeout(() => {
-        if (!isSessionActive) {
+        if (!AppState.voice.isActive) {
           startVoiceSession();
         }
       }, 1000);
     });
 
     function openDropdownModal(topic) {
-      currentDropdownTopic = topic;
+      AppState.ui.dropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       document.getElementById('dropdownSearchInput').value = '';
       
@@ -382,9 +421,8 @@
         options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
       }
       
-      currentDropdownOptionsList = options;
-      renderDropdownOptions(currentDropdownOptionsList);
-
+      AppState.ui.dropdownOptions = options;
+      renderDropdownOptions(AppState.ui.dropdownOptions);
       document.getElementById('dropdownModalOverlay').classList.add('active');
     }
 
@@ -392,19 +430,19 @@
       const optionsContainer = document.getElementById('dropdownOptions');
       optionsContainer.innerHTML = '';
       
-      if(optionsToRender.length === 0) {
+      if (optionsToRender.length === 0) {
         optionsContainer.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">ไม่พบตัวเลือกที่ค้นหา</div>';
         return;
       }
       
       optionsToRender.forEach(opt => {
-        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${currentDropdownTopic}', '${opt}')">${opt}</button>`;
+        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${AppState.ui.dropdownTopic}', '${opt}')">${opt}</button>`;
       });
     }
 
     function filterDropdownOptions() {
       const searchText = document.getElementById('dropdownSearchInput').value.toLowerCase();
-      const filteredOptions = currentDropdownOptionsList.filter(opt => 
+      const filteredOptions = AppState.ui.dropdownOptions.filter(opt => 
         opt.toLowerCase().includes(searchText)
       );
       renderDropdownOptions(filteredOptions);
@@ -420,20 +458,19 @@
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
         if (onClickAttr.includes(`'${topic}'`)) {
-          if (value === "เคลียร์ค่า") {
-            btn.innerText = `${topic} ▾`;
-          } else {
-            btn.innerText = `${value} ▾`;
-          }
+          btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
         }
       });
-      if(currentProperties && currentProperties.length > 0) {
-        renderListView(currentProperties);
+      if (AppState.data.properties && AppState.data.properties.length > 0) {
+        renderListView(AppState.data.properties);
       }
     }
 
+    // ==========================================
+    // 4. AI VOICE SESSION HANDLERS
+    // ==========================================
     async function toggleVoiceSession() {
-      if (!isSessionActive) await startVoiceSession();
+      if (!AppState.voice.isActive) await startVoiceSession();
       else await stopVoiceSession();
     }
 
@@ -443,19 +480,19 @@
       const statusText = document.getElementById('statusText');
 
       try {
-        isSetupReady = false;
-        isFetchingDB = false;
+        AppState.voice.isSetupReady = false;
+        AppState.data.isFetching = false;
         
         statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
         statusText.classList.add('loading-pulse'); 
 
-        audioOutputContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-        nextPlayTime = audioOutputContext.currentTime;
+        AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
 
-        webSocket = new WebSocket(BACKEND_WS_URL);
+        AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
 
-        webSocket.onopen = () => {
-          if (webSocket.readyState === WebSocket.OPEN) {
+        AppState.voice.ws.onopen = () => {
+          if (AppState.voice.ws.readyState === WebSocket.OPEN) {
             const setupData = {
               setup: {
                 model: "models/gemini-3.1-flash-live-preview", 
@@ -502,21 +539,21 @@
                 }]
               }
             };
-            webSocket.send(JSON.stringify(setupData));
+            AppState.voice.ws.send(JSON.stringify(setupData));
           }
 
-          isSessionActive = true;
+          AppState.voice.isActive = true;
           btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
 
-        webSocket.onmessage = async (event) => {
+        AppState.voice.ws.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
             
             if (response.setupComplete) {
-              isSetupReady = true;
+              AppState.voice.isSetupReady = true;
               statusText.classList.remove('loading-pulse');
               statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
               await initMicrophone(); 
@@ -548,13 +585,13 @@
                     editBox.value = summaryParts.filter(Boolean).join(' '); 
                   }
 
-                  if (!isFetchingDB) {
-                    isFetchingDB = true;
+                  if (!AppState.data.isFetching) {
+                    AppState.data.isFetching = true;
                     fetchDatabase(userData, criteria);
                   }
 
-                  if (webSocket && webSocket.readyState === WebSocket.OPEN && call.id) {
-                    webSocket.send(JSON.stringify({
+                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                    AppState.voice.ws.send(JSON.stringify({
                       toolResponse: {
                         functionResponses: [{
                           response: { output: { success: true } },
@@ -570,7 +607,7 @@
           } catch (e) {}
         };
 
-        webSocket.onclose = () => stopVoiceSession();
+        AppState.voice.ws.onclose = () => stopVoiceSession();
 
       } catch (err) {
         statusText.classList.remove('loading-pulse');
@@ -579,22 +616,22 @@
     }
 
     async function initMicrophone() {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
-      audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
+      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
       
-      const source = audioContext.createMediaStreamSource(mediaStream);
-      processor = audioContext.createScriptProcessor(4096, 1, 1);
+      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
+      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+      source.connect(AppState.voice.processor);
+      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
 
-      processor.onaudioprocess = (e) => {
-        if (!isSessionActive || !isSetupReady || !webSocket || webSocket.readyState !== WebSocket.OPEN) return;
+      AppState.voice.processor.onaudioprocess = (e) => {
+        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
         const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = convertFloat32ToPCM16(inputData);
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
-        webSocket.send(JSON.stringify({
+        AppState.voice.ws.send(JSON.stringify({
           realtimeInput: {
             audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
           }
@@ -610,7 +647,7 @@
     }
 
     function playPCMData(base64Audio) {
-      if (!audioOutputContext || audioOutputContext.state === 'closed') return;
+      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
       const raw = atob(base64Audio);
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
@@ -619,31 +656,33 @@
       const float32 = new Float32Array(int16.length);
       for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
 
-      const buffer = audioOutputContext.createBuffer(1, float32.length, 24000);
+      const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
       buffer.getChannelData(0).set(float32);
 
-      const source = audioOutputContext.createBufferSource();
+      const source = AppState.voice.audioOutCtx.createBufferSource();
       source.buffer = buffer;
-      source.connect(audioOutputContext.destination);
+      source.connect(AppState.voice.audioOutCtx.destination);
 
-      if (nextPlayTime < audioOutputContext.currentTime) nextPlayTime = audioOutputContext.currentTime;
-      source.start(nextPlayTime);
-      nextPlayTime += buffer.duration;
+      if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+      }
+      source.start(AppState.voice.nextPlayTime);
+      AppState.voice.nextPlayTime += buffer.duration;
     }
 
     async function stopVoiceSession() {
-      isSessionActive = false;
-      isSetupReady = false;
-      isFetchingDB = false;
+      AppState.voice.isActive = false;
+      AppState.voice.isSetupReady = false;
+      AppState.data.isFetching = false;
       
-      if (webSocket) webSocket.close();
-      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+      if (AppState.voice.ws) AppState.voice.ws.close();
+      if (AppState.voice.mediaStream) AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
       
-      if (audioContext && audioContext.state !== 'closed') {
-        try { await audioContext.close(); } catch(e) {}
+      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
+        try { await AppState.voice.audioCtx.close(); } catch(e) {}
       }
-      if (audioOutputContext && audioOutputContext.state !== 'closed') {
-        try { await audioOutputContext.close(); } catch(e) {}
+      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
+        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
       }
 
       const btn = document.getElementById('toggleBtn');
@@ -657,6 +696,9 @@
       statusText.innerText = "AI หยุดทำงานชั่วคราว";
     }
 
+    // ==========================================
+    // 5. DATABASE & LIST VIEW MANAGEMENT
+    // ==========================================
     async function testShowList() {
       document.getElementById('statusText').innerText = "กำลังดึงข้อมูลจาก Database จริง... ⏳";
       
@@ -695,12 +737,12 @@
       statusText.classList.add('loading-pulse');
       
       const container = document.getElementById('resultsContainer');
-      if(container) {
+      if (container) {
         container.innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังเชื่อมต่อ Google Sheets...</div>";
       }
     
       try {
-        const res = await fetch(GAS_WEB_APP_URL, {
+        const res = await fetch(CONFIG.GAS_WEB_APP_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({ action: 'searchAll', userData: userData, criteria: criteria, searchText: searchText }),
@@ -710,8 +752,8 @@
         const data = await res.json();
         
         if (data.status === "success" && data.results && data.results.length > 0) {
-          currentProperties = data.results;
-          renderListView(currentProperties); 
+          AppState.data.properties = data.results;
+          renderListView(AppState.data.properties); 
           statusText.classList.remove('loading-pulse');
           statusText.innerText = "✅ ดึงข้อมูลสำเร็จ!";
         } else {
@@ -722,7 +764,7 @@
         console.error("Database Error:", error);
         statusText.classList.remove('loading-pulse');
         statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ หรือไม่พบข้อมูล";
-        if(container) {
+        if (container) {
           container.innerHTML = `
             <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
               <b>ข้อผิดพลาด/ผลการค้นหา:</b><br><br>
@@ -730,7 +772,7 @@
             </div>`;
         }
       } finally {
-        isFetchingDB = false;
+        AppState.data.isFetching = false;
       }
     }
 
@@ -788,7 +830,7 @@
           
           let priceMatch = true;
           if (maxPrice !== null || minPrice !== null) {
-            const propPrice = p.price || p.Price || p['ราคา'] || '';
+            const propPrice = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'Price', 'ราคา']);
             let pPrice = propPrice ? parseInt(String(propPrice).replace(/[^0-9]/g, ''), 10) : 0;
             if (maxPrice !== null && pPrice > maxPrice) priceMatch = false;
             if (minPrice !== null && pPrice < minPrice) priceMatch = false;
@@ -796,7 +838,7 @@
           
           let typeMatch = true;
           if (exactPropertyType !== null) {
-            const propType = p.propertyType || p.PropertyType || p['ประเภท'] || '';
+            const propType = getPropValue(p, ['ประเภทอสังหา', 'propertyType', 'PropertyType', 'ประเภท']);
             if (!propType) {
               typeMatch = false;
             } else {
@@ -819,13 +861,14 @@
         const originalIndex = properties.indexOf(p);
         const cardBg = bgColors[index % 3]; 
 
-        const type = p.propertyType || p.PropertyType || p['ประเภท'] || 'อสังหา';
-        const price = p.price || p.Price || p['ราคา'] || '-';
-        const proj = p.project || p.Project || p.projectName || p['โครงการ'] || p['ชื่อโครงการ'] || p['ชื่อโครงการ (เน้นภาษาไทย)'] || (Object.keys(p).find(k => k.includes('โครงการ')) ? p[Object.keys(p).find(k => k.includes('โครงการ'))] : '');
-        const road = p.road || p.Road || p.roadName || p['ถนน'];
-        const dist = p.district || p.District || p['เขต'] || p['อำเภอ'];
-        const prov = p.province || p.Province || p['จังหวัด'];
-        const size = p.size || p.Size || p.area || p['ขนาด'] || p['พื้นที่'] || p['เนื้อที่'] || '';
+        // Mapping to 23 standardized columns with fallback backward-compatibility
+        const type = getPropValue(p, ['ประเภทอสังหา', 'propertyType', 'PropertyType', 'ประเภท'], 'อสังหา');
+        const price = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'Price', 'ราคา'], '-');
+        const proj = getPropValue(p, ['โครงการ', 'project', 'Project', 'projectName', 'ชื่อโครงการ']);
+        const road = getPropValue(p, ['ถนน', 'road', 'Road']);
+        const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'District', 'เขต', 'อำเภอ']);
+        const prov = getPropValue(p, ['จังหวัด', 'province', 'Province']);
+        const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'Size', 'area', 'ขนาด', 'พื้นที่']);
 
         const safeType = type;
         const safePrice = price; 
@@ -837,8 +880,7 @@
         if (prov) locParts.push(prov);
         const safeLoc = locParts.length > 0 ? locParts.join(', ') : '-';
         
-        const safeDemand = p.demandType || p.DemandType || (p.type && (p.type.includes("ขาย") || p.type.includes("เช่า")) ? p.type : "") || p['ประเภทประกาศ'] || 'ขาย/เช่า';
-        
+        const safeDemand = getPropValue(p, ['แบบราคา', 'demandType', 'DemandType', 'ประเภทประกาศ'], 'ขาย/เช่า');
         const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
 
         container.innerHTML += `
@@ -866,36 +908,26 @@
       });
     }
 
+    // ==========================================
+    // 6. DETAIL MODAL HANDLERS
+    // ==========================================
     function openDetailModal(index) {
-      const p = currentProperties[index];
+      const p = AppState.data.properties[index];
       if (!p) return;
 
-      const findValue = (keywords, defaultVal) => {
-        const keys = Object.keys(p);
-        for (let kw of keywords) {
-          const matchedKey = keys.find(k => k.toLowerCase().includes(kw.toLowerCase()));
-          if (matchedKey && p[matchedKey] !== undefined && p[matchedKey] !== null) {
-            return p[matchedKey];
-          }
-        }
-        return defaultVal;
-      };
-
-      const type = findValue(['propertytype', 'ประเภทอสังหา', 'ประเภท'], 'อสังหา');
-      const price = findValue(['price', 'ราคา'], '-');
-      const proj = findValue(['project', 'โครงการ'], '');
-      const road = findValue(['road', 'ถนน'], '');
-      const dist = findValue(['district', 'เขต', 'อำเภอ'], '');
-      const prov = findValue(['province', 'จังหวัด'], '');
-      const size = findValue(['size', 'area', 'ขนาด', 'พื้นที่', 'เนื้อที่'], '');
+      // Extract values according to standardized 23 Column Names
+      const type = getPropValue(p, ['ประเภทอสังหา', 'propertytype', 'ประเภท'], 'อสังหา');
+      const price = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'ราคา'], '-');
+      const proj = getPropValue(p, ['โครงการ', 'project'], '');
+      const road = getPropValue(p, ['ถนน', 'road'], '');
+      const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'เขต', 'อำเภอ'], '');
+      const prov = getPropValue(p, ['จังหวัด', 'province'], '');
+      const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'area', 'ขนาด', 'พื้นที่'], '');
       
-      let detailsColU = findValue(['รายละเอียดสั้นๆ', 'รายละเอียด', 'detail', 'ข้อมูลเพิ่มเติม'], 'ไม่มีข้อมูลเพิ่มเติม');
-      if (String(detailsColU).trim() === '') {
-          detailsColU = 'ไม่มีข้อมูลเพิ่มเติม';
-      }
+      let detailsColU = getPropValue(p, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'รายละเอียดสั้นๆ', 'รายละเอียด', 'detail'], 'ไม่มีข้อมูลเพิ่มเติม');
 
-      // แก้ไขปัญหา URL กลายเป็นวันที่ โดยใช้การหาคำว่า 'url', 'ลิงก์' แทนการ fix ลำดับคอลัมน์
-      let rawUrlColS = findValue(['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
+      // Fetch precise URL field from Standard Column Schema
+      let rawUrlColS = getPropValue(p, ['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
 
       let clickableUrl = rawUrlColS;
       if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
@@ -920,11 +952,11 @@
         btnDeepLink.onclick = null;
       }
 
-      // กรอง Key ที่เป็นภาษาอังกฤษที่สร้างซ้ำจาก Backend ออก เพื่อให้แสดงผลเนียนตา
+      // Hide duplicate temporary/English keys for clean raw data presentation
       const duplicateEngKeys = ['propertytype', 'province', 'district', 'price', 'size'];
       
       const allRawDataHtml = Object.entries(p)
-        .filter(([key, val]) => !duplicateEngKeys.includes(key.toLowerCase())) // ซ่อนตัวที่ซ้ำ
+        .filter(([key]) => !duplicateEngKeys.includes(key.toLowerCase()))
         .map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined ? val : '-'}`)
         .join('<br>');
 
@@ -943,7 +975,7 @@
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
-        const imgUrl = findValue([`image${i}`, `รูป${i}`, `pic${i}`], null) || `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`;
+        const imgUrl = getPropValue(p, [`image${i}`, `รูป${i}`, `pic${i}`], `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`);
         slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
       }
 
@@ -960,7 +992,7 @@
     }
 
     function sendTextToAI(textMessage) {
-      if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
         const message = {
           clientContent: {
             turns: [
@@ -972,16 +1004,17 @@
             turnComplete: true
           }
         };
-        webSocket.send(JSON.stringify(message));
+        AppState.voice.ws.send(JSON.stringify(message));
       }
     }
 
+    // Initialize LINE LIFF
     try {
-      liff.init({ liffId: "2011006139-Wn6PhY6D" }).catch(() => {});
+      liff.init({ liffId: CONFIG.LIFF_ID }).catch(() => {});
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.2.5 (Fixed URL Index Bug & Cleaned Raw Data)
+    🟢 Version: 1.2.6 (Refactored & Consolidated State)
   </div>
 </body>
 </html>
