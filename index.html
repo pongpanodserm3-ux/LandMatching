@@ -726,7 +726,7 @@
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
       }
       source.start(AppState.voice.nextPlayTime);
-      AppState.nextPlayTime += buffer.duration;
+      AppState.voice.nextPlayTime += buffer.duration;
     }
 
     async function stopVoiceSession() {
