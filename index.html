@@ -445,17 +445,17 @@
 
       // Infinite Scroll Event Listener บน List Section
       const listSection = document.getElementById('list-section');
-      listSection.addEventListener('scroll', () => {
-        if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-        
-        // ตรวจจับเมื่อเลื่อนใกล้ถึงท้ายรายการ (เช่น รายการที่ 6-7 จาก 10 รายการ)
-        const scrollPosition = listSection.scrollTop + listSection.clientHeight;
-        const threshold = listSection.scrollHeight - 300; 
-
-        if (scrollPosition >= threshold) {
-          loadNextPage();
-        }
-      });
+      if (listSection) {
+        listSection.addEventListener('scroll', () => {
+          if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+          
+          // ตรวจจับเมื่อผู้ใช้เลื่อนลงมาถึงช่วงประมาณรายการที่ 5-6 (เหลือระยะทางถึงด้านล่าง < 600px)
+          const remainingScroll = listSection.scrollHeight - (listSection.scrollTop + listSection.clientHeight);
+          if (remainingScroll < 600) {
+            loadNextPage();
+          }
+        });
+      }
     });
 
     function triggerSearchReset() {
@@ -538,7 +538,6 @@
       const avatar = document.getElementById('avatarCircle');
       const statusText = document.getElementById('statusText');
 
-      // ป้องกันการเปิด WebSocket ซ้ำซ้อน
       if (AppState.voice.ws || AppState.voice.isActive) {
         await stopVoiceSession();
       }
@@ -624,7 +623,6 @@
               return;
             }
 
-            // หาก AI ถูกขัดจังหวะ ให้รีเซ็ตเวลาการเล่นเสียง
             if (response.serverContent?.interrupted) {
               if (AppState.voice.audioOutCtx) {
                 AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
@@ -687,7 +685,6 @@
     }
 
     async function initMicrophone() {
-      // เพิ่ม echoCancellation และ noiseSuppression ป้องกันไมค์จับเสียงจากลำโพง
       AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -706,7 +703,6 @@
       AppState.voice.processor.onaudioprocess = (e) => {
         if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
         
-        // ปิดการส่งเสียงจากไมค์ชั่วคราวขณะ AI กำลังพูด เพื่อป้องกันเสียงสะท้อนกลับไปหา AI
         if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
           return;
         }
@@ -844,7 +840,7 @@
       AppState.pagination.reqId++;
       const currentReqId = AppState.pagination.reqId;
 
-      AppState.pagination.lastCriteria = criteria;
+      AppState.pagination.lastCriteria = criteria || {};
       AppState.pagination.lastSearchText = searchText;
 
       if (!isNextPage) {
@@ -881,18 +877,18 @@
 
         // ตรวจสอบ Request ID ป้องกันปัญหา Race Condition
         if (currentReqId !== AppState.pagination.reqId) {
-          return; // Discard ผลลัพธ์เก่าที่ส่งมาทีหลัง
+          return;
         }
 
         if (data.status === "success") {
           const newItems = data.results || [];
           AppState.pagination.hasMore = data.hasMore;
-          AppState.pagination.offset = data.nextOffset;
+          AppState.pagination.offset = data.nextOffset !== undefined ? data.nextOffset : (AppState.pagination.offset + newItems.length);
 
           appendListView(newItems, isNextPage);
 
           statusText.classList.remove('loading-pulse');
-          statusText.innerText = `✅ แสดง ${AppState.data.properties.length} จาก ${data.total} รายการ`;
+          statusText.innerText = `✅ แสดง ${AppState.data.properties.length} จาก ${data.total || AppState.data.properties.length} รายการ`;
         } else {
           throw new Error(data.message || "ดึงข้อมูลไม่สำเร็จ");
         }
@@ -935,7 +931,9 @@
 
       newItems.forEach((p) => {
         // สร้าง Unique Key ป้องกันการแสดงผลซ้ำซ้อน
-        const uniqueKey = `${getPropValue(p, ['post ID', 'postId', 'url', 'โครงการ', 'price'])}-${AppState.data.properties.length}`;
+        const rawId = getPropValue(p, ['post ID', 'postId', 'url', 'โครงการ', 'price', 'project']);
+        const uniqueKey = `${rawId}-${AppState.data.properties.length}`;
+
         if (AppState.pagination.renderedKeys.has(uniqueKey)) return;
 
         AppState.pagination.renderedKeys.add(uniqueKey);
@@ -1091,7 +1089,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.3.1 (Audio Loop & Duplicate WS Protection)
+    🟢 Version: 1.4.0 (True Server-Side Pagination & Infinite Scroll)
   </div>
 </body>
 </html>
