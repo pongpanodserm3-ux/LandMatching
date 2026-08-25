@@ -942,15 +942,30 @@
         const cardBg = bgColors[index % 3]; 
 
         const type = getPropValue(p, ['ประเภทอสังหา', 'propertyType', 'PropertyType', 'ประเภท'], 'อสังหา');
-        const price = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'Price', 'ราคา'], '-');
         const proj = getPropValue(p, ['โครงการ', 'project', 'Project', 'projectName', 'ชื่อโครงการ']);
         const road = getPropValue(p, ['ถนน', 'road', 'Road']);
         const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'District', 'เขต', 'อำเภอ']);
         const prov = getPropValue(p, ['จังหวัด', 'province', 'Province']);
         const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'Size', 'area', 'ขนาด', 'พื้นที่']);
 
+        // ---- ดึงราคาขายและเช่าแยกจากกัน ----
+        const rawSale = getPropValue(p, ['ราคาขาย', 'salePrice'], '');
+        const rawRent = getPropValue(p, ['ราคาเช่า', 'rentPrice'], '');
+        const rawFallback = getPropValue(p, ['price', 'Price', 'ราคา'], '-');
+        
+        let displaySale = rawSale || '-';
+        // เผื่อกรณีไม่มีราคาขายและเช่า แต่มี price รวมมาให้ fallback ใช้แทน
+        if (!rawSale && !rawRent && rawFallback !== '-') {
+            displaySale = rawFallback;
+        }
+
+        let displayRentHtml = '';
+        if (rawRent) {
+            displayRentHtml = `<div style="font-size: 14px; margin-top: 4px; color: #ff9800; font-weight: normal;">เช่า: ${rawRent}</div>`;
+        }
+        // --------------------------------
+
         const safeType = type;
-        const safePrice = price; 
         const safeProject = proj ? `โครงการ: ${proj}` : 'โครงการ: -';
         
         const locParts = [];
@@ -967,9 +982,12 @@
         cardElement.onclick = () => openDetailModal(index);
 
         cardElement.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items: center; font-weight:bold; font-size:18px; margin-bottom: 8px;">
-            <div style="color:#111;">${safeType}${displaySize}</div>
-            <div style="color:#d9534f; white-space: nowrap; margin-left: 10px;">${safePrice}</div>
+          <div style="display:flex; justify-content:space-between; align-items: flex-start; font-weight:bold; font-size:18px; margin-bottom: 8px;">
+            <div style="color:#111; padding-top: 2px;">${safeType}${displaySize}</div>
+            <div style="text-align: right; margin-left: 10px;">
+              <div style="color:#d9534f; white-space: nowrap;">${displaySale}</div>
+              ${displayRentHtml}
+            </div>
           </div>
           <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
             ${safeProject}
@@ -1089,7 +1107,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.4.0 (True Server-Side Pagination & Infinite Scroll)
+    🟢 Version: 1.4.1 (Price Dual Line Updated)
   </div>
 </body>
 </html>
