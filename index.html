@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<!-- nt GAS_RichM_IndexHtml-voice-1-5 -->
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- แผนที่ Leaflet OpenStreetMap สำหรับ Pop-up ปักหมุด -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --text-main: #5c3a6b; 
@@ -186,7 +188,7 @@
     
     .dropdown-modal {
       background: #fff;
-      width: 90%; max-width: 400px;
+      width: 90%; max-width: 420px;
       border-radius: 20px;
       padding: 20px; box-sizing: border-box;
       display: flex; flex-direction: column;
@@ -295,7 +297,9 @@
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
+    <!-- แถวเลื่อนตัวกรอง (Filter Scroll Row) - คำสั่งที่ 4: พิกัดอยู่ปุ่มแรกสุด -->
     <div class="filter-scroll-row">
+      <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">พิกัด ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
@@ -305,8 +309,8 @@
       <button class="filter-btn" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
-      <button class="filter-btn" onclick="openDropdownModal('พิกัด')">พิกัด ▾</button>
-      <button class="filter-btn" onclick="openDropdownModal('ขนาด')">ขนาด ▾</button>
+      <!-- คำสั่งที่ 3: เปลี่ยนชื่อเป็น "เนื้อที่" -->
+      <button class="filter-btn" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
@@ -333,6 +337,7 @@
     </div>
   </div>
 
+  <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
       <span class="close-modal" onclick="closeDetailModal()">&times;</span>
@@ -358,6 +363,7 @@
     </div>
   </div>
 
+  <!-- Dropdown Modal -->
   <div class="modal-overlay" id="dropdownModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -369,6 +375,38 @@
       </div>
       <input type="text" id="dropdownSearchInput" class="dropdown-search-input" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" onkeyup="filterDropdownOptions()">
       <div id="dropdownOptions" class="dropdown-options-container"></div>
+    </div>
+  </div>
+
+  <!-- คำสั่งที่ 4: Pop-up Modal ปักหมุดพิกัดพร้อมช่อง Latitude / Longitude -->
+  <div class="modal-overlay" id="locationModalOverlay" style="align-items: center;">
+    <div class="dropdown-modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="color: var(--text-main); margin: 0;">📍 ปักหมุดพิกัดค้นหา</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button onclick="clearLocationFilter()" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
+          <span onclick="closeLocationModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
+        </div>
+      </div>
+      
+      <!-- Interactive Map แสดงตำแหน่งปัจจุบันพร้อมหมุดลากปักได้ -->
+      <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
+      
+      <!-- ช่องกรอกพิกัด 2 ช่อง (ซ้าย: Latitude / ขวา: Longitude) -->
+      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+          <label style="font-size: 12px; font-weight: bold; color: #555;">Latitude (ละติจูด)</label>
+          <input type="number" step="any" id="latInput" placeholder="เช่น 13.7563" oninput="updateMapFromInputs()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 12px; font-weight: bold; color: #555;">Longitude (ลองติจูด)</label>
+          <input type="number" step="any" id="lngInput" placeholder="เช่น 100.5018" oninput="updateMapFromInputs()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
+        </div>
+      </div>
+
+      <button onclick="confirmLocation()" style="width: 100%; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+        OK ยืนยันพิกัด
+      </button>
     </div>
   </div>
 
@@ -388,6 +426,12 @@
       'เบอร์', 'line id', 'date', 'use', 'use2', 'use3', 'use4', 'url',
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
+
+    // ตัวแปรสำหรับระบบพิกัดและแผนที่
+    let leafletMap = null;
+    let mapMarker = null;
+    let selectedLat = null;
+    let selectedLng = null;
 
     // ==========================================
     // 2. CENTRALIZED APPLICATION STATE
@@ -461,6 +505,7 @@
       testShowList();
     }
 
+    // คำสั่งที่ 1, 2, 3: อัปเดตรายการ Dropdown ให้ตรงตามเงื่อนไข
     function openDropdownModal(topic) {
       AppState.ui.dropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
@@ -472,13 +517,20 @@
       } else if (topic === 'คอนโด/บ้าน') {
         options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
       } else if (topic === 'ราคาขาย') {
-        options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป"];
+        // คำสั่งที่ 1: รายการราคาขายใหม่
+        options = ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
       } else if (topic === 'ราคาเช่า') {
         options = ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
       } else if (topic === 'จังหวัด') {
         options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
       } else if (topic === 'เขต/อำเภอ') {
         options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
+      } else if (topic === 'ถนน') {
+        // คำสั่งที่ 2: เพิ่มถนนศรีนครินทร์, ถนนลาดพร้าว, ถนนรามอินทรา
+        options = ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
+      } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
+        // คำสั่งที่ 3: รายการเนื้อที่ใหม่
+        options = ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
       } else {
         options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
       }
@@ -519,11 +571,123 @@
       const filterBtns = document.querySelectorAll('.filter-btn');
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
-        if (onClickAttr.includes(`'${topic}'`)) {
+        if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
           btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
         }
       });
       testShowList();
+    }
+
+    // ==========================================
+    // คำสั่งที่ 4: ฟังก์ชันจัดการระบบพิกัด & Map Pop-up
+    // ==========================================
+    function openLocationModal() {
+      document.getElementById('locationModalOverlay').classList.add('active');
+      
+      const defaultLat = selectedLat || 13.7563;
+      const defaultLng = selectedLng || 100.5018;
+
+      if (!leafletMap) {
+        setTimeout(() => {
+          leafletMap = L.map('locationMap').setView([defaultLat, defaultLng], 12);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+          }).addTo(leafletMap);
+
+          mapMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(leafletMap);
+
+          // เมื่อลากหมุดบนแผนที่ ให้อัปเดตช่องกรอกพิกัดอัตโนมัติ
+          mapMarker.on('dragend', function (e) {
+            const pos = mapMarker.getLatLng();
+            setCoordinates(pos.lat, pos.lng);
+          });
+
+          // เมื่อคลิกบนแผนที่ ให้ย้ายหมุดและอัปเดตช่องกรอกพิกัด
+          leafletMap.on('click', function (e) {
+            mapMarker.setLatLng(e.latlng);
+            setCoordinates(e.latlng.lat, e.latlng.lng);
+          });
+
+          // ดึงพิกัด GPS ปัจจุบันของผู้ใช้
+          if (!selectedLat && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              leafletMap.setView([lat, lng], 14);
+              mapMarker.setLatLng([lat, lng]);
+              setCoordinates(lat, lng);
+            }, () => {});
+          }
+        }, 200);
+      } else {
+        setTimeout(() => {
+          leafletMap.invalidateSize();
+          if (selectedLat && selectedLng) {
+            const latLng = [selectedLat, selectedLng];
+            leafletMap.setView(latLng, 14);
+            mapMarker.setLatLng(latLng);
+          }
+        }, 200);
+      }
+
+      if (selectedLat && selectedLng) {
+        document.getElementById('latInput').value = selectedLat;
+        document.getElementById('lngInput').value = selectedLng;
+      }
+    }
+
+    function setCoordinates(lat, lng) {
+      selectedLat = parseFloat(lat).toFixed(6);
+      selectedLng = parseFloat(lng).toFixed(6);
+      document.getElementById('latInput').value = selectedLat;
+      document.getElementById('lngInput').value = selectedLng;
+    }
+
+    function updateMapFromInputs() {
+      const lat = parseFloat(document.getElementById('latInput').value);
+      const lng = parseFloat(document.getElementById('lngInput').value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        selectedLat = lat;
+        selectedLng = lng;
+        if (leafletMap && mapMarker) {
+          const newLatLng = new L.LatLng(lat, lng);
+          mapMarker.setLatLng(newLatLng);
+          leafletMap.panTo(newLatLng);
+        }
+      }
+    }
+
+    function closeLocationModal() {
+      document.getElementById('locationModalOverlay').classList.remove('active');
+    }
+
+    function clearLocationFilter() {
+      selectedLat = null;
+      selectedLng = null;
+      document.getElementById('latInput').value = '';
+      document.getElementById('lngInput').value = '';
+      document.getElementById('locationFilterBtn').innerText = 'พิกัด ▾';
+      closeLocationModal();
+      testShowList();
+    }
+
+    function confirmLocation() {
+      const lat = document.getElementById('latInput').value.trim();
+      const lng = document.getElementById('lngInput').value.trim();
+      
+      if (lat && lng) {
+        selectedLat = parseFloat(lat);
+        selectedLng = parseFloat(lng);
+        document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} ▾`;
+      } else {
+        selectedLat = null;
+        selectedLng = null;
+        document.getElementById('locationFilterBtn').innerText = 'พิกัด ▾';
+      }
+      
+      closeLocationModal();
+      testShowList(); // ค้นหาตามพิกัดทันทีเมื่อกด OK
     }
 
     // ==========================================
@@ -791,33 +955,57 @@
     // ==========================================
     // 5. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
+    // ปรับปรุงการแปลงค่าราคาขาย พิกัด และเนื้อที่ (คำสั่งที่ 1, 3, 4)
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
       
       filterBtns.forEach(btn => {
-        const topicMatch = btn.getAttribute('onclick').match(/'([^']+)'/);
+        const onClickAttr = btn.getAttribute('onclick') || '';
+        const topicMatch = onClickAttr.match(/'([^']+)'/);
+        
         if (topicMatch) {
           const topic = topicMatch[1];
-          let val = btn.innerText.replace(' ▾', '').trim();
+          let val = btn.innerText.replace(' ▾', '').replace('📍 ', '').trim();
           
-          if (val !== topic && val !== 'เคลียร์ค่า') { 
-            if (topic === 'ราคาขาย' || topic === 'ราคาเช่า') {
+          if (val !== topic && val !== 'เคลียร์ค่า' && val !== 'พิกัด') { 
+            if (topic === 'ราคาขาย') {
+              // คำสั่งที่ 1: แปลงตัวเลือกราคาขายเป็นตัวเลข
+              if (val === 'ไม่เกิน 2 ล้าน') criteria.priceSale = "2000000";
+              else if (val === 'ไม่เกิน 5 ล้าน') criteria.priceSale = "5000000";
+              else if (val === 'ไม่เกิน 10 ล้าน') criteria.priceSale = "10000000";
+              else if (val === 'ไม่เกิน 20 ล้าน') criteria.priceSale = "20000000";
+              else if (val === 'ตั้งแต่ 20 ล้านเป็นต้นไป') criteria.priceSaleMin = "20000000";
+              else {
+                let priceNum = val.replace(/[^0-9]/g, '');
+                if (val.includes('ล้าน') && priceNum) priceNum = String(parseInt(priceNum, 10) * 1000000);
+                criteria.priceSale = priceNum;
+              }
+            } else if (topic === 'ราคาเช่า') {
               let priceNum = val.replace(/[^0-9]/g, '');
-              if (val.includes('ล้าน') && priceNum) {
-                priceNum = String(parseInt(priceNum, 10) * 1000000);
-              }
-              if (topic === 'ราคาขาย') {
-                criteria.priceSale = priceNum; 
-              } else if (topic === 'ราคาเช่า') {
-                criteria.priceRent = priceNum;
-              }
+              criteria.priceRent = priceNum;
+            } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
+              // คำสั่งที่ 3: แปลงเงื่อนไขเนื้อที่ (หน่วย: ตารางวา)
+              if (val === 'ไม่เกิน 100 ตารางวา') criteria.areaMax = "100";
+              else if (val === 'ไม่เกิน 400 ตารางวา') criteria.areaMax = "400";
+              else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000"; // 10 ไร่ = 4,000 ตร.วา
+              else if (val === 'มากกว่า 10 ไร่ เป็นต้นไป') criteria.areaMin = "4000";
+              else criteria["เนื้อที่"] = val;
             } else {
               criteria[topic] = val;
             }
           }
         }
       });
+
+      // คำสั่งที่ 4: ส่งพิกัด Latitude (คอลัมน์ O) และ Longitude (คอลัมน์ P)
+      if (selectedLat !== null && selectedLng !== null) {
+        criteria.lat = selectedLat;
+        criteria.lng = selectedLng;
+        criteria.latitude = selectedLat;
+        criteria.longitude = selectedLng;
+      }
+
       return criteria;
     }
 
@@ -975,6 +1163,7 @@
         
         const safeDemand = getPropValue(p, ['แบบราคา', 'demandType', 'DemandType', 'ประเภทประกาศ'], 'ขาย/เช่า');
         const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
+        const distText = p._distance !== undefined ? `<span style="font-size:12px; color:#28a745; margin-left:5px;">(ห่าง ~${p._distance.toFixed(1)} กม.)</span>` : '';
 
         const cardElement = document.createElement('div');
         cardElement.style.cssText = `background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;`;
@@ -982,7 +1171,7 @@
 
         cardElement.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items: flex-start; font-weight:bold; font-size:18px; margin-bottom: 8px;">
-            <div style="color:#111; padding-top: 2px;">${safeType}${displaySize}</div>
+            <div style="color:#111; padding-top: 2px;">${safeType}${displaySize}${distText}</div>
             <div style="text-align: right; margin-left: 10px;">
               <div style="color:#d9534f; white-space: nowrap;">${displaySale}</div>
               ${displayRentHtml}
@@ -1114,7 +1303,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.4.2 (Cleaned & Fixed Duplication)
+    🟢 Version: 1.5.0 (Updated Filter Criteria & Coordinates Pinning)
   </div>
 </body>
 </html>
