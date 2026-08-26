@@ -377,7 +377,7 @@
     </div>
   </div>
 
-  <!-- Pop-up Modal ปักหมุดพิกัดพร้อมช่อง Latitude / Longitude และ Dropdown เลือกระยะทางรัศมี -->
+  <!-- Pop-up Modal ปักหมุดพิกัดพร้อมช่องค้นหาสถานที่สำคัญ, Latitude / Longitude และ Dropdown เลือกระยะทางรัศมี -->
   <div class="modal-overlay" id="locationModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -388,6 +388,13 @@
         </div>
       </div>
       
+      <!-- ช่องค้นหาสถานที่สำคัญพร้อม Auto-complete -->
+      <div style="position: relative; margin-bottom: 12px;">
+        <label style="font-size: 12px; font-weight: bold; color: #555;">🔍 ค้นหาสถานที่สำคัญ (เช่น เดอะมอลล์ บางกะปิ, เซ็นทรัล พระราม 9)</label>
+        <input type="text" id="placeSearchInput" placeholder="พิมพ์ชื่อสถานที่เพื่อค้นหา..." oninput="handlePlaceSearchInput(this.value)" autocomplete="off" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
+        <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--btn-blue); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px;"></div>
+      </div>
+
       <!-- Interactive Map แสดงตำแหน่งปัจจุบันพร้อมหมุดลากปักได้ -->
       <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
       
@@ -443,6 +450,7 @@
     let selectedLat = null;
     let selectedLng = null;
     let selectedRadius = 1; // ค่าเริ่มต้นรัศมี 1 กม.
+    let placeSearchDebounceTimer = null; // ตัวแปรสำหรับควบคุม Auto-complete debounce
 
     // ==========================================
     // 2. CENTRALIZED APPLICATION STATE
@@ -510,6 +518,15 @@
           }
         });
       }
+
+      // ปิดกล่องผลลัพธ์ Auto-complete เมื่อคลิกบริเวณอื่นนอกพื้นที่ค้นหา
+      document.addEventListener('click', (e) => {
+        const resultsDiv = document.getElementById('placeSearchResults');
+        const searchInput = document.getElementById('placeSearchInput');
+        if (resultsDiv && searchInput && !resultsDiv.contains(e.target) && e.target !== searchInput) {
+          resultsDiv.style.display = 'none';
+        }
+      });
     });
 
     function triggerSearchReset() {
@@ -586,7 +603,7 @@
     }
 
     // ==========================================
-    // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up
+    // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up & Place Search Auto-complete
     // ==========================================
     function openLocationModal() {
       document.getElementById('locationModalOverlay').classList.add('active');
@@ -645,6 +662,66 @@
       }
     }
 
+    // ระบบค้นหาสถานที่สำคัญด้วย Auto-complete (ใช้ OpenStreetMap Nominatim API)
+    function handlePlaceSearchInput(query) {
+      clearTimeout(placeSearchDebounceTimer);
+      const resultsDiv = document.getElementById('placeSearchResults');
+      
+      if (!query || query.trim().length < 2) {
+        resultsDiv.style.display = 'none';
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      placeSearchDebounceTimer = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.trim())}&countrycodes=th&limit=5&accept-language=th`)
+          .then(res => res.json())
+          .then(data => {
+            resultsDiv.innerHTML = '';
+            if (data && data.length > 0) {
+              data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.style.cssText = 'padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; color: #333; line-height: 1.4;';
+                itemDiv.innerText = item.display_name;
+                itemDiv.onmouseover = () => { itemDiv.style.background = '#f0f4f8'; };
+                itemDiv.onmouseout = () => { itemDiv.style.background = '#ffffff'; };
+                itemDiv.onclick = () => {
+                  selectPlaceResult(item.lat, item.lon, item.display_name);
+                };
+                resultsDiv.appendChild(itemDiv);
+              });
+              resultsDiv.style.display = 'block';
+            } else {
+              resultsDiv.innerHTML = '<div style="padding: 10px 12px; color: #888; font-size: 13px;">ไม่พบสถานที่ที่ค้นหา</div>';
+              resultsDiv.style.display = 'block';
+            }
+          })
+          .catch(err => {
+            console.error('Place Search Error:', err);
+          });
+      }, 350);
+    }
+
+    // เมื่อผู้ใช้เลือกสถานที่จากรายการ Auto-complete
+    function selectPlaceResult(lat, lon, displayName) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lon);
+      
+      document.getElementById('placeSearchInput').value = displayName;
+      document.getElementById('placeSearchResults').style.display = 'none';
+      
+      // อัปเดตพิกัดและช่องกรอก Latitude / Longitude
+      setCoordinates(latitude, longitude);
+
+      // แพนแผนที่และย้ายตำแหน่งหมุด Marker
+      if (leafletMap && mapMarker) {
+        const newLatLng = new L.LatLng(latitude, longitude);
+        leafletMap.panTo(newLatLng);
+        leafletMap.setZoom(15);
+        mapMarker.setLatLng(newLatLng);
+      }
+    }
+
     function setCoordinates(lat, lng) {
       selectedLat = parseFloat(lat).toFixed(6);
       selectedLng = parseFloat(lng).toFixed(6);
@@ -667,6 +744,8 @@
     }
 
     function closeLocationModal() {
+      const resultsDiv = document.getElementById('placeSearchResults');
+      if (resultsDiv) resultsDiv.style.display = 'none';
       document.getElementById('locationModalOverlay').classList.remove('active');
     }
 
@@ -676,6 +755,12 @@
       selectedRadius = 1;
       document.getElementById('latInput').value = '';
       document.getElementById('lngInput').value = '';
+      document.getElementById('placeSearchInput').value = '';
+      const resultsDiv = document.getElementById('placeSearchResults');
+      if (resultsDiv) {
+        resultsDiv.style.display = 'none';
+        resultsDiv.innerHTML = '';
+      }
       const radiusSelect = document.getElementById('radiusSelect');
       if (radiusSelect) radiusSelect.value = "1";
       document.getElementById('locationFilterBtn').innerText = 'พิกัด ▾';
@@ -1316,7 +1401,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.6.0 (Radius Distance Search Enabled)
+    🟢 Version: 1.7.0 (Place Search Auto-complete Enabled)
   </div>
 </body>
 </html>
