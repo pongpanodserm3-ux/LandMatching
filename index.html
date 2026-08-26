@@ -298,7 +298,8 @@
     <div class="filter-scroll-row">
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
-      <button class="filter-btn" onclick="openDropdownModal('ราคา')">ราคา ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
+      <button class="filter-btn" onclick="openDropdownModal('ราคาเช่า')">ราคาเช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('เขต/อำเภอ')">เขต/อำเภอ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
@@ -472,8 +473,10 @@
         options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       } else if (topic === 'คอนโด/บ้าน') {
         options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
-      } else if (topic === 'ราคา') {
+      } else if (topic === 'ราคาขาย') {
         options = ["ไม่เกิน 1 ล้าน", "ไม่เกิน 2 ล้าน", "ไม่เกิน 3 ล้าน", "ไม่เกิน 4 ล้าน", "ตั้งแต่ 5 ล้าน เป็น ต้น ไป"];
+      } else if (topic === 'ราคาเช่า') {
+        options = ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
       } else if (topic === 'จังหวัด') {
         options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
       } else if (topic === 'เขต/อำเภอ') {
@@ -801,12 +804,16 @@
           let val = btn.innerText.replace(' ▾', '').trim();
           
           if (val !== topic && val !== 'เคลียร์ค่า') { 
-            if (topic === 'ราคา') {
+            if (topic === 'ราคาขาย' || topic === 'ราคาเช่า') {
               let priceNum = val.replace(/[^0-9]/g, '');
               if (val.includes('ล้าน') && priceNum) {
                 priceNum = String(parseInt(priceNum, 10) * 1000000);
               }
-              criteria.price = priceNum; 
+              if (topic === 'ราคาขาย') {
+                criteria.priceSale = priceNum; 
+              } else if (topic === 'ราคาเช่า') {
+                criteria.priceRent = priceNum;
+              }
             } else {
               criteria[topic] = val;
             }
