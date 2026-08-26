@@ -297,7 +297,7 @@
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
-    <!-- แถวเลื่อนตัวกรอง (Filter Scroll Row) - คำสั่งที่ 4: พิกัดอยู่ปุ่มแรกสุด -->
+    <!-- แถวเลื่อนตัวกรอง (Filter Scroll Row) -->
     <div class="filter-scroll-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">พิกัด ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
@@ -309,7 +309,6 @@
       <button class="filter-btn" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
-      <!-- คำสั่งที่ 3: เปลี่ยนชื่อเป็น "เนื้อที่" -->
       <button class="filter-btn" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
@@ -378,7 +377,7 @@
     </div>
   </div>
 
-  <!-- คำสั่งที่ 4: Pop-up Modal ปักหมุดพิกัดพร้อมช่อง Latitude / Longitude -->
+  <!-- Pop-up Modal ปักหมุดพิกัดพร้อมช่อง Latitude / Longitude และ Dropdown เลือกระยะทางรัศมี -->
   <div class="modal-overlay" id="locationModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -393,7 +392,7 @@
       <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
       
       <!-- ช่องกรอกพิกัด 2 ช่อง (ซ้าย: Latitude / ขวา: Longitude) -->
-      <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <div style="flex: 1;">
           <label style="font-size: 12px; font-weight: bold; color: #555;">Latitude (ละติจูด)</label>
           <input type="number" step="any" id="latInput" placeholder="เช่น 13.7563" oninput="updateMapFromInputs()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
@@ -402,6 +401,17 @@
           <label style="font-size: 12px; font-weight: bold; color: #555;">Longitude (ลองติจูด)</label>
           <input type="number" step="any" id="lngInput" placeholder="เช่น 100.5018" oninput="updateMapFromInputs()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
         </div>
+      </div>
+
+      <!-- Dropdown เลือกระยะทางรัศมี (1, 5, 10, 30 กิโลเมตร) -->
+      <div style="margin-bottom: 15px;">
+        <label style="font-size: 12px; font-weight: bold; color: #555;">รัศมีการค้นหา</label>
+        <select id="radiusSelect" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
+          <option value="1" selected>ค้นหาในระยะ 1 กิโลเมตร</option>
+          <option value="5">ค้นหาในระยะ 5 กิโลเมตร</option>
+          <option value="10">ค้นหาในระยะ 10 กิโลเมตร</option>
+          <option value="30">ค้นหาในระยะ 30 กิโลเมตร</option>
+        </select>
       </div>
 
       <button onclick="confirmLocation()" style="width: 100%; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
@@ -432,6 +442,7 @@
     let mapMarker = null;
     let selectedLat = null;
     let selectedLng = null;
+    let selectedRadius = 1; // ค่าเริ่มต้นรัศมี 1 กม.
 
     // ==========================================
     // 2. CENTRALIZED APPLICATION STATE
@@ -505,7 +516,6 @@
       testShowList();
     }
 
-    // คำสั่งที่ 1, 2, 3: อัปเดตรายการ Dropdown ให้ตรงตามเงื่อนไข
     function openDropdownModal(topic) {
       AppState.ui.dropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
@@ -517,7 +527,6 @@
       } else if (topic === 'คอนโด/บ้าน') {
         options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
       } else if (topic === 'ราคาขาย') {
-        // คำสั่งที่ 1: รายการราคาขายใหม่
         options = ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
       } else if (topic === 'ราคาเช่า') {
         options = ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
@@ -526,10 +535,8 @@
       } else if (topic === 'เขต/อำเภอ') {
         options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
       } else if (topic === 'ถนน') {
-        // คำสั่งที่ 2: เพิ่มถนนศรีนครินทร์, ถนนลาดพร้าว, ถนนรามอินทรา
         options = ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
       } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
-        // คำสั่งที่ 3: รายการเนื้อที่ใหม่
         options = ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
       } else {
         options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
@@ -579,7 +586,7 @@
     }
 
     // ==========================================
-    // คำสั่งที่ 4: ฟังก์ชันจัดการระบบพิกัด & Map Pop-up
+    // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up
     // ==========================================
     function openLocationModal() {
       document.getElementById('locationModalOverlay').classList.add('active');
@@ -597,19 +604,16 @@
 
           mapMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(leafletMap);
 
-          // เมื่อลากหมุดบนแผนที่ ให้อัปเดตช่องกรอกพิกัดอัตโนมัติ
           mapMarker.on('dragend', function (e) {
             const pos = mapMarker.getLatLng();
             setCoordinates(pos.lat, pos.lng);
           });
 
-          // เมื่อคลิกบนแผนที่ ให้ย้ายหมุดและอัปเดตช่องกรอกพิกัด
           leafletMap.on('click', function (e) {
             mapMarker.setLatLng(e.latlng);
             setCoordinates(e.latlng.lat, e.latlng.lng);
           });
 
-          // ดึงพิกัด GPS ปัจจุบันของผู้ใช้
           if (!selectedLat && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
               const lat = pos.coords.latitude;
@@ -634,6 +638,10 @@
       if (selectedLat && selectedLng) {
         document.getElementById('latInput').value = selectedLat;
         document.getElementById('lngInput').value = selectedLng;
+      }
+      const radiusSelect = document.getElementById('radiusSelect');
+      if (radiusSelect) {
+        radiusSelect.value = String(selectedRadius || 1);
       }
     }
 
@@ -665,8 +673,11 @@
     function clearLocationFilter() {
       selectedLat = null;
       selectedLng = null;
+      selectedRadius = 1;
       document.getElementById('latInput').value = '';
       document.getElementById('lngInput').value = '';
+      const radiusSelect = document.getElementById('radiusSelect');
+      if (radiusSelect) radiusSelect.value = "1";
       document.getElementById('locationFilterBtn').innerText = 'พิกัด ▾';
       closeLocationModal();
       testShowList();
@@ -675,23 +686,27 @@
     function confirmLocation() {
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
+      const radiusSelect = document.getElementById('radiusSelect');
+      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
       
       if (lat && lng) {
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
-        document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} ▾`;
+        selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
+        document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
       } else {
         selectedLat = null;
         selectedLng = null;
+        selectedRadius = 1;
         document.getElementById('locationFilterBtn').innerText = 'พิกัด ▾';
       }
       
       closeLocationModal();
-      testShowList(); // ค้นหาตามพิกัดทันทีเมื่อกด OK
+      testShowList(); // ค้นหาตามพิกัดและรัศมีทันทีเมื่อกด OK
     }
 
     // ==========================================
-    // 4. AI VOICE SESSION HANDLERS
+    // 5. AI VOICE SESSION HANDLERS
     // ==========================================
     async function toggleVoiceSession() {
       if (!AppState.voice.isActive) await startVoiceSession();
@@ -953,9 +968,8 @@
     }
 
     // ==========================================
-    // 5. DATABASE & TARGETED INFINITE SCROLLING
+    // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
-    // ปรับปรุงการแปลงค่าราคาขาย พิกัด และเนื้อที่ (คำสั่งที่ 1, 3, 4)
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
@@ -970,7 +984,6 @@
           
           if (val !== topic && val !== 'เคลียร์ค่า' && val !== 'พิกัด') { 
             if (topic === 'ราคาขาย') {
-              // คำสั่งที่ 1: แปลงตัวเลือกราคาขายเป็นตัวเลข
               if (val === 'ไม่เกิน 2 ล้าน') criteria.priceSale = "2000000";
               else if (val === 'ไม่เกิน 5 ล้าน') criteria.priceSale = "5000000";
               else if (val === 'ไม่เกิน 10 ล้าน') criteria.priceSale = "10000000";
@@ -985,7 +998,6 @@
               let priceNum = val.replace(/[^0-9]/g, '');
               criteria.priceRent = priceNum;
             } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
-              // คำสั่งที่ 3: แปลงเงื่อนไขเนื้อที่ (หน่วย: ตารางวา)
               if (val === 'ไม่เกิน 100 ตารางวา') criteria.areaMax = "100";
               else if (val === 'ไม่เกิน 400 ตารางวา') criteria.areaMax = "400";
               else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000"; // 10 ไร่ = 4,000 ตร.วา
@@ -998,12 +1010,13 @@
         }
       });
 
-      // คำสั่งที่ 4: ส่งพิกัด Latitude (คอลัมน์ O) และ Longitude (คอลัมน์ P)
+      // ส่งพิกัด Latitude (คอลัมน์ O), Longitude (คอลัมน์ P) และ Radius (กิโลเมตร)
       if (selectedLat !== null && selectedLng !== null) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
         criteria.latitude = selectedLat;
         criteria.longitude = selectedLng;
+        criteria.radius = selectedRadius || 1;
       }
 
       return criteria;
@@ -1195,7 +1208,7 @@
     }
 
     // ==========================================
-    // 6. DETAIL MODAL HANDLERS
+    // 7. DETAIL MODAL HANDLERS
     // ==========================================
     function openDetailModal(index) {
       const p = AppState.data.properties[index];
@@ -1303,7 +1316,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.5.0 (Updated Filter Criteria & Coordinates Pinning)
+    🟢 Version: 1.6.0 (Radius Distance Search Enabled)
   </div>
 </body>
 </html>
