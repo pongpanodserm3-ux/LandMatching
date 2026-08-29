@@ -662,10 +662,12 @@
       }
     }
 
-    // ระบบค้นหาสถานที่สำคัญด้วย Auto-complete (รองรับ ห้าง, โรงพยาบาล, รถไฟฟ้า, ออฟฟิศ, 7-Eleven)
+    // ระบบค้นหาสถานที่สำคัญด้วย Auto-complete (รองรับการแปลงคำ และจัดอันดับตามคำสั่ง)
     function handlePlaceSearchInput(query) {
       clearTimeout(placeSearchDebounceTimer);
       const resultsDiv = document.getElementById('placeSearchResults');
+      
+      // เริ่มต้นค้นหาเมื่อพิมพ์ 4 ตัวอักษรขึ้นไป
       if (!query || query.trim().length < 4) {
         resultsDiv.style.display = 'none';
         resultsDiv.innerHTML = '';
@@ -680,7 +682,6 @@
     
         // ตารางจับคู่แปลงคำศัพท์สถานที่ยอดนิยม (ไทย <-> อังกฤษ & คำพ้องความหมาย)
         const mappings = [
-          // --- ห้างสรรพสินค้า (Malls & Retail) ---
           { from: /\bthe\s*mall\b/gi, to: "เดอะมอลล์" },
           { from: /เดอะมอลล์/gi, to: "the mall" },
           { from: /\bcentral\b/gi, to: "เซ็นทรัล" },
@@ -701,12 +702,8 @@
           { from: /เมกาบางนา|เมกา\s*บางนา/gi, to: "mega bangna" },
           { from: /\bseacon\b/gi, to: "ซีคอน" },
           { from: /ซีคอน/gi, to: "seacon" },
-    
-          // --- ร้านสะดวกซื้อ (Convenience Stores) ---
           { from: /\b7\s*-\s*11\b|\b7eleven\b|\bseven\s*eleven\b/gi, to: "เซเว่น" },
           { from: /เซเว่น|7-11/gi, to: "7-Eleven" },
-    
-          // --- โรงพยาบาล (Hospitals) ---
           { from: /\bhospital\b|\bhosp\b/gi, to: "โรงพยาบาล" },
           { from: /โรงพยาบาล/gi, to: "hospital" },
           { from: /\bbangkok\s*hospital\b/gi, to: "โรงพยาบาลกรุงเทพ" },
@@ -724,14 +721,10 @@
           { from: /เปาโล/gi, to: "paolo" },
           { from: /\bkasemrad\b/gi, to: "เกษมราษฎร์" },
           { from: /เกษมราษฎร์/gi, to: "kasemrad" },
-    
-          // --- สถานีรถไฟฟ้า (BTS / MRT / Train Stations) ---
           { from: /\bbts\b/gi, to: "สถานีรถไฟฟ้า BTS" },
           { from: /\bmrt\b/gi, to: "สถานีรถไฟฟ้า MRT" },
           { from: /\barl\b|\bairport\s*rail\s*link\b/gi, to: "สถานีรถไฟฟ้า แอร์พอร์ตลิงก์" },
           { from: /\bstation\b/gi, to: "สถานี" },
-    
-          // --- สำนักงาน / ออฟฟิศ (Offices & Towers) ---
           { from: /\btower\b/gi, to: "ทาวเวอร์" },
           { from: /ทาวเวอร์/gi, to: "tower" },
           { from: /\bbuilding\b|\boffice\b/gi, to: "อาคาร" },
@@ -753,9 +746,9 @@
           searchQueries.push(convertedQuery);
         }
     
-        // 2. เรียก API ค้นหาควบคู่กัน (Promise.all)
+        // 2. เรียก API ค้นหา (เพิ่ม addressdetails=1 เพื่อจัดอันดับ และเพิ่ม limit เป็น 15 เพื่อดึงข้อมูลมาเรียง)
         const fetchPromises = searchQueries.map(q => 
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + '*')}&countrycodes=th&limit=5`)
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=th&limit=15&addressdetails=1`)
             .then(res => res.json())
             .catch(() => [])
         );
@@ -779,9 +772,46 @@
                 });
               }
             });
+
+            // 4. จัดเรียงลำดับความสำคัญ (Ranking) ตามคำสั่งอย่างเคร่งครัด
+            combined.forEach(item => {
+              let score = 3; // ลำดับที่ 3: สถานที่สำคัญอื่นๆ (Default)
+              
+              const address = item.address || {};
+              const displayName = item.display_name || "";
+              const state = address.state || address.province || "";
+              const city = address.city || address.town || address.county || "";
+              const type = item.type || "";
+              const cls = item.class || "";
+
+              // เช็คพื้นที่
+              const isBKK = state.includes("กรุงเทพมหานคร") || state.includes("กรุงเทพ") || state.includes("Bangkok") || city.includes("กรุงเทพ") || city.includes("Bangkok");
+              const isVicinity = state.match(/(นนทบุรี|ปทุมธานี|สมุทรปราการ|สมุทรสาคร|นครปฐม|Nonthaburi|Pathum Thani|Samut Prakan|Samut Sakhon|Nakhon Pathom)/i);
+
+              // เช็คประเภท
+              const isRoadOrSoi = type === 'road' || cls === 'highway' || displayName.includes("ถนน") || displayName.includes("ซอย") || displayName.match(/\b(Road|Soi)\b/i);
+              const isProjectOrVillage = type === 'residential' || displayName.includes("หมู่บ้าน") || displayName.includes("โครงการ") || displayName.match(/\b(Village)\b/i);
+
+              if (isBKK && (isRoadOrSoi || isProjectOrVillage)) {
+                score = 1; // ลำดับที่ 1 (ความสำคัญสูงสุด): ถนน/ซอย/หมู่บ้าน ใน กทม.
+              } else if (isBKK || isVicinity || type === 'administrative' || type === 'suburb') {
+                score = 2; // ลำดับที่ 2: ไล่เรียงตามเขต/อำเภอ จังหวัดปริมณฑล หรือพื้นที่ใกล้เคียง
+              }
+
+              item._rankScore = score;
+            });
+
+            // ทำการเรียงข้อมูล (Sort: ลำดับ 1 -> 2 -> 3) ถ้าลำดับเท่ากัน ให้เรียงจาก importance
+            combined.sort((a, b) => {
+              if (a._rankScore !== b._rankScore) {
+                return a._rankScore - b._rankScore;
+              }
+              return (b.importance || 0) - (a.importance || 0);
+            });
     
             if (combined.length > 0) {
-              combined.slice(0, 5).forEach(item => {
+              // เลือกแสดงผลสูงสุด 6 รายการ หลังจากผ่านการ Rank
+              combined.slice(0, 6).forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.style.cssText = 'padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; color: #333; line-height: 1.4;';
                 itemDiv.innerText = item.display_name;
@@ -1504,7 +1534,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.1 (Place Search Auto-complete Enabled)
+    🟢 Version: 1.7.1 (Place Search Auto-complete Enabled - Ranked)
   </div>
 </body>
 </html>
