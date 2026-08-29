@@ -410,11 +410,12 @@
         </div>
       </div>
 
-      <!-- Dropdown เลือกระยะทางรัศมี (1, 5, 10, 30 กิโลเมตร) พร้อมอีเวนต์ onchange เพื่ออัปเดตวงกลม -->
+      <!-- Dropdown เลือกระยะทางรัศมี (1, 2, 5, 10, 30 กิโลเมตร) พร้อมอีเวนต์ onchange เพื่ออัปเดตวงกลม -->
       <div style="margin-bottom: 15px;">
         <label style="font-size: 12px; font-weight: bold; color: #555;">รัศมีการค้นหา</label>
         <select id="radiusSelect" onchange="updateRadiusCircle()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
           <option value="1" selected>ค้นหาในระยะ 1 กิโลเมตร</option>
+          <option value="2">ค้นหาในระยะ 2 กิโลเมตร</option>
           <option value="5">ค้นหาในระยะ 5 กิโลเมตร</option>
           <option value="10">ค้นหาในระยะ 10 กิโลเมตร</option>
           <option value="30">ค้นหาในระยะ 30 กิโลเมตร</option>
@@ -1571,7 +1572,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.2 (Added Radius Circle Feature)
+    🟢 Version: 1.7.3 (Added 2km Radius Feature)
   </div>
 </body>
 </html>
