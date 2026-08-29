@@ -666,7 +666,7 @@
     function handlePlaceSearchInput(query) {
       clearTimeout(placeSearchDebounceTimer);
       const resultsDiv = document.getElementById('placeSearchResults');
-      if (!query || query.trim().length < 2) {
+      if (!query || query.trim().length < 4) {
         resultsDiv.style.display = 'none';
         resultsDiv.innerHTML = '';
         return;
@@ -755,7 +755,7 @@
     
         // 2. เรียก API ค้นหาควบคู่กัน (Promise.all)
         const fetchPromises = searchQueries.map(q => 
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=th&limit=5`)
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + '*')}&countrycodes=th&limit=5`)
             .then(res => res.json())
             .catch(() => [])
         );
@@ -1504,7 +1504,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.0 (Place Search Auto-complete Enabled)
+    🟢 Version: 1.7.1 (Place Search Auto-complete Enabled)
   </div>
 </body>
 </html>
