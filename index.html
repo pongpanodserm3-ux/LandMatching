@@ -410,10 +410,10 @@
         </div>
       </div>
 
-      <!-- Dropdown เลือกระยะทางรัศมี (1, 5, 10, 30 กิโลเมตร) -->
+      <!-- Dropdown เลือกระยะทางรัศมี (1, 5, 10, 30 กิโลเมตร) พร้อมอีเวนต์ onchange เพื่ออัปเดตวงกลม -->
       <div style="margin-bottom: 15px;">
         <label style="font-size: 12px; font-weight: bold; color: #555;">รัศมีการค้นหา</label>
-        <select id="radiusSelect" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
+        <select id="radiusSelect" onchange="updateRadiusCircle()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
           <option value="1" selected>ค้นหาในระยะ 1 กิโลเมตร</option>
           <option value="5">ค้นหาในระยะ 5 กิโลเมตร</option>
           <option value="10">ค้นหาในระยะ 10 กิโลเมตร</option>
@@ -447,6 +447,7 @@
     // ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
+    let radiusCircle = null; // ตัวแปรสำหรับเก็บวงกลมรัศมี
     let selectedLat = null;
     let selectedLng = null;
     let selectedRadius = 1; // ค่าเริ่มต้นรัศมี 1 กม.
@@ -605,6 +606,31 @@
     // ==========================================
     // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up & Place Search Auto-complete
     // ==========================================
+    
+    // ฟังก์ชันวาด/อัปเดตวงกลมรัศมี
+    function updateRadiusCircle() {
+      if (!leafletMap || !selectedLat || !selectedLng) return;
+
+      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 1;
+      const radiusInMeters = radiusInKm * 1000;
+      const centerLatLng = new L.LatLng(selectedLat, selectedLng);
+
+      if (radiusCircle) {
+        radiusCircle.setLatLng(centerLatLng);
+        radiusCircle.setRadius(radiusInMeters);
+      } else {
+        radiusCircle = L.circle(centerLatLng, {
+          color: '#4a83cc',
+          fillColor: '#4a83cc',
+          fillOpacity: 0.15,
+          radius: radiusInMeters
+        }).addTo(leafletMap);
+      }
+
+      // ซูมแผนที่ให้พอดีกับขนาดวงกลม
+      leafletMap.fitBounds(radiusCircle.getBounds());
+    }
+
     function openLocationModal() {
       document.getElementById('locationModalOverlay').classList.add('active');
       
@@ -624,11 +650,13 @@
           mapMarker.on('dragend', function (e) {
             const pos = mapMarker.getLatLng();
             setCoordinates(pos.lat, pos.lng);
+            updateRadiusCircle();
           });
 
           leafletMap.on('click', function (e) {
             mapMarker.setLatLng(e.latlng);
             setCoordinates(e.latlng.lat, e.latlng.lng);
+            updateRadiusCircle();
           });
 
           if (!selectedLat && navigator.geolocation) {
@@ -638,7 +666,10 @@
               leafletMap.setView([lat, lng], 14);
               mapMarker.setLatLng([lat, lng]);
               setCoordinates(lat, lng);
+              updateRadiusCircle();
             }, () => {});
+          } else if (selectedLat && selectedLng) {
+            updateRadiusCircle();
           }
         }, 200);
       } else {
@@ -646,8 +677,8 @@
           leafletMap.invalidateSize();
           if (selectedLat && selectedLng) {
             const latLng = [selectedLat, selectedLng];
-            leafletMap.setView(latLng, 14);
             mapMarker.setLatLng(latLng);
+            updateRadiusCircle();
           }
         }, 200);
       }
@@ -846,12 +877,11 @@
       // อัปเดตพิกัดและช่องกรอก Latitude / Longitude
       setCoordinates(latitude, longitude);
 
-      // แพนแผนที่และย้ายตำแหน่งหมุด Marker
+      // แพนแผนที่ ย้ายตำแหน่งหมุด Marker และอัปเดตวงกลม
       if (leafletMap && mapMarker) {
         const newLatLng = new L.LatLng(latitude, longitude);
-        leafletMap.panTo(newLatLng);
-        leafletMap.setZoom(15);
         mapMarker.setLatLng(newLatLng);
+        updateRadiusCircle(); 
       }
     }
 
@@ -871,7 +901,7 @@
         if (leafletMap && mapMarker) {
           const newLatLng = new L.LatLng(lat, lng);
           mapMarker.setLatLng(newLatLng);
-          leafletMap.panTo(newLatLng);
+          updateRadiusCircle();
         }
       }
     }
@@ -886,6 +916,13 @@
       selectedLat = null;
       selectedLng = null;
       selectedRadius = 1;
+      
+      // ลบวงกลมออกจากแผนที่
+      if (radiusCircle && leafletMap) {
+        leafletMap.removeLayer(radiusCircle);
+        radiusCircle = null;
+      }
+
       document.getElementById('latInput').value = '';
       document.getElementById('lngInput').value = '';
       document.getElementById('placeSearchInput').value = '';
@@ -1534,7 +1571,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.1 (Place Search Auto-complete Enabled - Ranked)
+    🟢 Version: 1.7.2 (Added Radius Circle Feature)
   </div>
 </body>
 </html>
