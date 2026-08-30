@@ -980,7 +980,7 @@
       testShowList();
     }
 
-    // ฟังก์ชันเปิด Google Maps (อัปเดตใหม่: ตรวจสอบและแนบชื่อสถานที่ต่อท้าย Longitude ตามเงื่อนไข)
+    // ฟังก์ชันเปิด Google Maps (แก้ไขใหม่: ดึงข้อความจากช่องค้นหาสถานที่มาต่อท้ายลองจิจูดให้สมบูรณ์)
     function openGoogleMaps() {
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
@@ -988,7 +988,9 @@
       const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
 
       if (lat && lng) {
+        // สร้าง URL พื้นฐานด้วย ละติจูด, ลองจิจูด
         let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        // หากมีชื่อสถานที่ (ไม่ว่าจะพิมพ์เองหรือเลือกจาก Auto-complete) ให้แนบต่อท้ายเพื่อความแม่นยำบน Google Maps
         if (placeName) {
           queryUrl += `+${encodeURIComponent(placeName)}`;
         }
@@ -1181,7 +1183,7 @@
                   }
                 }
                 
-                // --- Tool Call ใหม่ สำหรับการปักหมุดพิกัดแผนที่ ---
+                // --- Tool Call สำหรับการปักหมุดพิกัดแผนที่ ---
                 else if (call.name === "set_location_coordinates") {
                   const args = call.args || {};
                   const lat = args.latitude;
@@ -1362,7 +1364,6 @@
               if (val === 'ไม่เกิน 100 ตารางวา') criteria.areaMax = "100";
               else if (val === 'ไม่เกิน 400 ตารางวา') criteria.areaMax = "400";
               else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000";
-              // 10 ไร่ = 4,000 ตร.วา
               else if (val === 'มากกว่า 10 ไร่ เป็นต้นไป') criteria.areaMin = "4000";
               else criteria["เนื้อที่"] = val;
             } else {
@@ -1371,7 +1372,6 @@
           }
         }
       });
-      // ส่งพิกัด Latitude (คอลัมน์ O), Longitude (คอลัมน์ P) และ Radius (กิโลเมตร)
       if (selectedLat !== null && selectedLng !== null) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
@@ -1664,7 +1664,7 @@
     } catch(e) {}
   </script>
   <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.4.1 (Added Google Map button - Latitude&Longtitude&Place)
+    🟢 Version: 1.7.5 (Fixed Google Maps URL Place Query Bug)
   </div>
 </body>
 </html>
