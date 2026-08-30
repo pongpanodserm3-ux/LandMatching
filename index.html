@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- แผนที่ Leaflet OpenStreetMap สำหรับ Pop-up ปักหมุด -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
-      --text-main: #5c3a6b; 
+      --text-main: #5c3a6b;
       --text-dark: #333333;
       --bg-gradient: linear-gradient(135deg, #ffd1df 0%, #c4f5e9 100%);
       --btn-green: #bcece0;
@@ -26,7 +25,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden; 
+      overflow: hidden;
     }
 
     /* --- ส่วนบน: AI Voice --- */
@@ -57,7 +56,7 @@
     }
 
     .mascot-img { 
-      height: 50px; 
+      height: 50px;
       object-fit: contain; 
     }
     
@@ -75,11 +74,15 @@
       transition: all 0.3s ease;
     }
     
-    .pulse-animation { animation: pulse 1.5s infinite; border-color: #ff6b81; }
+    .pulse-animation { animation: pulse 1.5s infinite;
+      border-color: #ff6b81; }
     @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
-      70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 107, 129, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
+      0% { transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 107, 129, 0.7); }
+      70% { transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(255, 107, 129, 0); }
+      100% { transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
     }
 
     .voice-btn {
@@ -94,7 +97,8 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
       transition: background 0.3s;
     }
-    .voice-btn.active { background: #ff6b81; }
+    .voice-btn.active { background: #ff6b81;
+    }
 
     .input-status-row {
       display: flex;
@@ -106,7 +110,7 @@
     }
     
     .custom-edit {
-      width: 66.66%; 
+      width: 66.66%;
       padding: 10px;
       font-size: 16px;
       border: 1px solid var(--btn-blue);
@@ -118,7 +122,7 @@
       font-size: 14px; 
       color: #555; 
       font-weight: bold; 
-      flex: 1; 
+      flex: 1;
       text-align: right; 
     }
 
@@ -127,9 +131,12 @@
       color: var(--btn-blue) !important;
     }
     @keyframes loadingAnim {
-      0% { opacity: 0.4; transform: scale(0.98); }
-      50% { opacity: 1; transform: scale(1.02); }
-      100% { opacity: 0.4; transform: scale(0.98); }
+      0% { opacity: 0.4;
+        transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02);
+      }
+      100% { opacity: 0.4; transform: scale(0.98);
+      }
     }
 
     .filter-scroll-row {
@@ -157,7 +164,8 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       transition: all 0.2s;
     }
-    .filter-btn:active { background: var(--btn-blue); color: #fff; }
+    .filter-btn:active { background: var(--btn-blue); color: #fff;
+    }
 
     /* --- ส่วนล่าง: List View --- */
     #list-section {
@@ -169,17 +177,21 @@
 
     /* --- Modal --- */
     .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
       background-color: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(5px);
-      display: none; justify-content: center; align-items: flex-end;
+      display: none; justify-content: center;
+      align-items: flex-end;
       z-index: 9000;
     }
-    .modal-overlay.active { display: flex !important; }
+    .modal-overlay.active { display: flex !important;
+    }
     
     .detail-modal {
       background: #fff;
-      width: 100%; height: 85vh;
+      width: 100%;
+      height: 85vh;
       border-radius: 30px 30px 0 0;
       padding: 20px; box-sizing: border-box;
       display: flex; flex-direction: column;
@@ -188,7 +200,8 @@
     
     .dropdown-modal {
       background: #fff;
-      width: 90%; max-width: 420px;
+      width: 90%;
+      max-width: 420px;
       border-radius: 20px;
       padding: 20px; box-sizing: border-box;
       display: flex; flex-direction: column;
@@ -212,45 +225,58 @@
     }
 
     .dropdown-options-container {
-      display: flex; flex-direction: column; gap: 6px;
+      display: flex;
+      flex-direction: column; gap: 6px;
       margin-top: 10px; max-height: 45vh; overflow-y: auto;
     }
     .dropdown-option-btn {
       background: #f0f4f8; border: none; padding: 12px;
-      border-radius: 10px; text-align: left; font-size: 20px;
+      border-radius: 10px;
+      text-align: left; font-size: 20px;
       cursor: pointer; transition: background 0.2s;
     }
-    .dropdown-option-btn:active { background: #d0e0f0; }
+    .dropdown-option-btn:active { background: #d0e0f0;
+    }
 
     .close-modal {
       position: absolute; top: 15px; right: 20px;
-      font-size: 20px; color: #888; cursor: pointer; font-weight: bold;
+      font-size: 20px;
+      color: #888; cursor: pointer; font-weight: bold;
       line-height: 1;
     }
 
     .image-slider {
-      display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+      display: flex;
+      overflow-x: auto; scroll-snap-type: x mandatory;
       gap: 6px; padding-bottom: 10px; margin-top: 10px;
     }
-    .image-slider::-webkit-scrollbar { height: 6px; }
-    .image-slider::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    .image-slider::-webkit-scrollbar { height: 6px;
+    }
+    .image-slider::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px;
+    }
     .image-slider img {
       width: 85%; height: 200px; object-fit: cover;
-      border-radius: 15px; scroll-snap-align: center; flex-shrink: 0;
+      border-radius: 15px;
+      scroll-snap-align: center; flex-shrink: 0;
       background: #eee;
     }
 
-    .detail-content { flex: 1; overflow-y: auto; margin-top: 8px; }
+    .detail-content { flex: 1; overflow-y: auto; margin-top: 8px;
+    }
     .detail-title { font-size: 22px; font-weight: bold; color: var(--text-main); }
-    .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; }
+    .detail-price { font-size: 20px;
+      font-weight: bold; color: #d9534f; }
     
     .ai-detail-box {
-      background: #e6f2ff; border-radius: 15px; padding: 15px;
+      background: #e6f2ff;
+      border-radius: 15px; padding: 15px;
       margin-top: 8px; display: flex; align-items: center; gap: 10px;
     }
 
-    #modalDesc::-webkit-scrollbar { width: 6px; }
-    #modalDesc::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+    #modalDesc::-webkit-scrollbar { width: 6px;
+    }
+    #modalDesc::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px;
+    }
 
     /* --- Infinite Scroll & Fallback UI --- */
     .infinite-loader {
@@ -293,11 +319,11 @@
     <div class="input-status-row">
       <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ" 
              oninput="triggerSearchReset()"
-             onkeypress="if(event.key === 'Enter') { testShowList(); }">
+             onkeypress="if(event.key === 'Enter') { testShowList(); 
+             }">
       <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
     </div>
 
-    <!-- แถวเลื่อนตัวกรอง (Filter Scroll Row) -->
     <div class="filter-scroll-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">พิกัด ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
@@ -336,10 +362,9 @@
     </div>
   </div>
 
-  <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
-      <span class="close-modal" onclick="closeDetailModal()">&times;</span>
+      <span class="close-modal" onclick="closeDetailModal()">×</span>
       <div class="image-slider" id="modalSlider"></div>
       <div class="detail-content">
         <div id="modalTitle" class="detail-title">โหลดข้อมูล...</div>
@@ -362,14 +387,13 @@
     </div>
   </div>
 
-  <!-- Dropdown Modal -->
   <div class="modal-overlay" id="dropdownModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 id="dropdownModalTitle" style="color: var(--text-main); margin: 0;">เลือกข้อมูล</h3>
         <div style="display: flex; align-items: center; gap: 10px;">
           <button onclick="selectDropdownOption(AppState.ui.dropdownTopic, 'เคลียร์ค่า')" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
-          <span onclick="closeDropdownModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
+          <span onclick="closeDropdownModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">×</span>
         </div>
       </div>
       <input type="text" id="dropdownSearchInput" class="dropdown-search-input" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" onkeyup="filterDropdownOptions()">
@@ -377,28 +401,24 @@
     </div>
   </div>
 
-  <!-- Pop-up Modal ปักหมุดพิกัดพร้อมช่องค้นหาสถานที่สำคัญ, Latitude / Longitude และ Dropdown เลือกระยะทางรัศมี -->
   <div class="modal-overlay" id="locationModalOverlay" style="align-items: center;">
     <div class="dropdown-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="color: var(--text-main); margin: 0;">📍 ปักหมุดพิกัดค้นหา</h3>
         <div style="display: flex; align-items: center; gap: 10px;">
           <button onclick="clearLocationFilter()" style="background: #ffebe9; border: 1px solid #ffbdad; color: #d9534f; border-radius: 8px; padding: 5px 12px; font-size: 14px; cursor: pointer; font-weight: bold; white-space: nowrap;">เคลียร์ค่า</button>
-          <span onclick="closeLocationModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">&times;</span>
+          <span onclick="closeLocationModal()" style="font-size: 28px; color: #888; cursor: pointer; font-weight: bold; line-height: 1; padding-bottom: 3px;">×</span>
         </div>
       </div>
       
-      <!-- ช่องค้นหาสถานที่สำคัญพร้อม Auto-complete -->
       <div style="position: relative; margin-bottom: 12px;">
         <label style="font-size: 12px; font-weight: bold; color: #555;">🔍 ค้นหาสถานที่สำคัญ (เช่น เดอะมอลล์ บางกะปิ, เซ็นทรัล พระราม 9)</label>
         <input type="text" id="placeSearchInput" placeholder="พิมพ์ชื่อสถานที่เพื่อค้นหา..." oninput="handlePlaceSearchInput(this.value)" autocomplete="off" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
         <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--btn-blue); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px;"></div>
       </div>
 
-      <!-- Interactive Map แสดงตำแหน่งปัจจุบันพร้อมหมุดลากปักได้ -->
       <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
       
-      <!-- ช่องกรอกพิกัด 2 ช่อง (ซ้าย: Latitude / ขวา: Longitude) -->
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <div style="flex: 1;">
           <label style="font-size: 12px; font-weight: bold; color: #555;">Latitude (ละติจูด)</label>
@@ -410,16 +430,22 @@
         </div>
       </div>
 
-      <!-- Dropdown เลือกระยะทางรัศมี (1, 2, 5, 10, 30 กิโลเมตร) พร้อมอีเวนต์ onchange เพื่ออัปเดตวงกลม -->
-      <div style="margin-bottom: 15px;">
-        <label style="font-size: 12px; font-weight: bold; color: #555;">รัศมีการค้นหา</label>
-        <select id="radiusSelect" onchange="updateRadiusCircle()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
-          <option value="1" selected>ค้นหาในระยะ 1 กิโลเมตร</option>
-          <option value="2">ค้นหาในระยะ 2 กิโลเมตร</option>
-          <option value="5">ค้นหาในระยะ 5 กิโลเมตร</option>
-          <option value="10">ค้นหาในระยะ 10 กิโลเมตร</option>
-          <option value="30">ค้นหาในระยะ 30 กิโลเมตร</option>
-        </select>
+      <div style="display: flex; gap: 8px; margin-bottom: 15px; align-items: flex-end;">
+        <div style="flex: 1;">
+          <label style="font-size: 12px; font-weight: bold; color: #555;">รัศมีการค้นหา</label>
+          <select id="radiusSelect" onchange="updateRadiusCircle()" style="width: 100%; padding: 10px; font-size: 15px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px; background: #fff; color: #333;">
+            <option value="1" selected>ค้นหาในระยะ 1 กิโลเมตร</option>
+            <option value="2">ค้นหาในระยะ 2 กิโลเมตร</option>
+            <option value="5">ค้นหาในระยะ 5 กิโลเมตร</option>
+            <option value="10">ค้นหาในระยะ 10 กิโลเมตร</option>
+            <option value="30">ค้นหาในระยะ 30 กิโลเมตร</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <button onclick="openGoogleMaps()" style="width: 100%; padding: 10px; font-size: 14px; background-color: #e6f2ff; border: 1px solid var(--btn-blue); border-radius: 10px; color: var(--btn-blue); font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box; height: 43.5px;">
+            🗺️ เปิด Google Maps
+          </button>
+        </div>
       </div>
 
       <button onclick="confirmLocation()" style="width: 100%; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
@@ -448,10 +474,10 @@
     // ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
-    let radiusCircle = null; // ตัวแปรสำหรับเก็บวงกลมรัศมี
+    let radiusCircle = null;
     let selectedLat = null;
     let selectedLng = null;
-    let selectedRadius = 1; // ค่าเริ่มต้นรัศมี 1 กม.
+    let selectedRadius = 1;
     let placeSearchDebounceTimer = null; // ตัวแปรสำหรับควบคุม Auto-complete debounce
 
     // ==========================================
@@ -569,7 +595,6 @@
     function renderDropdownOptions(optionsToRender) {
       const optionsContainer = document.getElementById('dropdownOptions');
       optionsContainer.innerHTML = '';
-      
       if (optionsToRender.length === 0) {
         optionsContainer.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">ไม่พบตัวเลือกที่ค้นหา</div>';
         return;
@@ -611,11 +636,9 @@
     // ฟังก์ชันวาด/อัปเดตวงกลมรัศมี
     function updateRadiusCircle() {
       if (!leafletMap || !selectedLat || !selectedLng) return;
-
       const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 1;
       const radiusInMeters = radiusInKm * 1000;
       const centerLatLng = new L.LatLng(selectedLat, selectedLng);
-
       if (radiusCircle) {
         radiusCircle.setLatLng(centerLatLng);
         radiusCircle.setRadius(radiusInMeters);
@@ -707,14 +730,12 @@
       1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "พิมพ์คำนำหน้า เช่น ถนน หรือ ซอย หรือ หมู่บ้าน หรือ อาคาร แล้วตามด้วยชื่อ โดยไม่ต้องเว้นวรรค (เช่น ถนนลาดพร้าว)"
       2. หากผู้ใช้ไม่แน่ใจหรือต้องการความช่วยเหลือ ให้พูดคุยสอบถามเพื่อสรุปตำแหน่งสถานที่ที่ต้องการค้นหา 
       3. เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่`;
-      
       const checkReady = setInterval(() => {
         if (AppState.voice.isActive && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && AppState.voice.isSetupReady) {
           clearInterval(checkReady);
           sendTextToAI(prompt);
         }
       }, 500);
-      
       setTimeout(() => clearInterval(checkReady), 10000); // กัน loop ค้างเกิน 10 วิ
     }
 
@@ -790,14 +811,12 @@
           { from: /\bsathorn\s*square\b/gi, to: "สาทร สแควร์" },
           { from: /\bg\s*tower\b/gi, to: "จี ทาวเวอร์" }
         ];
-    
         let convertedQuery = rawTrimmed;
         mappings.forEach(m => {
           if (m.from.test(convertedQuery)) {
             convertedQuery = convertedQuery.replace(m.from, m.to);
           }
         });
-    
         if (convertedQuery !== rawTrimmed && !searchQueries.includes(convertedQuery)) {
           searchQueries.push(convertedQuery);
         }
@@ -808,7 +827,6 @@
             .then(res => res.json())
             .catch(() => [])
         );
-    
         Promise.all(fetchPromises)
           .then(resultsArray => {
             resultsDiv.innerHTML = '';
@@ -843,7 +861,7 @@
               // เช็คพื้นที่
               const isBKK = state.includes("กรุงเทพมหานคร") || state.includes("กรุงเทพ") || state.includes("Bangkok") || city.includes("กรุงเทพ") || city.includes("Bangkok");
               const isVicinity = state.match(/(นนทบุรี|ปทุมธานี|สมุทรปราการ|สมุทรสาคร|นครปฐม|Nonthaburi|Pathum Thani|Samut Prakan|Samut Sakhon|Nakhon Pathom)/i);
-
+              
               // เช็คประเภท
               const isRoadOrSoi = type === 'road' || cls === 'highway' || displayName.includes("ถนน") || displayName.includes("ซอย") || displayName.match(/\b(Road|Soi)\b/i);
               const isProjectOrVillage = type === 'residential' || displayName.includes("หมู่บ้าน") || displayName.includes("โครงการ") || displayName.match(/\b(Village)\b/i);
@@ -864,7 +882,6 @@
               }
               return (b.importance || 0) - (a.importance || 0);
             });
-    
             if (combined.length > 0) {
               // เลือกแสดงผลสูงสุด 6 รายการ หลังจากผ่านการ Rank
               combined.slice(0, 6).forEach(item => {
@@ -901,7 +918,7 @@
       
       // อัปเดตพิกัดและช่องกรอก Latitude / Longitude
       setCoordinates(latitude, longitude);
-
+      
       // แพนแผนที่ ย้ายตำแหน่งหมุด Marker และอัปเดตวงกลม
       if (leafletMap && mapMarker) {
         const newLatLng = new L.LatLng(latitude, longitude);
@@ -963,12 +980,22 @@
       testShowList();
     }
 
+    // ฟังก์ชันใหม่สำหรับการเปิด Google Maps ตามพิกัด
+    function openGoogleMaps() {
+      const lat = document.getElementById('latInput').value.trim();
+      const lng = document.getElementById('lngInput').value.trim();
+      if (lat && lng) {
+        window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+      } else {
+        alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
+      }
+    }
+
     function confirmLocation() {
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const radiusSelect = document.getElementById('radiusSelect');
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
-      
       if (lat && lng) {
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
@@ -982,7 +1009,8 @@
       }
       
       closeLocationModal();
-      testShowList(); // ค้นหาตามพิกัดและรัศมีทันทีเมื่อกด OK
+      testShowList();
+      // ค้นหาตามพิกัดและรัศมีทันทีเมื่อกด OK
     }
 
     // ==========================================
@@ -1087,11 +1115,9 @@
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
-
         AppState.voice.ws.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
-            
             if (response.setupComplete) {
               AppState.voice.isSetupReady = true;
               statusText.classList.remove('loading-pulse');
@@ -1117,7 +1143,6 @@
 
             const toolCall = response.toolCall || response.serverContent?.interrupted === false && response.serverContent?.modelTurn?.parts?.find(p => p.functionCall);
             const functionCalls = response.toolCall?.functionCalls || (toolCall?.functionCall ? [toolCall.functionCall] : null);
-
             if (functionCalls && functionCalls.length > 0) {
               for (let call of functionCalls) {
                 // --- Tool Call สำหรับส่งค้นหาข้อมูลบ้าน ---
@@ -1129,7 +1154,7 @@
                   const editBox = document.getElementById('customEditBox');
                   let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
                   if (editBox && summaryParts.length > 0) {
-                    editBox.value = summaryParts.filter(Boolean).join(' '); 
+                    editBox.value = summaryParts.filter(Boolean).join(' ');
                   }
 
                   if (!AppState.data.isFetching) {
@@ -1186,7 +1211,6 @@
 
           } catch (e) {}
         };
-
         AppState.voice.ws.onclose = () => stopVoiceSession();
 
       } catch (err) {
@@ -1210,10 +1234,8 @@
 
       source.connect(AppState.voice.processor);
       AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
-
       AppState.voice.processor.onaudioprocess = (e) => {
         if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
-        
         if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
           return;
         }
@@ -1242,7 +1264,6 @@
       const raw = atob(base64Audio);
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-
       const int16 = new Int16Array(bytes.buffer);
       const float32 = new Float32Array(int16.length);
       for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
@@ -1277,10 +1298,12 @@
       }
       
       if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
-        try { await AppState.voice.audioCtx.close(); } catch(e) {}
+        try { await AppState.voice.audioCtx.close();
+        } catch(e) {}
       }
       if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
-        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
+        try { await AppState.voice.audioOutCtx.close();
+        } catch(e) {}
       }
 
       const btn = document.getElementById('toggleBtn');
@@ -1331,7 +1354,8 @@
             } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
               if (val === 'ไม่เกิน 100 ตารางวา') criteria.areaMax = "100";
               else if (val === 'ไม่เกิน 400 ตารางวา') criteria.areaMax = "400";
-              else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000"; // 10 ไร่ = 4,000 ตร.วา
+              else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000";
+              // 10 ไร่ = 4,000 ตร.วา
               else if (val === 'มากกว่า 10 ไร่ เป็นต้นไป') criteria.areaMin = "4000";
               else criteria["เนื้อที่"] = val;
             } else {
@@ -1340,7 +1364,6 @@
           }
         }
       });
-
       // ส่งพิกัด Latitude (คอลัมน์ O), Longitude (คอลัมน์ P) และ Radius (กิโลเมตร)
       if (selectedLat !== null && selectedLng !== null) {
         criteria.lat = selectedLat;
@@ -1375,7 +1398,6 @@
 
       AppState.pagination.reqId++;
       const currentReqId = AppState.pagination.reqId;
-
       AppState.pagination.lastCriteria = criteria || {};
       AppState.pagination.lastSearchText = searchText;
 
@@ -1393,7 +1415,6 @@
       AppState.pagination.isLoading = true;
       statusText.innerText = "กำลังดึงข้อมูล... ⏳";
       statusText.classList.add('loading-pulse');
-
       try {
         const res = await fetch(CONFIG.GAS_WEB_APP_URL, {
           method: 'POST',
@@ -1408,7 +1429,6 @@
           }),
           redirect: 'follow' 
         });
-        
         const data = await res.json();
 
         if (currentReqId !== AppState.pagination.reqId) {
@@ -1430,11 +1450,9 @@
         
       } catch (error) {
         if (currentReqId !== AppState.pagination.reqId) return;
-
         console.error("Database Fetch Error:", error);
         statusText.classList.remove('loading-pulse');
         statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ";
-
         if (isNextPage) {
           document.getElementById('fallbackRetryCard').style.display = 'block';
         } else {
@@ -1463,7 +1481,6 @@
       }
 
       const bgColors = ['#fbeceb', '#eef5ff', '#fdf6e7'];
-
       newItems.forEach((p) => {
         const rawId = getPropValue(p, ['post ID', 'postId', 'url', 'โครงการ', 'price', 'project']);
         const uniqueKey = `${rawId}-${AppState.data.properties.length}`;
@@ -1481,7 +1498,6 @@
         const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'District', 'เขต', 'อำเภอ']);
         const prov = getPropValue(p, ['จังหวัด', 'province', 'Province']);
         const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'Size', 'area', 'ขนาด', 'พื้นที่']);
-
         const rawSale = getPropValue(p, ['ราคาขาย', 'salePrice'], '');
         const rawRent = getPropValue(p, ['ราคาเช่า', 'rentPrice'], '');
         const rawFallback = getPropValue(p, ['price', 'Price', 'ราคา'], '-');
@@ -1555,7 +1571,6 @@
       
       let detailsColU = getPropValue(p, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'รายละเอียดสั้นๆ', 'รายละเอียด', 'detail'], 'ไม่มีข้อมูลเพิ่มเติม');
       let rawUrlColS = getPropValue(p, ['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
-
       let clickableUrl = rawUrlColS;
       if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
           clickableUrl = 'https://' + clickableUrl;
@@ -1563,11 +1578,9 @@
 
       document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
       document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
-      
       const btnDeepLink = document.getElementById('modalDeepLink');
       btnDeepLink.href = clickableUrl;
       btnDeepLink.style.display = 'inline-block';
-      
       if (rawUrlColS === '#' || rawUrlColS === '') {
         btnDeepLink.style.opacity = '0.6';
         btnDeepLink.onclick = (e) => { 
@@ -1584,7 +1597,6 @@
         'road', 'pricetype', 'saleprice', 'rentprice', 'price', 'size',
         'areanum', 'phone', 'lineid', 'postid', 'postdetails', 'businesstype'
       ];
-      
       const allRawDataHtml = Object.entries(p)
         .filter(([key]) => {
           if (duplicateEngKeys.includes(key.toLowerCase())) return false;
@@ -1593,7 +1605,6 @@
         })
         .map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined && val !== '' ? val : '-'}`)
         .join('<br>');
-
       document.getElementById('modalDesc').innerHTML = `
         <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
         <b>ขนาด:</b> ${size || '-'}<br>
@@ -1605,7 +1616,6 @@
           </span>
         </div>
       `;
-
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
