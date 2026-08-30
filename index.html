@@ -412,7 +412,7 @@
       </div>
       
       <div style="position: relative; margin-bottom: 12px;">
-        <label style="font-size: 12px; font-weight: bold; color: #555;">🔍 ค้นหาสถานที่สำคัญ (เช่น เดอะมอลล์ บางกะปิ, เซ็นทรัล พระราม 9)</label>
+        <label style="font-size: 12px; font-weight: bold; color: #555;">🔍 ค้นหาสถานที่ (เช่น ถนนลาดพร้าว, เซ็นทรัลพระราม9)</label>
         <input type="text" id="placeSearchInput" placeholder="พิมพ์ชื่อสถานที่เพื่อค้นหา..." oninput="handlePlaceSearchInput(this.value)" autocomplete="off" style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; margin-top: 4px;">
         <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--btn-blue); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px;"></div>
       </div>
@@ -727,7 +727,7 @@
     // ฟังก์ชันกระตุ้น AI ทักทายเฉพาะหน้าต่างพิกัด
     function triggerLocationAIGreeting() {
       const prompt = `ขณะนี้ผู้ใช้ได้เปิดหน้าต่าง "ป๊อปอัปพิกัดการค้นหา" บนแผนที่แล้ว 
-      1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "พิมพ์คำนำหน้า เช่น ถนน หรือ ซอย หรือ หมู่บ้าน หรือ อาคาร แล้วตามด้วยชื่อ โดยไม่ต้องเว้นวรรค (เช่น ถนนลาดพร้าว)"
+      1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "สนใจแถวไหนบอกผมได้เลย หรือ ค้นเองง่ายๆโดย พิมพ์คำติดกันได้โดยไม่ต้องเว้นวรรค (เช่น ถนนลาดพร้าว)ครับ"
       2. หากผู้ใช้ไม่แน่ใจหรือต้องการความช่วยเหลือ ให้พูดคุยสอบถามเพื่อสรุปตำแหน่งสถานที่ที่ต้องการค้นหา 
       3. เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย`;
       const checkReady = setInterval(() => {
