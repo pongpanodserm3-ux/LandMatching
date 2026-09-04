@@ -461,7 +461,9 @@
     const CONFIG = {
       BACKEND_WS_URL: "wss://land-matching-backend.onrender.com",
       GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
-      LIFF_ID: "2011006139-Wn6PhY6D"
+      LIFF_ID: "2011006139-Wn6PhY6D",
+      // เพิ่ม API URL เพื่อดึงข้อมูลจาก Render / Supabase
+      BACKEND_API_URL: "https://land-matching-backend.onrender.com/api/search" 
     };
 
     const SHEET_COLUMNS = [
@@ -729,7 +731,7 @@
       const prompt = `ขณะนี้ผู้ใช้ได้เปิดหน้าต่าง "ป๊อปอัปพิกัดการค้นหา" บนแผนที่แล้ว 
       1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "สนใจแถวไหนบอกผมได้เลย หรือ ค้นเองง่ายๆโดย พิมพ์คำติดกันได้โดยไม่ต้องเว้นวรรค (เช่น ถนนลาดพร้าว)ครับ"
       2. หากผู้ใช้ไม่แน่ใจหรือต้องการความช่วยเหลือ ให้พูดคุยสอบถามเพื่อสรุปตำแหน่งสถานที่ที่ต้องการค้นหา 
-      3. เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย ***สำคัญมาก: ต้องตรวจสอบประเภทสถานที่และใส่คำนำหน้าชื่อสถานที่ให้ถูกต้องตามหลักเกณฑ์เสมอ เช่น หากสถานที่นั้นเป็นหมู่บ้าน ให้ใส่คำนำหน้าว่า "หมู่บ้าน", หากเป็นถนน ให้ใส่ "ถนน", หรือปรับเปลี่ยนตามประเภทสถานที่จริง เช่น ซอย, อาคาร, ห้างสรรพสินค้า ฯลฯ***`;
+      3. เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย`;
       const checkReady = setInterval(() => {
         if (AppState.voice.isActive && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && AppState.voice.isSetupReady) {
           clearInterval(checkReady);
@@ -990,7 +992,7 @@
       if (lat && lng) {
         // สร้าง URL พื้นฐานด้วย ละติจูด, ลองจิจูด
         let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-        // หากมีชื่อสถานที่ (ไม่ว่าจะพิมพ์เองหรือเลือกจาก Auto-complete) ให้แนบต่อท้ายเพื่อความแม่นยำบน Google Maps
+        // หากมีชื่อสถานที่(ไม่ว่าจะพิมพ์เองหรือเลือกจาก Auto-complete) ให้แนบต่อท้ายเพื่อความแม่นยำบน Google Maps
         if (placeName) {
           queryUrl += `+${encodeURIComponent(placeName)}`;
         }
@@ -1069,7 +1071,7 @@
                     3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
                     4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
                     5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
-                    6. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย (สำคัญ: ต้องตรวจสอบและเติมคำนำหน้าประเภทสถานที่ให้ถูกต้องเสมอ เช่น "หมู่บ้าน...", "ถนน...", "ซอย...", "อาคาร...", "ห้างสรรพสินค้า...")`
+                    6. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย`
                   }]
                 },
                 tools: [
@@ -1108,7 +1110,7 @@
                           properties: {
                             latitude: { type: "NUMBER" },
                             longitude: { type: "NUMBER" },
-                            placeName: { type: "STRING", description: "ชื่อสถานที่ที่ผู้ใช้ต้องการค้นหา (บังคับ: ต้องตรวจสอบและใส่คำนำหน้าประเภทสถานที่ให้ถูกต้อง เช่น หมู่บ้าน, ถนน, ซอย, อาคาร, ห้างสรรพสินค้า)" }
+                            placeName: { type: "STRING", description: "ชื่อสถานที่ที่ผู้ใช้ต้องการค้นหา" }
                           },
                           required: ["latitude", "longitude", "placeName"]
                         }
@@ -1408,6 +1410,7 @@
       loadNextPage();
     }
 
+    // ฟังก์ชันดึงและเรนเดอร์ข้อมูลโดยเรียกใช้ Endpoint ของ Render ที่เชื่อมกับ Supabase
     async function fetchDatabase(userData, criteria, isNextPage = false) {
       const statusText = document.getElementById('statusText');
       const editBox = document.getElementById('customEditBox');
@@ -1423,258 +1426,146 @@
         AppState.pagination.hasMore = true;
         AppState.pagination.renderedKeys.clear();
         AppState.data.properties = [];
-        document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังโหลดรายการ... ⏳</div>";
-        document.getElementById('fallbackRetryCard').style.display = 'none';
+        document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังโหลดรายการ...</div>";
       } else {
         document.getElementById('infiniteLoader').style.display = 'block';
       }
 
       AppState.pagination.isLoading = true;
-      statusText.innerText = "กำลังดึงข้อมูล... ⏳";
-      statusText.classList.add('loading-pulse');
+
       try {
-        const res = await fetch(CONFIG.GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ 
-            action: 'searchAll', 
-            userData: userData, 
-            criteria: criteria, 
-            searchText: searchText,
-            offset: AppState.pagination.offset,
-            limit: AppState.pagination.limit
-          }),
-          redirect: 'follow' 
+        const payload = {
+          action: "searchAll",
+          offset: AppState.pagination.offset,
+          limit: AppState.pagination.limit,
+          userData: userData || {},
+          criteria: criteria || {},
+          searchText: searchText || ""
+        };
+
+        // เปลี่ยนแหล่งดึงข้อมูลจาก GAS ไปเป็น Backend บน Render
+        const response = await fetch(CONFIG.BACKEND_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-        const data = await res.json();
 
-        if (currentReqId !== AppState.pagination.reqId) {
-          return;
+        if (!response.ok) {
+          throw new Error("HTTP error " + response.status);
         }
 
-        if (data.status === "success") {
-          const newItems = data.results || [];
-          AppState.pagination.hasMore = data.hasMore;
-          AppState.pagination.offset = data.nextOffset !== undefined ? data.nextOffset : (AppState.pagination.offset + newItems.length);
+        const resData = await response.json();
 
-          appendListView(newItems, isNextPage);
-
-          statusText.classList.remove('loading-pulse');
-          statusText.innerText = `✅ แสดง ${AppState.data.properties.length} จาก ${data.total || AppState.data.properties.length} รายการ`;
-        } else {
-          throw new Error(data.message || "ดึงข้อมูลไม่สำเร็จ");
-        }
-        
-      } catch (error) {
         if (currentReqId !== AppState.pagination.reqId) return;
-        console.error("Database Fetch Error:", error);
-        statusText.classList.remove('loading-pulse');
-        statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ";
+
+        AppState.pagination.isLoading = false;
+        document.getElementById('infiniteLoader').style.display = 'none';
+        document.getElementById('fallbackRetryCard').style.display = 'none';
+
+        if (resData.status === "success") {
+          const results = resData.results || [];
+          
+          if (!isNextPage) {
+            document.getElementById('resultsContainer').innerHTML = "";
+          }
+
+          if (results.length === 0 && !isNextPage) {
+            document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#888;'>ไม่พบรายการอสังหาฯ ที่ตรงกับเงื่อนไขครับ</div>";
+            AppState.pagination.hasMore = false;
+          } else {
+            AppState.data.properties = AppState.data.properties.concat(results);
+            renderList(results);
+            AppState.pagination.offset += results.length;
+            // เช็คว่ามีข้อมูลหน้าถัดไปหรือไม่
+            AppState.pagination.hasMore = resData.hasMore !== undefined ? resData.hasMore : results.length >= AppState.pagination.limit;
+          }
+        } else {
+          throw new Error(resData.message || "Unknown error from backend");
+        }
+      } catch (err) {
+        if (currentReqId !== AppState.pagination.reqId) return;
+        AppState.pagination.isLoading = false;
+        document.getElementById('infiniteLoader').style.display = 'none';
         if (isNextPage) {
           document.getElementById('fallbackRetryCard').style.display = 'block';
         } else {
-          document.getElementById('resultsContainer').innerHTML = `
-            <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
-              <b>ข้อผิดพลาด:</b><br><span style="color: #333;">${error.message}</span><br><br>
-              <button onclick="testShowList()" style="background:#d9534f; color:#fff; border:none; padding:8px 15px; border-radius:10px; cursor:pointer;">🔄 ลองใหม่อีกครั้ง</button>
-            </div>`;
-        }
-      } finally {
-        if (currentReqId === AppState.pagination.reqId) {
-          AppState.pagination.isLoading = false;
-          AppState.data.isFetching = false;
-          document.getElementById('infiniteLoader').style.display = 'none';
+          document.getElementById('resultsContainer').innerHTML = `<div style='text-align:center; padding: 20px; color:#d9534f;'>เกิดข้อผิดพลาด: ${err.message}</div>`;
         }
       }
     }
 
-    function appendListView(newItems, isNextPage) {
+    function renderList(items) {
       const container = document.getElementById('resultsContainer');
-      if (!isNextPage) container.innerHTML = '';
+      items.forEach(item => {
+        // ใช้ข้อมูล key ที่ดึงมาจาก Supabase
+        const key = item.post_id || item.postId || item.url || Math.random().toString();
+        if (AppState.pagination.renderedKeys.has(key)) return;
+        AppState.pagination.renderedKeys.add(key);
 
-      if (AppState.data.properties.length === 0 && newItems.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขที่เลือก</div>';
-        return;
-      }
+        const title = item.project || item.facebook_name || item.facebookPostName || "ไม่ระบุชื่อ";
+        const price = item.price_sell || item.price_rent || item.price || item.salePrice || item.rentPrice || "ไม่ระบุราคา";
+        const area = item.area || item.size || "-";
+        const location = `${item.district || ''} ${item.province || ''}`.trim() || "ไม่ระบุตำแหน่ง";
 
-      const bgColors = ['#fbeceb', '#eef5ff', '#fdf6e7'];
-      newItems.forEach((p) => {
-        const rawId = getPropValue(p, ['post ID', 'postId', 'url', 'โครงการ', 'price', 'project']);
-        const uniqueKey = `${rawId}-${AppState.data.properties.length}`;
-
-        if (AppState.pagination.renderedKeys.has(uniqueKey)) return;
-
-        AppState.pagination.renderedKeys.add(uniqueKey);
-        AppState.data.properties.push(p);
-        const index = AppState.data.properties.length - 1;
-        const cardBg = bgColors[index % 3]; 
-
-        const type = getPropValue(p, ['ประเภทอสังหา', 'propertyType', 'PropertyType', 'ประเภท'], 'อสังหา');
-        const proj = getPropValue(p, ['โครงการ', 'project', 'Project', 'projectName', 'ชื่อโครงการ']);
-        const road = getPropValue(p, ['ถนน', 'road', 'Road']);
-        const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'District', 'เขต', 'อำเภอ']);
-        const prov = getPropValue(p, ['จังหวัด', 'province', 'Province']);
-        const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'Size', 'area', 'ขนาด', 'พื้นที่']);
-        const rawSale = getPropValue(p, ['ราคาขาย', 'salePrice'], '');
-        const rawRent = getPropValue(p, ['ราคาเช่า', 'rentPrice'], '');
-        const rawFallback = getPropValue(p, ['price', 'Price', 'ราคา'], '-');
+        const card = document.createElement('div');
+        card.style.cssText = "background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; cursor: pointer; transition: transform 0.2s;";
+        card.onclick = () => openDetailModal(item);
         
-        let displaySale = rawSale || '-';
-        if (!rawSale && !rawRent && rawFallback !== '-') {
-            displaySale = rawFallback;
-        }
-
-        let displayRentHtml = '';
-        if (rawRent) {
-            displayRentHtml = `<div style="font-size: 14px; margin-top: 4px; color: #ff9800; font-weight: normal;">เช่า: ${rawRent}</div>`;
-        }
-
-        const safeType = type;
-        const safeProject = proj ? `โครงการ: ${proj}` : 'โครงการ: -';
-        
-        const locParts = [];
-        if (road) locParts.push(road);
-        if (dist) locParts.push(dist);
-        if (prov) locParts.push(prov);
-        const safeLoc = locParts.length > 0 ? locParts.join(', ') : '-';
-        
-        const safeDemand = getPropValue(p, ['แบบราคา', 'demandType', 'DemandType', 'ประเภทประกาศ'], 'ขาย/เช่า');
-        const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
-        const distText = p._distance !== undefined ? `<span style="font-size:12px; color:#28a745; margin-left:5px;">(ห่าง ~${p._distance.toFixed(1)} กม.)</span>` : '';
-
-        const cardElement = document.createElement('div');
-        cardElement.style.cssText = `background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;`;
-        cardElement.onclick = () => openDetailModal(index);
-
-        cardElement.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items: flex-start; font-weight:bold; font-size:18px; margin-bottom: 8px;">
-            <div style="color:#111; padding-top: 2px;">${safeType}${displaySize}${distText}</div>
-            <div style="text-align: right; margin-left: 10px;">
-              <div style="color:#d9534f; white-space: nowrap;">${displaySale}</div>
-              ${displayRentHtml}
-            </div>
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div style="font-weight: bold; font-size: 16px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">${title}</div>
+            <div style="color: #d9534f; font-weight: bold; font-size: 14px;">${price}</div>
           </div>
-          <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
-            ${safeProject}
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:14px; color:#555;">
-            <div style="flex:1; padding-right:10px;">
-              ${safeLoc}
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px; white-space:nowrap;">
-              <span style="font-size:12px; color:#777;">ประเภท: ${safeDemand}</span>
-              <button style="background:#4a83cc; color:#fff; border:none; border-radius:15px; padding:6px 14px; cursor:pointer; font-size:12px;">ดูรายละเอียด</button>
-            </div>
-          </div>
+          <div style="font-size: 13px; color: #666; margin-bottom: 4px;">📍 ${location}</div>
+          <div style="font-size: 13px; color: #666;">📐 ${area}</div>
         `;
-        container.appendChild(cardElement);
+        container.appendChild(card);
       });
     }
 
-    // ==========================================
-    // 7. DETAIL MODAL HANDLERS
-    // ==========================================
-    function openDetailModal(index) {
-      const p = AppState.data.properties[index];
-      if (!p) return;
-
-      const type = getPropValue(p, ['ประเภทอสังหา', 'propertytype', 'ประเภท'], 'อสังหา');
-      const price = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'ราคา'], '-');
-      const proj = getPropValue(p, ['โครงการ', 'project'], '');
-      const road = getPropValue(p, ['ถนน', 'road'], '');
-      const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'เขต', 'อำเภอ'], '');
-      const prov = getPropValue(p, ['จังหวัด', 'province'], '');
-      const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'area', 'ขนาด', 'พื้นที่'], '');
+    function openDetailModal(item) {
+      document.getElementById('modalTitle').innerText = item.project || item.facebook_name || item.facebookPostName || "ไม่ระบุชื่อ";
+      document.getElementById('modalPrice').innerText = item.price_sell || item.price_rent || item.price || item.salePrice || item.rentPrice || "ไม่ระบุราคา";
+      document.getElementById('modalDesc').innerText = item.details || item.postDetails || "ไม่มีรายละเอียดเพิ่มเติม";
       
-      let detailsColU = getPropValue(p, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'รายละเอียดสั้นๆ', 'รายละเอียด', 'detail'], 'ไม่มีข้อมูลเพิ่มเติม');
-      let rawUrlColS = getPropValue(p, ['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
-      let clickableUrl = rawUrlColS;
-      if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
-          clickableUrl = 'https://' + clickableUrl;
-      }
-
-      document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
-      document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
-      const btnDeepLink = document.getElementById('modalDeepLink');
-      btnDeepLink.href = clickableUrl;
-      btnDeepLink.style.display = 'inline-block';
-      if (rawUrlColS === '#' || rawUrlColS === '') {
-        btnDeepLink.style.opacity = '0.6';
-        btnDeepLink.onclick = (e) => { 
-          e.preventDefault(); 
-          alert('ขออภัย ไม่พบข้อมูลลิงก์ต้นทางสำหรับประกาศนี้'); 
-        };
+      const deepLink = document.getElementById('modalDeepLink');
+      if (item.url && item.url !== "#") {
+        deepLink.href = item.url;
+        deepLink.style.display = 'inline-block';
       } else {
-        btnDeepLink.style.opacity = '1';
-        btnDeepLink.onclick = null;
+        deepLink.style.display = 'none';
       }
 
-      const duplicateEngKeys = [
-        'facebookpostname', 'project', 'propertytype', 'province', 'district',
-        'road', 'pricetype', 'saleprice', 'rentprice', 'price', 'size',
-        'areanum', 'phone', 'lineid', 'postid', 'postdetails', 'businesstype'
-      ];
-      const allRawDataHtml = Object.entries(p)
-        .filter(([key]) => {
-          if (duplicateEngKeys.includes(key.toLowerCase())) return false;
-          if (SHEET_COLUMNS && SHEET_COLUMNS.length > 0 && !SHEET_COLUMNS.includes(key)) return false;
-          return true;
-        })
-        .map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined && val !== '' ? val : '-'}`)
-        .join('<br>');
-      document.getElementById('modalDesc').innerHTML = `
-        <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
-        <b>ขนาด:</b> ${size || '-'}<br>
-        <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
-        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-word; font-size: 13px; color: #555;">
-          <b>📋 ข้อมูลดิบจากฐานข้อมูล:</b><br>
-          <span style="display: block; margin-top: 5px;">
-            ${allRawDataHtml}
-          </span>
-        </div>
-      `;
-      const slider = document.getElementById('modalSlider');
-      slider.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const imgUrl = getPropValue(p, [`image${i}`, `รูป${i}`, `pic${i}`], `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`);
-        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
-      }
-
+      document.getElementById('modalSlider').innerHTML = `<img src="https://via.placeholder.com/400x200?text=No+Image" alt="Property Image" style="width: 100%; height: auto; border-radius: 10px;">`;
       document.getElementById('detailModalOverlay').classList.add('active');
 
-      const contextData = JSON.stringify(p);
-      sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
-      (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
-      กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
+      // AI Context Update สำหรับบ้านที่เลือก
+      if (AppState.voice.isActive && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
+        const title = item.project || item.facebook_name || item.facebookPostName;
+        const price = item.price_sell || item.price_rent || item.price || item.salePrice || item.rentPrice;
+        const details = item.details || item.postDetails;
+        const contextMsg = `ตอนนี้ลูกค้ากำลังดูข้อมูลบ้าน: ${title} ราคา: ${price} รายละเอียด: ${details}. ให้คุณสวมบทบาทนักเจรจาต่อรอง แนะนำจุดเด่น และสอบถามความสนใจของลูกค้าครับ`;
+        sendTextToAI(contextMsg);
+      }
     }
 
     function closeDetailModal() {
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
 
-    function sendTextToAI(textMessage) {
+    function sendTextToAI(text) {
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
-        const message = {
+        AppState.voice.ws.send(JSON.stringify({
           clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [{ text: textMessage }]
-              }
-            ],
+            turns: [{
+              role: "user",
+              parts: [{ text: text }]
+            }],
             turnComplete: true
           }
-        };
-        AppState.voice.ws.send(JSON.stringify(message));
+        }));
       }
     }
-
-    try {
-      liff.init({ liffId: CONFIG.LIFF_ID }).catch(() => {});
-    } catch(e) {}
   </script>
-  <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.7 (Auto-prefix Place Name by AI)
-  </div>
 </body>
 </html>
