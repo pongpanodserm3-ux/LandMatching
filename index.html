@@ -642,6 +642,14 @@
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
+    
+    // แยกสถานะพิกัดที่ยืนยันแล้วสำหรับการค้นหา (Active Search Filter)
+    let isLocationActive = false;
+    let activeLat = null;
+    let activeLng = null;
+    let activeRadius = 1;
+
+    // ตัวแปรชั่วคราวสำหรับพิกัดขณะเปิด/ดูหน้าต่าง Popup แผนที่
     let selectedLat = null;
     let selectedLng = null;
     let selectedRadius = 1;
@@ -814,10 +822,14 @@
     // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up & Place Search Auto-complete
     // ==========================================
     function updateRadiusCircle() {
-      if (!leafletMap || !selectedLat || !selectedLng) return;
-      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 1;
+      if (!leafletMap) return;
+      const latVal = selectedLat !== null ? selectedLat : activeLat;
+      const lngVal = selectedLng !== null ? selectedLng : activeLng;
+      if (latVal === null || lngVal === null) return;
+
+      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || selectedRadius || activeRadius || 1;
       const radiusInMeters = radiusInKm * 1000;
-      const centerLatLng = new L.LatLng(selectedLat, selectedLng);
+      const centerLatLng = new L.LatLng(latVal, lngVal);
       if (radiusCircle) {
         radiusCircle.setLatLng(centerLatLng);
         radiusCircle.setRadius(radiusInMeters);
@@ -836,8 +848,11 @@
     function openLocationModal() {
       document.getElementById('locationModalOverlay').classList.add('active');
       
-      const defaultLat = selectedLat || 13.7563;
-      const defaultLng = selectedLng || 100.5018;
+      const defaultLat = isLocationActive ? activeLat : (selectedLat || 13.7563);
+      const defaultLng = isLocationActive ? activeLng : (selectedLng || 100.5018);
+      selectedLat = defaultLat;
+      selectedLng = defaultLng;
+      selectedRadius = isLocationActive ? activeRadius : 1;
 
       if (!leafletMap) {
         setTimeout(() => {
@@ -861,7 +876,7 @@
             updateRadiusCircle();
           });
 
-          if (!selectedLat && navigator.geolocation) {
+          if (!isLocationActive && !selectedLat && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
               const lat = pos.coords.latitude;
               const lng = pos.coords.longitude;
@@ -879,6 +894,7 @@
           leafletMap.invalidateSize();
           if (selectedLat && selectedLng) {
             const latLng = [selectedLat, selectedLng];
+            leafletMap.setView(latLng, 13);
             mapMarker.setLatLng(latLng);
             updateRadiusCircle();
           }
@@ -1104,10 +1120,10 @@
     }
 
     function setCoordinates(lat, lng) {
-      selectedLat = parseFloat(lat).toFixed(6);
-      selectedLng = parseFloat(lng).toFixed(6);
-      document.getElementById('latInput').value = selectedLat;
-      document.getElementById('lngInput').value = selectedLng;
+      selectedLat = parseFloat(lat);
+      selectedLng = parseFloat(lng);
+      document.getElementById('latInput').value = selectedLat.toFixed(6);
+      document.getElementById('lngInput').value = selectedLng.toFixed(6);
     }
 
     function updateMapFromInputs() {
@@ -1131,6 +1147,11 @@
     }
 
     function clearLocationFilter() {
+      isLocationActive = false;
+      activeLat = null;
+      activeLng = null;
+      activeRadius = 1;
+
       selectedLat = null;
       selectedLng = null;
       selectedRadius = 1;
@@ -1173,19 +1194,22 @@
     }
 
     function confirmLocation() {
-      const lat = document.getElementById('latInput').value.trim();
-      const lng = document.getElementById('lngInput').value.trim();
+      const lat = parseFloat(document.getElementById('latInput').value);
+      const lng = parseFloat(document.getElementById('lngInput').value);
       const radiusSelect = document.getElementById('radiusSelect');
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
-      if (lat && lng) {
-        selectedLat = parseFloat(lat);
-        selectedLng = parseFloat(lng);
-        selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
-        document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        activeLat = lat;
+        activeLng = lng;
+        activeRadius = isNaN(radiusVal) ? 1 : radiusVal;
+        isLocationActive = true;
+        document.getElementById('locationFilterBtn').innerText = `📍 ${activeLat.toFixed(3)}, ${activeLng.toFixed(3)} (${activeRadius} กม.) ▾`;
       } else {
-        selectedLat = null;
-        selectedLng = null;
-        selectedRadius = 1;
+        isLocationActive = false;
+        activeLat = null;
+        activeLng = null;
+        activeRadius = 1;
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       }
       
@@ -1359,8 +1383,8 @@
                 }
                 else if (call.name === "set_location_coordinates") {
                   const args = call.args || {};
-                  const lat = args.latitude;
-                  const lng = args.longitude;
+                  const lat = parseFloat(args.latitude);
+                  const lng = parseFloat(args.longitude);
                   const placeName = args.placeName;
                   
                   if (placeName) {
@@ -1370,16 +1394,25 @@
                     }
                   }
 
-                  if (lat && lng) {
-                    document.getElementById('latInput').value = lat;
-                    document.getElementById('lngInput').value = lng;
+                  if (!isNaN(lat) && !isNaN(lng)) {
+                    document.getElementById('latInput').value = lat.toFixed(6);
+                    document.getElementById('lngInput').value = lng.toFixed(6);
                     
                     setCoordinates(lat, lng);
+
+                    activeLat = lat;
+                    activeLng = lng;
+                    activeRadius = selectedRadius || 1;
+                    isLocationActive = true;
+                    document.getElementById('locationFilterBtn').innerText = `📍 ${activeLat.toFixed(3)}, ${activeLng.toFixed(3)} (${activeRadius} กม.) ▾`;
+
                     if (leafletMap && mapMarker) {
                       const newLatLng = new L.LatLng(lat, lng);
                       mapMarker.setLatLng(newLatLng);
                       updateRadiusCircle();
                     }
+
+                    testShowList();
                   }
 
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -1520,6 +1553,9 @@
       ];
       
       filterBtns.forEach(btn => {
+        const id = btn.id || '';
+        if (id === 'locationFilterBtn') return;
+
         const text = btn.innerText;
         if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
         
@@ -1543,26 +1579,18 @@
       const realEstateTabBtn = document.getElementById('tab-btn-realestate');
       const isRealEstateTab = realEstateTabBtn ? realEstateTabBtn.classList.contains('active') : true;
 
-      if (isRealEstateTab) {
-        // 1. ตรวจสอบสถานะการเลือกพิกัดจากปุ่มพิกัดสีเขียว (#locationFilterBtn)
-        const locationBtn = document.getElementById('locationFilterBtn');
-        const hasValidCoords = selectedLat !== null && selectedLng !== null && !isNaN(parseFloat(selectedLat)) && !isNaN(parseFloat(selectedLng));
+      // เพิ่มเงื่อนไขพิกัดลงใน criteria เฉพาะเมื่อผู้ใช้กด "OK ยืนยันพิกัด" แล้วเท่านั้น (isLocationActive === true)
+      if (isRealEstateTab && isLocationActive && activeLat !== null && activeLng !== null && !isNaN(activeLat) && !isNaN(activeLng)) {
+        const latVal = parseFloat(activeLat);
+        const lngVal = parseFloat(activeLng);
+        const radiusVal = parseFloat(activeRadius) || 1;
 
-        // 2. หากปุ่มพิกัดสีเขียวถูกเลือก (มีค่า latitude, longitude และ radius ถูกกำหนด) ให้ดึงค่ามาใช้ในเงื่อนไขการค้นหาทันที
-        if (locationBtn && hasValidCoords) {
-          const latVal = parseFloat(selectedLat);
-          const lngVal = parseFloat(selectedLng);
-          const radiusVal = parseFloat(selectedRadius) || 1;
+        criteria.latitude = latVal;
+        criteria.longitude = lngVal;
+        criteria.radius = radiusVal;
 
-          criteria.latitude = latVal;
-          criteria.longitude = lngVal;
-          criteria.radius = radiusVal;
-
-          // คงฟิลด์เดิมไว้ร่วมด้วยเพื่อรองรับ Backend API ที่อาจเรียกใช้ lat / lng
-          criteria.lat = latVal;
-          criteria.lng = lngVal;
-        }
-        // 3. ถ้าปุ่มพิกัดสีเขียวไม่ถูกกด หรือไม่มีการกำหนดค่าพิกัด ระบบจะข้ามเงื่อนไขนี้ไปโดยอัตโนมัติ
+        criteria.lat = latVal;
+        criteria.lng = lngVal;
       }
 
       return criteria;
