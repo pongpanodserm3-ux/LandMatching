@@ -175,7 +175,6 @@
       background: rgba(255, 255, 255, 0.4);
     }
 
-    /* Affordance & Active State */
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
@@ -439,7 +438,7 @@
       <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     </div>
     
-    <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
+    <!-- แถบระบบนำทาง 4 แท็บ -->
     <div class="tabs-nav">
       <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">อสังหาริมทรัพย์</button>
       <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้าแต่งบ้าน</button>
@@ -447,7 +446,7 @@
       <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ทั่วไป / อื่นๆ</button>
     </div>
 
-    <!-- แท็บที่ 1: อสังหาริมทรัพย์ (ใช้งานอยู่) -->
+    <!-- แท็บที่ 1: อสังหาริมทรัพย์ -->
     <div id="tab-content-realestate" class="tab-content">
       <!-- บรรทัดที่ 2: กล่องข้อความ "พิมพ์ที่ต้องการ" และปุ่มค้นหา -->
       <div class="input-status-row">
@@ -475,7 +474,7 @@
       </div>
     </div>
 
-    <!-- แท็บที่ 2: สินค้าแต่งบ้าน (เตรียมเปิดบริการ) -->
+    <!-- แท็บที่ 2: สินค้าแต่งบ้าน -->
     <div id="tab-content-decor" class="tab-content" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="พิมพ์ที่ต้องการ" 
@@ -487,7 +486,7 @@
       </div>
     </div>
 
-    <!-- แท็บที่ 3: ไลฟ์สไตล์ & ท่องเที่ยว (เตรียมเปิดบริการ) -->
+    <!-- แท็บที่ 3: ไลฟ์สไตล์ & ท่องเที่ยว -->
     <div id="tab-content-lifestyle" class="tab-content" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxLifestyle" placeholder="พิมพ์ที่ต้องการ" 
@@ -499,7 +498,7 @@
       </div>
     </div>
 
-    <!-- แท็บที่ 4: ทั่วไป / อื่นๆ (เตรียมเปิดบริการ) -->
+    <!-- แท็บที่ 4: ทั่วไป / อื่นๆ -->
     <div id="tab-content-others" class="tab-content" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxOthers" placeholder="พิมพ์ที่ต้องการ" 
@@ -1516,7 +1515,7 @@
       
       const defaultLabels = [
         "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
-        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด"
+        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด", "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ"
       ];
       
       filterBtns.forEach(btn => {
@@ -1536,7 +1535,12 @@
         if (onclick.includes('จังหวัด')) criteria.province = val;
         if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
         if (onclick.includes('ถนน')) criteria.road = val;
-        if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
+        if (onclick.includes('โครงการ')) criteria.project = val;
+        if (onclick.includes('ซอย')) criteria.soi = val;
+        if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+        if (onclick.includes('อื่นๆ')) criteria.other = val;
+        if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
+        if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.facility = val;
       });
 
       if (selectedLat && selectedLng) {
@@ -1617,7 +1621,7 @@
       }
 
       properties.forEach(item => {
-        const key = item.postId || item.url;
+        const key = item.postId || item.post_id || item.url || (item.id ? item.id : Math.random());
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
 
@@ -1625,15 +1629,18 @@
         card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
         card.onclick = () => showDetailModal(item);
         
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = (item._distance !== undefined && item._distance !== null) ? `<span style="color:#2b5893; font-weight:bold; margin-left:8px;">(ระยะทาง ~${item._distance} กม.)</span>` : '';
+        const price = item.salePrice || item.rentPrice || item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
+        const distText = (item.distanceKm !== undefined && item.distanceKm !== null && !isNaN(item.distanceKm)) 
+          ? `<span style="font-size: 12px; color: #159947; font-weight: bold; background: #e6f9ed; padding: 2px 8px; border-radius: 10px; margin-left: 5px;">📍 ห่าง ~${parseFloat(item.distanceKm).toFixed(2)} กม.</span>` 
+          : '';
         
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <span>${item.project || item.facebookPostName || item.facebook_name || 'ประกาศอสังหาริมทรัพย์'}</span>
+            ${distText}
           </div>
           <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''} ${distanceText}
+            📍 ${item.district || ''} ${item.province || ''} ${item.road ? 'ถนน ' + item.road : ''}
           </div>
           <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
             💰 ${price}
@@ -1644,9 +1651,9 @@
     }
 
     function showDetailModal(item) {
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
+      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || item.facebook_name || 'ประกาศ';
+      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || item.price || 'ไม่ระบุ';
+      document.getElementById('modalDesc').innerText = item.postDetails || item.details || 'ไม่มีรายละเอียด';
       
       const deepLink = document.getElementById('modalDeepLink');
       if (item.url && item.url !== '#') {
