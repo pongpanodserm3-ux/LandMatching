@@ -209,7 +209,7 @@
     }
     
     .custom-edit {
-      width: 65%;
+      flex: 1;
       padding: 10px 12px;
       font-size: 15px;
       border: 1px solid var(--btn-blue);
@@ -267,18 +267,18 @@
     .filter-btn:active { background: var(--btn-blue); color: #fff; }
 
     .action-show-list-btn {
-      width: 100%;
-      margin-top: 4px;
       background: #ffdfba;
       border: 1px solid #f7c99b;
-      padding: 10px 15px;
-      border-radius: 14px;
+      padding: 10px 16px;
+      border-radius: 12px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 15px;
       color: #333;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .action-show-list-btn:active {
       transform: scale(0.98);
@@ -449,12 +449,12 @@
 
     <!-- แท็บที่ 1: อสังหาริมทรัพย์ (ใช้งานอยู่) -->
     <div id="tab-content-realestate" class="tab-content">
-      <!-- บรรทัดที่ 2: กล่องข้อความ "พิมพ์ที่ต้องการ" -->
+      <!-- บรรทัดที่ 2: กล่องข้อความ "พิมพ์ที่ต้องการ" และปุ่มค้นหา -->
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBox" placeholder="พิมพ์ที่ต้องการ" 
                oninput="triggerSearchReset()"
                onkeypress="if(event.key === 'Enter') { testShowList(); }">
-        <div id="statusText" class="loading-pulse">กำลังโหลดไฟล์และเตรียมระบบ AI...</div>
+        <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
       </div>
 
       <!-- บรรทัดที่ 3: กลุ่มปุ่ม dropdown ทั้งหมด -->
@@ -473,15 +473,15 @@
         <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
       </div>
-      
-      <!-- บรรทัดที่ 4: ปุ่ม "กดปุ่มนี้ แสดงลิสต์บ้าน" -->
-      <button class="action-show-list-btn" onclick="testShowList()">
-        🧪 กดปุ่มนี้ แสดงลิสต์บ้าน
-      </button>
     </div>
 
     <!-- แท็บที่ 2: สินค้าแต่งบ้าน (เตรียมเปิดบริการ) -->
     <div id="tab-content-decor" class="tab-content" style="display: none;">
+      <div class="input-status-row">
+        <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="พิมพ์ที่ต้องการ" 
+               onkeypress="if(event.key === 'Enter') { testShowList(); }">
+        <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
+      </div>
       <div class="empty-tab-box">
         🛋️ หมวดหมู่สินค้าแต่งบ้าน (พร้อมเปิดให้บริการเร็วๆ นี้)
       </div>
@@ -489,6 +489,11 @@
 
     <!-- แท็บที่ 3: ไลฟ์สไตล์ & ท่องเที่ยว (เตรียมเปิดบริการ) -->
     <div id="tab-content-lifestyle" class="tab-content" style="display: none;">
+      <div class="input-status-row">
+        <input type="text" class="custom-edit" id="customEditBoxLifestyle" placeholder="พิมพ์ที่ต้องการ" 
+               onkeypress="if(event.key === 'Enter') { testShowList(); }">
+        <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
+      </div>
       <div class="empty-tab-box">
         ✈️ หมวดหมู่ ไลฟ์สไตล์ & ท่องเที่ยว (พร้อมเปิดให้บริการเร็วๆ นี้)
       </div>
@@ -496,6 +501,11 @@
 
     <!-- แท็บที่ 4: ทั่วไป / อื่นๆ (เตรียมเปิดบริการ) -->
     <div id="tab-content-others" class="tab-content" style="display: none;">
+      <div class="input-status-row">
+        <input type="text" class="custom-edit" id="customEditBoxOthers" placeholder="พิมพ์ที่ต้องการ" 
+               onkeypress="if(event.key === 'Enter') { testShowList(); }">
+        <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
+      </div>
       <div class="empty-tab-box">
         🌐 หมวดหมู่ ทั่วไป / อื่นๆ (พร้อมเปิดให้บริการเร็วๆ นี้)
       </div>
@@ -1205,8 +1215,10 @@
         AppState.voice.isSetupReady = false;
         AppState.data.isFetching = false;
         
-        statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-        statusText.classList.add('loading-pulse'); 
+        if (statusText) {
+          statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+          statusText.classList.add('loading-pulse'); 
+        }
 
         AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
@@ -1291,8 +1303,10 @@
             const response = JSON.parse(event.data);
             if (response.setupComplete) {
               AppState.voice.isSetupReady = true;
-              statusText.classList.remove('loading-pulse');
-              statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+              if (statusText) {
+                statusText.classList.remove('loading-pulse');
+                statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+              }
               await initMicrophone(); 
               return;
             }
@@ -1387,8 +1401,10 @@
         AppState.voice.ws.onclose = () => stopVoiceSession();
 
       } catch (err) {
-        statusText.classList.remove('loading-pulse');
-        statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
+        if (statusText) {
+          statusText.classList.remove('loading-pulse');
+          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
+        }
       }
     }
 
@@ -1488,7 +1504,6 @@
       if (avatar) avatar.classList.remove('pulse-animation');
       if (statusText) {
         statusText.classList.remove('loading-pulse');
-        statusText.innerText = "AI หยุดทำงานชั่วคราว";
       }
     }
 
@@ -1537,7 +1552,8 @@
       AppState.pagination.hasMore = true;
       AppState.pagination.renderedKeys.clear();
       document.getElementById('resultsContainer').innerHTML = '';
-      const searchText = document.getElementById('customEditBox').value;
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
       fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
 
@@ -1647,7 +1663,9 @@
     }
 
     function loadNextPage() {
-      fetchDatabase({}, getSelectedCriteria(), false, document.getElementById('customEditBox').value);
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      fetchDatabase({}, getSelectedCriteria(), false, searchText);
     }
 
     function retryNextPage() {
