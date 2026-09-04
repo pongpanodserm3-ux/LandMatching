@@ -1345,35 +1345,45 @@
     // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
     
-    // เติมโค้ดจากจุดที่คุณพิมพ์ค้างไว้ให้เต็มสมบูรณ์ และสลับไปดึง Supabase ผ่าน Render Backend
-    function getSelectedCriteria() {
-      let criteria = {};
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      
-      filterBtns.forEach(btn => {
-        const text = btn.innerText;
-        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
-        
-        const val = text.replace(' ▾', '');
-        const onclick = btn.getAttribute('onclick') || '';
-        
-        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
-        if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
-        if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
-        if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
-        if (onclick.includes('จังหวัด')) criteria.province = val;
-        if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
-        if (onclick.includes('ถนน')) criteria.road = val;
-        if (onclick.includes('เนื้อที่')) criteria.areaMax = val;
-      });
+    // เติมโค้ดจากจุดที่คุณพิมพ์ค้างไว้ให้เต็มสมบูรณ์ และสลับไปดึง Supabase ผ่าน Render Backend Line1348-1386
+function getSelectedCriteria() {
+  let criteria = {};
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  
+  // รายการชื่อปุ่มเริ่มต้น (Default Labels) ที่ห้ามนำไปค้นหา
+  const defaultLabels = [
+    "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
+    "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด"
+  ];
+  
+  filterBtns.forEach(btn => {
+    const text = btn.innerText;
+    if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
+    
+    const val = text.replace(' ▾', '').trim();
+    
+    // ถ้าคานั้นเป็นชื่อเริ่มต้น ให้ข้ามทันที
+    if (defaultLabels.includes(val)) return;
+    
+    const onclick = btn.getAttribute('onclick') || '';
+    
+    if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
+    if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+    if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+    if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+    if (onclick.includes('จังหวัด')) criteria.province = val;
+    if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+    if (onclick.includes('ถนน')) criteria.road = val;
+    if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
+  });
 
-      if (selectedLat && selectedLng) {
-        criteria.lat = selectedLat;
-        criteria.lng = selectedLng;
-        criteria.radius = selectedRadius || 1;
-      }
-      return criteria;
-    }
+  if (selectedLat && selectedLng) {
+    criteria.lat = selectedLat;
+    criteria.lng = selectedLng;
+    criteria.radius = selectedRadius || 1;
+  }
+  return criteria;
+}
 
     function testShowList() {
       AppState.pagination.offset = 0;
