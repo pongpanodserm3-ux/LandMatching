@@ -1582,10 +1582,9 @@
           searchText: searchText
         };
 
-        const response = await fetch(CONFIG.GAS_WEB_APP_URL, { // เปลี่ยนจาก CONFIG.RENDER_API_URL
+        const response = await fetch(CONFIG.RENDER_API_URL, {
           method: 'POST',
-          // หมายเหตุ: หากพบปัญหา CORS จาก GAS อาจต้องเลี่ยงโดยใช้ 'text/plain;charset=utf-8' หรือ mode: 'no-cors'
-          headers: { 'Content-Type': 'application/json' }, 
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
