@@ -50,7 +50,7 @@
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
       width: 100%;
       margin-bottom: 10px;
     }
@@ -89,15 +89,34 @@
       background: var(--btn-blue);
       color: white;
       border: none;
-      border-radius: 20px;
-      padding: 10px 18px;
-      font-size: 20px;
+      border-radius: 10px;
+      padding: 5px 9px;
+      font-size: 11px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
       transition: background 0.3s;
+      white-space: nowrap;
     }
     .voice-btn.active { background: #ff6b81;
+    }
+
+    #locationFilterBtn {
+      background-color: #0e6b38;
+      color: #ffffff;
+      border: 1px solid #0a522a;
+      border-radius: 15px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+    #locationFilterBtn:active {
+      background-color: #0a522a;
+      color: #ffffff;
     }
 
     .input-status-row {
@@ -311,6 +330,7 @@
 
   <div id="ai-section">
     <div class="ai-controls-row">
+      <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">พิกัด ▾</button>
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
       <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
@@ -325,7 +345,6 @@
     </div>
 
     <div class="filter-scroll-row">
-      <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">พิกัด ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
       <button class="filter-btn" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
@@ -1345,45 +1364,44 @@
     // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
     
-    // เติมโค้ดจากจุดที่คุณพิมพ์ค้างไว้ให้เต็มสมบูรณ์ และสลับไปดึง Supabase ผ่าน Render Backend Line1348-1386
-function getSelectedCriteria() {
-  let criteria = {};
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  
-  // รายการชื่อปุ่มเริ่มต้น (Default Labels) ที่ห้ามนำไปค้นหา
-  const defaultLabels = [
-    "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
-    "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด"
-  ];
-  
-  filterBtns.forEach(btn => {
-    const text = btn.innerText;
-    if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
-    
-    const val = text.replace(' ▾', '').trim();
-    
-    // ถ้าคานั้นเป็นชื่อเริ่มต้น ให้ข้ามทันที
-    if (defaultLabels.includes(val)) return;
-    
-    const onclick = btn.getAttribute('onclick') || '';
-    
-    if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
-    if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
-    if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
-    if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
-    if (onclick.includes('จังหวัด')) criteria.province = val;
-    if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
-    if (onclick.includes('ถนน')) criteria.road = val;
-    if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
-  });
+    function getSelectedCriteria() {
+      let criteria = {};
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
+      // รายการชื่อปุ่มเริ่มต้น (Default Labels) ที่ห้ามนำไปค้นหา
+      const defaultLabels = [
+        "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
+        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด"
+      ];
+      
+      filterBtns.forEach(btn => {
+        const text = btn.innerText;
+        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
+        
+        const val = text.replace(' ▾', '').trim();
+        
+        // ถ้าคานั้นเป็นชื่อเริ่มต้น ให้ข้ามทันที
+        if (defaultLabels.includes(val)) return;
+        
+        const onclick = btn.getAttribute('onclick') || '';
+        
+        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
+        if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+        if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+        if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+        if (onclick.includes('จังหวัด')) criteria.province = val;
+        if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+        if (onclick.includes('ถนน')) criteria.road = val;
+        if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
+      });
 
-  if (selectedLat && selectedLng) {
-    criteria.lat = selectedLat;
-    criteria.lng = selectedLng;
-    criteria.radius = selectedRadius || 1;
-  }
-  return criteria;
-}
+      if (selectedLat && selectedLng) {
+        criteria.lat = selectedLat;
+        criteria.lng = selectedLng;
+        criteria.radius = selectedRadius || 1;
+      }
+      return criteria;
+    }
 
     function testShowList() {
       AppState.pagination.offset = 0;
