@@ -175,7 +175,7 @@
       background: rgba(255, 255, 255, 0.4);
     }
 
-    /* Affordance & Active State: โดดเด่น ชัดเจน ลอยตัวพร้อมแถบเน้นย้ำ */
+    /* Affordance & Active State */
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
@@ -1626,13 +1626,14 @@
         card.onclick = () => showDetailModal(item);
         
         const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
+        const distanceText = (item._distance !== undefined && item._distance !== null) ? `<span style="color:#2b5893; font-weight:bold; margin-left:8px;">(ระยะทาง ~${item._distance} กม.)</span>` : '';
         
         card.innerHTML = `
           <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
             ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
           </div>
           <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''}
+            📍 ${item.district || ''} ${item.province || ''} ${distanceText}
           </div>
           <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
             💰 ${price}
