@@ -638,7 +638,7 @@
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
 
-    // ตัวแปรสำหรับระบบพิกัดและแผนที่ (Global Location State)
+    // ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
@@ -648,15 +648,9 @@
     let placeSearchDebounceTimer = null;
 
     // ==========================================
-    // 2. CENTRALIZED APPLICATION STATE (GLOBAL STATE)
+    // 2. CENTRALIZED APPLICATION STATE
     // ==========================================
     const AppState = {
-      location: {
-        lat: null,
-        lng: null,
-        radius: 1
-      },
-      currentTab: 'realestate',
       voice: {
         isActive: false,
         isSetupReady: false,
@@ -714,10 +708,6 @@
       const activeContent = document.getElementById('tab-content-' + tabId);
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
-
-      // อัปเดตแท็บปัจจุบันใน Global State และเรียกการค้นหาข้ามแท็บด้วยพิกัดปุ่มเขียวทันที
-      AppState.currentTab = tabId;
-      testShowList();
     }
 
     window.addEventListener('load', () => {
@@ -846,8 +836,8 @@
     function openLocationModal() {
       document.getElementById('locationModalOverlay').classList.add('active');
       
-      const defaultLat = selectedLat || AppState.location.lat || 13.7563;
-      const defaultLng = selectedLng || AppState.location.lng || 100.5018;
+      const defaultLat = selectedLat || 13.7563;
+      const defaultLng = selectedLng || 100.5018;
 
       if (!leafletMap) {
         setTimeout(() => {
@@ -901,7 +891,7 @@
       }
       const radiusSelect = document.getElementById('radiusSelect');
       if (radiusSelect) {
-        radiusSelect.value = String(selectedRadius || AppState.location.radius || 1);
+        radiusSelect.value = String(selectedRadius || 1);
       }
       
       if (!AppState.voice.isActive || !AppState.voice.ws) {
@@ -1116,10 +1106,6 @@
     function setCoordinates(lat, lng) {
       selectedLat = parseFloat(lat).toFixed(6);
       selectedLng = parseFloat(lng).toFixed(6);
-      
-      AppState.location.lat = parseFloat(selectedLat);
-      AppState.location.lng = parseFloat(selectedLng);
-
       document.getElementById('latInput').value = selectedLat;
       document.getElementById('lngInput').value = selectedLng;
     }
@@ -1130,9 +1116,6 @@
       if (!isNaN(lat) && !isNaN(lng)) {
         selectedLat = lat;
         selectedLng = lng;
-        AppState.location.lat = selectedLat;
-        AppState.location.lng = selectedLng;
-
         if (leafletMap && mapMarker) {
           const newLatLng = new L.LatLng(lat, lng);
           mapMarker.setLatLng(newLatLng);
@@ -1151,10 +1134,6 @@
       selectedLat = null;
       selectedLng = null;
       selectedRadius = 1;
-
-      AppState.location.lat = null;
-      AppState.location.lng = null;
-      AppState.location.radius = 1;
       
       if (radiusCircle && leafletMap) {
         leafletMap.removeLayer(radiusCircle);
@@ -1202,22 +1181,11 @@
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
         selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
-
-        // บันทึกลง Global State ทันที
-        AppState.location.lat = selectedLat;
-        AppState.location.lng = selectedLng;
-        AppState.location.radius = selectedRadius;
-
         document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
       } else {
         selectedLat = null;
         selectedLng = null;
         selectedRadius = 1;
-
-        AppState.location.lat = null;
-        AppState.location.lng = null;
-        AppState.location.radius = 1;
-
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       }
       
@@ -1571,20 +1539,11 @@
         if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
       });
 
-      // นำค่าพิกัดจากปุ่มสีเขียว / Global State ผนวกเป็นเงื่อนไขค้นหาเสมอ
-      const latVal = (selectedLat !== null && selectedLat !== undefined) ? selectedLat : (AppState.location ? AppState.location.lat : null);
-      const lngVal = (selectedLng !== null && selectedLng !== undefined) ? selectedLng : (AppState.location ? AppState.location.lng : null);
-      const radVal = selectedRadius || (AppState.location ? AppState.location.radius : 1);
-
-      if (latVal !== null && lngVal !== null && !isNaN(parseFloat(latVal)) && !isNaN(parseFloat(lngVal))) {
-        criteria.lat = parseFloat(latVal);
-        criteria.lng = parseFloat(lngVal);
-        criteria.latitude = parseFloat(latVal);
-        criteria.longitude = parseFloat(lngVal);
-        criteria.radius = parseFloat(radVal) || 1;
+      if (selectedLat && selectedLng) {
+        criteria.lat = selectedLat;
+        criteria.lng = selectedLng;
+        criteria.radius = selectedRadius || 1;
       }
-
-      criteria.tab = AppState.currentTab || 'realestate';
       return criteria;
     }
 
@@ -1620,8 +1579,7 @@
           limit: AppState.pagination.limit,
           userData: userData,
           criteria: criteria,
-          searchText: searchText,
-          tab: AppState.currentTab || 'realestate'
+          searchText: searchText
         };
 
         const response = await fetch(CONFIG.RENDER_API_URL, {
@@ -1653,13 +1611,13 @@
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
         if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
+          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
         }
         return;
       }
 
       properties.forEach(item => {
-        const key = item.postId || item.url || (item.project + item.salePrice);
+        const key = item.postId || item.url;
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
 
@@ -1667,14 +1625,11 @@
         card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
         card.onclick = () => showDetailModal(item);
         
-        const price = item.salePrice || item.rentPrice || item.price || 'ไม่ระบุราคา';
-        const distBadge = (item._distance !== undefined && item._distance !== null) 
-          ? `<span style="background: #e6f2ff; color: var(--btn-blue); padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; margin-left: 6px;">📍 ${parseFloat(item._distance).toFixed(2)} กม.</span>` 
-          : '';
+        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
         
         card.innerHTML = `
           <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศ'} ${distBadge}
+            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
           </div>
           <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
             📍 ${item.district || ''} ${item.province || ''}
@@ -1689,7 +1644,7 @@
 
     function showDetailModal(item) {
       document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || item.price || 'ไม่ระบุ';
+      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
       document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
       
       const deepLink = document.getElementById('modalDeepLink');
