@@ -460,7 +460,8 @@
     // ==========================================
     const CONFIG = {
       BACKEND_WS_URL: "wss://land-matching-backend.onrender.com",
-      GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
+      RENDER_API_URL: "https://land-matching-backend.onrender.com/api/properties", // เพิ่ม URL ของ Render Backend สำหรับดึงข้อมูล Supabase ออกมาแสดงผล
+      GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec", // เก็บไว้กรณีจำเป็น
       LIFF_ID: "2011006139-Wn6PhY6D"
     };
 
@@ -1343,338 +1344,159 @@
     // ==========================================
     // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
+    
+    // เติมโค้ดจากจุดที่คุณพิมพ์ค้างไว้ให้เต็มสมบูรณ์ และสลับไปดึง Supabase ผ่าน Render Backend
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
       
       filterBtns.forEach(btn => {
-        const onClickAttr = btn.getAttribute('onclick') || '';
-        const topicMatch = onClickAttr.match(/'([^']+)'/);
+        const text = btn.innerText;
+        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
         
-        if (topicMatch) {
-          const topic = topicMatch[1];
-          let val = btn.innerText.replace(' ▾', '').replace('📍 ', '').trim();
-          
-          if (val !== topic && val !== 'เคลียร์ค่า' && val !== 'พิกัด') { 
-            if (topic === 'ราคาขาย') {
-              if (val === 'ไม่เกิน 2 ล้าน') criteria.priceSale = "2000000";
-              else if (val === 'ไม่เกิน 5 ล้าน') criteria.priceSale = "5000000";
-              else if (val === 'ไม่เกิน 10 ล้าน') criteria.priceSale = "10000000";
-              else if (val === 'ไม่เกิน 20 ล้าน') criteria.priceSale = "20000000";
-              else if (val === 'ตั้งแต่ 20 ล้านเป็นต้นไป') criteria.priceSaleMin = "20000000";
-              else {
-                let priceNum = val.replace(/[^0-9]/g, '');
-                if (val.includes('ล้าน') && priceNum) priceNum = String(parseInt(priceNum, 10) * 1000000);
-                criteria.priceSale = priceNum;
-              }
-            } else if (topic === 'ราคาเช่า') {
-              let priceNum = val.replace(/[^0-9]/g, '');
-              criteria.priceRent = priceNum;
-            } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
-              if (val === 'ไม่เกิน 100 ตารางวา') criteria.areaMax = "100";
-              else if (val === 'ไม่เกิน 400 ตารางวา') criteria.areaMax = "400";
-              else if (val === 'ไม่เกิน 10 ไร่') criteria.areaMax = "4000";
-              else if (val === 'มากกว่า 10 ไร่ เป็นต้นไป') criteria.areaMin = "4000";
-              else criteria["เนื้อที่"] = val;
-            } else {
-              criteria[topic] = val;
-            }
-          }
-        }
+        const val = text.replace(' ▾', '');
+        const onclick = btn.getAttribute('onclick') || '';
+        
+        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
+        if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+        if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+        if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+        if (onclick.includes('จังหวัด')) criteria.province = val;
+        if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+        if (onclick.includes('ถนน')) criteria.road = val;
+        if (onclick.includes('เนื้อที่')) criteria.areaMax = val;
       });
-      if (selectedLat !== null && selectedLng !== null) {
+
+      if (selectedLat && selectedLng) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
-        criteria.latitude = selectedLat;
-        criteria.longitude = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
-
       return criteria;
     }
 
-    async function testShowList() {
-      const criteria = getSelectedCriteria();
-      await fetchDatabase({}, criteria, false); 
+    function testShowList() {
+      AppState.pagination.offset = 0;
+      AppState.pagination.hasMore = true;
+      AppState.pagination.renderedKeys.clear();
+      document.getElementById('resultsContainer').innerHTML = '';
+      const searchText = document.getElementById('customEditBox').value;
+      fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
 
-    function loadNextPage() {
-      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-      fetchDatabase({}, AppState.pagination.lastCriteria, true);
-    }
+    async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
+      if (AppState.pagination.isLoading) return;
+      AppState.pagination.isLoading = true;
+      
+      const loader = document.getElementById('infiniteLoader');
+      const fallback = document.getElementById('fallbackRetryCard');
+      if (loader) loader.style.display = 'block';
+      if (fallback) fallback.style.display = 'none';
 
-    function retryNextPage() {
-      document.getElementById('fallbackRetryCard').style.display = 'none';
-      loadNextPage();
-    }
-
-    async function fetchDatabase(userData, criteria, isNextPage = false) {
-      const statusText = document.getElementById('statusText');
-      const editBox = document.getElementById('customEditBox');
-      const searchText = editBox ? editBox.value : "";
-
-      AppState.pagination.reqId++;
-      const currentReqId = AppState.pagination.reqId;
-      AppState.pagination.lastCriteria = criteria || {};
-      AppState.pagination.lastSearchText = searchText;
-
-      if (!isNextPage) {
+      if (isNewSearch) {
         AppState.pagination.offset = 0;
         AppState.pagination.hasMore = true;
-        AppState.pagination.renderedKeys.clear();
-        AppState.data.properties = [];
-        document.getElementById('resultsContainer').innerHTML = "<div style='text-align:center; padding: 20px; color:#4a83cc;'>กำลังโหลดรายการ... ⏳</div>";
-        document.getElementById('fallbackRetryCard').style.display = 'none';
-      } else {
-        document.getElementById('infiniteLoader').style.display = 'block';
+        document.getElementById('resultsContainer').innerHTML = '';
       }
 
-      AppState.pagination.isLoading = true;
-      statusText.innerText = "กำลังดึงข้อมูล... ⏳";
-      statusText.classList.add('loading-pulse');
       try {
-        const res = await fetch(CONFIG.GAS_WEB_APP_URL, {
+        const payload = {
+          action: "searchAll",
+          offset: AppState.pagination.offset,
+          limit: AppState.pagination.limit,
+          userData: userData,
+          criteria: criteria,
+          searchText: searchText
+        };
+
+        // เปลี่ยนให้ Frontend ไปดึงข้อมูลที่ฐานข้อมูล (Supabase) จาก API ของ Render
+        const response = await fetch(CONFIG.RENDER_API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ 
-            action: 'searchAll', 
-            userData: userData, 
-            criteria: criteria, 
-            searchText: searchText,
-            offset: AppState.pagination.offset,
-            limit: AppState.pagination.limit
-          }),
-          redirect: 'follow' 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
-        const data = await res.json();
 
-        if (currentReqId !== AppState.pagination.reqId) {
-          return;
-        }
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
 
-        if (data.status === "success") {
-          const newItems = data.results || [];
+        if (data.status === 'success') {
+          renderProperties(data.results);
+          AppState.pagination.offset = data.nextOffset;
           AppState.pagination.hasMore = data.hasMore;
-          AppState.pagination.offset = data.nextOffset !== undefined ? data.nextOffset : (AppState.pagination.offset + newItems.length);
-
-          appendListView(newItems, isNextPage);
-
-          statusText.classList.remove('loading-pulse');
-          statusText.innerText = `✅ แสดง ${AppState.data.properties.length} จาก ${data.total || AppState.data.properties.length} รายการ`;
         } else {
-          throw new Error(data.message || "ดึงข้อมูลไม่สำเร็จ");
+          throw new Error(data.message || 'Error fetching data');
         }
-        
       } catch (error) {
-        if (currentReqId !== AppState.pagination.reqId) return;
-        console.error("Database Fetch Error:", error);
-        statusText.classList.remove('loading-pulse');
-        statusText.innerText = "❌ เชื่อมต่อ Database ไม่สำเร็จ";
-        if (isNextPage) {
-          document.getElementById('fallbackRetryCard').style.display = 'block';
-        } else {
-          document.getElementById('resultsContainer').innerHTML = `
-            <div style="text-align: center; color: red; padding: 20px; border: 1px dashed red; margin-top: 8px; background: #fff9f9;">
-              <b>ข้อผิดพลาด:</b><br><span style="color: #333;">${error.message}</span><br><br>
-              <button onclick="testShowList()" style="background:#d9534f; color:#fff; border:none; padding:8px 15px; border-radius:10px; cursor:pointer;">🔄 ลองใหม่อีกครั้ง</button>
-            </div>`;
-        }
+        console.error("Fetch Error:", error);
+        if (fallback) fallback.style.display = 'block';
       } finally {
-        if (currentReqId === AppState.pagination.reqId) {
-          AppState.pagination.isLoading = false;
-          AppState.data.isFetching = false;
-          document.getElementById('infiniteLoader').style.display = 'none';
-        }
+        AppState.pagination.isLoading = false;
+        if (loader) loader.style.display = 'none';
       }
     }
 
-    function appendListView(newItems, isNextPage) {
+    function renderProperties(properties) {
       const container = document.getElementById('resultsContainer');
-      if (!isNextPage) container.innerHTML = '';
-
-      if (AppState.data.properties.length === 0 && newItems.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#999;">ไม่พบทรัพย์ที่ตรงเงื่อนไขที่เลือก</div>';
+      if (!properties || properties.length === 0) {
+        if (AppState.pagination.offset === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
+        }
         return;
       }
 
-      const bgColors = ['#fbeceb', '#eef5ff', '#fdf6e7'];
-      newItems.forEach((p) => {
-        const rawId = getPropValue(p, ['post ID', 'postId', 'url', 'โครงการ', 'price', 'project']);
-        const uniqueKey = `${rawId}-${AppState.data.properties.length}`;
+      properties.forEach(item => {
+        const key = item.postId || item.url;
+        if (AppState.pagination.renderedKeys.has(key)) return;
+        AppState.pagination.renderedKeys.add(key);
 
-        if (AppState.pagination.renderedKeys.has(uniqueKey)) return;
-
-        AppState.pagination.renderedKeys.add(uniqueKey);
-        AppState.data.properties.push(p);
-        const index = AppState.data.properties.length - 1;
-        const cardBg = bgColors[index % 3]; 
-
-        const type = getPropValue(p, ['ประเภทอสังหา', 'propertyType', 'PropertyType', 'ประเภท'], 'อสังหา');
-        const proj = getPropValue(p, ['โครงการ', 'project', 'Project', 'projectName', 'ชื่อโครงการ']);
-        const road = getPropValue(p, ['ถนน', 'road', 'Road']);
-        const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'District', 'เขต', 'อำเภอ']);
-        const prov = getPropValue(p, ['จังหวัด', 'province', 'Province']);
-        const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'Size', 'area', 'ขนาด', 'พื้นที่']);
-        const rawSale = getPropValue(p, ['ราคาขาย', 'salePrice'], '');
-        const rawRent = getPropValue(p, ['ราคาเช่า', 'rentPrice'], '');
-        const rawFallback = getPropValue(p, ['price', 'Price', 'ราคา'], '-');
+        const card = document.createElement('div');
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
+        card.onclick = () => showDetailModal(item);
         
-        let displaySale = rawSale || '-';
-        if (!rawSale && !rawRent && rawFallback !== '-') {
-            displaySale = rawFallback;
-        }
-
-        let displayRentHtml = '';
-        if (rawRent) {
-            displayRentHtml = `<div style="font-size: 14px; margin-top: 4px; color: #ff9800; font-weight: normal;">เช่า: ${rawRent}</div>`;
-        }
-
-        const safeType = type;
-        const safeProject = proj ? `โครงการ: ${proj}` : 'โครงการ: -';
+        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
         
-        const locParts = [];
-        if (road) locParts.push(road);
-        if (dist) locParts.push(dist);
-        if (prov) locParts.push(prov);
-        const safeLoc = locParts.length > 0 ? locParts.join(', ') : '-';
-        
-        const safeDemand = getPropValue(p, ['แบบราคา', 'demandType', 'DemandType', 'ประเภทประกาศ'], 'ขาย/เช่า');
-        const displaySize = size ? `<span style="font-size:14px; color:#666; font-weight:normal; margin-left: 5px;">(เนื้อที่: ${size})</span>` : '';
-        const distText = p._distance !== undefined ? `<span style="font-size:12px; color:#28a745; margin-left:5px;">(ห่าง ~${p._distance.toFixed(1)} กม.)</span>` : '';
-
-        const cardElement = document.createElement('div');
-        cardElement.style.cssText = `background: ${cardBg}; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); cursor: pointer;`;
-        cardElement.onclick = () => openDetailModal(index);
-
-        cardElement.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items: flex-start; font-weight:bold; font-size:18px; margin-bottom: 8px;">
-            <div style="color:#111; padding-top: 2px;">${safeType}${displaySize}${distText}</div>
-            <div style="text-align: right; margin-left: 10px;">
-              <div style="color:#d9534f; white-space: nowrap;">${displaySale}</div>
-              ${displayRentHtml}
-            </div>
+        card.innerHTML = `
+          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
+            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
           </div>
-          <div style="font-weight:bold; color:#444; font-size:15px; margin-bottom: 8px;">
-            ${safeProject}
+          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
+            📍 ${item.district || ''} ${item.province || ''}
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-end; font-size:14px; color:#555;">
-            <div style="flex:1; padding-right:10px;">
-              ${safeLoc}
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px; white-space:nowrap;">
-              <span style="font-size:12px; color:#777;">ประเภท: ${safeDemand}</span>
-              <button style="background:#4a83cc; color:#fff; border:none; border-radius:15px; padding:6px 14px; cursor:pointer; font-size:12px;">ดูรายละเอียด</button>
-            </div>
+          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
+            💰 ${price}
           </div>
         `;
-        container.appendChild(cardElement);
+        container.appendChild(card);
       });
     }
 
-    // ==========================================
-    // 7. DETAIL MODAL HANDLERS
-    // ==========================================
-    function openDetailModal(index) {
-      const p = AppState.data.properties[index];
-      if (!p) return;
-
-      const type = getPropValue(p, ['ประเภทอสังหา', 'propertytype', 'ประเภท'], 'อสังหา');
-      const price = getPropValue(p, ['ราคาขาย', 'ราคาเช่า', 'price', 'ราคา'], '-');
-      const proj = getPropValue(p, ['โครงการ', 'project'], '');
-      const road = getPropValue(p, ['ถนน', 'road'], '');
-      const dist = getPropValue(p, ['เขต/อำเภอ', 'district', 'เขต', 'อำเภอ'], '');
-      const prov = getPropValue(p, ['จังหวัด', 'province'], '');
-      const size = getPropValue(p, ['เนื้อที่', 'เนื้อที่ ตัวเลข', 'size', 'area', 'ขนาด', 'พื้นที่'], '');
+    function showDetailModal(item) {
+      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
+      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
+      document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
       
-      let detailsColU = getPropValue(p, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'รายละเอียดสั้นๆ', 'รายละเอียด', 'detail'], 'ไม่มีข้อมูลเพิ่มเติม');
-      let rawUrlColS = getPropValue(p, ['url', 'URL', 'ลิงก์ต้นทาง', 'ลิงก์', 'link'], '#');
-      let clickableUrl = rawUrlColS;
-      if (clickableUrl !== '#' && clickableUrl !== '' && !clickableUrl.startsWith('http')) {
-          clickableUrl = 'https://' + clickableUrl;
-      }
-
-      document.getElementById('modalTitle').innerText = `${type} ${proj ? '- '+proj : ''}`;
-      document.getElementById('modalPrice').innerText = `ราคา: ${price} บาท`;
-      const btnDeepLink = document.getElementById('modalDeepLink');
-      btnDeepLink.href = clickableUrl;
-      btnDeepLink.style.display = 'inline-block';
-      if (rawUrlColS === '#' || rawUrlColS === '') {
-        btnDeepLink.style.opacity = '0.6';
-        btnDeepLink.onclick = (e) => { 
-          e.preventDefault(); 
-          alert('ขออภัย ไม่พบข้อมูลลิงก์ต้นทางสำหรับประกาศนี้'); 
-        };
+      const deepLink = document.getElementById('modalDeepLink');
+      if (item.url && item.url !== '#') {
+        deepLink.href = item.url;
+        deepLink.style.display = 'inline-block';
       } else {
-        btnDeepLink.style.opacity = '1';
-        btnDeepLink.onclick = null;
-      }
-
-      const duplicateEngKeys = [
-        'facebookpostname', 'project', 'propertytype', 'province', 'district',
-        'road', 'pricetype', 'saleprice', 'rentprice', 'price', 'size',
-        'areanum', 'phone', 'lineid', 'postid', 'postdetails', 'businesstype'
-      ];
-      const allRawDataHtml = Object.entries(p)
-        .filter(([key]) => {
-          if (duplicateEngKeys.includes(key.toLowerCase())) return false;
-          if (SHEET_COLUMNS && SHEET_COLUMNS.length > 0 && !SHEET_COLUMNS.includes(key)) return false;
-          return true;
-        })
-        .map(([key, val]) => `<b>${key}:</b> ${val !== null && val !== undefined && val !== '' ? val : '-'}`)
-        .join('<br>');
-      document.getElementById('modalDesc').innerHTML = `
-        <b>ทำเล:</b> ${road || '-'} ${dist || '-'} ${prov || '-'}<br>
-        <b>ขนาด:</b> ${size || '-'}<br>
-        <div style="margin-top: 8px;"><b>รายละเอียด:</b><br>${String(detailsColU).replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
-        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ddd; word-break: break-word; font-size: 13px; color: #555;">
-          <b>📋 ข้อมูลดิบจากฐานข้อมูล:</b><br>
-          <span style="display: block; margin-top: 5px;">
-            ${allRawDataHtml}
-          </span>
-        </div>
-      `;
-      const slider = document.getElementById('modalSlider');
-      slider.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const imgUrl = getPropValue(p, [`image${i}`, `รูป${i}`, `pic${i}`], `https://via.placeholder.com/400x300/e0e0e0/888?text=Image+${i}`);
-        slider.innerHTML += `<img src="${imgUrl}" alt="รูปบ้าน ${i}">`;
+        deepLink.style.display = 'none';
       }
 
       document.getElementById('detailModalOverlay').classList.add('active');
-
-      const contextData = JSON.stringify(p);
-      sendTextToAI(`ผู้ใช้ได้กดดูรายละเอียดบ้านหลังนี้: ${contextData} 
-      (ข้อมูลทั้งหมดอ้างอิงจาก Database Sheet1) 
-      กรุณารอสแตนด์บาย หากผู้ใช้ถามรายละเอียด ให้ตอบอ้างอิงจากข้อมูลชุดนี้เป็นหลัก`);
     }
 
     function closeDetailModal() {
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
 
-    function sendTextToAI(textMessage) {
-      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
-        const message = {
-          clientContent: {
-            turns: [
-              {
-                role: "user",
-                parts: [{ text: textMessage }]
-              }
-            ],
-            turnComplete: true
-          }
-        };
-        AppState.voice.ws.send(JSON.stringify(message));
-      }
+    function loadNextPage() {
+      fetchDatabase({}, getSelectedCriteria(), false, document.getElementById('customEditBox').value);
     }
 
-    try {
-      liff.init({ liffId: CONFIG.LIFF_ID }).catch(() => {});
-    } catch(e) {}
+    function retryNextPage() {
+      loadNextPage();
+    }
   </script>
-  <div style="text-align: center; font-size: 12px; color: #888; padding: 10px 0;">
-    🟢 Version: 1.7.7 (Auto-prefix Place Name by AI)
-  </div>
 </body>
 </html>
