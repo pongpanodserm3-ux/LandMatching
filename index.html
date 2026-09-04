@@ -1539,11 +1539,32 @@
         if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
       });
 
-      if (selectedLat && selectedLng) {
-        criteria.lat = selectedLat;
-        criteria.lng = selectedLng;
-        criteria.radius = selectedRadius || 1;
+      // ตรวจสอบว่าขณะนี้ผู้ใช้อยู่ที่แท็บ "อสังหาริมทรัพย์" หรือไม่
+      const realEstateTabBtn = document.getElementById('tab-btn-realestate');
+      const isRealEstateTab = realEstateTabBtn ? realEstateTabBtn.classList.contains('active') : true;
+
+      if (isRealEstateTab) {
+        // 1. ตรวจสอบสถานะการเลือกพิกัดจากปุ่มพิกัดสีเขียว (#locationFilterBtn)
+        const locationBtn = document.getElementById('locationFilterBtn');
+        const hasValidCoords = selectedLat !== null && selectedLng !== null && !isNaN(parseFloat(selectedLat)) && !isNaN(parseFloat(selectedLng));
+
+        // 2. หากปุ่มพิกัดสีเขียวถูกเลือก (มีค่า latitude, longitude และ radius ถูกกำหนด) ให้ดึงค่ามาใช้ในเงื่อนไขการค้นหาทันที
+        if (locationBtn && hasValidCoords) {
+          const latVal = parseFloat(selectedLat);
+          const lngVal = parseFloat(selectedLng);
+          const radiusVal = parseFloat(selectedRadius) || 1;
+
+          criteria.latitude = latVal;
+          criteria.longitude = lngVal;
+          criteria.radius = radiusVal;
+
+          // คงฟิลด์เดิมไว้ร่วมด้วยเพื่อรองรับ Backend API ที่อาจเรียกใช้ lat / lng
+          criteria.lat = latVal;
+          criteria.lng = lngVal;
+        }
+        // 3. ถ้าปุ่มพิกัดสีเขียวไม่ถูกกด หรือไม่มีการกำหนดค่าพิกัด ระบบจะข้ามเงื่อนไขนี้ไปโดยอัตโนมัติ
       }
+
       return criteria;
     }
 
