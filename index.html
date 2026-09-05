@@ -442,7 +442,7 @@
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
     <div class="tabs-nav">
       <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">อสังหาริมทรัพย์</button>
-      <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้าแต่งบ้าน</button>
+      <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้าทั่วไป</button>
       <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchTab('lifestyle')">ไลฟ์สไตล์ & ท่องเที่ยว</button>
       <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ช่าง-บริการ</button>
     </div>
@@ -475,7 +475,7 @@
       </div>
     </div>
 
-    <!-- แท็บที่ 2: สินค้าแต่งบ้าน (เตรียมเปิดบริการ) -->
+    <!-- แท็บที่ 2: สินค้าทั่วไป (เตรียมเปิดบริการ) -->
     <div id="tab-content-decor" class="tab-content" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="พิมพ์ที่ต้องการ" 
@@ -483,7 +483,7 @@
         <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
       </div>
       <div class="empty-tab-box">
-        🛋️ หมวดหมู่สินค้าแต่งบ้าน (พร้อมเปิดให้บริการเร็วๆ นี้)
+        🛋️ หมวดหมู่สินค้าทั่วไป (พร้อมเปิดให้บริการเร็วๆ นี้)
       </div>
     </div>
 
@@ -1306,7 +1306,7 @@
                           properties: {
                             tabId: { 
                               type: "STRING", 
-                              description: "ID ของแท็บเป้าหมาย: 'realestate' (อสังหาริมทรัพย์), 'decor' (สินค้าแต่งบ้าน), 'lifestyle' (ไลฟ์สไตล์&ท่องเที่ยว), 'others' (ช่าง-บริการ)"
+                              description: "ID ของแท็บเป้าหมาย: 'realestate' (อสังหาริมทรัพย์), 'decor' (สินค้าทั่วไป), 'lifestyle' (ไลฟ์สไตล์&ท่องเที่ยว), 'others' (ช่าง-บริการ)"
                             }
                           },
                           required: ["tabId"]
