@@ -745,32 +745,46 @@
       testShowList();
     }
 
+    // ฟังก์ชันคืนค่าตัวเลือกรายการ Dropdown ตามหัวข้อ
+    function getDropdownOptionsForTopic(topic) {
+      if (topic === 'ขาย/เช่า') {
+        return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
+      } else if (topic === 'คอนโด/บ้าน') {
+        return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
+      } else if (topic === 'ราคาขาย') {
+        return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
+      } else if (topic === 'ราคาเช่า') {
+        return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
+      } else if (topic === 'จังหวัด') {
+        return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
+      } else if (topic === 'เขต/อำเภอ') {
+        return ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
+      } else if (topic === 'ถนน') {
+        return ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
+      } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
+        return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
+      } else {
+        return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      }
+    }
+
+    // ฟังก์ชันรวมตัวเลือกใน Dropdown ทั้งหมดที่มีในแท็บอสังหาริมทรัพย์เพื่อนำไปกำกับ AI และเป็นกฎกรองคำ
+    function getAllValidDropdownOptions() {
+      const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
+      let allOptions = [];
+      topics.forEach(t => {
+        allOptions = allOptions.concat(getDropdownOptionsForTopic(t));
+      });
+      return [...new Set(allOptions)];
+    }
+
     function openDropdownModal(topic) {
       stopAIVoiceSpeech();
       AppState.ui.dropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       document.getElementById('dropdownSearchInput').value = '';
       
-      let options = [];
-      if (topic === 'ขาย/เช่า') {
-        options = ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
-      } else if (topic === 'คอนโด/บ้าน') {
-        options = ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
-      } else if (topic === 'ราคาขาย') {
-        options = ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
-      } else if (topic === 'ราคาเช่า') {
-        options = ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
-      } else if (topic === 'จังหวัด') {
-        options = ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
-      } else if (topic === 'เขต/อำเภอ') {
-        options = ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
-      } else if (topic === 'ถนน') {
-        options = ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
-      } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
-        options = ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
-      } else {
-        options = [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
-      }
+      let options = getDropdownOptionsForTopic(topic);
       
       AppState.ui.dropdownOptions = options;
       renderDropdownOptions(AppState.ui.dropdownOptions);
@@ -1254,6 +1268,7 @@
 
         AppState.voice.ws.onopen = () => {
           if (AppState.voice.ws.readyState === WebSocket.OPEN) {
+            const validDropdowns = getAllValidDropdownOptions().join(', ');
             const setupData = {
               setup: {
                 model: "models/gemini-3.1-flash-live-preview", 
@@ -1266,6 +1281,10 @@
                     text: `คุณคือ AI ผู้ช่วยอสังหาริมทรัพย์ หน้าที่หลักคือ:
                     1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
                     2. เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
+                    ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
+                    คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
+                    [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
+
                     3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
                     4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
                     5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
@@ -1282,23 +1301,23 @@
                     functionDeclarations: [
                       {
                         name: "submit_user_summary",
-                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเมื่อได้ข้อมูลครบถ้วนแล้ว",
+                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเมื่อได้ข้อมูลครบถ้วนแล้ว โดยเลือกใช้เฉพาะคำที่มีแสดงอยู่ในรายการ Dropdown ในแท็บอสังหาริมทรัพย์เท่านั้น ห้ามใช้คำนอกเหนือจากข้อความใน Dropdown",
                         parameters: {
                           type: "OBJECT",
                           properties: {
                             userData: {
                               type: "OBJECT",
                               properties: {
-                                demandType: { type: "STRING" },
-                                location: { type: "STRING" },
-                                budget: { type: "STRING" }
+                                demandType: { type: "STRING", description: "ประเภทความต้องการ ต้องใช้ข้อความจาก Dropdown เช่น ขาย, เช่า" },
+                                location: { type: "STRING", description: "ทำเลสถานที่ ต้องใช้ข้อความจาก Dropdown เช่น กทม., ถนนลาดพร้าว" },
+                                budget: { type: "STRING", description: "งบประมาณ ต้องใช้ข้อความจาก Dropdown เช่น ไม่เกิน 5 ล้าน" }
                               }
                             },
                             criteria: {
                               type: "OBJECT",
                               properties: {
-                                propertyType: { type: "STRING" },
-                                province: { type: "STRING" }
+                                propertyType: { type: "STRING", description: "ประเภทอสังหา ต้องใช้ข้อความจาก Dropdown เช่น บ้าน, คอนโด" },
+                                province: { type: "STRING", description: "จังหวัด ต้องใช้ข้อความจาก Dropdown เช่น กทม." }
                               }
                             }
                           },
@@ -1388,9 +1407,32 @@
                   const criteria = args.criteria || {};
 
                   const editBox = document.getElementById('customEditBox');
-                  let summaryParts = [...Object.values(userData), ...Object.values(criteria)];
-                  if (editBox && summaryParts.length > 0) {
-                    editBox.value = summaryParts.filter(Boolean).join(' ');
+                  let rawParts = [...Object.values(userData), ...Object.values(criteria)].filter(Boolean);
+                  
+                  // ดึงข้อความ Dropdown ทั้งหมดเพื่อตรวจกรองคำ ให้มั่นใจว่าจะเขียนเฉพาะคำที่มีใน Dropdown เท่านั้น
+                  const validOptions = getAllValidDropdownOptions();
+                  let matchedWords = [];
+
+                  rawParts.forEach(part => {
+                    const strPart = String(part).trim();
+                    if (validOptions.includes(strPart)) {
+                      if (!matchedWords.includes(strPart)) matchedWords.push(strPart);
+                    } else {
+                      validOptions.forEach(opt => {
+                        if (strPart.includes(opt) && !matchedWords.includes(opt)) {
+                          matchedWords.push(opt);
+                        }
+                      });
+                    }
+                  });
+
+                  if (editBox) {
+                    if (matchedWords.length > 0) {
+                      editBox.value = matchedWords.join(' ');
+                    } else {
+                      const fallbackMatched = rawParts.filter(p => validOptions.includes(String(p).trim()));
+                      editBox.value = fallbackMatched.join(' ');
+                    }
                   }
 
                   if (!AppState.data.isFetching) {
