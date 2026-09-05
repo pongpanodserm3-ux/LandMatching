@@ -43,6 +43,12 @@
       z-index: 10;
       border-radius: 0 0 30px 30px;
       flex-shrink: 0;
+      transition: min-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #ai-section.collapsed {
+      min-height: 0 !important;
+      padding-bottom: 10px;
     }
 
     /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มเริ่มค้นหาด้วยเสียง) --- */
@@ -196,6 +202,16 @@
 
     .tab-content {
       width: 100%;
+      max-height: 400px;
+      opacity: 1;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #ai-section.collapsed .tab-content {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
     }
 
     /* --- โครงสร้างเนื้อหาภายในแท็บ --- */
@@ -703,6 +719,13 @@
     // ==========================================
     function switchTab(tabId) {
       stopAIVoiceSpeech();
+      
+      // ขยายแผงค้นหากลับมา (หากอยู่ในสถานะยุบตัว) เมื่อผู้ใช้กดสลับแท็บ
+      const aiSection = document.getElementById('ai-section');
+      if (aiSection && aiSection.classList.contains('collapsed')) {
+        aiSection.classList.remove('collapsed');
+      }
+
       const tabs = ['realestate', 'decor', 'lifestyle', 'others'];
       tabs.forEach(id => {
         const btn = document.getElementById('tab-btn-' + id);
@@ -725,11 +748,27 @@
       }, 1000);
 
       const listSection = document.getElementById('list-section');
+      const aiSection = document.getElementById('ai-section');
+      let lastScrollTop = 0;
+
       if (listSection) {
         listSection.addEventListener('scroll', () => {
+          let currentScroll = listSection.scrollTop;
+          
+          // --- Interactive Scroll Logic (ลากนิ้วยุบ/ขยายแผงตัวกรอง) ---
+          if (currentScroll > lastScrollTop && currentScroll > 20) {
+            // เลื่อนหน้าจอลง (ลากนิ้วขึ้น) -> ยุบแผง Detail
+            if (aiSection) aiSection.classList.add('collapsed');
+          } else if (currentScroll < lastScrollTop) {
+            // เลื่อนหน้าจอขึ้น (ลากนิ้วลง) -> ขยายแผง Detail
+            if (aiSection) aiSection.classList.remove('collapsed');
+          }
+          lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+
+          // --- Infinite Scroll Logic ---
           if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
           
-          const remainingScroll = listSection.scrollHeight - (listSection.scrollTop + listSection.clientHeight);
+          const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
           if (remainingScroll < 600) {
             loadNextPage();
           }
