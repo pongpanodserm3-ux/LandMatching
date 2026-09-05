@@ -444,7 +444,7 @@
       <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">อสังหาริมทรัพย์</button>
       <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้าแต่งบ้าน</button>
       <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchTab('lifestyle')">ไลฟ์สไตล์ & ท่องเที่ยว</button>
-      <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ทั่วไป / อื่นๆ</button>
+      <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ช่าง-บริการ</button>
     </div>
 
     <!-- แท็บที่ 1: อสังหาริมทรัพย์ (ใช้งานอยู่) -->
@@ -499,7 +499,7 @@
       </div>
     </div>
 
-    <!-- แท็บที่ 4: ทั่วไป / อื่นๆ (เตรียมเปิดบริการ) -->
+    <!-- แท็บที่ 4: ช่าง-บริการ (เตรียมเปิดบริการ) -->
     <div id="tab-content-others" class="tab-content" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxOthers" placeholder="พิมพ์ที่ต้องการ" 
@@ -507,7 +507,7 @@
         <button class="action-show-list-btn" onclick="testShowList()">ค้นหา</button>
       </div>
       <div class="empty-tab-box">
-        🌐 หมวดหมู่ ทั่วไป / อื่นๆ (พร้อมเปิดให้บริการเร็วๆ นี้)
+        🛠️ หมวดหมู่ ช่าง-บริการ (พร้อมเปิดให้บริการเร็วๆ นี้)
       </div>
     </div>
   </div>
@@ -659,7 +659,8 @@
         mediaStream: null,
         processor: null,
         audioOutCtx: null,
-        nextPlayTime: 0
+        nextPlayTime: 0,
+        hasGreeted: false // ป้องกันการให้ AI แนะนำตัวซ้ำซ้อน
       },
       data: {
         isFetching: false,
@@ -913,6 +914,12 @@
         }
       }, 500);
       setTimeout(() => clearInterval(checkReady), 10000);
+    }
+
+    // ฟังก์ชันเพิ่มเติมสำหรับสั่งให้ AI พูดประโยคแนะนำตัวตอนเข้าแอปครั้งแรก
+    function triggerInitialAIGreeting() {
+      const prompt = `ตอนนี้ผู้ใช้เปิดแอปพลิเคชันขึ้นมาแล้ว ให้คุณแนะนำตัวด้วยเสียงพูดทันทีตามข้อความนี้เป๊ะๆว่า: "ผมคือ AI landmatching เป็นผู้ช่วยส่วนตัวของคุณ ช่วยค้นหาบ้าน หาสินค้าแต่งบ้านซ่อมบ้าน หาช่าง หาร้านอาหาร หรือแหล่งชุมชนท่องเที่ยว ตามพิกัดที่คุณต้องการ บอกมาได้เลยครับ"`;
+      sendTextToAI(prompt);
     }
 
     function sendTextToAI(text) {
@@ -1242,7 +1249,12 @@
                     3. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
                     4. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Sheet1
                     5. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
-                    6. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย (สำคัญ: ต้องตรวจสอบและเติมคำนำหน้าประเภทสถานที่ให้ถูกต้องเสมอ เช่น "หมู่บ้าน...", "ถนน...", "ซอย...", "อาคาร...", "ห้างสรรพสินค้า...")`
+                    6. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย (สำคัญ: ต้องตรวจสอบและเติมคำนำหน้าประเภทสถานที่ให้ถูกต้องเสมอ เช่น "หมู่บ้าน...", "ถนน...", "ซอย...", "อาคาร...", "ห้างสรรพสินค้า...")
+                    7. เมื่อผู้ใช้บอกสิ่งที่ต้องการ ให้คุณวิเคราะห์และเรียกใช้ฟังก์ชัน switch_tab_category เพื่อเปลี่ยนแท็บหน้าจอตามหมวดหมู่ที่เหมาะสมทันที:
+                       - หากผู้ใช้บอกอยากหาบ้าน หรือหาของที่เป็นอสังหาริมทรัพย์ทุกชนิด ให้เลือก 'realestate'
+                       - หากผู้ใช้บอกอยากหา ของแต่งบ้าน อุปกรณ์ซ่อมบ้าน หรือหาของที่เป็นสังหาริมทรัพย์ทุกชนิด ให้เลือก 'decor'
+                       - หากผู้ใช้บอกอยากหา ร้านอาหาร ท่องเที่ยว โรงพยาบาล หรือ แหล่งชุมชนทุกประเภท ให้เลือก 'lifestyle'
+                       - หากผู้ใช้บอกอยากหาช่างต่างๆ งานซ่อมต่างๆ หรือ งานบริการต่างๆ ให้เลือก 'others'`
                   }]
                 },
                 tools: [
@@ -1285,6 +1297,20 @@
                           },
                           required: ["latitude", "longitude", "placeName"]
                         }
+                      },
+                      {
+                        name: "switch_tab_category",
+                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก เพื่อให้หน้าจอแสดงผลถูกต้องตามความต้องการของผู้ใช้",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            tabId: { 
+                              type: "STRING", 
+                              description: "ID ของแท็บเป้าหมาย: 'realestate' (อสังหาริมทรัพย์), 'decor' (สินค้าแต่งบ้าน), 'lifestyle' (ไลฟ์สไตล์&ท่องเที่ยว), 'others' (ช่าง-บริการ)"
+                            }
+                          },
+                          required: ["tabId"]
+                        }
                       }
                     ]
                   }
@@ -1308,6 +1334,12 @@
                 statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
               }
               await initMicrophone(); 
+              
+              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก (คำสั่ง 1)
+              if (!AppState.voice.hasGreeted) {
+                triggerInitialAIGreeting();
+                AppState.voice.hasGreeted = true;
+              }
               return;
             }
 
@@ -1387,6 +1419,26 @@
                       toolResponse: {
                         functionResponses: [{
                           response: { output: { success: true, message: "ปักหมุดบนแผนที่เรียบร้อยแล้ว" } },
+                          id: call.id
+                        }]
+                      }
+                    }));
+                  }
+                }
+                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ (คำสั่ง 3)
+                else if (call.name === "switch_tab_category") {
+                  const args = call.args || {};
+                  const tabId = args.tabId;
+                  
+                  if (tabId) {
+                    switchTab(tabId);
+                  }
+
+                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                    AppState.voice.ws.send(JSON.stringify({
+                      toolResponse: {
+                        functionResponses: [{
+                          response: { output: { success: true, message: `เปลี่ยนแท็บสำเร็จ` } },
                           id: call.id
                         }]
                       }
