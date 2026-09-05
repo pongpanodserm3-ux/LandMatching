@@ -537,7 +537,7 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; margin-bottom: 10px;">
           <div id="modalPrice" class="detail-price" style="margin-bottom: 0;">-</div>
-          <a id="modalDeepLink" href="#" target="_blank" style="background: var(--btn-blue); color: white; border: none; border-radius: 15px; padding: 8px 16px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15); text-decoration: none;">ดูข้อมูลเชิงลึก 🔍</a>
+          <a id="modalDeepLink" href="#" target="_blank" onclick="stopAIVoiceSpeech()" style="background: var(--btn-blue); color: white; border: none; border-radius: 15px; padding: 8px 16px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15); text-decoration: none;">ดูข้อมูลเชิงลึก 🔍</a>
         </div>
         
         <div id="modalDesc" style="font-size: 15px; color: #444; line-height: 1.5; max-height: 180px; overflow-y: auto; padding: 10px; background: #f9f9f9; border-radius: 10px; margin-bottom: 10px; border: 1px solid #eee;"></div>
@@ -660,7 +660,8 @@
         processor: null,
         audioOutCtx: null,
         nextPlayTime: 0,
-        hasGreeted: false // ป้องกันการให้ AI แนะนำตัวซ้ำซ้อน
+        hasGreeted: false, // ป้องกันการให้ AI แนะนำตัวซ้ำซ้อน
+        silenced: false
       },
       data: {
         isFetching: false,
@@ -697,6 +698,7 @@
     // 3. UI, TABS & INFINITE SCROLL BINDINGS
     // ==========================================
     function switchTab(tabId) {
+      stopAIVoiceSpeech();
       const tabs = ['realestate', 'decor', 'lifestyle', 'others'];
       tabs.forEach(id => {
         const btn = document.getElementById('tab-btn-' + id);
@@ -744,6 +746,7 @@
     }
 
     function openDropdownModal(topic) {
+      stopAIVoiceSpeech();
       AppState.ui.dropdownTopic = topic;
       document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
       document.getElementById('dropdownSearchInput').value = '';
@@ -796,6 +799,7 @@
     }
 
     function closeDropdownModal() {
+      stopAIVoiceSpeech();
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
 
@@ -835,6 +839,7 @@
     }
 
     function openLocationModal() {
+      stopAIVoiceSpeech();
       document.getElementById('locationModalOverlay').classList.add('active');
       
       const defaultLat = selectedLat || 13.7563;
@@ -923,6 +928,7 @@
     }
 
     function sendTextToAI(text) {
+      AppState.voice.silenced = false;
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
         AppState.voice.ws.send(JSON.stringify({
           clientContent: {
@@ -1132,6 +1138,7 @@
     }
 
     function closeLocationModal() {
+      stopAIVoiceSpeech();
       const resultsDiv = document.getElementById('placeSearchResults');
       if (resultsDiv) resultsDiv.style.display = 'none';
       document.getElementById('locationModalOverlay').classList.remove('active');
@@ -1163,6 +1170,7 @@
     }
 
     function openGoogleMaps() {
+      stopAIVoiceSpeech();
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const placeSearchInput = document.getElementById('placeSearchInput');
@@ -1203,6 +1211,17 @@
     // ==========================================
     // 5. AI VOICE SESSION HANDLERS
     // ==========================================
+    function stopAIVoiceSpeech() {
+      AppState.voice.silenced = true;
+      if (AppState.voice.audioOutCtx) {
+        try {
+          AppState.voice.audioOutCtx.close();
+        } catch (e) {}
+        AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+      }
+    }
+
     async function toggleVoiceSession() {
       if (!AppState.voice.isActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -1220,6 +1239,7 @@
       try {
         AppState.voice.isActive = true;
         AppState.voice.isSetupReady = false;
+        AppState.voice.silenced = false;
         AppState.data.isFetching = false;
         
         if (statusText) {
@@ -1477,11 +1497,21 @@
       AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
       AppState.voice.processor.onaudioprocess = (e) => {
         if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        let sum = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          sum += inputData[i] * inputData[i];
+        }
+        let rms = Math.sqrt(sum / inputData.length);
+        if (rms > 0.02) {
+          AppState.voice.silenced = false;
+        }
+
         if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
           return;
         }
 
-        const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = convertFloat32ToPCM16(inputData);
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
@@ -1501,6 +1531,7 @@
     }
 
     function playPCMData(base64Audio) {
+      if (AppState.voice.silenced) return;
       if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
       const raw = atob(base64Audio);
       const bytes = new Uint8Array(raw.length);
@@ -1526,6 +1557,7 @@
     async function stopVoiceSession() {
       AppState.voice.isActive = false;
       AppState.voice.isSetupReady = false;
+      AppState.voice.silenced = false;
       AppState.data.isFetching = false;
       
       if (AppState.voice.ws) {
@@ -1696,6 +1728,7 @@
     }
 
     function showDetailModal(item) {
+      stopAIVoiceSpeech();
       document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
       document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
       document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
@@ -1728,6 +1761,7 @@
     }
 
     function closeDetailModal() {
+      stopAIVoiceSpeech();
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
 
