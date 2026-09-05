@@ -1652,13 +1652,16 @@
     // ==========================================
     // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
+    
+    // ฟังก์ชันรวบรวมค่าจากทุกปุ่ม Dropdown แบบสมบูรณ์
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
       
       const defaultLabels = [
         "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
-        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด"
+        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
+        "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
       ];
       
       filterBtns.forEach(btn => {
@@ -1667,18 +1670,24 @@
         
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
         
-        if (defaultLabels.includes(val)) return;
+        // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
+        if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
         
         const onclick = btn.getAttribute('onclick') || '';
         
         if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
-        if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
-        if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
-        if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
-        if (onclick.includes('จังหวัด')) criteria.province = val;
-        if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
-        if (onclick.includes('ถนน')) criteria.road = val;
-        if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด')) criteria.areaMax = val;
+        else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+        else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+        else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+        else if (onclick.includes('จังหวัด')) criteria.province = val;
+        else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+        else if (onclick.includes('ถนน')) criteria.road = val;
+        else if (onclick.includes('โครงการ')) criteria.project = val;
+        else if (onclick.includes('ซอย')) criteria.soi = val;
+        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+        else if (onclick.includes('อื่นๆ')) criteria.other = val;
+        else if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
+        else if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.facility = val;
       });
 
       if (selectedLat && selectedLng) {
@@ -1799,9 +1808,8 @@
         deepLink.style.display = 'none';
       }
 
-  // 🟢 แก้ไข/กำหนดข้อความที่จะส่งไปให้ AI ตรงส่วนนี้ Line 1711-1725
-  // =========================================================
-  const housePrompt = `รายละเอียดประกาศนี้ครับ:
+      // ส่งข้อความไปให้ AI สรุปบ้าน
+      const housePrompt = `รายละเอียดประกาศนี้ครับ:
 - โครงการ/ชื่อประกาศ: ${item.project || item.facebookPostName || 'ไม่ระบุ'}
 - ราคา: ${item.salePrice || item.rentPrice || 'ไม่ระบุ'}
 - ทำเล: ${item.district || ''} ${item.province || ''}
@@ -1809,11 +1817,9 @@
 
 ให้คุณพูดสรุปสั้นๆจุดเด่นของบ้านหลังนี้  พร้อมสอบถามผู้ใช้ว่าสนใจต่อรองราคาหรืออยากทราบข้อมูลส่วนไหนเพิ่มเติมครับ`;
 
-  // ส่งข้อความหา AI หากเปิดระบบเสียงอยู่อยู่
-  if (AppState.voice.isActive && AppState.voice.ws) {
-    sendTextToAI(housePrompt);
-  }
-  // =========================================================      
+      if (AppState.voice.isActive && AppState.voice.ws) {
+        sendTextToAI(housePrompt);
+      }
       
       document.getElementById('detailModalOverlay').classList.add('active');
     }
