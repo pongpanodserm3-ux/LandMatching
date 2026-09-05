@@ -459,6 +459,10 @@
 
       <!-- บรรทัดที่ 3: กลุ่มปุ่ม dropdown ทั้งหมด -->
       <div class="filter-scroll-row">
+        <!-- ปุ่มรีเซ็ตค่าทั้งหมด: ขนาดเล็ก, สีชมพูอ่อนพาสเทล, ตัวอักษรเล็ก -->
+        <button class="filter-btn" onclick="resetAllFilters()" style="background: #ffe4e1; border: 1px solid #ffb6c1; color: #d81b60; font-size: 10px; padding: 4px 8px; display: flex; align-items: center; justify-content: center; gap: 3px; min-width: 35px; height: 30px; align-self: center; flex-shrink: 0;">
+          <span style="font-size: 12px; line-height: 1;">🔄</span> รีเซ็ต
+        </button>
         <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
@@ -743,6 +747,28 @@
 
     function triggerSearchReset() {
       testShowList();
+    }
+
+    // ฟังก์ชันสำหรับปุ่มรีเซ็ตค่าทั้งหมด
+    function resetAllFilters() {
+      // 1. รีเซ็ตกล่องข้อความค้นหา (edit box) ในหน้าอสังหาริมทรัพย์
+      const editBox = document.getElementById('customEditBox');
+      if (editBox) editBox.value = '';
+      
+      // 2. รีเซ็ตปุ่ม Dropdown ทั้งหมดให้กลับเป็นค่าเริ่มต้น
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        const onClickAttr = btn.getAttribute('onclick') || '';
+        if (onClickAttr.includes('openDropdownModal')) {
+          const topicMatch = onClickAttr.match(/openDropdownModal\('([^']+)'\)/);
+          if (topicMatch && topicMatch[1]) {
+            btn.innerText = `${topicMatch[1]} ▾`;
+          }
+        }
+      });
+      
+      // 3. รีเซ็ตพิกัดและเริ่มค้นหาใหม่ (ฟังก์ชัน clearLocationFilter มีการเรียก testShowList() อยู่แล้ว)
+      clearLocationFilter();
     }
 
     // ฟังก์ชันคืนค่าตัวเลือกรายการ Dropdown ตามหัวข้อ
