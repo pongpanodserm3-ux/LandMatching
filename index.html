@@ -442,6 +442,313 @@
       cursor: pointer;
       margin-top: 8px;
     }
+
+    /* --- Floating User Chat Button --- */
+    .user-chat-float-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      box-shadow: 0 6px 16px rgba(255, 65, 108, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      z-index: 9999;
+      border: 2px solid #ffffff;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      text-align: center;
+      line-height: 1.1;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .user-chat-float-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(255, 65, 108, 0.6);
+    }
+    .user-chat-float-btn:active {
+      transform: scale(0.95);
+    }
+    .user-chat-float-btn .chat-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    /* --- Chat Modal & Dual-Pane Screen Layout --- */
+    .chat-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background-color: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .chat-modal-overlay.active {
+      display: flex !important;
+    }
+
+    .chat-container-card {
+      background: #ffffff;
+      width: 95vw;
+      max-width: 1000px;
+      height: 85vh;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--text-main) 0%, #3a2245 100%);
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .close-chat-modal {
+      font-size: 24px;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: bold;
+      line-height: 1;
+      transition: opacity 0.2s;
+    }
+    .close-chat-modal:hover {
+      opacity: 0.8;
+    }
+
+    /* --- Split Dual-Pane View (Chat List Left / Chat Room Right) --- */
+    .chat-dual-split-body {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #f4f6f9;
+      position: relative;
+    }
+
+    /* Left Zone: Chat List / Inbox List */
+    .chat-zone-list {
+      flex: 1;
+      width: 50%;
+      background: #ffffff;
+      border-right: 2px solid #e0e6ed;
+      display: flex;
+      flex-direction: column;
+      transition: flex 0.35s cubic-bezier(0.25, 1, 0.5, 1), width 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      overflow: hidden;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    /* Right Zone: Chat Room */
+    .chat-zone-room {
+      flex: 1;
+      width: 50%;
+      background: #fafbfc;
+      display: flex;
+      flex-direction: column;
+      transition: flex 0.35s cubic-bezier(0.25, 1, 0.5, 1), width 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      overflow: hidden;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    /* Expansion Logic: When Chat List zone is active/touched */
+    .chat-zone-list.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-room.shrunk {
+      flex: 1 !important;
+    }
+
+    /* Expansion Logic: When Chat Room zone is active/touched */
+    .chat-zone-room.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-list.shrunk {
+      flex: 1 !important;
+    }
+
+    /* Inner Styling for Chat List */
+    .chat-list-header {
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      font-weight: bold;
+      color: var(--text-main);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .chat-list-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .chat-item-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #eef2f6;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .chat-item-card:hover, .chat-item-card.active {
+      background: #eef5ff;
+      border-color: var(--btn-blue);
+    }
+
+    .chat-item-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #d0e0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .chat-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .chat-item-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-item-preview {
+      font-size: 11px;
+      color: #777;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-badge {
+      background: #ff4b2b;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Inner Styling for Chat Room */
+    .chat-room-header {
+      padding: 12px 15px;
+      background: #ffffff;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .chat-room-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: var(--text-dark);
+    }
+
+    .chat-messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f9fbfd;
+    }
+
+    .chat-bubble {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .chat-bubble.sent {
+      align-self: flex-end;
+      background: var(--btn-blue);
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-bubble.received {
+      align-self: flex-start;
+      background: #ffffff;
+      color: #333333;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .chat-input-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 15px;
+      background: #ffffff;
+      border-top: 1px solid #eee;
+      flex-shrink: 0;
+    }
+    .chat-input-field {
+      flex: 1;
+      padding: 9px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 20px;
+      font-size: 13px;
+      outline: none;
+    }
+    .chat-input-field:focus {
+      border-color: var(--btn-blue);
+    }
+    .chat-send-btn {
+      background: var(--btn-blue);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .chat-send-btn:active {
+      transform: scale(0.96);
+    }
   </style>
 </head>
 <body>
@@ -637,6 +944,83 @@
       <button onclick="confirmLocation()" style="width: 100%; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
         OK ยืนยันพิกัด
       </button>
+    </div>
+  </div>
+
+  <!-- ปุ่มการเข้าหน้าต่างแชท ลอยอยู่มุมขวาล่างสุดของหน้าเบราว์เซอร์ตลอดเวลา -->
+  <div class="user-chat-float-btn" onclick="openUserChatModal()">
+    <span class="chat-icon">💬</span>
+    <span>user chat</span>
+  </div>
+
+  <!-- หน้าต่าง User Chat แยกเป็น 2 ฝั่ง (Chat List / Chat Room) -->
+  <div class="chat-modal-overlay" id="userChatModalOverlay">
+    <div class="chat-container-card">
+      <div class="chat-header-bar">
+        <span>💬 ระบบแชทส่วนตัว (User Chat)</span>
+        <span class="close-chat-modal" onclick="closeUserChatModal()">×</span>
+      </div>
+      <div class="chat-dual-split-body">
+        <!-- ฝั่งซ้าย: Chat List / Inbox List -->
+        <div class="chat-zone-list" id="chatZoneList" 
+             ontouchstart="expandChatZone('list')" 
+             onpointerdown="expandChatZone('list')" 
+             onmouseenter="expandChatZone('list')">
+          <div class="chat-list-header">
+            <span>📥</span> รายการแชท (Inbox List)
+          </div>
+          <div class="chat-list-items">
+            <div class="chat-item-card active" onclick="selectChatRoom('ร้านข้าวมันไก่ป้าต้อย', 'ป้าต้อย')">
+              <div class="chat-item-avatar">🐔</div>
+              <div class="chat-item-info">
+                <div class="chat-item-title">ร้านข้าวมันไก่ป้าต้อย</div>
+                <div class="chat-item-preview">ป้าต้อย: ได้เลยจ้ะ อีก 10 นาทีไปส่ง...</div>
+              </div>
+              <div class="chat-badge">1</div>
+            </div>
+            <div class="chat-item-card" onclick="selectChatRoom('ร้านข้าวหน้าเป็ดเฮียหมู', 'เฮียหมู')">
+              <div class="chat-item-avatar">🦆</div>
+              <div class="chat-item-info">
+                <div class="chat-item-title">ร้านข้าวหน้าเป็ดเฮียหมู</div>
+                <div class="chat-item-preview">เฮียหมู: มีเป็ดย่างพร้อมส่งครับ</div>
+              </div>
+            </div>
+            <div class="chat-item-card" onclick="selectChatRoom('ร้านข้าวหมูแดงสว่างรส', 'เฮียสว่าง')">
+              <div class="chat-item-avatar">🐷</div>
+              <div class="chat-item-info">
+                <div class="chat-item-title">ร้านข้าวหมูแดงสว่างรส</div>
+                <div class="chat-item-preview">ขอบคุณที่อุดหนุนครับ!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ฝั่งขวา: Chat Room -->
+        <div class="chat-zone-room" id="chatZoneRoom" 
+             ontouchstart="expandChatZone('room')" 
+             onpointerdown="expandChatZone('room')" 
+             onmouseenter="expandChatZone('room')">
+          <div class="chat-room-header">
+            <div class="chat-room-title" id="chatActiveTitle">🐔 ร้านข้าวมันไก่ป้าต้อย</div>
+            <span style="font-size: 11px; color: #28a745; font-weight: bold;">🟢 ออนไลน์</span>
+          </div>
+          <div class="chat-messages-container" id="chatMessagesContainer">
+            <div class="chat-bubble received">
+              สวัสดีค่ะ สนใจสั่งข้าวมันไก่เมนูไหนสอบถามได้เลยนะคะ
+            </div>
+            <div class="chat-bubble sent">
+              ข้าวมันไก่เนื้อน่องพิเศษ 1 ห่อ ส่งหน้าคอนโด A ตอนนี้ได้ไหมครับ?
+            </div>
+            <div class="chat-bubble received">
+              ได้เลยจ้ะ อีก 10 นาทีเดินไปส่งให้ ฟรีค่าส่งนะ!
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input type="text" class="chat-input-field" id="chatMessageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key === 'Enter') { sendChatMessage(); }">
+            <button class="chat-send-btn" onclick="sendChatMessage()">ส่ง</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1902,6 +2286,78 @@
 
     function retryNextPage() {
       loadNextPage();
+    }
+
+    // ==========================================
+    // 7. USER CHAT DUAL-PANE & EXPANSION HANDLERS
+    // ==========================================
+    function openUserChatModal() {
+      stopAIVoiceSpeech();
+      document.getElementById('userChatModalOverlay').classList.add('active');
+    }
+
+    function closeUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.remove('active');
+    }
+
+    function expandChatZone(activeZone) {
+      const listZone = document.getElementById('chatZoneList');
+      const roomZone = document.getElementById('chatZoneRoom');
+      
+      if (!listZone || !roomZone) return;
+
+      if (activeZone === 'list') {
+        listZone.classList.add('expanded');
+        listZone.classList.remove('shrunk');
+        roomZone.classList.add('shrunk');
+        roomZone.classList.remove('expanded');
+      } else if (activeZone === 'room') {
+        roomZone.classList.add('expanded');
+        roomZone.classList.remove('shrunk');
+        listZone.classList.add('shrunk');
+        listZone.classList.remove('expanded');
+      }
+    }
+
+    function selectChatRoom(shopName, ownerName) {
+      const titleElem = document.getElementById('chatActiveTitle');
+      const messagesContainer = document.getElementById('chatMessagesContainer');
+      
+      if (titleElem) {
+        titleElem.innerText = shopName;
+      }
+      
+      if (messagesContainer) {
+        messagesContainer.innerHTML = `
+          <div class="chat-bubble received">
+            ยินดีต้อนรับสู่ ${shopName} ค่ะ คุณ ${ownerName} พร้อมให้บริการแล้วค่ะ
+          </div>
+        `;
+      }
+
+      // เมื่อเลือกห้องแชทแล้ว ให้ขยายฝั่ง Chat Room ทันที
+      expandChatZone('room');
+    }
+
+    function sendChatMessage() {
+      const inputElem = document.getElementById('chatMessageInput');
+      const messagesContainer = document.getElementById('chatMessagesContainer');
+      
+      if (!inputElem || !messagesContainer) return;
+      
+      const text = inputElem.value.trim();
+      if (!text) return;
+      
+      const sentBubble = document.createElement('div');
+      sentBubble.className = 'chat-bubble sent';
+      sentBubble.innerText = text;
+      messagesContainer.appendChild(sentBubble);
+      
+      inputElem.value = '';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      
+      // สลับไปขยายฝั่งห้องแชทเมื่อส่งข้อความ
+      expandChatZone('room');
     }
   </script>
 </body>
