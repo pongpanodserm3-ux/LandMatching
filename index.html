@@ -62,8 +62,9 @@
       margin-bottom: 12px;
     }
 
-    /* ปรับแต่งปุ่มทั้งสองให้มีขนาดพอเหมาะ ดีไซน์ไฮเทคล้ำยุค */
-    #locationFilterBtn, .voice-btn {
+    /* ปรับแต่งปุ่มทั้งสองให้ขนาดใหญ่เท่ากัน ดีไซน์ไฮเทคล้ำยุค */
+    #locationFilterBtn {
+      width: auto;
       height: 44px;
       padding: 6px 16px;
       font-size: 13px;
@@ -79,9 +80,6 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
-    }
-
-    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
     }
@@ -94,14 +92,30 @@
       background-color: #0a522a;
     }
 
-    /* ตั้งค่าให้ปุ่ม AI ลอยตัวอยู่ด้านบนขวาเสมอ */
+    /* การตั้งค่าสำหรับปุ่ม AI แบบลอยตัว */
     .voice-btn {
-      background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
-      color: white;
       position: fixed;
       top: 15px;
       right: 15px;
-      z-index: 99999; /* ลอยเหนือหน้าต่างและ Modal ทั้งหมด */
+      z-index: 999999;
+      width: auto;
+      height: 44px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(5px);
+      background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
+      color: white;
     }
     .voice-btn:hover {
       transform: translateY(-2px);
@@ -758,22 +772,20 @@
 <body>
 
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: จัดกลุ่มโครงสร้างให้สมดุล (ปุ่มพิกัดชิดซ้าย, ไอคอนกลาง, ปุ่มคุยกับ AI ชิดขวาแบบ Fixed) -->
+    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์ (ปุ่มคุยกับ AI ถูกย้ายไปลอยอิสระแล้ว) -->
     <div class="ai-controls-row">
+      <!-- ห่อหุ้มปุ่มพิกัดด้วย flex เพื่อผลักให้ปุ่มชิดซ้ายสุดเสมอ -->
       <div style="flex: 1; display: flex; justify-content: flex-start;">
         <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       </div>
       
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-        <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
-        <div id="avatarCircle" class="ai-avatar">🤖</div>
+      <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
+      <div id="avatarCircle" class="ai-avatar">🤖</div>
+      
+      <!-- พื้นที่ว่างด้านขวา เพื่อรักษาสมดุลให้ Mascot และ Avatar อยู่กึ่งกลางเสมอ โดยไม่เสียรูปทรงบรรทัดเดิม -->
+      <div style="flex: 1; display: flex; justify-content: flex-end;">
       </div>
-
-      <div style="flex: 1;"></div> <!-- Spacer เว้นที่ให้โครงสร้างอยู่ตรงกลาง -->
     </div>
-    
-    <!-- ปุ่มคุยกับ AI แบบลอยเหนือทุกหน้าจอ เปลี่ยนชื่อและลดความกว้างแล้ว -->
-    <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
     <div class="tabs-nav">
@@ -1042,6 +1054,9 @@
       </div>
     </div>
   </div>
+
+  <!-- คำสั่งที่ 3: ปุ่มคุยกับ AI แบบลอยตัวเหนือหน้าจอทุกหน้าเสมอ (โครงสร้างอยู่นอกสุด) -->
+  <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
 
   <script>
     // ==========================================
@@ -2095,7 +2110,7 @@
                     }));
                   }
                 }
-                // ฟังก์ชันเปิด Google Maps ด้วยเสียง
+                // ฟังก์ชันเปิด Google Maps
                 else if (call.name === "open_google_maps_action") {
                   openGoogleMaps();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2111,124 +2126,16 @@
                 }
               }
             }
-
-          } catch (e) {}
-        };
-        AppState.voice.ws.onclose = () => stopVoiceSession();
-
-      } catch (err) {
-        if (statusText) {
-          statusText.classList.remove('loading-pulse');
-          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
-        }
-      }
-    }
-
-    async function initMicrophone() {
-      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      
-      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
-      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
-
-      source.connect(AppState.voice.processor);
-      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
-      AppState.voice.processor.onaudioprocess = (e) => {
-        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
-        
-        const inputData = e.inputBuffer.getChannelData(0);
-        let sum = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sum += inputData[i] * inputData[i];
-        }
-        let rms = Math.sqrt(sum / inputData.length);
-        if (rms > 0.02) {
-          AppState.voice.silenced = false;
-        }
-
-        if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
-          return;
-        }
-
-        const pcm16 = convertFloat32ToPCM16(inputData);
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-
-        AppState.voice.ws.send(JSON.stringify({
-          realtimeInput: {
-            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+          } catch (e) {
+            console.error("Error parsing WS message:", e);
           }
-        }));
-      };
-    }
+        };
 
-    function convertFloat32ToPCM16(buffer) {
-      let l = buffer.length;
-      let buf = new Int16Array(l);
-      while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
-      return buf;
-    }
-
-    function playPCMData(base64Audio) {
-      if (AppState.voice.silenced) return;
-      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
-      const raw = atob(base64Audio);
-      const bytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-      const int16 = new Int16Array(bytes.buffer);
-      const float32 = new Float32Array(int16.length);
-      for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
-
-      const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
-      buffer.getChannelData(0).set(float32);
-
-      const source = AppState.voice.audioOutCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(AppState.voice.audioOutCtx.destination);
-
-      if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
-        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-      }
-      source.start(AppState.voice.nextPlayTime);
-      AppState.voice.nextPlayTime += buffer.duration;
-    }
-
-    async function stopVoiceSession() {
-      AppState.voice.isActive = false;
-      AppState.voice.isSetupReady = false;
-      AppState.voice.silenced = false;
-      AppState.data.isFetching = false;
-      
-      if (AppState.voice.ws) {
-        AppState.voice.ws.onclose = null;
-        AppState.voice.ws.close();
-        AppState.voice.ws = null;
-      }
-      if (AppState.voice.mediaStream) {
-        AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
-        AppState.voice.mediaStream = null;
-      }
-      
-      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
-        try { await AppState.voice.audioCtx.close(); } catch(e) {}
-      }
-      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
-        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
-      }
-
-      const btn = document.getElementById('toggleBtn');
-      const avatar = document.getElementById('avatarCircle');
-      if (btn) {
-        btn.innerHTML = "🎙️ คุยกับ AI";
-        btn.classList.remove('active');
-      }
-      if (avatar) {
-        avatar.classList.remove('pulse-animation');
+        AppState.voice.ws.onerror = (e) => {
+          console.error("WS Error:", e);
+        };
+      } catch (e) {
+        console.error("Error in startVoiceSession:", e);
       }
     }
   </script>
