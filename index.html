@@ -1745,773 +1745,773 @@
     }
 
 //---------PartB
-async function startVoiceSession() {
-      const btn = document.getElementById('toggleBtn');
-      const avatar = document.getElementById('avatarCircle');
-      const statusText = document.getElementById('statusText');
-
-      if (AppState.voice.ws || AppState.voice.isActive) {
-        await stopVoiceSession();
-      }
-
-      try {
-        AppState.voice.isActive = true;
-        AppState.voice.isSetupReady = false;
-        AppState.voice.silenced = false;
-        AppState.data.isFetching = false;
-        
-        if (statusText) {
-          statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-          statusText.classList.add('loading-pulse'); 
-        }
-
-        AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-
-        AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
-
-        AppState.voice.ws.onopen = () => {
-          if (AppState.voice.ws.readyState === WebSocket.OPEN) {
-            const validDropdowns = getAllValidDropdownOptions().join(', ');
-            const setupData = {
-              setup: {
-                model: "models/gemini-3.1-flash-live-preview", 
-                generationConfig: {
-                  responseModalities: ["AUDIO"],
-                  speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
-                },
-                systemInstruction: {
-                  parts: [{
-                    text: `คุณคือ AI ผู้ช่วยค้นหา  หน้าที่หลักคือ:
-                    1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
-                    2. เมื่ออยู่ในแท็บอสังหาริมทรัพย์ หรือ เพิ่งเข้าสู่แท็บอสังหาริมทรัพย์ อันดับแรก AIถามทันทีว่า "ต้องการหาพื้นที่ใด ต้องการให้เปิดหน้าพิกัดไหม" ถ้าuserบอกต้องการ ให้AIเรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อเปิดหน้าพิกัดขึ้นมา และ  ให้AI สอบถามความต้องการบ้านที่userต้องการ โดยเน้นถามเร็วเน้นสรุป เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
-                    ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
-                    คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
-                    [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
-                    3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchText ในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
-                    4. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
-                    5. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
-                    6. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
-                    7. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย (สำคัญ: ต้องตรวจสอบและเติมคำนำหน้าประเภทสถานที่ให้ถูกต้องเสมอ เช่น "หมู่บ้าน...", "ถนน...", "ซอย...", "อาคาร...", "ห้างสรรพสินค้า...")
-                    8. กฎและลำดับการทำงานเมื่อผู้ใช้ระบุความต้องการ (สำคัญมาก - ให้ทำตามลำดับนี้ทุกครั้ง):
-                        - **ขั้นตอนที่ 1 (ต้องทำก่อนอันดับแรกเสมอ):**  ให้ AI วิเคราะห์หมวดหมู่และเรียกใช้ฟังก์ชัน 'switch_tab_category' เพื่อสลับหน้าจอไปยังแท็บที่ถูกต้องทันทีก่อนเริ่มประมวลผลอื่น (สามารถส่ง searchText เพื่อพิมพ์ลงช่องค้นหาในแท็บได้เลย) โดยใช้เกณฑ์ดังนี้:
-                            * หากผู้ใช้ต้องการหา บ้าน, คอนโด, ที่ดิน, หรืออสังหาริมทรัพย์ทุกชนิด ➔ เลือก 'realestate'
-                            * หากผู้ใช้ต้องการหา ของแต่งบ้าน, อุปกรณ์ซ่อมบ้าน, หรือสินค้าทั่วไปอื่นๆ ➔ เลือก 'decor'
-                            * หากผู้ใช้ต้องการหา ร้านอาหาร, ของกิน, คาเฟ่, ตลาด, ห้าง, 7-11, แหล่งชุมชน, แหล่งท่องเที่ยว, หรือโรงพยาบาล ➔ เลือก 'lifestyle'
-                            * หากผู้ใช้ต้องการหา ช่างซ่อม, งานบริการต่างๆ ➔ เลือก 'others'
-                        - **ขั้นตอนที่ 2 (สำคัญที่สุด):** ทันทีหลังจากเรียกฟังก์ชันเปลี่ยนแท็บสำเร็จ **ให้คุณ (AI) พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"** เพื่อให้ผู้ใช้ระบุพิกัดต่อ
-                    9. หากลูกค้าต้องการให้เปิดหน้าพิกัดแผนที่ (ปักหมุดสีเขียว) ไม่ว่าจะอยู่ในแท็บไหน ให้เรียกใช้ฟังก์ชัน 'open_location_modal' ทันที
-                    10. ไม่ว่าจะอยู่ที่หน้าเพจใด ถ้า AI Voice พบว่าผู้ใช้ต้องการหาพิกัดหรือ location ของสถานที่ใดๆ ก็ตาม ให้แปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน 'set_location_coordinates' ทันทีเพื่อเปิดหน้าพิกัดค้นหา ปักหมุดในตำแหน่งที่ผู้ใช้ต้องการ พร้อมเขียนรายละเอียดสถานที่ลงบนช่อง edit ในหน้าพิกัดอัตโนมัติ
-                    11. ที่หน้าต่างปักหมุดพิกัดค้นหา ผู้ใช้สามารถสั่งกดปุ่มด้วยเสียงได้:
-                        - หากผู้ใช้สั่ง "ยืนยันพิกัด" (เช่น "ตกลง", "เอาตรงนี้แหละ") เรียกใช้ฟังก์ชัน 'confirm_location_action' 
-                        - หากผู้ใช้สั่ง "เปิด Google Maps" (เช่น "เปิดแมพ") เรียกใช้ฟังก์ชัน 'open_google_maps_action' 
-                    `
-                  }]
-                },
-                tools: [
-                  {
-                    functionDeclarations: [
+    async function startVoiceSession() {
+          const btn = document.getElementById('toggleBtn');
+          const avatar = document.getElementById('avatarCircle');
+          const statusText = document.getElementById('statusText');
+    
+          if (AppState.voice.ws || AppState.voice.isActive) {
+            await stopVoiceSession();
+          }
+    
+          try {
+            AppState.voice.isActive = true;
+            AppState.voice.isSetupReady = false;
+            AppState.voice.silenced = false;
+            AppState.data.isFetching = false;
+            
+            if (statusText) {
+              statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+              statusText.classList.add('loading-pulse'); 
+            }
+    
+            AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+    
+            AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
+    
+            AppState.voice.ws.onopen = () => {
+              if (AppState.voice.ws.readyState === WebSocket.OPEN) {
+                const validDropdowns = getAllValidDropdownOptions().join(', ');
+                const setupData = {
+                  setup: {
+                    model: "models/gemini-3.1-flash-live-preview", 
+                    generationConfig: {
+                      responseModalities: ["AUDIO"],
+                      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
+                    },
+                    systemInstruction: {
+                      parts: [{
+                        text: `คุณคือ AI ผู้ช่วยค้นหา  หน้าที่หลักคือ:
+                        1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
+                        2. เมื่ออยู่ในแท็บอสังหาริมทรัพย์ หรือ เพิ่งเข้าสู่แท็บอสังหาริมทรัพย์ อันดับแรก AIถามทันทีว่า "ต้องการหาพื้นที่ใด ต้องการให้เปิดหน้าพิกัดไหม" ถ้าuserบอกต้องการ ให้AIเรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อเปิดหน้าพิกัดขึ้นมา และ  ให้AI สอบถามความต้องการบ้านที่userต้องการ โดยเน้นถามเร็วเน้นสรุป เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
+                        ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
+                        คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
+                        [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
+                        3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchText ในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
+                        4. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
+                        5. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
+                        6. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
+                        7. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย (สำคัญ: ต้องตรวจสอบและเติมคำนำหน้าประเภทสถานที่ให้ถูกต้องเสมอ เช่น "หมู่บ้าน...", "ถนน...", "ซอย...", "อาคาร...", "ห้างสรรพสินค้า...")
+                        8. กฎและลำดับการทำงานเมื่อผู้ใช้ระบุความต้องการ (สำคัญมาก - ให้ทำตามลำดับนี้ทุกครั้ง):
+                            - **ขั้นตอนที่ 1 (ต้องทำก่อนอันดับแรกเสมอ):**  ให้ AI วิเคราะห์หมวดหมู่และเรียกใช้ฟังก์ชัน 'switch_tab_category' เพื่อสลับหน้าจอไปยังแท็บที่ถูกต้องทันทีก่อนเริ่มประมวลผลอื่น (สามารถส่ง searchText เพื่อพิมพ์ลงช่องค้นหาในแท็บได้เลย) โดยใช้เกณฑ์ดังนี้:
+                                * หากผู้ใช้ต้องการหา บ้าน, คอนโด, ที่ดิน, หรืออสังหาริมทรัพย์ทุกชนิด ➔ เลือก 'realestate'
+                                * หากผู้ใช้ต้องการหา ของแต่งบ้าน, อุปกรณ์ซ่อมบ้าน, หรือสินค้าทั่วไปอื่นๆ ➔ เลือก 'decor'
+                                * หากผู้ใช้ต้องการหา ร้านอาหาร, ของกิน, คาเฟ่, ตลาด, ห้าง, 7-11, แหล่งชุมชน, แหล่งท่องเที่ยว, หรือโรงพยาบาล ➔ เลือก 'lifestyle'
+                                * หากผู้ใช้ต้องการหา ช่างซ่อม, งานบริการต่างๆ ➔ เลือก 'others'
+                            - **ขั้นตอนที่ 2 (สำคัญที่สุด):** ทันทีหลังจากเรียกฟังก์ชันเปลี่ยนแท็บสำเร็จ **ให้คุณ (AI) พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"** เพื่อให้ผู้ใช้ระบุพิกัดต่อ
+                        9. หากลูกค้าต้องการให้เปิดหน้าพิกัดแผนที่ (ปักหมุดสีเขียว) ไม่ว่าจะอยู่ในแท็บไหน ให้เรียกใช้ฟังก์ชัน 'open_location_modal' ทันที
+                        10. ไม่ว่าจะอยู่ที่หน้าเพจใด ถ้า AI Voice พบว่าผู้ใช้ต้องการหาพิกัดหรือ location ของสถานที่ใดๆ ก็ตาม ให้แปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน 'set_location_coordinates' ทันทีเพื่อเปิดหน้าพิกัดค้นหา ปักหมุดในตำแหน่งที่ผู้ใช้ต้องการ พร้อมเขียนรายละเอียดสถานที่ลงบนช่อง edit ในหน้าพิกัดอัตโนมัติ
+                        11. ที่หน้าต่างปักหมุดพิกัดค้นหา ผู้ใช้สามารถสั่งกดปุ่มด้วยเสียงได้:
+                            - หากผู้ใช้สั่ง "ยืนยันพิกัด" (เช่น "ตกลง", "เอาตรงนี้แหละ") เรียกใช้ฟังก์ชัน 'confirm_location_action' 
+                            - หากผู้ใช้สั่ง "เปิด Google Maps" (เช่น "เปิดแมพ") เรียกใช้ฟังก์ชัน 'open_google_maps_action' 
+                        `
+                      }]
+                    },
+                    tools: [
                       {
-                        name: "submit_user_summary",
-                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเมื่อได้ข้อมูลครบถ้วนแล้ว โดยเลือกใช้เฉพาะคำที่มีแสดงอยู่ในรายการ Dropdown ในแท็บอสังหาริมทรัพย์เท่านั้น ห้ามใช้คำนอกเหนือจากข้อความใน Dropdown",
-                        parameters: {
-                          type: "OBJECT",
-                          properties: {
-                            userData: {
+                        functionDeclarations: [
+                          {
+                            name: "submit_user_summary",
+                            description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเมื่อได้ข้อมูลครบถ้วนแล้ว โดยเลือกใช้เฉพาะคำที่มีแสดงอยู่ในรายการ Dropdown ในแท็บอสังหาริมทรัพย์เท่านั้น ห้ามใช้คำนอกเหนือจากข้อความใน Dropdown",
+                            parameters: {
                               type: "OBJECT",
                               properties: {
-                                demandType: { type: "STRING", description: "ประเภทความต้องการ ต้องใช้ข้อความจาก Dropdown เช่น ขาย, เช่า" },
-                                location: { type: "STRING", description: "ทำเลสถานที่ ต้องใช้ข้อความจาก Dropdown เช่น กทม., ถนนลาดพร้าว" },
-                                budget: { type: "STRING", description: "งบประมาณ ต้องใช้ข้อความจาก Dropdown เช่น ไม่เกิน 5 ล้าน" }
-                              }
-                            },
-                            criteria: {
+                                userData: {
+                                  type: "OBJECT",
+                                  properties: {
+                                    demandType: { type: "STRING", description: "ประเภทความต้องการ ต้องใช้ข้อความจาก Dropdown เช่น ขาย, เช่า" },
+                                    location: { type: "STRING", description: "ทำเลสถานที่ ต้องใช้ข้อความจาก Dropdown เช่น กทม., ถนนลาดพร้าว" },
+                                    budget: { type: "STRING", description: "งบประมาณ ต้องใช้ข้อความจาก Dropdown เช่น ไม่เกิน 5 ล้าน" }
+                                  }
+                                },
+                                criteria: {
+                                  type: "OBJECT",
+                                  properties: {
+                                    propertyType: { type: "STRING", description: "ประเภทอสังหา ต้องใช้ข้อความจาก Dropdown เช่น บ้าน, คอนโด" },
+                                    province: { type: "STRING", description: "จังหวัด ต้องใช้ข้อความจาก Dropdown เช่น กทม." }
+                                  }
+                                }
+                              },
+                              required: ["userData", "criteria"]
+                            }
+                          },
+                          {
+                            name: "set_location_coordinates",
+                            description: "เมื่อได้ข้อสรุปตำแหน่งสถานที่ที่ผู้ใช้ต้องการค้นหาแล้ว ให้แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่ แล้วเรียกฟังก์ชันนี้เพื่อเปิดหน้าต่างพิกัด ใส่ข้อมูลในช่องค้นหา และปักหมุดบนแผนที่อัตโนมัติ",
+                            parameters: {
                               type: "OBJECT",
                               properties: {
-                                propertyType: { type: "STRING", description: "ประเภทอสังหา ต้องใช้ข้อความจาก Dropdown เช่น บ้าน, คอนโด" },
-                                province: { type: "STRING", description: "จังหวัด ต้องใช้ข้อความจาก Dropdown เช่น กทม." }
-                              }
+                                latitude: { type: "NUMBER" },
+                                longitude: { type: "NUMBER" },
+                                placeName: { type: "STRING", description: "ชื่อสถานที่ที่ผู้ใช้ต้องการค้นหา (บังคับ: ต้องตรวจสอบและใส่คำนำหน้าประเภทสถานที่ให้ถูกต้อง เช่น หมู่บ้าน, ถนน, ซอย, อาคาร, ห้างสรรพสินค้า)" }
+                              },
+                              required: ["latitude", "longitude", "placeName"]
                             }
                           },
-                          required: ["userData", "criteria"]
-                        }
-                      },
-                      {
-                        name: "set_location_coordinates",
-                        description: "เมื่อได้ข้อสรุปตำแหน่งสถานที่ที่ผู้ใช้ต้องการค้นหาแล้ว ให้แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่ แล้วเรียกฟังก์ชันนี้เพื่อเปิดหน้าต่างพิกัด ใส่ข้อมูลในช่องค้นหา และปักหมุดบนแผนที่อัตโนมัติ",
-                        parameters: {
-                          type: "OBJECT",
-                          properties: {
-                            latitude: { type: "NUMBER" },
-                            longitude: { type: "NUMBER" },
-                            placeName: { type: "STRING", description: "ชื่อสถานที่ที่ผู้ใช้ต้องการค้นหา (บังคับ: ต้องตรวจสอบและใส่คำนำหน้าประเภทสถานที่ให้ถูกต้อง เช่น หมู่บ้าน, ถนน, ซอย, อาคาร, ห้างสรรพสินค้า)" }
-                          },
-                          required: ["latitude", "longitude", "placeName"]
-                        }
-                      },
-                      {
-                        name: "switch_tab_category",
-                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก เพื่อให้หน้าจอแสดงผลถูกต้องตามความต้องการของผู้ใช้ พร้อมพิมพ์ข้อความค้นหาลงในแท็บนั้นๆ",
-                        parameters: {
-                          type: "OBJECT",
-                          properties: {
-                            tabId: { 
-                              type: "STRING", 
-                              description: "ID ของแท็บเป้าหมาย: 'realestate' (อสังหาริมทรัพย์), 'decor' (สินค้าทั่วไป), 'lifestyle' (ไลฟ์สไตล์&ท่องเที่ยว), 'others' (ช่าง-บริการ)"
-                            },
-                            searchText: {
-                              type: "STRING",
-                              description: "ข้อความสรุปความต้องการของลูกค้า เพื่อนำไปพิมพ์ลงในช่องค้นหาของแท็บนั้น"
+                          {
+                            name: "switch_tab_category",
+                            description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก เพื่อให้หน้าจอแสดงผลถูกต้องตามความต้องการของผู้ใช้ พร้อมพิมพ์ข้อความค้นหาลงในแท็บนั้นๆ",
+                            parameters: {
+                              type: "OBJECT",
+                              properties: {
+                                tabId: { 
+                                  type: "STRING", 
+                                  description: "ID ของแท็บเป้าหมาย: 'realestate' (อสังหาริมทรัพย์), 'decor' (สินค้าทั่วไป), 'lifestyle' (ไลฟ์สไตล์&ท่องเที่ยว), 'others' (ช่าง-บริการ)"
+                                },
+                                searchText: {
+                                  type: "STRING",
+                                  description: "ข้อความสรุปความต้องการของลูกค้า เพื่อนำไปพิมพ์ลงในช่องค้นหาของแท็บนั้น"
+                                }
+                              },
+                              required: ["tabId"]
                             }
                           },
-                          required: ["tabId"]
-                        }
-                      },
-                      {
-                        name: "open_location_modal",
-                        description: "เรียกใช้ฟังก์ชันนี้เมื่อผู้ใช้ต้องการเปิดหน้าพิกัด ปักหมุดแผนที่ หรือกดปุ่มพิกัดสีเขียว",
-                        parameters: {
-                          type: "OBJECT",
-                          properties: {}
-                        }
-                      },
-                      {
-                        name: "confirm_location_action",
-                        description: "กดปุ่ม 'ยืนยันพิกัด' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ยืนยันพิกัดใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
-                        parameters: { type: "OBJECT", properties: {} }
-                      },
-                      {
-                        name: "open_google_maps_action",
-                        description: "กดปุ่ม 'เปิด Google Maps' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ต้องการ เพิ่มความแม่นยำปักหมุดโดยใช้ Google Maps ช่วย ใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
-                        parameters: { type: "OBJECT", properties: {} }
+                          {
+                            name: "open_location_modal",
+                            description: "เรียกใช้ฟังก์ชันนี้เมื่อผู้ใช้ต้องการเปิดหน้าพิกัด ปักหมุดแผนที่ หรือกดปุ่มพิกัดสีเขียว",
+                            parameters: {
+                              type: "OBJECT",
+                              properties: {}
+                            }
+                          },
+                          {
+                            name: "confirm_location_action",
+                            description: "กดปุ่ม 'ยืนยันพิกัด' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ยืนยันพิกัดใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                            parameters: { type: "OBJECT", properties: {} }
+                          },
+                          {
+                            name: "open_google_maps_action",
+                            description: "กดปุ่ม 'เปิด Google Maps' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ต้องการ เพิ่มความแม่นยำปักหมุดโดยใช้ Google Maps ช่วย ใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                            parameters: { type: "OBJECT", properties: {} }
+                          }
+                        ]
                       }
                     ]
                   }
-                ]
+                };
+                AppState.voice.ws.send(JSON.stringify(setupData));
               }
+    
+              btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
+              btn.classList.add('active');
+              avatar.classList.add('pulse-animation');
             };
-            AppState.voice.ws.send(JSON.stringify(setupData));
-          }
-
-          btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
-          btn.classList.add('active');
-          avatar.classList.add('pulse-animation');
-        };
-        AppState.voice.ws.onmessage = async (event) => {
-          try {
-            const response = JSON.parse(event.data);
-            if (response.setupComplete) {
-              AppState.voice.isSetupReady = true;
-              if (statusText) {
-                statusText.classList.remove('loading-pulse');
-                statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
-              }
-              await initMicrophone(); 
-              
-              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก
-              if (!AppState.voice.hasGreeted) {
-                triggerInitialAIGreeting();
-                AppState.voice.hasGreeted = true;
-              }
-              return;
-            }
-
-            if (response.serverContent?.interrupted) {
-              if (AppState.voice.audioOutCtx) {
-                AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-              }
-            }
-
-            const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
-            if (parts) {
-              for (let part of parts) {
-                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
-                  playPCMData(part.inlineData.data);
-                }
-              }
-            }
-
-            const toolCall = response.toolCall || response.serverContent?.interrupted === false && response.serverContent?.modelTurn?.parts?.find(p => p.functionCall);
-            const functionCalls = response.toolCall?.functionCalls || (toolCall?.functionCall ? [toolCall.functionCall] : null);
-            if (functionCalls && functionCalls.length > 0) {
-              for (let call of functionCalls) {
-                if (call.name === "submit_user_summary") {
-                  const args = call.args || {};
-                  const userData = args.userData || {};
-                  const criteria = args.criteria || {};
-
-                  const editBox = document.getElementById('customEditBox');
-                  let rawParts = [...Object.values(userData), ...Object.values(criteria)].filter(Boolean);
+            AppState.voice.ws.onmessage = async (event) => {
+              try {
+                const response = JSON.parse(event.data);
+                if (response.setupComplete) {
+                  AppState.voice.isSetupReady = true;
+                  if (statusText) {
+                    statusText.classList.remove('loading-pulse');
+                    statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+                  }
+                  await initMicrophone(); 
                   
-                  // ดึงข้อความ Dropdown ทั้งหมดเพื่อตรวจกรองคำ ให้มั่นใจว่าจะเขียนเฉพาะคำที่มีใน Dropdown เท่านั้น
-                  const validOptions = getAllValidDropdownOptions();
-                  let matchedWords = [];
-
-                  rawParts.forEach(part => {
-                    const strPart = String(part).trim();
-                    if (validOptions.includes(strPart)) {
-                      if (!matchedWords.includes(strPart)) matchedWords.push(strPart);
-                    } else {
-                      validOptions.forEach(opt => {
-                        if (strPart.includes(opt) && !matchedWords.includes(opt)) {
-                          matchedWords.push(opt);
+                  // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก
+                  if (!AppState.voice.hasGreeted) {
+                    triggerInitialAIGreeting();
+                    AppState.voice.hasGreeted = true;
+                  }
+                  return;
+                }
+    
+                if (response.serverContent?.interrupted) {
+                  if (AppState.voice.audioOutCtx) {
+                    AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+                  }
+                }
+    
+                const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
+                if (parts) {
+                  for (let part of parts) {
+                    if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
+                      playPCMData(part.inlineData.data);
+                    }
+                  }
+                }
+    
+                const toolCall = response.toolCall || response.serverContent?.interrupted === false && response.serverContent?.modelTurn?.parts?.find(p => p.functionCall);
+                const functionCalls = response.toolCall?.functionCalls || (toolCall?.functionCall ? [toolCall.functionCall] : null);
+                if (functionCalls && functionCalls.length > 0) {
+                  for (let call of functionCalls) {
+                    if (call.name === "submit_user_summary") {
+                      const args = call.args || {};
+                      const userData = args.userData || {};
+                      const criteria = args.criteria || {};
+    
+                      const editBox = document.getElementById('customEditBox');
+                      let rawParts = [...Object.values(userData), ...Object.values(criteria)].filter(Boolean);
+                      
+                      // ดึงข้อความ Dropdown ทั้งหมดเพื่อตรวจกรองคำ ให้มั่นใจว่าจะเขียนเฉพาะคำที่มีใน Dropdown เท่านั้น
+                      const validOptions = getAllValidDropdownOptions();
+                      let matchedWords = [];
+    
+                      rawParts.forEach(part => {
+                        const strPart = String(part).trim();
+                        if (validOptions.includes(strPart)) {
+                          if (!matchedWords.includes(strPart)) matchedWords.push(strPart);
+                        } else {
+                          validOptions.forEach(opt => {
+                            if (strPart.includes(opt) && !matchedWords.includes(opt)) {
+                              matchedWords.push(opt);
+                            }
+                          });
                         }
                       });
-                    }
-                  });
-
-                  if (editBox) {
-                    // 1. เคลียร์ข้อความในช่อง Edit
-                    editBox.value = ''; 
-                  
-                    // 2. (Optional) รีเซ็ตชื่อปุ่ม Dropdown ทั้งหมดกลับเป็นค่าเริ่มต้น
-                    const filterBtns = document.querySelectorAll('.filter-btn');
-                    filterBtns.forEach(btn => {
-                      const onClickAttr = btn.getAttribute('onclick') || '';
-                      if (!onClickAttr.includes('openLocationModal')) {
-                        const topicMatch = onClickAttr.match(/openDropdownModal\('([^']+)'\)/);
-                        if (topicMatch && topicMatch[1]) {
-                          btn.innerText = `${topicMatch[1]} ▾`;
+    
+                      if (editBox) {
+                        // 1. เคลียร์ข้อความในช่อง Edit
+                        editBox.value = ''; 
+                      
+                        // 2. (Optional) รีเซ็ตชื่อปุ่ม Dropdown ทั้งหมดกลับเป็นค่าเริ่มต้น
+                        const filterBtns = document.querySelectorAll('.filter-btn');
+                        filterBtns.forEach(btn => {
+                          const onClickAttr = btn.getAttribute('onclick') || '';
+                          if (!onClickAttr.includes('openLocationModal')) {
+                            const topicMatch = onClickAttr.match(/openDropdownModal\('([^']+)'\)/);
+                            if (topicMatch && topicMatch[1]) {
+                              btn.innerText = `${topicMatch[1]} ▾`;
+                            }
+                          }
+                        });
+                      
+                        // 3. กำหนดค่าใหม่ลงใน Edit
+                        if (matchedWords.length > 0) {
+                          editBox.value = matchedWords.join(' ');
+                        } else {
+                          const fallbackMatched = rawParts.filter(p => validOptions.includes(String(p).trim()));
+                          editBox.value = fallbackMatched.join(' ');
                         }
                       }
-                    });
-                  
-                    // 3. กำหนดค่าใหม่ลงใน Edit
-                    if (matchedWords.length > 0) {
-                      editBox.value = matchedWords.join(' ');
-                    } else {
-                      const fallbackMatched = rawParts.filter(p => validOptions.includes(String(p).trim()));
-                      editBox.value = fallbackMatched.join(' ');
-                    }
-                  }
-
-                  if (!AppState.data.isFetching) {
-                    AppState.data.isFetching = true;
-                    fetchDatabase(userData, criteria, false);
-                  }
-
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-                else if (call.name === "set_location_coordinates") {
-                  const args = call.args || {};
-                  const lat = args.latitude;
-                  const lng = args.longitude;
-                  const placeName = args.placeName;
-                  
-                  // 1. เปิดหน้าต่างพิกัดทันทีเมื่อ AI ค้นพบว่าผู้ใช้ต้องการหาพิกัดหรือสถานที่
-                  if (!document.getElementById('locationModalOverlay').classList.contains('active')) {
-                    openLocationModal();
-                  }
-
-                  if (placeName) {
-                    const placeSearchInput = document.getElementById('placeSearchInput');
-                    if (placeSearchInput) {
-                      placeSearchInput.value = placeName;
-                    }
-                  }
-
-                  if (lat && lng) {
-                    document.getElementById('latInput').value = lat;
-                    document.getElementById('lngInput').value = lng;
-                    
-                    setCoordinates(lat, lng);
-                    if (leafletMap && mapMarker) {
-                      const newLatLng = new L.LatLng(lat, lng);
-                      mapMarker.setLatLng(newLatLng);
-                      updateRadiusCircle();
-                    }
-                  }
-
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true, message: "ปักหมุดบนแผนที่เรียบร้อยแล้ว" } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ
-                else if (call.name === "switch_tab_category") {
-                  const args = call.args || {};
-                  const tabId = args.tabId;
-                  const searchText = args.searchText;
-                  
-                  if (tabId) {
-                    switchTab(tabId);
-                    
-                    if (searchText) {
-                      let boxId = 'customEditBox';
-                      if (tabId === 'decor') boxId = 'customEditBoxDecor';
-                      else if (tabId === 'lifestyle') boxId = 'customEditBoxLifestyle';
-                      else if (tabId === 'others') boxId = 'customEditBoxOthers';
-                      
-                      const editBox = document.getElementById(boxId);
-                      if (editBox) {
-                        editBox.value = searchText;
-                      }
-                    }
-                  }
-
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true, message: `เปลี่ยนแท็บสำเร็จและอัปเดตช่องค้นหาเรียบร้อย` } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามต้องการเพิ่มเติม
-                else if (call.name === "open_location_modal") {
-                  openLocationModal();
-                  
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true, message: `เปิดหน้าต่างพิกัดแผนที่ (ปุ่มสีเขียว) เรียบร้อยแล้ว` } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-                // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
-                else if (call.name === "confirm_location_action") {
-                  confirmLocation();
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว" } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-                // ฟังก์ชันเปิด Google Maps ด้วยเสียง
-                else if (call.name === "open_google_maps_action") {
-                  openGoogleMaps();
-                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
-                    AppState.voice.ws.send(JSON.stringify({
-                      toolResponse: {
-                        functionResponses: [{
-                          response: { output: { success: true, message: "เปิด Google Maps เรียบร้อยแล้ว" } },
-                          id: call.id
-                        }]
-                      }
-                    }));
-                  }
-                }
-              }
-            }
-
-          } catch (e) {}
-        };
-        AppState.voice.ws.onclose = () => stopVoiceSession();
-
-      } catch (err) {
-        if (statusText) {
-          statusText.classList.remove('loading-pulse');
-          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
-        }
-      }
-    }
-
-    async function initMicrophone() {
-      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      
-      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
-      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
-
-      source.connect(AppState.voice.processor);
-      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
-      AppState.voice.processor.onaudioprocess = (e) => {
-        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
-        
-        const inputData = e.inputBuffer.getChannelData(0);
-        let sum = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sum += inputData[i] * inputData[i];
-        }
-        let rms = Math.sqrt(sum / inputData.length);
-        if (rms > 0.02) {
-          AppState.voice.silenced = false;
-        }
-
-        if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
-          return;
-        }
-
-        const pcm16 = convertFloat32ToPCM16(inputData);
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-
-        AppState.voice.ws.send(JSON.stringify({
-          realtimeInput: {
-            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
-          }
-        }));
-      };
-    }
-
-    function convertFloat32ToPCM16(buffer) {
-      let l = buffer.length;
-      let buf = new Int16Array(l);
-      while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
-      return buf;
-    }
-
-    function playPCMData(base64Audio) {
-      if (AppState.voice.silenced) return;
-      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
-      const raw = atob(base64Audio);
-      const bytes = new Uint8Array(raw.length);
-      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-      const int16 = new Int16Array(bytes.buffer);
-      const float32 = new Float32Array(int16.length);
-      for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
-
-      const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
-      buffer.getChannelData(0).set(float32);
-
-      const source = AppState.voice.audioOutCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(AppState.voice.audioOutCtx.destination);
-
-      if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
-        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-      }
-      source.start(AppState.voice.nextPlayTime);
-      AppState.voice.nextPlayTime += buffer.duration;
-    }
-
-    async function stopVoiceSession() {
-      AppState.voice.isActive = false;
-      AppState.voice.isSetupReady = false;
-      AppState.voice.silenced = false;
-      AppState.data.isFetching = false;
-      
-      if (AppState.voice.ws) {
-        AppState.voice.ws.onclose = null;
-        AppState.voice.ws.close();
-        AppState.voice.ws = null;
-      }
-      if (AppState.voice.mediaStream) {
-        AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
-        AppState.voice.mediaStream = null;
-      }
-      
-      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
-        try { await AppState.voice.audioCtx.close(); } catch(e) {}
-      }
-      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
-        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
-      }
-
-      const btn = document.getElementById('toggleBtn');
-      const avatar = document.getElementById('avatarCircle');
-      const statusText = document.getElementById('statusText');
-
-      if (btn) {
-        btn.innerHTML = "🎙️ คุยกับ AI";
-        btn.classList.remove('active');
-      }
-      if (avatar) avatar.classList.remove('pulse-animation');
-      if (statusText) {
-        statusText.classList.remove('loading-pulse');
-      }
-    }
-
-    // ==========================================
-    // 6. DATABASE & TARGETED INFINITE SCROLLING
-    // ==========================================
     
-    // ฟังก์ชันรวบรวมค่าจากทุกปุ่ม Dropdown แบบสมบูรณ์
-    function getSelectedCriteria() {
-      let criteria = {};
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      
-      const defaultLabels = [
-        "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
-        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
-        "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
-      ];
-      
-      filterBtns.forEach(btn => {
-        const text = btn.innerText;
-        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
-        
-        const val = text.replace(' ▾', '').replace('📍 ', '').trim();
-        
-        // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
-        if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
-        
-        const onclick = btn.getAttribute('onclick') || '';
-        
-        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
-        else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
-        else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
-        else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
-        else if (onclick.includes('จังหวัด')) criteria.province = val;
-        else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
-        else if (onclick.includes('ถนน')) criteria.road = val;
-        else if (onclick.includes('โครงการ')) criteria.project = val;
-        else if (onclick.includes('ซอย')) criteria.soi = val;
-        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
-        else if (onclick.includes('อื่นๆ')) criteria.other = val;
-        else if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
-        else if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.facility = val;
-      });
-
-      if (selectedLat && selectedLng) {
-        criteria.lat = selectedLat;
-        criteria.lng = selectedLng;
-        criteria.radius = selectedRadius || 1;
-      }
-      return criteria;
-    }
-
-    function testShowList() {
-      AppState.pagination.offset = 0;
-      AppState.pagination.hasMore = true;
-      AppState.pagination.renderedKeys.clear();
-      document.getElementById('resultsContainer').innerHTML = '';
-      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
-      fetchDatabase({}, getSelectedCriteria(), true, searchText);
-    }
-
-    async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
-      if (AppState.pagination.isLoading) return;
-      AppState.pagination.isLoading = true;
-      
-      const loader = document.getElementById('infiniteLoader');
-      const fallback = document.getElementById('fallbackRetryCard');
-      if (loader) loader.style.display = 'block';
-      if (fallback) fallback.style.display = 'none';
-
-      if (isNewSearch) {
-        AppState.pagination.offset = 0;
-        AppState.pagination.hasMore = true;
-        document.getElementById('resultsContainer').innerHTML = '';
-      }
-
-      try {
-        const payload = {
-          action: "searchAll",
-          offset: AppState.pagination.offset,
-          limit: AppState.pagination.limit,
-          userData: userData,
-          criteria: criteria,
-          searchText: searchText
-        };
-
-        const response = await fetch(CONFIG.RENDER_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-
-        if (data.status === 'success') {
-          renderProperties(data.results);
-          AppState.pagination.offset = data.nextOffset;
-          AppState.pagination.hasMore = data.hasMore;
-        } else {
-          throw new Error(data.message || 'Error fetching data');
+                      if (!AppState.data.isFetching) {
+                        AppState.data.isFetching = true;
+                        fetchDatabase(userData, criteria, false);
+                      }
+    
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                    else if (call.name === "set_location_coordinates") {
+                      const args = call.args || {};
+                      const lat = args.latitude;
+                      const lng = args.longitude;
+                      const placeName = args.placeName;
+                      
+                      // 1. เปิดหน้าต่างพิกัดทันทีเมื่อ AI ค้นพบว่าผู้ใช้ต้องการหาพิกัดหรือสถานที่
+                      if (!document.getElementById('locationModalOverlay').classList.contains('active')) {
+                        openLocationModal();
+                      }
+    
+                      if (placeName) {
+                        const placeSearchInput = document.getElementById('placeSearchInput');
+                        if (placeSearchInput) {
+                          placeSearchInput.value = placeName;
+                        }
+                      }
+    
+                      if (lat && lng) {
+                        document.getElementById('latInput').value = lat;
+                        document.getElementById('lngInput').value = lng;
+                        
+                        setCoordinates(lat, lng);
+                        if (leafletMap && mapMarker) {
+                          const newLatLng = new L.LatLng(lat, lng);
+                          mapMarker.setLatLng(newLatLng);
+                          updateRadiusCircle();
+                        }
+                      }
+    
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true, message: "ปักหมุดบนแผนที่เรียบร้อยแล้ว" } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                    // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ
+                    else if (call.name === "switch_tab_category") {
+                      const args = call.args || {};
+                      const tabId = args.tabId;
+                      const searchText = args.searchText;
+                      
+                      if (tabId) {
+                        switchTab(tabId);
+                        
+                        if (searchText) {
+                          let boxId = 'customEditBox';
+                          if (tabId === 'decor') boxId = 'customEditBoxDecor';
+                          else if (tabId === 'lifestyle') boxId = 'customEditBoxLifestyle';
+                          else if (tabId === 'others') boxId = 'customEditBoxOthers';
+                          
+                          const editBox = document.getElementById(boxId);
+                          if (editBox) {
+                            editBox.value = searchText;
+                          }
+                        }
+                      }
+    
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true, message: `เปลี่ยนแท็บสำเร็จและอัปเดตช่องค้นหาเรียบร้อย` } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                    // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามต้องการเพิ่มเติม
+                    else if (call.name === "open_location_modal") {
+                      openLocationModal();
+                      
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true, message: `เปิดหน้าต่างพิกัดแผนที่ (ปุ่มสีเขียว) เรียบร้อยแล้ว` } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                    // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
+                    else if (call.name === "confirm_location_action") {
+                      confirmLocation();
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว" } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                    // ฟังก์ชันเปิด Google Maps ด้วยเสียง
+                    else if (call.name === "open_google_maps_action") {
+                      openGoogleMaps();
+                      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                        AppState.voice.ws.send(JSON.stringify({
+                          toolResponse: {
+                            functionResponses: [{
+                              response: { output: { success: true, message: "เปิด Google Maps เรียบร้อยแล้ว" } },
+                              id: call.id
+                            }]
+                          }
+                        }));
+                      }
+                    }
+                  }
+                }
+    
+              } catch (e) {}
+            };
+            AppState.voice.ws.onclose = () => stopVoiceSession();
+    
+          } catch (err) {
+            if (statusText) {
+              statusText.classList.remove('loading-pulse');
+              statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
+            }
+          }
         }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-        if (fallback) fallback.style.display = 'block';
-      } finally {
-        AppState.pagination.isLoading = false;
-        if (loader) loader.style.display = 'none';
-      }
-    }
-
-    function renderProperties(properties) {
-      const container = document.getElementById('resultsContainer');
-      if (!properties || properties.length === 0) {
-        if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
+    
+        async function initMicrophone() {
+          AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+          AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+          
+          const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
+          AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
+    
+          source.connect(AppState.voice.processor);
+          AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
+          AppState.voice.processor.onaudioprocess = (e) => {
+            if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+            
+            const inputData = e.inputBuffer.getChannelData(0);
+            let sum = 0;
+            for (let i = 0; i < inputData.length; i++) {
+              sum += inputData[i] * inputData[i];
+            }
+            let rms = Math.sqrt(sum / inputData.length);
+            if (rms > 0.02) {
+              AppState.voice.silenced = false;
+            }
+    
+            if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
+              return;
+            }
+    
+            const pcm16 = convertFloat32ToPCM16(inputData);
+            const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+    
+            AppState.voice.ws.send(JSON.stringify({
+              realtimeInput: {
+                audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+              }
+            }));
+          };
         }
-        return;
-      }
-
-      properties.forEach(item => {
-        const key = item.id || getPropValue(item, ['post ID', 'url', 'ชื่อ Facebook ผู้โพสต์']) || Math.random();
-        if (AppState.pagination.renderedKeys.has(key)) return;
-        AppState.pagination.renderedKeys.add(key);
-
-        const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'อสังหาริมทรัพย์');
-        const priceSale = getPropValue(item, ['ราคาขาย']);
-        const priceRent = getPropValue(item, ['ราคาเช่า']);
-        let priceDisplay = '';
-        if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
-        if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
-        if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
-
-        const locationDisplay = [
-          getPropValue(item, ['เขต/อำเภอ']),
-          getPropValue(item, ['จังหวัด'])
-        ].filter(Boolean).join(', ');
-
-        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
-        const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
-
-        const card = document.createElement('div');
-        card.style.cssText = 'background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:16px; overflow:hidden; border:1px solid #eee; cursor:pointer;';
-        card.onclick = () => openDetailModal(item);
-
-        card.innerHTML = `
-          <div style="position:relative; height:180px; background:#eee;">
-            <img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">
-            <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.6); color:#fff; padding:4px 10px; border-radius:12px; font-size:12px;">${locationDisplay || 'ไม่ระบุพื้นที่'}</div>
-          </div>
-          <div style="padding:12px;">
-            <div style="font-weight:bold; font-size:16px; color:var(--text-main); margin-bottom:4px;">${title}</div>
-            <div style="color:#d9534f; font-weight:bold; font-size:15px; margin-bottom:6px;">${priceDisplay}</div>
-            <div style="font-size:13px; color:#666; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${desc}</div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function retryNextPage() {
-      fetchDatabase(AppState.pagination.lastCriteria, getSelectedCriteria(), false, AppState.pagination.lastSearchText);
-    }
-
-    function loadNextPage() {
-      fetchDatabase({}, getSelectedCriteria(), false);
-    }
-
-    // Modal Detail Handlers
-    function openDetailModal(item) {
-      stopAIVoiceSpeech();
-      const modal = document.getElementById('detailModalOverlay');
-      const titleEl = document.getElementById('modalTitle');
-      const priceEl = document.getElementById('modalPrice');
-      const descEl = document.getElementById('modalDesc');
-      const sliderEl = document.getElementById('modalSlider');
-      const deepLinkEl = document.getElementById('modalDeepLink');
-
-      const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'รายละเอียดอสังหาริมทรัพย์');
-      const priceSale = getPropValue(item, ['ราคาขาย']);
-      const priceRent = getPropValue(item, ['ราคาเช่า']);
-      let priceDisplay = '';
-      if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
-      if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
-      if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
-
-      const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
-      const url = getPropValue(item, ['url'], '#');
-
-      if (titleEl) titleEl.innerText = title;
-      if (priceEl) priceEl.innerText = priceDisplay;
-      if (descEl) descEl.innerText = desc;
-      if (deepLinkEl) deepLinkEl.href = url;
-
-      if (sliderEl) {
-        sliderEl.innerHTML = '';
-        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
-        sliderEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">`;
-      }
-
-      if (modal) modal.classList.add('active');
-    }
-
-    function closeDetailModal() {
-      stopAIVoiceSpeech();
-      const modal = document.getElementById('detailModalOverlay');
-      if (modal) modal.classList.remove('active');
-    }
-
-    // Chat Modal Handlers
-    function openUserChatModal() {
-      stopAIVoiceSpeech();
-      const modal = document.getElementById('userChatModalOverlay');
-      if (modal) modal.classList.add('active');
-    }
-
-    function closeUserChatModal() {
-      stopAIVoiceSpeech();
-      const modal = document.getElementById('userChatModalOverlay');
-      if (modal) modal.classList.remove('active');
-    }
-
-    function selectChatRoom(name, person) {
-      const titleEl = document.getElementById('chatActiveTitle');
-      if (titleEl) titleEl.innerText = `💬 ${name}`;
-    }
-
-    function sendChatMessage() {
-      const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container || !input.value.trim()) return;
-
-      const text = input.value.trim();
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble sent';
-      bubble.innerText = text;
-      container.appendChild(bubble);
-      input.value = '';
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function expandChatZone(zone) {
-      const listZone = document.getElementById('chatZoneList');
-      const roomZone = document.getElementById('chatZoneRoom');
-      if (!listZone || !roomZone) return;
-
-      if (zone === 'list') {
-        listZone.classList.add('expanded');
-        listZone.classList.remove('shrunk');
-        roomZone.classList.add('shrunk');
-        roomZone.classList.remove('expanded');
-      } else {
-        roomZone.classList.add('expanded');
-        roomZone.classList.remove('shrunk');
-        listZone.classList.add('shrunk');
-        listZone.classList.remove('expanded');
-      }
-    }
-
-    // LIFF Initialization
-    if (window.liff) {
-      liff.init({ liffId: CONFIG.LIFF_ID })
-        .then(() => {
-          console.log("LIFF Initialized");
-        })
-        .catch((err) => {
-          console.error("LIFF Init Error:", err);
-        });
-    }
-  </script>
-</body>
-</html>
+    
+        function convertFloat32ToPCM16(buffer) {
+          let l = buffer.length;
+          let buf = new Int16Array(l);
+          while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
+          return buf;
+        }
+    
+        function playPCMData(base64Audio) {
+          if (AppState.voice.silenced) return;
+          if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
+          const raw = atob(base64Audio);
+          const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          const int16 = new Int16Array(bytes.buffer);
+          const float32 = new Float32Array(int16.length);
+          for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
+    
+          const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
+          buffer.getChannelData(0).set(float32);
+    
+          const source = AppState.voice.audioOutCtx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(AppState.voice.audioOutCtx.destination);
+    
+          if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
+            AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+          }
+          source.start(AppState.voice.nextPlayTime);
+          AppState.voice.nextPlayTime += buffer.duration;
+        }
+    
+        async function stopVoiceSession() {
+          AppState.voice.isActive = false;
+          AppState.voice.isSetupReady = false;
+          AppState.voice.silenced = false;
+          AppState.data.isFetching = false;
+          
+          if (AppState.voice.ws) {
+            AppState.voice.ws.onclose = null;
+            AppState.voice.ws.close();
+            AppState.voice.ws = null;
+          }
+          if (AppState.voice.mediaStream) {
+            AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
+            AppState.voice.mediaStream = null;
+          }
+          
+          if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
+            try { await AppState.voice.audioCtx.close(); } catch(e) {}
+          }
+          if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
+            try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
+          }
+    
+          const btn = document.getElementById('toggleBtn');
+          const avatar = document.getElementById('avatarCircle');
+          const statusText = document.getElementById('statusText');
+    
+          if (btn) {
+            btn.innerHTML = "🎙️ คุยกับ AI";
+            btn.classList.remove('active');
+          }
+          if (avatar) avatar.classList.remove('pulse-animation');
+          if (statusText) {
+            statusText.classList.remove('loading-pulse');
+          }
+        }
+    
+        // ==========================================
+        // 6. DATABASE & TARGETED INFINITE SCROLLING
+        // ==========================================
+        
+        // ฟังก์ชันรวบรวมค่าจากทุกปุ่ม Dropdown แบบสมบูรณ์
+        function getSelectedCriteria() {
+          let criteria = {};
+          const filterBtns = document.querySelectorAll('.filter-btn');
+          
+          const defaultLabels = [
+            "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
+            "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
+            "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
+          ];
+          
+          filterBtns.forEach(btn => {
+            const text = btn.innerText;
+            if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
+            
+            const val = text.replace(' ▾', '').replace('📍 ', '').trim();
+            
+            // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
+            if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
+            
+            const onclick = btn.getAttribute('onclick') || '';
+            
+            if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
+            else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+            else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+            else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+            else if (onclick.includes('จังหวัด')) criteria.province = val;
+            else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+            else if (onclick.includes('ถนน')) criteria.road = val;
+            else if (onclick.includes('โครงการ')) criteria.project = val;
+            else if (onclick.includes('ซอย')) criteria.soi = val;
+            else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+            else if (onclick.includes('อื่นๆ')) criteria.other = val;
+            else if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
+            else if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.facility = val;
+          });
+    
+          if (selectedLat && selectedLng) {
+            criteria.lat = selectedLat;
+            criteria.lng = selectedLng;
+            criteria.radius = selectedRadius || 1;
+          }
+          return criteria;
+        }
+    
+        function testShowList() {
+          AppState.pagination.offset = 0;
+          AppState.pagination.hasMore = true;
+          AppState.pagination.renderedKeys.clear();
+          document.getElementById('resultsContainer').innerHTML = '';
+          const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+          const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+          fetchDatabase({}, getSelectedCriteria(), true, searchText);
+        }
+    
+        async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
+          if (AppState.pagination.isLoading) return;
+          AppState.pagination.isLoading = true;
+          
+          const loader = document.getElementById('infiniteLoader');
+          const fallback = document.getElementById('fallbackRetryCard');
+          if (loader) loader.style.display = 'block';
+          if (fallback) fallback.style.display = 'none';
+    
+          if (isNewSearch) {
+            AppState.pagination.offset = 0;
+            AppState.pagination.hasMore = true;
+            document.getElementById('resultsContainer').innerHTML = '';
+          }
+    
+          try {
+            const payload = {
+              action: "searchAll",
+              offset: AppState.pagination.offset,
+              limit: AppState.pagination.limit,
+              userData: userData,
+              criteria: criteria,
+              searchText: searchText
+            };
+    
+            const response = await fetch(CONFIG.RENDER_API_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+    
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+    
+            if (data.status === 'success') {
+              renderProperties(data.results);
+              AppState.pagination.offset = data.nextOffset;
+              AppState.pagination.hasMore = data.hasMore;
+            } else {
+              throw new Error(data.message || 'Error fetching data');
+            }
+          } catch (error) {
+            console.error("Fetch Error:", error);
+            if (fallback) fallback.style.display = 'block';
+          } finally {
+            AppState.pagination.isLoading = false;
+            if (loader) loader.style.display = 'none';
+          }
+        }
+    
+        function renderProperties(properties) {
+          const container = document.getElementById('resultsContainer');
+          if (!properties || properties.length === 0) {
+            if (AppState.pagination.offset === 0) {
+              container.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
+            }
+            return;
+          }
+    
+          properties.forEach(item => {
+            const key = item.id || getPropValue(item, ['post ID', 'url', 'ชื่อ Facebook ผู้โพสต์']) || Math.random();
+            if (AppState.pagination.renderedKeys.has(key)) return;
+            AppState.pagination.renderedKeys.add(key);
+    
+            const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'อสังหาริมทรัพย์');
+            const priceSale = getPropValue(item, ['ราคาขาย']);
+            const priceRent = getPropValue(item, ['ราคาเช่า']);
+            let priceDisplay = '';
+            if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
+            if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
+            if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
+    
+            const locationDisplay = [
+              getPropValue(item, ['เขต/อำเภอ']),
+              getPropValue(item, ['จังหวัด'])
+            ].filter(Boolean).join(', ');
+    
+            const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
+            const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
+    
+            const card = document.createElement('div');
+            card.style.cssText = 'background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:16px; overflow:hidden; border:1px solid #eee; cursor:pointer;';
+            card.onclick = () => openDetailModal(item);
+    
+            card.innerHTML = `
+              <div style="position:relative; height:180px; background:#eee;">
+                <img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">
+                <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.6); color:#fff; padding:4px 10px; border-radius:12px; font-size:12px;">${locationDisplay || 'ไม่ระบุพื้นที่'}</div>
+              </div>
+              <div style="padding:12px;">
+                <div style="font-weight:bold; font-size:16px; color:var(--text-main); margin-bottom:4px;">${title}</div>
+                <div style="color:#d9534f; font-weight:bold; font-size:15px; margin-bottom:6px;">${priceDisplay}</div>
+                <div style="font-size:13px; color:#666; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${desc}</div>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }
+    
+        function retryNextPage() {
+          fetchDatabase(AppState.pagination.lastCriteria, getSelectedCriteria(), false, AppState.pagination.lastSearchText);
+        }
+    
+        function loadNextPage() {
+          fetchDatabase({}, getSelectedCriteria(), false);
+        }
+    
+        // Modal Detail Handlers
+        function openDetailModal(item) {
+          stopAIVoiceSpeech();
+          const modal = document.getElementById('detailModalOverlay');
+          const titleEl = document.getElementById('modalTitle');
+          const priceEl = document.getElementById('modalPrice');
+          const descEl = document.getElementById('modalDesc');
+          const sliderEl = document.getElementById('modalSlider');
+          const deepLinkEl = document.getElementById('modalDeepLink');
+    
+          const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'รายละเอียดอสังหาริมทรัพย์');
+          const priceSale = getPropValue(item, ['ราคาขาย']);
+          const priceRent = getPropValue(item, ['ราคาเช่า']);
+          let priceDisplay = '';
+          if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
+          if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
+          if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
+    
+          const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
+          const url = getPropValue(item, ['url'], '#');
+    
+          if (titleEl) titleEl.innerText = title;
+          if (priceEl) priceEl.innerText = priceDisplay;
+          if (descEl) descEl.innerText = desc;
+          if (deepLinkEl) deepLinkEl.href = url;
+    
+          if (sliderEl) {
+            sliderEl.innerHTML = '';
+            const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
+            sliderEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">`;
+          }
+    
+          if (modal) modal.classList.add('active');
+        }
+    
+        function closeDetailModal() {
+          stopAIVoiceSpeech();
+          const modal = document.getElementById('detailModalOverlay');
+          if (modal) modal.classList.remove('active');
+        }
+    
+        // Chat Modal Handlers
+        function openUserChatModal() {
+          stopAIVoiceSpeech();
+          const modal = document.getElementById('userChatModalOverlay');
+          if (modal) modal.classList.add('active');
+        }
+    
+        function closeUserChatModal() {
+          stopAIVoiceSpeech();
+          const modal = document.getElementById('userChatModalOverlay');
+          if (modal) modal.classList.remove('active');
+        }
+    
+        function selectChatRoom(name, person) {
+          const titleEl = document.getElementById('chatActiveTitle');
+          if (titleEl) titleEl.innerText = `💬 ${name}`;
+        }
+    
+        function sendChatMessage() {
+          const input = document.getElementById('chatMessageInput');
+          const container = document.getElementById('chatMessagesContainer');
+          if (!input || !container || !input.value.trim()) return;
+    
+          const text = input.value.trim();
+          const bubble = document.createElement('div');
+          bubble.className = 'chat-bubble sent';
+          bubble.innerText = text;
+          container.appendChild(bubble);
+          input.value = '';
+          container.scrollTop = container.scrollHeight;
+        }
+    
+        function expandChatZone(zone) {
+          const listZone = document.getElementById('chatZoneList');
+          const roomZone = document.getElementById('chatZoneRoom');
+          if (!listZone || !roomZone) return;
+    
+          if (zone === 'list') {
+            listZone.classList.add('expanded');
+            listZone.classList.remove('shrunk');
+            roomZone.classList.add('shrunk');
+            roomZone.classList.remove('expanded');
+          } else {
+            roomZone.classList.add('expanded');
+            roomZone.classList.remove('shrunk');
+            listZone.classList.add('shrunk');
+            listZone.classList.remove('expanded');
+          }
+        }
+    
+        // LIFF Initialization
+        if (window.liff) {
+          liff.init({ liffId: CONFIG.LIFF_ID })
+            .then(() => {
+              console.log("LIFF Initialized");
+            })
+            .catch((err) => {
+              console.error("LIFF Init Error:", err);
+            });
+        }
+      </script>
+    </body>
+    </html>
     
