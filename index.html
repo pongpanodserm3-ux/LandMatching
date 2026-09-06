@@ -910,7 +910,13 @@
         <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--btn-blue); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px;"></div>
       </div>
 
-      <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
+      <!-- ส่วนที่มีการแก้ไขเพิ่มปุ่ม Current Location 🎯 -->
+      <div style="position: relative; margin-bottom: 12px;">
+        <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; border: 1px solid var(--btn-blue); background: #eee; z-index: 1;"></div>
+        <button onclick="getCurrentUserLocation()" title="ไปที่ตำแหน่งปัจจุบัน" style="position: absolute; bottom: 10px; right: 10px; width: 44px; height: 44px; border-radius: 50%; background: #ffffff; border: 2px solid var(--btn-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 1000; transition: transform 0.2s;">
+          🎯
+        </button>
+      </div>
       
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <div style="flex: 1;">
@@ -1597,6 +1603,33 @@
           mapMarker.setLatLng(newLatLng);
           updateRadiusCircle();
         }
+      }
+    }
+
+    // ฟังก์ชันเพิ่มเติมสำหรับปุ่มดึงตำแหน่งปัจจุบัน
+    function getCurrentUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          setCoordinates(lat, lng);
+          if (leafletMap && mapMarker) {
+            leafletMap.setView([lat, lng], 14);
+            const newLatLng = new L.LatLng(lat, lng);
+            mapMarker.setLatLng(newLatLng);
+            updateRadiusCircle();
+          }
+        }, (err) => {
+          console.error(err);
+          alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง (Location)");
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      } else {
+        alert("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
       }
     }
 
@@ -2338,19 +2371,93 @@
       stopAIVoiceSpeech();
       document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
       document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
+      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
-      const deepLink = document.getElementById('modalDeepLink');
-      if (item.url && item.url !== '#') {
-        deepLink.href = item.url;
-        deepLink.style.display = 'inline-block';
+      const deepLinkBtn = document.getElementById('modalDeepLink');
+      if (item.url) {
+        deepLinkBtn.href = item.url;
+        deepLinkBtn.style.display = 'inline-block';
       } else {
-        deepLink.style.display = 'none';
+        deepLinkBtn.style.display = 'none';
       }
 
-      // ส่งข้อความไปให้ AI สรุปบ้าน
-      const housePrompt = `รายละเอียด: ${item.project || ''} ราคา ${item.salePrice || item.rentPrice || ''} รายละเอียดเพิ่มเติม: ${item.postDetails || ''}`;
-      sendTextToAI(housePrompt);
+      const slider = document.getElementById('modalSlider');
+      slider.innerHTML = '';
+      if (item.images && item.images.length > 0) {
+        item.images.forEach(imgUrl => {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          slider.appendChild(img);
+        });
+      } else {
+         const placeholder = document.createElement('div');
+         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
+         placeholder.innerText = 'ไม่มีรูปภาพ';
+         slider.appendChild(placeholder);
+      }
+      
+      document.getElementById('detailModalOverlay').classList.add('active');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModalOverlay').classList.remove('active');
+    }
+
+    function loadNextPage() {
+      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
+    }
+
+    function retryNextPage() {
+      loadNextPage();
+    }
+
+    function openUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.add('active');
+    }
+
+    function closeUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.remove('active');
+    }
+
+    function expandChatZone(zone) {
+      const listZone = document.getElementById('chatZoneList');
+      const roomZone = document.getElementById('chatZoneRoom');
+      if (zone === 'list') {
+        listZone.classList.add('expanded');
+        listZone.classList.remove('shrunk');
+        roomZone.classList.add('shrunk');
+        roomZone.classList.remove('expanded');
+      } else if (zone === 'room') {
+        roomZone.classList.add('expanded');
+        roomZone.classList.remove('shrunk');
+        listZone.classList.add('shrunk');
+        listZone.classList.remove('expanded');
+      }
+    }
+
+    function selectChatRoom(title, personName) {
+      document.getElementById('chatActiveTitle').innerText = title;
+      const items = document.querySelectorAll('.chat-item-card');
+      items.forEach(el => el.classList.remove('active'));
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+      expandChatZone('room');
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      const text = input.value.trim();
+      if (text !== '') {
+        const container = document.getElementById('chatMessagesContainer');
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble sent';
+        bubble.innerText = text;
+        container.appendChild(bubble);
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+      }
     }
   </script>
 </body>
