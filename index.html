@@ -51,7 +51,7 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มเริ่มค้นหาด้วยเสียง) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
@@ -62,8 +62,8 @@
       margin-bottom: 12px;
     }
 
-    /* ปรับแต่งปุ่มทั้งสองให้ขนาดใหญ่เท่ากัน ดีไซน์ไฮเทคล้ำยุค */
-    #locationFilterBtn, .voice-btn {
+    /* ปรับแต่งปุ่มพิกัด ดีไซน์ไฮเทคล้ำยุค */
+    #locationFilterBtn {
       flex: 1;
       height: 44px;
       padding: 6px 12px;
@@ -80,9 +80,6 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
-    }
-
-    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
     }
@@ -95,17 +92,40 @@
       background-color: #0a522a;
     }
 
+    /* ปุ่ม "คุยกับ AI" ลอยอยู่เหนือทุกหน้าเพจเบราว์เซอร์ตลอดเวลา */
     .voice-btn {
+      position: fixed;
+      bottom: 95px;
+      right: 20px;
+      z-index: 99999;
+      height: 50px;
+      padding: 0 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(74, 131, 204, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid #ffffff;
+      backdrop-filter: blur(5px);
       background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
       color: white;
     }
     .voice-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(74, 131, 204, 0.35);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 22px rgba(74, 131, 204, 0.6);
+    }
+    .voice-btn:active {
+      transform: scale(0.95);
     }
     .voice-btn.active {
       background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-      box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
+      box-shadow: 0 0 15px rgba(255, 65, 108, 0.8);
     }
 
     .mascot-img { 
@@ -754,12 +774,13 @@
 <body>
 
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มเริ่มค้นหาด้วยเสียง -->
+    <!-- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์) -->
     <div class="ai-controls-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
+      <!-- ปุ่มคุยกับ AI ลอยอยู่เหนือทุกหน้าเบราว์เซอร์ -->
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
     </div>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
@@ -1723,7 +1744,8 @@
       else await stopVoiceSession();
     }
 
-    async function startVoiceSession() {
+//---------PartB
+async function startVoiceSession() {
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
       const statusText = document.getElementById('statusText');
@@ -1886,7 +1908,7 @@
               }
               await initMicrophone(); 
               
-              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก (คำสั่ง 1)
+              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก
               if (!AppState.voice.hasGreeted) {
                 triggerInitialAIGreeting();
                 AppState.voice.hasGreeted = true;
@@ -2020,7 +2042,7 @@
                     }));
                   }
                 }
-                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ (คำสั่ง 3)
+                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ
                 else if (call.name === "switch_tab_category") {
                   const args = call.args || {};
                   const tabId = args.tabId;
@@ -2053,7 +2075,7 @@
                     }));
                   }
                 }
-                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามที่คุณต้องการเพิ่มเติม
+                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามต้องการเพิ่มเติม
                 else if (call.name === "open_location_modal") {
                   openLocationModal();
                   
@@ -2213,7 +2235,7 @@
       const statusText = document.getElementById('statusText');
 
       if (btn) {
-        btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+        btn.innerHTML = "🎙️ คุยกับ AI";
         btn.classList.remove('active');
       }
       if (avatar) avatar.classList.remove('pulse-animation');
@@ -2335,100 +2357,143 @@
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
         if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
+          container.innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
         }
         return;
       }
 
       properties.forEach(item => {
-        const key = item.postId || item.url;
+        const key = item.id || getPropValue(item, ['post ID', 'url', 'ชื่อ Facebook ผู้โพสต์']) || Math.random();
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
 
+        const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'อสังหาริมทรัพย์');
+        const priceSale = getPropValue(item, ['ราคาขาย']);
+        const priceRent = getPropValue(item, ['ราคาเช่า']);
+        let priceDisplay = '';
+        if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
+        if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
+        if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
+
+        const locationDisplay = [
+          getPropValue(item, ['เขต/อำเภอ']),
+          getPropValue(item, ['จังหวัด'])
+        ].filter(Boolean).join(', ');
+
+        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
+        const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
+
         const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
-        card.onclick = () => showDetailModal(item);
-        
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        
+        card.style.cssText = 'background:#fff; border-radius:16px; box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:16px; overflow:hidden; border:1px solid #eee; cursor:pointer;';
+        card.onclick = () => openDetailModal(item);
+
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+          <div style="position:relative; height:180px; background:#eee;">
+            <img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">
+            <div style="position:absolute; bottom:10px; left:10px; background:rgba(0,0,0,0.6); color:#fff; padding:4px 10px; border-radius:12px; font-size:12px;">${locationDisplay || 'ไม่ระบุพื้นที่'}</div>
           </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-            💰 ${price}
+          <div style="padding:12px;">
+            <div style="font-weight:bold; font-size:16px; color:var(--text-main); margin-bottom:4px;">${title}</div>
+            <div style="color:#d9534f; font-weight:bold; font-size:15px; margin-bottom:6px;">${priceDisplay}</div>
+            <div style="font-size:13px; color:#666; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${desc}</div>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function showDetailModal(item) {
-      stopAIVoiceSpeech();
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
-      
-      const deepLinkBtn = document.getElementById('modalDeepLink');
-      if (item.url) {
-        deepLinkBtn.href = item.url;
-        deepLinkBtn.style.display = 'inline-block';
-      } else {
-        deepLinkBtn.style.display = 'none';
-      }
-
-      const slider = document.getElementById('modalSlider');
-      slider.innerHTML = '';
-      if (item.images && item.images.length > 0) {
-        item.images.forEach(imgUrl => {
-          const img = document.createElement('img');
-          img.src = imgUrl;
-          slider.appendChild(img);
-        });
-      } else {
-         const placeholder = document.createElement('div');
-         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
-         placeholder.innerText = 'ไม่มีรูปภาพ';
-         slider.appendChild(placeholder);
-      }
-      
-      document.getElementById('detailModalOverlay').classList.add('active');
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModalOverlay').classList.remove('active');
+    function retryNextPage() {
+      fetchDatabase(AppState.pagination.lastCriteria, getSelectedCriteria(), false, AppState.pagination.lastSearchText);
     }
 
     function loadNextPage() {
-      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
+      fetchDatabase({}, getSelectedCriteria(), false);
     }
 
-    function retryNextPage() {
-      loadNextPage();
+    // Modal Detail Handlers
+    function openDetailModal(item) {
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('detailModalOverlay');
+      const titleEl = document.getElementById('modalTitle');
+      const priceEl = document.getElementById('modalPrice');
+      const descEl = document.getElementById('modalDesc');
+      const sliderEl = document.getElementById('modalSlider');
+      const deepLinkEl = document.getElementById('modalDeepLink');
+
+      const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ลักษณะกิจการ'], 'รายละเอียดอสังหาริมทรัพย์');
+      const priceSale = getPropValue(item, ['ราคาขาย']);
+      const priceRent = getPropValue(item, ['ราคาเช่า']);
+      let priceDisplay = '';
+      if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
+      if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
+      if (!priceDisplay) priceDisplay = 'โปรดสอบถามราคา';
+
+      const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
+      const url = getPropValue(item, ['url'], '#');
+
+      if (titleEl) titleEl.innerText = title;
+      if (priceEl) priceEl.innerText = priceDisplay;
+      if (descEl) descEl.innerText = desc;
+      if (deepLinkEl) deepLinkEl.href = url;
+
+      if (sliderEl) {
+        sliderEl.innerHTML = '';
+        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
+        sliderEl.innerHTML = `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x200?text=Land+Matching'">`;
+      }
+
+      if (modal) modal.classList.add('active');
     }
 
+    function closeDetailModal() {
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('detailModalOverlay');
+      if (modal) modal.classList.remove('active');
+    }
+
+    // Chat Modal Handlers
     function openUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.add('active');
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.add('active');
     }
 
     function closeUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.remove('active');
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function selectChatRoom(name, person) {
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) titleEl.innerText = `💬 ${name}`;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      const container = document.getElementById('chatMessagesContainer');
+      if (!input || !container || !input.value.trim()) return;
+
+      const text = input.value.trim();
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble sent';
+      bubble.innerText = text;
+      container.appendChild(bubble);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
     }
 
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
+      if (!listZone || !roomZone) return;
+
       if (zone === 'list') {
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
         roomZone.classList.add('shrunk');
         roomZone.classList.remove('expanded');
-      } else if (zone === 'room') {
+      } else {
         roomZone.classList.add('expanded');
         roomZone.classList.remove('shrunk');
         listZone.classList.add('shrunk');
@@ -2436,29 +2501,17 @@
       }
     }
 
-    function selectChatRoom(title, personName) {
-      document.getElementById('chatActiveTitle').innerText = title;
-      const items = document.querySelectorAll('.chat-item-card');
-      items.forEach(el => el.classList.remove('active'));
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-      }
-      expandChatZone('room');
-    }
-
-    function sendChatMessage() {
-      const input = document.getElementById('chatMessageInput');
-      const text = input.value.trim();
-      if (text !== '') {
-        const container = document.getElementById('chatMessagesContainer');
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-bubble sent';
-        bubble.innerText = text;
-        container.appendChild(bubble);
-        input.value = '';
-        container.scrollTop = container.scrollHeight;
-      }
+    // LIFF Initialization
+    if (window.liff) {
+      liff.init({ liffId: CONFIG.LIFF_ID })
+        .then(() => {
+          console.log("LIFF Initialized");
+        })
+        .catch((err) => {
+          console.error("LIFF Init Error:", err);
+        });
     }
   </script>
 </body>
 </html>
+    
