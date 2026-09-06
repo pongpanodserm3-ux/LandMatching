@@ -51,7 +51,7 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มคุยกับ AI) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
@@ -95,7 +95,12 @@
       background-color: #0a522a;
     }
 
+    /* ปุ่มเริ่มต้นค้นหาด้วยเสียง แบบ Floating ลอยเหนือทุกๆ หน้าเพจเบราว์เซอร์ */
     .voice-btn {
+      position: fixed;
+      bottom: 95px;
+      right: 20px;
+      z-index: 100000;
       background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
       color: white;
     }
@@ -181,7 +186,6 @@
       background: rgba(255, 255, 255, 0.4);
     }
 
-    /* Affordance & Active State: โดดเด่น ชัดเจน ลอยตัวพร้อมแถบเน้นย้ำ */
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
@@ -754,13 +758,15 @@
 <body>
 
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มคุยกับ AI -->
+    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์ -->
     <div class="ai-controls-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
     </div>
+
+    <!-- ปุ่มเริ่มต้นค้นหาด้วยเสียง แบบลอยอยู่เหนือทุกๆ หน้าเพจเบราว์เซอร์ -->
+    <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มต้นค้นหาด้วยเสียง</button>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
     <div class="tabs-nav">
@@ -1048,7 +1054,8 @@
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
 
-    // ตัวแปรสำหรับระบบพิกัดและแผนที่
+
+// ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
@@ -2213,7 +2220,7 @@
       const statusText = document.getElementById('statusText');
 
       if (btn) {
-        btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+        btn.innerHTML = "🎙️ เริ่มต้นค้นหาด้วยเสียง";
         btn.classList.remove('active');
       }
       if (avatar) avatar.classList.remove('pulse-animation');
