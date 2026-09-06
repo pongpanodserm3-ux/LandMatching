@@ -51,37 +51,24 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัดซ้ายบน, โลโก้บ้านและหุ่นยนต์ตรงกลางบน, ปุ่มคุยกับ AI ลอยขวาบน) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      width: 100%;
-      min-height: 52px;
-      margin-bottom: 12px;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    /* โลโก้บ้าน และ โลโก้หุ่นยนต์ จัดให้อยู่ตำแหน่งตรงกลางและบนสุดของจอ */
-    .center-logos {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       gap: 8px;
-      z-index: 1;
+      width: 100%;
+      margin-bottom: 12px;
+      padding-right: 120px;
+      box-sizing: border-box;
     }
 
-    /* ปรับแต่งปุ่มพิกัดสีเขียว อยู่ตำแหน่งซ้ายบนสุดของจอ และความกว้างเหมาะสมกับคำว่าพิกัด */
+    /* ปรับแต่งปุ่มพิกัด */
     #locationFilterBtn {
-      flex: 0 0 auto;
-      width: auto;
+      flex: 1;
       height: 44px;
-      padding: 6px 14px;
+      padding: 6px 12px;
       font-size: 13px;
       font-weight: bold;
       border-radius: 22px;
@@ -97,7 +84,6 @@
       backdrop-filter: blur(5px);
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
-      z-index: 2;
     }
     #locationFilterBtn:hover {
       transform: translateY(-2px);
@@ -108,7 +94,7 @@
       background-color: #0a522a;
     }
 
-    /* ปุ่ม คุยกับ AI เป็นปุ่มลอย (Floating/Fixed Button) ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า */
+    /* ปุ่ม คุยกับ AI ตั้งค่าให้ลอยอยู่ที่มุมขวาบนสุดของจอภาพตลอดเวลา */
     .voice-btn {
       position: fixed;
       top: 15px;
@@ -785,17 +771,13 @@
 </head>
 <body>
 
-  <!-- ปุ่ม คุยกับ AI ตั้งค่าให้ลอยอยู่ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า -->
-  <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
-
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัดสีเขียวตำแหน่งซ้ายบนสุด, โลโก้บ้านและหุ่นยนต์ตำแหน่งตรงกลางบนสุด) -->
+    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มคุยกับ AI (วางตำแหน่งลอยมุมขวาบนสุด) -->
     <div class="ai-controls-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-      <div class="center-logos">
-        <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
-        <div id="avatarCircle" class="ai-avatar">🤖</div>
-      </div>
+      <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
+      <div id="avatarCircle" class="ai-avatar">🤖</div>
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
     </div>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
@@ -2445,13 +2427,12 @@
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
       if (!listZone || !roomZone) return;
-
       if (zone === 'list') {
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
         roomZone.classList.add('shrunk');
         roomZone.classList.remove('expanded');
-      } else if (zone === 'room') {
+      } else {
         roomZone.classList.add('expanded');
         roomZone.classList.remove('shrunk');
         listZone.classList.add('shrunk');
@@ -2462,25 +2443,18 @@
     function selectChatRoom(title, name) {
       const titleEl = document.getElementById('chatActiveTitle');
       if (titleEl) titleEl.innerText = title;
-      const cards = document.querySelectorAll('.chat-item-card');
-      cards.forEach(card => card.classList.remove('active'));
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-      }
       expandChatZone('room');
     }
 
     function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
       const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
-      const text = input.value.trim();
-      if (!text) return;
-
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble sent';
-      bubble.innerText = text;
-      container.appendChild(bubble);
+      if (!input || !container || !input.value.trim()) return;
+      
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-bubble sent';
+      msgDiv.innerText = input.value.trim();
+      container.appendChild(msgDiv);
       input.value = '';
       container.scrollTop = container.scrollHeight;
     }
