@@ -51,7 +51,7 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มเริ่มค้นหาด้วยเสียง) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มคุยกับ AI) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
@@ -62,9 +62,9 @@
       margin-bottom: 12px;
     }
 
-    /* ปรับแต่งปุ่มทั้งสองให้ขนาดใหญ่เท่ากัน ดีไซน์ไฮเทคล้ำยุค */
-    #locationFilterBtn {
-      width: auto;
+    /* ปรับแต่งปุ่มทั้งสองให้มีขนาดพอดีกับข้อความและดันชิดซ้ายขวา */
+    #locationFilterBtn, .voice-btn {
+      flex: 0 0 auto;
       height: 44px;
       padding: 6px 16px;
       font-size: 13px;
@@ -80,6 +80,9 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
+    }
+
+    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
     }
@@ -92,28 +95,7 @@
       background-color: #0a522a;
     }
 
-    /* การตั้งค่าสำหรับปุ่ม AI แบบลอยตัว */
     .voice-btn {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      z-index: 999999;
-      width: auto;
-      height: 44px;
-      padding: 6px 16px;
-      font-size: 13px;
-      font-weight: bold;
-      border-radius: 22px;
-      cursor: pointer;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(5px);
       background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
       color: white;
     }
@@ -772,19 +754,12 @@
 <body>
 
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์ (ปุ่มคุยกับ AI ถูกย้ายไปลอยอิสระแล้ว) -->
+    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มคุยกับ AI -->
     <div class="ai-controls-row">
-      <!-- ห่อหุ้มปุ่มพิกัดด้วย flex เพื่อผลักให้ปุ่มชิดซ้ายสุดเสมอ -->
-      <div style="flex: 1; display: flex; justify-content: flex-start;">
-        <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-      </div>
-      
+      <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
       <div id="avatarCircle" class="ai-avatar">🤖</div>
-      
-      <!-- พื้นที่ว่างด้านขวา เพื่อรักษาสมดุลให้ Mascot และ Avatar อยู่กึ่งกลางเสมอ โดยไม่เสียรูปทรงบรรทัดเดิม -->
-      <div style="flex: 1; display: flex; justify-content: flex-end;">
-      </div>
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
     </div>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
@@ -1054,9 +1029,6 @@
       </div>
     </div>
   </div>
-
-  <!-- คำสั่งที่ 3: ปุ่มคุยกับ AI แบบลอยตัวเหนือหน้าจอทุกหน้าเสมอ (โครงสร้างอยู่นอกสุด) -->
-  <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
 
   <script>
     // ==========================================
@@ -1794,7 +1766,7 @@
                     ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
                     คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
                     [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
-                    3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchText ในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
+                    3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchTextในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
                     4. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
                     5. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
                     6. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
@@ -2110,7 +2082,7 @@
                     }));
                   }
                 }
-                // ฟังก์ชันเปิด Google Maps
+                // ฟังก์ชันเปิด Google Maps ด้วยเสียง
                 else if (call.name === "open_google_maps_action") {
                   openGoogleMaps();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2126,16 +2098,365 @@
                 }
               }
             }
-          } catch (e) {
-            console.error("Error parsing WS message:", e);
+
+          } catch (e) {}
+        };
+        AppState.voice.ws.onclose = () => stopVoiceSession();
+
+      } catch (err) {
+        if (statusText) {
+          statusText.classList.remove('loading-pulse');
+          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
+        }
+      }
+    }
+
+    async function initMicrophone() {
+      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      
+      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
+      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
+
+      source.connect(AppState.voice.processor);
+      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
+      AppState.voice.processor.onaudioprocess = (e) => {
+        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        let sum = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          sum += inputData[i] * inputData[i];
+        }
+        let rms = Math.sqrt(sum / inputData.length);
+        if (rms > 0.02) {
+          AppState.voice.silenced = false;
+        }
+
+        if (AppState.voice.audioOutCtx && AppState.voice.nextPlayTime > AppState.voice.audioOutCtx.currentTime + 0.1) {
+          return;
+        }
+
+        const pcm16 = convertFloat32ToPCM16(inputData);
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+
+        AppState.voice.ws.send(JSON.stringify({
+          realtimeInput: {
+            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
           }
+        }));
+      };
+    }
+
+    function convertFloat32ToPCM16(buffer) {
+      let l = buffer.length;
+      let buf = new Int16Array(l);
+      while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
+      return buf;
+    }
+
+    function playPCMData(base64Audio) {
+      if (AppState.voice.silenced) return;
+      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
+      const raw = atob(base64Audio);
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      const int16 = new Int16Array(bytes.buffer);
+      const float32 = new Float32Array(int16.length);
+      for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
+
+      const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
+      buffer.getChannelData(0).set(float32);
+
+      const source = AppState.voice.audioOutCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(AppState.voice.audioOutCtx.destination);
+
+      if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+      }
+      source.start(AppState.voice.nextPlayTime);
+      AppState.voice.nextPlayTime += buffer.duration;
+    }
+
+    async function stopVoiceSession() {
+      AppState.voice.isActive = false;
+      AppState.voice.isSetupReady = false;
+      AppState.voice.silenced = false;
+      AppState.data.isFetching = false;
+      
+      if (AppState.voice.ws) {
+        AppState.voice.ws.onclose = null;
+        AppState.voice.ws.close();
+        AppState.voice.ws = null;
+      }
+      if (AppState.voice.mediaStream) {
+        AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
+        AppState.voice.mediaStream = null;
+      }
+      
+      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
+        try { await AppState.voice.audioCtx.close(); } catch(e) {}
+      }
+      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
+        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
+      }
+
+      const btn = document.getElementById('toggleBtn');
+      const avatar = document.getElementById('avatarCircle');
+      const statusText = document.getElementById('statusText');
+
+      if (btn) {
+        btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+        btn.classList.remove('active');
+      }
+      if (avatar) avatar.classList.remove('pulse-animation');
+      if (statusText) {
+        statusText.classList.remove('loading-pulse');
+      }
+    }
+
+    // ==========================================
+    // 6. DATABASE & TARGETED INFINITE SCROLLING
+    // ==========================================
+    
+    // ฟังก์ชันรวบรวมค่าจากทุกปุ่ม Dropdown แบบสมบูรณ์
+    function getSelectedCriteria() {
+      let criteria = {};
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
+      const defaultLabels = [
+        "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
+        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
+        "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
+      ];
+      
+      filterBtns.forEach(btn => {
+        const text = btn.innerText;
+        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
+        
+        const val = text.replace(' ▾', '').replace('📍 ', '').trim();
+        
+        // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
+        if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
+        
+        const onclick = btn.getAttribute('onclick') || '';
+        
+        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
+        else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
+        else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
+        else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
+        else if (onclick.includes('จังหวัด')) criteria.province = val;
+        else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+        else if (onclick.includes('ถนน')) criteria.road = val;
+        else if (onclick.includes('โครงการ')) criteria.project = val;
+        else if (onclick.includes('ซอย')) criteria.soi = val;
+        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+        else if (onclick.includes('อื่นๆ')) criteria.other = val;
+        else if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
+        else if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.facility = val;
+      });
+
+      if (selectedLat && selectedLng) {
+        criteria.lat = selectedLat;
+        criteria.lng = selectedLng;
+        criteria.radius = selectedRadius || 1;
+      }
+      return criteria;
+    }
+
+    function testShowList() {
+      AppState.pagination.offset = 0;
+      AppState.pagination.hasMore = true;
+      AppState.pagination.renderedKeys.clear();
+      document.getElementById('resultsContainer').innerHTML = '';
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      fetchDatabase({}, getSelectedCriteria(), true, searchText);
+    }
+
+    async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
+      if (AppState.pagination.isLoading) return;
+      AppState.pagination.isLoading = true;
+      
+      const loader = document.getElementById('infiniteLoader');
+      const fallback = document.getElementById('fallbackRetryCard');
+      if (loader) loader.style.display = 'block';
+      if (fallback) fallback.style.display = 'none';
+
+      if (isNewSearch) {
+        AppState.pagination.offset = 0;
+        AppState.pagination.hasMore = true;
+        document.getElementById('resultsContainer').innerHTML = '';
+      }
+
+      try {
+        const payload = {
+          action: "searchAll",
+          offset: AppState.pagination.offset,
+          limit: AppState.pagination.limit,
+          userData: userData,
+          criteria: criteria,
+          searchText: searchText
         };
 
-        AppState.voice.ws.onerror = (e) => {
-          console.error("WS Error:", e);
-        };
-      } catch (e) {
-        console.error("Error in startVoiceSession:", e);
+        const response = await fetch(CONFIG.RENDER_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          renderProperties(data.results);
+          AppState.pagination.offset = data.nextOffset;
+          AppState.pagination.hasMore = data.hasMore;
+        } else {
+          throw new Error(data.message || 'Error fetching data');
+        }
+      } catch (error) {
+        console.error("Fetch Error:", error);
+        if (fallback) fallback.style.display = 'block';
+      } finally {
+        AppState.pagination.isLoading = false;
+        if (loader) loader.style.display = 'none';
+      }
+    }
+
+    function renderProperties(properties) {
+      const container = document.getElementById('resultsContainer');
+      if (!properties || properties.length === 0) {
+        if (AppState.pagination.offset === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
+        }
+        return;
+      }
+
+      properties.forEach(item => {
+        const key = item.postId || item.url;
+        if (AppState.pagination.renderedKeys.has(key)) return;
+        AppState.pagination.renderedKeys.add(key);
+
+        const card = document.createElement('div');
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
+        card.onclick = () => showDetailModal(item);
+        
+        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
+        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
+        
+        card.innerHTML = `
+          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
+            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+          </div>
+          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
+            📍 ${item.district || ''} ${item.province || ''}${distanceText}
+          </div>
+          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
+            💰 ${price}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function showDetailModal(item) {
+      stopAIVoiceSpeech();
+      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
+      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
+      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
+      
+      const deepLinkBtn = document.getElementById('modalDeepLink');
+      if (item.url) {
+        deepLinkBtn.href = item.url;
+        deepLinkBtn.style.display = 'inline-block';
+      } else {
+        deepLinkBtn.style.display = 'none';
+      }
+
+      const slider = document.getElementById('modalSlider');
+      slider.innerHTML = '';
+      if (item.images && item.images.length > 0) {
+        item.images.forEach(imgUrl => {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          slider.appendChild(img);
+        });
+      } else {
+         const placeholder = document.createElement('div');
+         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
+         placeholder.innerText = 'ไม่มีรูปภาพ';
+         slider.appendChild(placeholder);
+      }
+      
+      document.getElementById('detailModalOverlay').classList.add('active');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModalOverlay').classList.remove('active');
+    }
+
+    function loadNextPage() {
+      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
+    }
+
+    function retryNextPage() {
+      loadNextPage();
+    }
+
+    function openUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.add('active');
+    }
+
+    function closeUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.remove('active');
+    }
+
+    function expandChatZone(zone) {
+      const listZone = document.getElementById('chatZoneList');
+      const roomZone = document.getElementById('chatZoneRoom');
+      if (zone === 'list') {
+        listZone.classList.add('expanded');
+        listZone.classList.remove('shrunk');
+        roomZone.classList.add('shrunk');
+        roomZone.classList.remove('expanded');
+      } else if (zone === 'room') {
+        roomZone.classList.add('expanded');
+        roomZone.classList.remove('shrunk');
+        listZone.classList.add('shrunk');
+        listZone.classList.remove('expanded');
+      }
+    }
+
+    function selectChatRoom(title, personName) {
+      document.getElementById('chatActiveTitle').innerText = title;
+      const items = document.querySelectorAll('.chat-item-card');
+      items.forEach(el => el.classList.remove('active'));
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+      expandChatZone('room');
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      const text = input.value.trim();
+      if (text !== '') {
+        const container = document.getElementById('chatMessagesContainer');
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble sent';
+        bubble.innerText = text;
+        container.appendChild(bubble);
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
       }
     }
   </script>
