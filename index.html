@@ -51,22 +51,37 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มเริ่มค้นหาด้วยเสียง) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัดซ้ายบน, โลโก้บ้านและหุ่นยนต์ตรงกลางบน, ปุ่มคุยกับ AI ลอยขวาบน) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
       width: 100%;
+      min-height: 52px;
       margin-bottom: 12px;
+      box-sizing: border-box;
+      position: relative;
     }
 
-    /* ปรับแต่งปุ่มทั้งสองให้ขนาดใหญ่เท่ากัน ดีไซน์ไฮเทคล้ำยุค */
-    #locationFilterBtn, .voice-btn {
-      flex: 1;
+    /* โลโก้บ้าน และ โลโก้หุ่นยนต์ จัดให้อยู่ตำแหน่งตรงกลางและบนสุดของจอ */
+    .center-logos {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    /* ปรับแต่งปุ่มพิกัดสีเขียว อยู่ตำแหน่งซ้ายบนสุดของจอ และความกว้างเหมาะสมกับคำว่าพิกัด */
+    #locationFilterBtn {
+      flex: 0 0 auto;
+      width: auto;
       height: 44px;
-      padding: 6px 12px;
+      padding: 6px 14px;
       font-size: 13px;
       font-weight: bold;
       border-radius: 22px;
@@ -80,11 +95,9 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
-    }
-
-    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
+      z-index: 2;
     }
     #locationFilterBtn:hover {
       transform: translateY(-2px);
@@ -95,7 +108,27 @@
       background-color: #0a522a;
     }
 
+    /* ปุ่ม คุยกับ AI เป็นปุ่มลอย (Floating/Fixed Button) ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า */
     .voice-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 9999;
+      height: 44px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(5px);
       background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
       color: white;
     }
@@ -181,7 +214,6 @@
       background: rgba(255, 255, 255, 0.4);
     }
 
-    /* Affordance & Active State: โดดเด่น ชัดเจน ลอยตัวพร้อมแถบเน้นย้ำ */
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
@@ -753,21 +785,25 @@
 </head>
 <body>
 
+  <!-- ปุ่ม คุยกับ AI ตั้งค่าให้ลอยอยู่ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า -->
+  <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
+
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มเริ่มค้นหาด้วยเสียง -->
+    <!-- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัดสีเขียวตำแหน่งซ้ายบนสุด, โลโก้บ้านและหุ่นยนต์ตำแหน่งตรงกลางบนสุด) -->
     <div class="ai-controls-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-      <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
-      <div id="avatarCircle" class="ai-avatar">🤖</div>
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
+      <div class="center-logos">
+        <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
+        <div id="avatarCircle" class="ai-avatar">🤖</div>
+      </div>
     </div>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
     <div class="tabs-nav">
-      <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">อสังหาริมทรัพย์</button>
-      <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้าทั่วไป</button>
-      <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchTab('lifestyle')">ไลฟ์สไตล์ & ท่องเที่ยว</button>
-      <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ช่าง-บริการ</button>
+      <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">อสังหา<br>ริมทรัพย์</button>
+      <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">สินค้า<br>ทั่วไป</button>
+      <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchTab('lifestyle')">ไลฟ์สไตล์<br>ร้านอาหาร</button>
+      <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">ช่าง<br>บริการ</button>
     </div>
 
     <!-- แท็บที่ 1: อสังหาริมทรัพย์ (ใช้งานอยู่) -->
@@ -910,7 +946,13 @@
         <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--btn-blue); border-radius: 10px; max-height: 180px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 4px;"></div>
       </div>
 
-      <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--btn-blue); background: #eee;"></div>
+      <!-- ส่วนที่มีการแก้ไขเพิ่มปุ่ม Current Location 🎯 -->
+      <div style="position: relative; margin-bottom: 12px;">
+        <div id="locationMap" style="width: 100%; height: 220px; border-radius: 12px; border: 1px solid var(--btn-blue); background: #eee; z-index: 1;"></div>
+        <button onclick="getCurrentUserLocation()" title="ไปที่ตำแหน่งปัจจุบัน" style="position: absolute; bottom: 10px; right: 10px; width: 44px; height: 44px; border-radius: 50%; background: #ffffff; border: 2px solid var(--btn-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 1000; transition: transform 0.2s;">
+          🎯
+        </button>
+      </div>
       
       <div style="display: flex; gap: 8px; margin-bottom: 12px;">
         <div style="flex: 1;">
@@ -1174,7 +1216,7 @@
 
     // ฟังก์ชันสำหรับปุ่มรีเซ็ตค่าทั้งหมด
     function resetAllFilters() {
-      // 1. รีเซ็ตกล่องข้อความค้นหา (edit box) ในหน้าอสังหาริมทรัพย์
+      // 1. รีเซ็ตกล่องข้อความค้นหา (edit box)ในหน้าอสังหาริมทรัพย์
       const editBox = document.getElementById('customEditBox');
       if (editBox) editBox.value = '';
       
@@ -1372,7 +1414,7 @@
     
     function triggerLocationAIGreeting() {
       const prompt = `ขณะนี้ผู้ใช้ได้เปิดหน้าต่าง "ป๊อปอัปพิกัดการค้นหา" บนแผนที่แล้ว 
-      1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "สนใจแถวไหนบอกได้เลย หรือ ค้นเองง่ายๆโดย พิมพ์คำติดกันได้โดยไม่ต้องเว้นวรรค (เช่น ถนนลาดพร้าว)ครับ"
+      1. ให้คุณพูดทักทายด้วยเสียงตามข้อความนี้เป๊ะๆ ทันทีว่า: "ปักหมุดที่ไหนบอกได้เลย"
       2. หากผู้ใช้ไม่แน่ใจหรือต้องการความช่วยเหลือ ให้พูดคุยสอบถามเพื่อสรุปตำแหน่งสถานที่ที่ต้องการค้นหา 
       3. เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย ***สำคัญมาก: ต้องตรวจสอบประเภทสถานที่และใส่คำนำหน้าชื่อสถานที่ให้ถูกต้องตามหลักเกณฑ์เสมอ เช่น หากสถานที่นั้นเป็นหมู่บ้าน ให้ใส่คำนำหน้าว่า "หมู่บ้าน", หากเป็นถนน ให้ใส่ "ถนน", หรือปรับเปลี่ยนตามประเภทสถานที่จริง เช่น ซอย, อาคาร, ห้างสรรพสินค้า ฯลฯ***`;
       const checkReady = setInterval(() => {
@@ -1386,7 +1428,7 @@
 
     // ฟังก์ชันเพิ่มเติมสำหรับสั่งให้ AI พูดประโยคแนะนำตัวตอนเข้าแอปครั้งแรก
     function triggerInitialAIGreeting() {
-      const prompt = `ตอนนี้ผู้ใช้เปิดแอปพลิเคชันขึ้นมาแล้ว ให้คุณแนะนำตัวด้วยเสียงพูดทันทีตามข้อความนี้เป๊ะๆว่า: "AI landmatching1.6 ผู้ช่วยค้นหาทุกอย่าง  หาบ้าน ของแต่งบ้านซ่อมบ้าน หาช่าง ร้านอาหาร บอกได้เลย"`;
+      const prompt = `ตอนนี้ผู้ใช้เปิดแอปพลิเคชันขึ้นมาแล้ว ให้คุณแนะนำตัวด้วยเสียงพูดทันทีตามข้อความนี้เป๊ะๆว่า: "AI landmatching1.8 ผู้ช่วยค้นหา บ้าน ของแต่งบ้าน ซ่อมบ้าน หาช่าง ร้านอาหาร บอกได้เลย"`;
       sendTextToAI(prompt);
     }
 
@@ -1600,6 +1642,33 @@
       }
     }
 
+    // ฟังก์ชันเพิ่มเติมสำหรับปุ่มดึงตำแหน่งปัจจุบัน
+    function getCurrentUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          setCoordinates(lat, lng);
+          if (leafletMap && mapMarker) {
+            leafletMap.setView([lat, lng], 14);
+            const newLatLng = new L.LatLng(lat, lng);
+            mapMarker.setLatLng(newLatLng);
+            updateRadiusCircle();
+          }
+        }, (err) => {
+          console.error(err);
+          alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง (Location)");
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      } else {
+        alert("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
+      }
+    }
+
     function closeLocationModal() {
       stopAIVoiceSpeech();
       const resultsDiv = document.getElementById('placeSearchResults');
@@ -1745,7 +1814,12 @@
                             * หากผู้ใช้ต้องการหา ร้านอาหาร, ของกิน, คาเฟ่, ตลาด, ห้าง, 7-11, แหล่งชุมชน, แหล่งท่องเที่ยว, หรือโรงพยาบาล ➔ เลือก 'lifestyle'
                             * หากผู้ใช้ต้องการหา ช่างซ่อม, งานบริการต่างๆ ➔ เลือก 'others'
                         - **ขั้นตอนที่ 2 (สำคัญที่สุด):** ทันทีหลังจากเรียกฟังก์ชันเปลี่ยนแท็บสำเร็จ **ให้คุณ (AI) พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"** เพื่อให้ผู้ใช้ระบุพิกัดต่อ
-                    9. หากลูกค้าต้องการให้เปิดหน้าพิกัดแผนที่ (ปักหมุดสีเขียว) ไม่ว่าจะอยู่ในแท็บไหน ให้เรียกใช้ฟังก์ชัน 'open_location_modal' ทันที`
+                    9. หากลูกค้าต้องการให้เปิดหน้าพิกัดแผนที่ (ปักหมุดสีเขียว) ไม่ว่าจะอยู่ในแท็บไหน ให้เรียกใช้ฟังก์ชัน 'open_location_modal' ทันที
+                    10. ไม่ว่าจะอยู่ที่หน้าเพจใด ถ้า AI Voice พบว่าผู้ใช้ต้องการหาพิกัดหรือ location ของสถานที่ใดๆ ก็ตาม ให้แปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน 'set_location_coordinates' ทันทีเพื่อเปิดหน้าพิกัดค้นหา ปักหมุดในตำแหน่งที่ผู้ใช้ต้องการ พร้อมเขียนรายละเอียดสถานที่ลงบนช่อง edit ในหน้าพิกัดอัตโนมัติ
+                    11. ที่หน้าต่างปักหมุดพิกัดค้นหา ผู้ใช้สามารถสั่งกดปุ่มด้วยเสียงได้:
+                        - หากผู้ใช้สั่ง "ยืนยันพิกัด" (เช่น "ตกลง", "เอาตรงนี้แหละ") เรียกใช้ฟังก์ชัน 'confirm_location_action' 
+                        - หากผู้ใช้สั่ง "เปิด Google Maps" (เช่น "เปิดแมพ") เรียกใช้ฟังก์ชัน 'open_google_maps_action' 
+                    `
                   }]
                 },
                 tools: [
@@ -1778,7 +1852,7 @@
                       },
                       {
                         name: "set_location_coordinates",
-                        description: "เมื่อได้ข้อสรุปตำแหน่งสถานที่ที่ผู้ใช้ต้องการค้นหาแล้ว ให้แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่ แล้วเรียกฟังก์ชันนี้เพื่อใส่ข้อมูลในช่องฟอร์มและปักหมุดบนแผนที่อัตโนมัติ",
+                        description: "เมื่อได้ข้อสรุปตำแหน่งสถานที่ที่ผู้ใช้ต้องการค้นหาแล้ว ให้แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่ แล้วเรียกฟังก์ชันนี้เพื่อเปิดหน้าต่างพิกัด ใส่ข้อมูลในช่องค้นหา และปักหมุดบนแผนที่อัตโนมัติ",
                         parameters: {
                           type: "OBJECT",
                           properties: {
@@ -1814,6 +1888,16 @@
                           type: "OBJECT",
                           properties: {}
                         }
+                      },
+                      {
+                        name: "confirm_location_action",
+                        description: "กดปุ่ม 'ยืนยันพิกัด' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ยืนยันพิกัดใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "open_google_maps_action",
+                        description: "กดปุ่ม 'เปิด Google Maps' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ต้องการ เพิ่มความแม่นยำปักหมุดโดยใช้ Google Maps ช่วย ใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                        parameters: { type: "OBJECT", properties: {} }
                       }
                     ]
                   }
@@ -1823,7 +1907,7 @@
             AppState.voice.ws.send(JSON.stringify(setupData));
           }
 
-          btn.innerHTML = "⏹️ วางสาย / จบสนทนา";
+          btn.innerHTML = "⏹️วางสาย";
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
@@ -1838,7 +1922,6 @@
               }
               await initMicrophone(); 
               
-              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก (คำสั่ง 1)
               if (!AppState.voice.hasGreeted) {
                 triggerInitialAIGreeting();
                 AppState.voice.hasGreeted = true;
@@ -1873,7 +1956,6 @@
                   const editBox = document.getElementById('customEditBox');
                   let rawParts = [...Object.values(userData), ...Object.values(criteria)].filter(Boolean);
                   
-                  // ดึงข้อความ Dropdown ทั้งหมดเพื่อตรวจกรองคำ ให้มั่นใจว่าจะเขียนเฉพาะคำที่มีใน Dropdown เท่านั้น
                   const validOptions = getAllValidDropdownOptions();
                   let matchedWords = [];
 
@@ -1891,10 +1973,8 @@
                   });
 
                   if (editBox) {
-                    // 1. เคลียร์ข้อความในช่อง Edit
                     editBox.value = ''; 
                   
-                    // 2. (Optional) รีเซ็ตชื่อปุ่ม Dropdown ทั้งหมดกลับเป็นค่าเริ่มต้น
                     const filterBtns = document.querySelectorAll('.filter-btn');
                     filterBtns.forEach(btn => {
                       const onClickAttr = btn.getAttribute('onclick') || '';
@@ -1906,7 +1986,6 @@
                       }
                     });
                   
-                    // 3. กำหนดค่าใหม่ลงใน Edit
                     if (matchedWords.length > 0) {
                       editBox.value = matchedWords.join(' ');
                     } else {
@@ -1937,6 +2016,10 @@
                   const lng = args.longitude;
                   const placeName = args.placeName;
                   
+                  if (!document.getElementById('locationModalOverlay').classList.contains('active')) {
+                    openLocationModal();
+                  }
+
                   if (placeName) {
                     const placeSearchInput = document.getElementById('placeSearchInput');
                     if (placeSearchInput) {
@@ -1967,7 +2050,6 @@
                     }));
                   }
                 }
-                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ (คำสั่ง 3)
                 else if (call.name === "switch_tab_category") {
                   const args = call.args || {};
                   const tabId = args.tabId;
@@ -2000,7 +2082,6 @@
                     }));
                   }
                 }
-                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามที่คุณต้องการเพิ่มเติม
                 else if (call.name === "open_location_modal") {
                   openLocationModal();
                   
@@ -2009,6 +2090,32 @@
                       toolResponse: {
                         functionResponses: [{
                           response: { output: { success: true, message: `เปิดหน้าต่างพิกัดแผนที่ (ปุ่มสีเขียว) เรียบร้อยแล้ว` } },
+                          id: call.id
+                        }]
+                      }
+                    }));
+                  }
+                }
+                else if (call.name === "confirm_location_action") {
+                  confirmLocation();
+                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                    AppState.voice.ws.send(JSON.stringify({
+                      toolResponse: {
+                        functionResponses: [{
+                          response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว" } },
+                          id: call.id
+                        }]
+                      }
+                    }));
+                  }
+                }
+                else if (call.name === "open_google_maps_action") {
+                  openGoogleMaps();
+                  if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                    AppState.voice.ws.send(JSON.stringify({
+                      toolResponse: {
+                        functionResponses: [{
+                          response: { output: { success: true, message: "เปิด Google Maps เรียบร้อยแล้ว" } },
                           id: call.id
                         }]
                       }
@@ -2132,7 +2239,7 @@
       const statusText = document.getElementById('statusText');
 
       if (btn) {
-        btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
+        btn.innerHTML = "🎙️ คุยกับ AI";
         btn.classList.remove('active');
       }
       if (avatar) avatar.classList.remove('pulse-animation');
@@ -2162,7 +2269,6 @@
         
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
         
-        // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
         if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
         
         const onclick = btn.getAttribute('onclick') || '';
@@ -2260,101 +2366,92 @@
       }
 
       properties.forEach(item => {
-        const key = item.postId || item.url;
+        const key = item.postId || item.url || Math.random().toString();
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
 
+        const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ชื่อ Facebook ผู้โพสต์'], 'อสังหาริมทรัพย์');
+        const price = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'แบบราคา'], 'โปรดสอบถาม');
+        const locationStr = [getPropValue(item, 'เขต/อำเภอ'), getPropValue(item, 'จังหวัด')].filter(Boolean).join(', ');
+        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
+
         const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
-        card.onclick = () => showDetailModal(item);
-        
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        
+        card.style.cssText = 'background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border:1px solid #eee; display:flex; gap:12px; cursor:pointer; align-items:center;';
+        card.onclick = () => openDetailModal(item);
+
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
-          </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-            💰 ${price}
+          <img src="${imgUrl}" style="width:90px; height:90px; object-fit:cover; border-radius:12px; flex-shrink:0; background:#eee;" onerror="this.src='https://via.placeholder.com/90?text=House';">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:15px; font-weight:bold; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
+            <div style="font-size:13px; color:#666; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${locationStr || 'ไม่ระบุตำแหน่ง'}</div>
+            <div style="font-size:15px; font-weight:bold; color:#d9534f; margin-top:4px;">${price}</div>
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function showDetailModal(item) {
-      stopAIVoiceSpeech();
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerText = item.postDetails || 'ไม่มีรายละเอียด';
+    function openDetailModal(item) {
+      const modalOverlay = document.getElementById('detailModalOverlay');
+      const titleEl = document.getElementById('modalTitle');
+      const priceEl = document.getElementById('modalPrice');
+      const descEl = document.getElementById('modalDesc');
+      const sliderEl = document.getElementById('modalSlider');
+      const linkEl = document.getElementById('modalDeepLink');
+
+      if (titleEl) titleEl.innerText = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ชื่อ Facebook ผู้โพสต์'], 'รายละเอียด');
+      if (priceEl) priceEl.innerText = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'แบบราคา'], '-');
+      if (descEl) descEl.innerText = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'description'], 'ไม่มีรายละเอียดเพิ่มเติม');
       
-      const deepLink = document.getElementById('modalDeepLink');
-      if (item.url && item.url !== '#') {
-        deepLink.href = item.url;
-        deepLink.style.display = 'inline-block';
-      } else {
-        deepLink.style.display = 'none';
+      if (linkEl) {
+        const url = getPropValue(item, ['url', 'link'], '#');
+        linkEl.href = url;
       }
 
-      // ส่งข้อความไปให้ AI สรุปบ้าน
-      const housePrompt = `รายละเอียดประกาศนี้ครับ:
-- โครงการ/ชื่อประกาศ: ${item.project || item.facebookPostName || 'ไม่ระบุ'}
-- ราคา: ${item.salePrice || item.rentPrice || 'ไม่ระบุ'}
-- ทำเล: ${item.district || ''} ${item.province || ''}
-- รายละเอียดเพิ่มเติม: ${item.postDetails || 'ไม่มีข้อมูลเพิ่มเติม'}
-
-ให้คุณพูดสรุปสั้นๆจุดเด่นของบ้านหลังนี้  พร้อมสอบถามผู้ใช้ว่าสนใจต่อรองราคาหรืออยากทราบข้อมูลส่วนไหนเพิ่มเติมครับ`;
-
-      if (AppState.voice.isActive && AppState.voice.ws) {
-        sendTextToAI(housePrompt);
+      if (sliderEl) {
+        sliderEl.innerHTML = '';
+        const imgUrl = getPropValue(item, ['url', 'image'], '');
+        if (imgUrl) {
+          const img = document.createElement('img');
+          img.src = imgUrl;
+          img.onerror = () => { img.src = 'https://via.placeholder.com/300x200?text=No+Image'; };
+          sliderEl.appendChild(img);
+        }
       }
-      
-      document.getElementById('detailModalOverlay').classList.add('active');
+
+      if (modalOverlay) modalOverlay.classList.add('active');
     }
 
     function closeDetailModal() {
-      stopAIVoiceSpeech();
-      document.getElementById('detailModalOverlay').classList.remove('active');
-    }
-
-    function loadNextPage() {
-      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
-      fetchDatabase({}, getSelectedCriteria(), false, searchText);
-    }
-
-    function retryNextPage() {
-      loadNextPage();
+      const modalOverlay = document.getElementById('detailModalOverlay');
+      if (modalOverlay) modalOverlay.classList.remove('active');
     }
 
     // ==========================================
-    // 7. USER CHAT DUAL-PANE & EXPANSION HANDLERS
+    // 7. USER CHAT HELPER FUNCTIONS
     // ==========================================
     function openUserChatModal() {
       stopAIVoiceSpeech();
-      document.getElementById('userChatModalOverlay').classList.add('active');
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.add('active');
     }
 
     function closeUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.remove('active');
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.remove('active');
     }
 
-    function expandChatZone(activeZone) {
+    function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
-      
       if (!listZone || !roomZone) return;
 
-      if (activeZone === 'list') {
+      if (zone === 'list') {
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
         roomZone.classList.add('shrunk');
         roomZone.classList.remove('expanded');
-      } else if (activeZone === 'room') {
+      } else if (zone === 'room') {
         roomZone.classList.add('expanded');
         roomZone.classList.remove('shrunk');
         listZone.classList.add('shrunk');
@@ -2362,45 +2459,30 @@
       }
     }
 
-    function selectChatRoom(shopName, ownerName) {
-      const titleElem = document.getElementById('chatActiveTitle');
-      const messagesContainer = document.getElementById('chatMessagesContainer');
-      
-      if (titleElem) {
-        titleElem.innerText = shopName;
+    function selectChatRoom(title, name) {
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) titleEl.innerText = title;
+      const cards = document.querySelectorAll('.chat-item-card');
+      cards.forEach(card => card.classList.remove('active'));
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
       }
-      
-      if (messagesContainer) {
-        messagesContainer.innerHTML = `
-          <div class="chat-bubble received">
-            ยินดีต้อนรับสู่ ${shopName} ค่ะ คุณ ${ownerName} พร้อมให้บริการแล้วค่ะ
-          </div>
-        `;
-      }
-
-      // เมื่อเลือกห้องแชทแล้ว ให้ขยายฝั่ง Chat Room ทันที
       expandChatZone('room');
     }
 
     function sendChatMessage() {
-      const inputElem = document.getElementById('chatMessageInput');
-      const messagesContainer = document.getElementById('chatMessagesContainer');
-      
-      if (!inputElem || !messagesContainer) return;
-      
-      const text = inputElem.value.trim();
+      const input = document.getElementById('chatMessageInput');
+      const container = document.getElementById('chatMessagesContainer');
+      if (!input || !container) return;
+      const text = input.value.trim();
       if (!text) return;
-      
-      const sentBubble = document.createElement('div');
-      sentBubble.className = 'chat-bubble sent';
-      sentBubble.innerText = text;
-      messagesContainer.appendChild(sentBubble);
-      
-      inputElem.value = '';
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      
-      // สลับไปขยายฝั่งห้องแชทเมื่อส่งข้อความ
-      expandChatZone('room');
+
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble sent';
+      bubble.innerText = text;
+      container.appendChild(bubble);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
     }
   </script>
 </body>
