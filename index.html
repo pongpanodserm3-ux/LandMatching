@@ -51,39 +51,22 @@
       padding-bottom: 10px;
     }
 
-    /* --- บรรทัดที่ 1: ส่วนหัว (ปุ่มคุยกับ AI ซ้ายบน, โลโก้บ้านและหุ่นยนต์ตรงกลางบน) --- */
+    /* --- บรรทัดที่ 1: ส่วนหัวเดิม (ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, ปุ่มเริ่มค้นหาด้วยเสียง) --- */
     .ai-controls-row {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
-      width: 100%;
-      min-height: 52px;
-      margin-bottom: 12px;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    /* โลโก้บ้าน และ โลโก้หุ่นยนต์ จัดให้อยู่ตำแหน่งตรงกลางและบนสุดของจอ */
-    .center-logos {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       gap: 8px;
-      z-index: 1;
+      width: 100%;
+      margin-bottom: 12px;
     }
 
-    /* ปรับแต่งปุ่มพิกัดสีเขียว เป็นปุ่มลอย (Floating/Fixed Button) ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า */
-    #locationFilterBtn {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      z-index: 9999;
+    /* ปรับแต่งปุ่มทั้งสองให้ขนาดใหญ่เท่ากัน ดีไซน์ไฮเทคล้ำยุค */
+    #locationFilterBtn, .voice-btn {
+      flex: 1;
       height: 44px;
-      padding: 6px 14px;
+      padding: 6px 12px;
       font-size: 13px;
       font-weight: bold;
       border-radius: 22px;
@@ -97,6 +80,9 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
+    }
+
+    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
     }
@@ -109,28 +95,9 @@
       background-color: #0a522a;
     }
 
-    /* ปุ่ม คุยกับ AI สีน้ำเงิน อยู่ตำแหน่งซ้ายบนสุดของจอ และความกว้างเหมาะสม */
     .voice-btn {
-      flex: 0 0 auto;
-      width: auto;
-      height: 44px;
-      padding: 6px 14px;
-      font-size: 13px;
-      font-weight: bold;
-      border-radius: 22px;
-      cursor: pointer;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(5px);
       background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
       color: white;
-      z-index: 2;
     }
     .voice-btn:hover {
       transform: translateY(-2px);
@@ -214,6 +181,7 @@
       background: rgba(255, 255, 255, 0.4);
     }
 
+    /* Affordance & Active State: โดดเด่น ชัดเจน ลอยตัวพร้อมแถบเน้นย้ำ */
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
@@ -785,17 +753,13 @@
 </head>
 <body>
 
-  <!-- ปุ่มพิกัดสีเขียว ตั้งค่าให้ลอยอยู่ที่มุมขวาบนสุดของหน้าจอเสมอ แสดงผลทุกหน้า -->
-  <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ส่วนหัว (ปุ่มคุยกับ AI ตำแหน่งซ้ายบนสุด, โลโก้บ้านและหุ่นยนต์ตำแหน่งตรงกลางบนสุด) -->
+    <!-- บรรทัดที่ 1: ปุ่มพิกัด, โลโก้บ้าน, ไอคอนหุ่นยนต์, และปุ่มเริ่มค้นหาด้วยเสียง -->
     <div class="ai-controls-row">
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ คุยกับ AI</button>
-      <div class="center-logos">
-        <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
-        <div id="avatarCircle" class="ai-avatar">🤖</div>
-      </div>
+      <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
+      <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
+      <div id="avatarCircle" class="ai-avatar">🤖</div>
+      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️ เริ่มค้นหาด้วยเสียง</button>
     </div>
     
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
@@ -1922,6 +1886,7 @@
               }
               await initMicrophone(); 
               
+              // สั่งให้ AI แนะนำตัวเฉพาะตอนเข้าใช้งานครั้งแรก (คำสั่ง 1)
               if (!AppState.voice.hasGreeted) {
                 triggerInitialAIGreeting();
                 AppState.voice.hasGreeted = true;
@@ -1956,6 +1921,7 @@
                   const editBox = document.getElementById('customEditBox');
                   let rawParts = [...Object.values(userData), ...Object.values(criteria)].filter(Boolean);
                   
+                  // ดึงข้อความ Dropdown ทั้งหมดเพื่อตรวจกรองคำ ให้มั่นใจว่าจะเขียนเฉพาะคำที่มีใน Dropdown เท่านั้น
                   const validOptions = getAllValidDropdownOptions();
                   let matchedWords = [];
 
@@ -1973,8 +1939,10 @@
                   });
 
                   if (editBox) {
+                    // 1. เคลียร์ข้อความในช่อง Edit
                     editBox.value = ''; 
                   
+                    // 2. (Optional) รีเซ็ตชื่อปุ่ม Dropdown ทั้งหมดกลับเป็นค่าเริ่มต้น
                     const filterBtns = document.querySelectorAll('.filter-btn');
                     filterBtns.forEach(btn => {
                       const onClickAttr = btn.getAttribute('onclick') || '';
@@ -1986,6 +1954,7 @@
                       }
                     });
                   
+                    // 3. กำหนดค่าใหม่ลงใน Edit
                     if (matchedWords.length > 0) {
                       editBox.value = matchedWords.join(' ');
                     } else {
@@ -2016,6 +1985,7 @@
                   const lng = args.longitude;
                   const placeName = args.placeName;
                   
+                  // 1. เปิดหน้าต่างพิกัดทันทีเมื่อ AI ค้นพบว่าผู้ใช้ต้องการหาพิกัดหรือสถานที่
                   if (!document.getElementById('locationModalOverlay').classList.contains('active')) {
                     openLocationModal();
                   }
@@ -2050,6 +2020,7 @@
                     }));
                   }
                 }
+                // ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ (คำสั่ง 3)
                 else if (call.name === "switch_tab_category") {
                   const args = call.args || {};
                   const tabId = args.tabId;
@@ -2082,6 +2053,7 @@
                     }));
                   }
                 }
+                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามที่คุณต้องการเพิ่มเติม
                 else if (call.name === "open_location_modal") {
                   openLocationModal();
                   
@@ -2096,6 +2068,7 @@
                     }));
                   }
                 }
+                // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
                 else if (call.name === "confirm_location_action") {
                   confirmLocation();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2109,6 +2082,7 @@
                     }));
                   }
                 }
+                // ฟังก์ชันเปิด Google Maps ด้วยเสียง
                 else if (call.name === "open_google_maps_action") {
                   openGoogleMaps();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2239,7 +2213,7 @@
       const statusText = document.getElementById('statusText');
 
       if (btn) {
-        btn.innerHTML = "🎙️ คุยกับ AI";
+        btn.innerHTML = "🎙️ เริ่มค้นหาด้วยเสียง";
         btn.classList.remove('active');
       }
       if (avatar) avatar.classList.remove('pulse-animation');
@@ -2269,6 +2243,7 @@
         
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
         
+        // ถ้าเป็นหัวข้อ default หรือปุ่มพิกัด ให้ข้ามไป
         if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
         
         const onclick = btn.getAttribute('onclick') || '';
@@ -2366,86 +2341,88 @@
       }
 
       properties.forEach(item => {
-        const key = item.postId || item.url || Math.random().toString();
+        const key = item.postId || item.url;
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
 
-        const title = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ชื่อ Facebook ผู้โพสต์'], 'อสังหาริมทรัพย์');
-        const price = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'แบบราคา'], 'โปรดสอบถาม');
-        const locationStr = [getPropValue(item, 'เขต/อำเภอ'), getPropValue(item, 'จังหวัด')].filter(Boolean).join(', ');
-        const imgUrl = getPropValue(item, ['url', 'image'], 'https://via.placeholder.com/300x200?text=Land+Matching');
-
         const card = document.createElement('div');
-        card.style.cssText = 'background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border:1px solid #eee; display:flex; gap:12px; cursor:pointer; align-items:center;';
-        card.onclick = () => openDetailModal(item);
-
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
+        card.onclick = () => showDetailModal(item);
+        
+        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
+        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
+        
         card.innerHTML = `
-          <img src="${imgUrl}" style="width:90px; height:90px; object-fit:cover; border-radius:12px; flex-shrink:0; background:#eee;" onerror="this.src='https://via.placeholder.com/90?text=House';">
-          <div style="flex:1; min-width:0;">
-            <div style="font-size:15px; font-weight:bold; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</div>
-            <div style="font-size:13px; color:#666; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${locationStr || 'ไม่ระบุตำแหน่ง'}</div>
-            <div style="font-size:15px; font-weight:bold; color:#d9534f; margin-top:4px;">${price}</div>
+          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
+            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+          </div>
+          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
+            📍 ${item.district || ''} ${item.province || ''}${distanceText}
+          </div>
+          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
+            💰 ${price}
           </div>
         `;
         container.appendChild(card);
       });
     }
 
-    function openDetailModal(item) {
-      const modalOverlay = document.getElementById('detailModalOverlay');
-      const titleEl = document.getElementById('modalTitle');
-      const priceEl = document.getElementById('modalPrice');
-      const descEl = document.getElementById('modalDesc');
-      const sliderEl = document.getElementById('modalSlider');
-      const linkEl = document.getElementById('modalDeepLink');
-
-      if (titleEl) titleEl.innerText = getPropValue(item, ['โครงการ', 'ประเภทอสังหา', 'ชื่อ Facebook ผู้โพสต์'], 'รายละเอียด');
-      if (priceEl) priceEl.innerText = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'แบบราคา'], '-');
-      if (descEl) descEl.innerText = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'description'], 'ไม่มีรายละเอียดเพิ่มเติม');
+    function showDetailModal(item) {
+      stopAIVoiceSpeech();
+      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
+      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
+      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
-      if (linkEl) {
-        const url = getPropValue(item, ['url', 'link'], '#');
-        linkEl.href = url;
+      const deepLinkBtn = document.getElementById('modalDeepLink');
+      if (item.url) {
+        deepLinkBtn.href = item.url;
+        deepLinkBtn.style.display = 'inline-block';
+      } else {
+        deepLinkBtn.style.display = 'none';
       }
 
-      if (sliderEl) {
-        sliderEl.innerHTML = '';
-        const imgUrl = getPropValue(item, ['url', 'image'], '');
-        if (imgUrl) {
+      const slider = document.getElementById('modalSlider');
+      slider.innerHTML = '';
+      if (item.images && item.images.length > 0) {
+        item.images.forEach(imgUrl => {
           const img = document.createElement('img');
           img.src = imgUrl;
-          img.onerror = () => { img.src = 'https://via.placeholder.com/300x200?text=No+Image'; };
-          sliderEl.appendChild(img);
-        }
+          slider.appendChild(img);
+        });
+      } else {
+         const placeholder = document.createElement('div');
+         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
+         placeholder.innerText = 'ไม่มีรูปภาพ';
+         slider.appendChild(placeholder);
       }
-
-      if (modalOverlay) modalOverlay.classList.add('active');
+      
+      document.getElementById('detailModalOverlay').classList.add('active');
     }
 
     function closeDetailModal() {
-      const modalOverlay = document.getElementById('detailModalOverlay');
-      if (modalOverlay) modalOverlay.classList.remove('active');
+      document.getElementById('detailModalOverlay').classList.remove('active');
     }
 
-    // ==========================================
-    // 7. USER CHAT HELPER FUNCTIONS
-    // ==========================================
+    function loadNextPage() {
+      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
+    }
+
+    function retryNextPage() {
+      loadNextPage();
+    }
+
     function openUserChatModal() {
-      stopAIVoiceSpeech();
-      const modal = document.getElementById('userChatModalOverlay');
-      if (modal) modal.classList.add('active');
+      document.getElementById('userChatModalOverlay').classList.add('active');
     }
 
     function closeUserChatModal() {
-      const modal = document.getElementById('userChatModalOverlay');
-      if (modal) modal.classList.remove('active');
+      document.getElementById('userChatModalOverlay').classList.remove('active');
     }
 
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
-      if (!listZone || !roomZone) return;
-
       if (zone === 'list') {
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
@@ -2459,11 +2436,10 @@
       }
     }
 
-    function selectChatRoom(title, name) {
-      const titleEl = document.getElementById('chatActiveTitle');
-      if (titleEl) titleEl.innerText = title;
-      const cards = document.querySelectorAll('.chat-item-card');
-      cards.forEach(card => card.classList.remove('active'));
+    function selectChatRoom(title, personName) {
+      document.getElementById('chatActiveTitle').innerText = title;
+      const items = document.querySelectorAll('.chat-item-card');
+      items.forEach(el => el.classList.remove('active'));
       if (event && event.currentTarget) {
         event.currentTarget.classList.add('active');
       }
@@ -2472,17 +2448,16 @@
 
     function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
       const text = input.value.trim();
-      if (!text) return;
-
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble sent';
-      bubble.innerText = text;
-      container.appendChild(bubble);
-      input.value = '';
-      container.scrollTop = container.scrollHeight;
+      if (text !== '') {
+        const container = document.getElementById('chatMessagesContainer');
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble sent';
+        bubble.innerText = text;
+        container.appendChild(bubble);
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+      }
     }
   </script>
 </body>
