@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -1073,6 +1074,15 @@
       LIFF_ID: "2011006139-Wn6PhY6D"
     };
 
+    // --- Supabase JS SDK v2 Setup ---
+    const { createClient } = supabase;
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let activeChannel = null;
+    let currentChatRoomId = 'room_1';
+    let currentSenderId = 'user_me';
+
     const SHEET_COLUMNS = [
       'ชื่อ Facebook ผู้โพสต์', 'โครงการ', 'ประเภทอสังหา', 'จังหวัด', 'เขต/อำเภอ',
       'ถนน', 'แบบราคา', 'ราคาขาย', 'ราคาเช่า', 'เนื้อที่', 'เนื้อที่ ตัวเลข',
@@ -1739,7 +1749,6 @@
     async function stopAIVoiceSpeech() {
       AppState.voice.silenced = true;
       if (AppState.voice.audioOutCtx) {
-        // ตรวจสอบว่าไม่ได้อยู่ในสถานะ closed หรือกำลัง closing
         if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
           try {
             await AppState.voice.audioOutCtx.close();
@@ -1781,8 +1790,7 @@
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
 
         AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
-
-        AppState.voice.ws.onopen = () => {
+AppState.voice.ws.onopen = () => {
           if (AppState.voice.ws.readyState === WebSocket.OPEN) {
             const validDropdowns = getAllValidDropdownOptions().join(', ');
             const setupData = {
@@ -2220,56 +2228,56 @@
     }
 
     async function stopVoiceSession() {
-          AppState.voice.isActive = false;
-          AppState.voice.isSetupReady = false;
-          AppState.voice.silenced = false;
-          AppState.data.isFetching = false;
-          
-          if (AppState.voice.ws) {
-            AppState.voice.ws.onclose = null;
-            AppState.voice.ws.close();
-            AppState.voice.ws = null;
-          }
-          if (AppState.voice.mediaStream) {
-            AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
-            AppState.voice.mediaStream = null;
-          }
-          
-          if (AppState.voice.audioCtx) {
-            if (AppState.voice.audioCtx.state !== 'closed' && AppState.voice.audioCtx.state !== 'closing') {
-              try {
-                await AppState.voice.audioCtx.close();
-              } catch (e) {
-                console.warn("AudioContext already closed or closing:", e);
-              }
-            }
-          }
-    
-          if (AppState.voice.audioOutCtx) {
-            if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
-              try {
-                await AppState.voice.audioOutCtx.close();
-              } catch (e) {
-                console.warn("AudioOutContext already closed or closing:", e);
-              }
-            }
-          }
-    
-          const btn = document.getElementById('toggleBtn');
-          const avatar = document.getElementById('avatarCircle');
-          const statusText = document.getElementById('statusText');
-          if (btn) {
-            btn.innerHTML = "🎙️คุยกับAI";
-            btn.classList.remove('active');
-          }
-          if (avatar) {
-            avatar.classList.remove('pulse-animation');
-          }
-          if (statusText) {
-            statusText.classList.remove('loading-pulse');
-            statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
+      AppState.voice.isActive = false;
+      AppState.voice.isSetupReady = false;
+      AppState.voice.silenced = false;
+      AppState.data.isFetching = false;
+      
+      if (AppState.voice.ws) {
+        AppState.voice.ws.onclose = null;
+        AppState.voice.ws.close();
+        AppState.voice.ws = null;
+      }
+      if (AppState.voice.mediaStream) {
+        AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
+        AppState.voice.mediaStream = null;
+      }
+      
+      if (AppState.voice.audioCtx) {
+        if (AppState.voice.audioCtx.state !== 'closed' && AppState.voice.audioCtx.state !== 'closing') {
+          try {
+            await AppState.voice.audioCtx.close();
+          } catch (e) {
+            console.warn("AudioContext already closed or closing:", e);
           }
         }
+      }
+
+      if (AppState.voice.audioOutCtx) {
+        if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
+          try {
+            await AppState.voice.audioOutCtx.close();
+          } catch (e) {
+            console.warn("AudioOutContext already closed or closing:", e);
+          }
+        }
+      }
+
+      const btn = document.getElementById('toggleBtn');
+      const avatar = document.getElementById('avatarCircle');
+      const statusText = document.getElementById('statusText');
+      if (btn) {
+        btn.innerHTML = "🎙️คุยกับAI";
+        btn.classList.remove('active');
+      }
+      if (avatar) {
+        avatar.classList.remove('pulse-animation');
+      }
+      if (statusText) {
+        statusText.classList.remove('loading-pulse');
+        statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
+      }
+    }
 
     // ==========================================
     // 6. DATABASE & TARGETED INFINITE SCROLLING
@@ -2395,96 +2403,220 @@
         AppState.pagination.renderedKeys.add(key);
 
         const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
-        card.onclick = () => showDetailModal(item);
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; cursor: pointer;';
         
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        
+        const title = getPropValue(item, ['โครงการ', 'ลักษณะกิจการ', 'ประเภทอสังหา'], 'รายการอสังหาริมทรัพย์');
+        const priceSale = getPropValue(item, ['ราคาขาย']);
+        const priceRent = getPropValue(item, ['ราคาเช่า']);
+        let priceStr = '';
+        if (priceSale) priceStr += `ขาย: ${priceSale} `;
+        if (priceRent) priceStr += `เช่า: ${priceRent}`;
+        if (!priceStr) priceStr = 'ติดต่อสอบถามราคา';
+
+        const locationStr = `${getPropValue(item, ['เขต/อำเภอ'])} ${getPropValue(item, ['จังหวัด'])}`.trim();
+        const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)']);
+
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
-          </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-            💰 ${price}
-          </div>
+          <div style="font-weight: bold; font-size: 16px; color: var(--text-main);">${title}</div>
+          <div style="font-weight: bold; font-size: 15px; color: #d9534f;">${priceStr}</div>
+          <div style="font-size: 13px; color: #666;">📍 ${locationStr || 'ไม่ระบุตำแหน่ง'}</div>
+          ${desc ? `<div style="font-size: 12px; color: #777; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${desc}</div>` : ''}
         `;
+
+        card.onclick = () => openDetailModal(item);
         container.appendChild(card);
       });
     }
 
-    function showDetailModal(item) {
-      // 1. สั่งหยุดเสียง AI ก่อนตามเงื่อนไข
-      stopAIVoiceSpeech(); 
-    
-      // 2. โค้ดเดิมสำหรับแสดงรายละเอียดลงใน Modal
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
-      
-      const deepLinkBtn = document.getElementById('modalDeepLink');
-      if (item.url) {
-        deepLinkBtn.href = item.url;
-        deepLinkBtn.style.display = 'inline-block';
-      } else {
-        deepLinkBtn.style.display = 'none';
-      }
-    
+    function openDetailModal(item) {
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('detailModalOverlay');
+      const titleEl = document.getElementById('modalTitle');
+      const priceEl = document.getElementById('modalPrice');
+      const descEl = document.getElementById('modalDesc');
+      const linkEl = document.getElementById('modalDeepLink');
       const slider = document.getElementById('modalSlider');
-      slider.innerHTML = '';
-      if (item.images && item.images.length > 0) {
-        item.images.forEach(imgUrl => {
-          const img = document.createElement('img');
-          img.src = imgUrl;
-          slider.appendChild(img);
-        });
-      } else {
-         const placeholder = document.createElement('div');
-         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
-         placeholder.innerText = 'ไม่มีรูปภาพ';
-         slider.appendChild(placeholder);
-      }
-      
-      document.getElementById('detailModalOverlay').classList.add('active');
-    
-      // 3. เพิ่มส่วนนี้: ส่งข้อมูลบ้านไปให้ AI พูดอธิบายต่อทันทีหลังหยุดเสียง
-      const houseSummaryText = `ผู้ใช้เพิ่งเปิดดูบ้านชื่อ ${item.project || item.facebookPostName || 'หลังนี้'} ราคา ${item.salePrice || item.rentPrice || 'ไม่ระบุราคา'} รายละเอียดคือ: ${item.detail || item.description || 'ไม่มีรายละเอียด'} กรุณาสวมบทบาทผู้เชี่ยวชาญพูดสรุปและนำเสนอจุดเด่นของบ้านหลังนี้ให้ผู้ใช้ฟังทันทีสั้นๆ ครับ`;
-      
-      // หน่วงเวลาเล็กน้อย 0.5 วินาทีเพื่อให้แน่ใจว่าระบบเสียงเคลียร์เรียบร้อยแล้วค่อยให้ AI พูด
-      setTimeout(() => {
-        if (typeof sendTextToAI === 'function') {
-          sendTextToAI(houseSummaryText);
+
+      const title = getPropValue(item, ['โครงการ', 'ลักษณะกิจการ', 'ประเภทอสังหา'], 'รายละเอียดอสังหาริมทรัพย์');
+      const priceSale = getPropValue(item, ['ราคาขาย']);
+      const priceRent = getPropValue(item, ['ราคาเช่า']);
+      let priceStr = '';
+      if (priceSale) priceStr += `ขาย: ${priceSale} `;
+      if (priceRent) priceStr += `เช่า: ${priceRent}`;
+      if (!priceStr) priceStr = 'ติดต่อสอบถาม';
+
+      const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)'], 'ไม่มีรายละเอียดเพิ่มเติม');
+      const url = getPropValue(item, ['url'], '#');
+
+      if (titleEl) titleEl.innerText = title;
+      if (priceEl) priceEl.innerText = priceStr;
+      if (descEl) descEl.innerText = desc;
+      if (linkEl) linkEl.href = url;
+
+      if (slider) {
+        slider.innerHTML = '';
+        const imgUrl = getPropValue(item, ['use', 'use2', 'use3', 'use4', 'use5']);
+        if (imgUrl) {
+          slider.innerHTML = `<img src="${imgUrl}" alt="property image" onerror="this.style.display='none'">`;
+        } else {
+          slider.innerHTML = `<div style="width:100%; height:150px; background:#eee; border-radius:15px; display:flex; align-items:center; justify-content:center; color:#888;">ไม่มีรูปภาพ</div>`;
         }
-      }, 500);
+      }
+
+      if (modal) modal.classList.add('active');
+
+      if (AppState.voice.isActive && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
+        const houseInfo = `ผู้ใช้กำลังดูบ้าน: ${title}, ราคา: ${priceStr}, รายละเอียด: ${desc}`;
+        sendTextToAI(`ผู้ใช้เปิดดูรายละเอียดบ้านหลังนี้ ให้สวมบทบาทเป็นผู้เชี่ยวชาญอธิบายข้อมูลบ้านหลังนี้ให้ผู้ใช้ฟัง: ${houseInfo}`);
+      }
     }
 
     function closeDetailModal() {
-      document.getElementById('detailModalOverlay').classList.remove('active');
-    }
-
-    function loadNextPage() {
-      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('detailModalOverlay');
+      if (modal) modal.classList.remove('active');
     }
 
     function retryNextPage() {
-      loadNextPage();
+      const fallback = document.getElementById('fallbackRetryCard');
+      if (fallback) fallback.style.display = 'none';
+      fetchDatabase(AppState.pagination.lastCriteria, getSelectedCriteria(), false, AppState.pagination.lastSearchText);
     }
 
+    function loadNextPage() {
+      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText);
+    }
+
+    // ==========================================
+    // 7. SUPABASE REAL-TIME USER CHAT FUNCTIONS
+    // ==========================================
+    
+    // ฟังก์ชันเปิดห้องแชทและดักฟังข้อความใหม่ (Subscribe)
+    function openChatRoom(roomId) {
+      currentChatRoomId = roomId;
+      const container = document.getElementById('chatMessagesContainer');
+      if (container) container.innerHTML = '';
+
+      // หากมี channel เก่าอยู่ให้ยกเลิกก่อนสลับห้อง
+      if (activeChannel) {
+        supabaseClient.removeChannel(activeChannel);
+      }
+
+      // ดึงประวัติแชทเก่าก่อน
+      fetchChatHistory(roomId);
+
+      // ดักฟังการ INSERT ข้อความใหม่เฉพาะ room_id นี้
+      activeChannel = supabaseClient
+        .channel(`chat_room_${roomId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `room_id=eq.${roomId}`
+          },
+          (payload) => {
+            const newMessage = payload.new;
+            renderMessageToUI(newMessage);
+          }
+        )
+        .subscribe();
+    }
+
+    // ฟังก์ชันส่งข้อความเข้าฐานข้อมูล (Publish)
+    async function sendMessage(roomId, senderId, messageText) {
+      if (!messageText.trim()) return;
+
+      const { data, error } = await supabaseClient
+        .from('chat_messages')
+        .insert([
+          {
+            room_id: roomId,
+            sender_id: senderId,
+            content: messageText
+          }
+        ]);
+
+      if (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+
+    // ดึงประวัติแชทล่าสุด
+    async function fetchChatHistory(roomId) {
+      const { data: messages, error } = await supabaseClient
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching chat history:', error);
+        return;
+      }
+
+      // นำรายการข้อความไป Render ลงในหน้าจอ
+      messages.forEach((msg) => renderMessageToUI(msg));
+    }
+
+    // นำข้อความไป Render ใน UI
+    function renderMessageToUI(msg) {
+      const container = document.getElementById('chatMessagesContainer');
+      if (!container) return;
+
+      const bubble = document.createElement('div');
+      const isSent = (msg.sender_id === currentSenderId);
+      bubble.className = `chat-bubble ${isSent ? 'sent' : 'received'}`;
+      bubble.innerText = msg.content || msg.messageText || '';
+
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // ฟังก์ชัน UI เปิด/ปิด Modal User Chat
     function openUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.add('active');
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.add('active');
+      openChatRoom(currentChatRoomId);
     }
 
     function closeUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.remove('active');
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('userChatModalOverlay');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function selectChatRoom(roomTitle, senderName) {
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) titleEl.innerText = roomTitle;
+      
+      const roomId = roomTitle.replace(/\s+/g, '_');
+      openChatRoom(roomId);
+
+      const items = document.querySelectorAll('.chat-item-card');
+      items.forEach(item => item.classList.remove('active'));
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      sendMessage(currentChatRoomId, currentSenderId, text);
+      input.value = '';
     }
 
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
+      if (!listZone || !roomZone) return;
+
       if (zone === 'list') {
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
@@ -2497,30 +2629,6 @@
         listZone.classList.remove('expanded');
       }
     }
-
-    function selectChatRoom(title, personName) {
-      document.getElementById('chatActiveTitle').innerText = title;
-      const items = document.querySelectorAll('.chat-item-card');
-      items.forEach(el => el.classList.remove('active'));
-      if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.classList.add('active');
-      }
-    }
-
-    function sendChatMessage() {
-      const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
-      const text = input.value.trim();
-      if (!text) return;
-      
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble sent';
-      bubble.innerText = text;
-      container.appendChild(bubble);
-      input.value = '';
-      container.scrollTop = container.scrollHeight;
-    }
-  </script>
+</script>
 </body>
 </html>
