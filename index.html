@@ -2223,41 +2223,56 @@
     }
 
     async function stopVoiceSession() {
-      AppState.voice.isActive = false;
-      AppState.voice.isSetupReady = false;
-      AppState.voice.silenced = false;
-      AppState.data.isFetching = false;
-      
-      if (AppState.voice.ws) {
-        AppState.voice.ws.onclose = null;
-        AppState.voice.ws.close();
-        AppState.voice.ws = null;
-      }
-      if (AppState.voice.mediaStream) {
-        AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
-        AppState.voice.mediaStream = null;
-      }
-      
-      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
-        try { await AppState.voice.audioCtx.close(); } catch(e) {}
-      }
-      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
-        try { await AppState.voice.audioOutCtx.close(); } catch(e) {}
-      }
-
-      const btn = document.getElementById('toggleBtn');
-      const avatar = document.getElementById('avatarCircle');
-      const statusText = document.getElementById('statusText');
-
-      if (btn) {
-        btn.innerHTML = "🎙️คุยกับAI";
-        btn.classList.remove('active');
-      }
-      if (avatar) avatar.classList.remove('pulse-animation');
-      if (statusText) {
-        statusText.classList.remove('loading-pulse');
-      }
-    }
+          AppState.voice.isActive = false;
+          AppState.voice.isSetupReady = false;
+          AppState.voice.silenced = false;
+          AppState.data.isFetching = false;
+          
+          if (AppState.voice.ws) {
+            AppState.voice.ws.onclose = null;
+            AppState.voice.ws.close();
+            AppState.voice.ws = null;
+          }
+          if (AppState.voice.mediaStream) {
+            AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
+            AppState.voice.mediaStream = null;
+          }
+          
+          if (AppState.voice.audioCtx) {
+            if (AppState.voice.audioCtx.state !== 'closed' && AppState.voice.audioCtx.state !== 'closing') {
+              try {
+                await AppState.voice.audioCtx.close();
+              } catch (e) {
+                console.warn("AudioContext already closed or closing:", e);
+              }
+            }
+          }
+    
+          if (AppState.voice.audioOutCtx) {
+            if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
+              try {
+                await AppState.voice.audioOutCtx.close();
+              } catch (e) {
+                console.warn("AudioOutContext already closed or closing:", e);
+              }
+            }
+          }
+    
+          const btn = document.getElementById('toggleBtn');
+          const avatar = document.getElementById('avatarCircle');
+          const statusText = document.getElementById('statusText');
+          if (btn) {
+            btn.innerHTML = "🎙️คุยกับAI";
+            btn.classList.remove('active');
+          }
+          if (avatar) {
+            avatar.classList.remove('pulse-animation');
+          }
+          if (statusText) {
+            statusText.classList.remove('loading-pulse');
+            statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
+          }
+        }
 
     // ==========================================
     // 6. DATABASE & TARGETED INFINITE SCROLLING
