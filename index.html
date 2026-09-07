@@ -2387,7 +2387,10 @@
     }
 
     function showDetailModal(item) {
-      stopAIVoiceSpeech();
+      // 1. สั่งหยุดเสียง AI ก่อนตามเงื่อนไข
+      stopAIVoiceSpeech(); 
+    
+      // 2. โค้ดเดิมสำหรับแสดงรายละเอียดลงใน Modal
       document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
       document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
       document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
@@ -2399,7 +2402,7 @@
       } else {
         deepLinkBtn.style.display = 'none';
       }
-
+    
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       if (item.images && item.images.length > 0) {
@@ -2416,6 +2419,16 @@
       }
       
       document.getElementById('detailModalOverlay').classList.add('active');
+    
+      // 3. เพิ่มส่วนนี้: ส่งข้อมูลบ้านไปให้ AI พูดอธิบายต่อทันทีหลังหยุดเสียง
+      const houseSummaryText = `ผู้ใช้เพิ่งเปิดดูบ้านชื่อ ${item.project || item.facebookPostName || 'หลังนี้'} ราคา ${item.salePrice || item.rentPrice || 'ไม่ระบุราคา'} รายละเอียดคือ: ${item.detail || item.description || 'ไม่มีรายละเอียด'} กรุณาสวมบทบาทผู้เชี่ยวชาญพูดสรุปและนำเสนอจุดเด่นของบ้านหลังนี้ให้ผู้ใช้ฟังทันทีสั้นๆ ครับ`;
+      
+      // หน่วงเวลาเล็กน้อย 0.5 วินาทีเพื่อให้แน่ใจว่าระบบเสียงเคลียร์เรียบร้อยแล้วค่อยให้ AI พูด
+      setTimeout(() => {
+        if (typeof sendTextToAI === 'function') {
+          sendTextToAI(houseSummaryText);
+        }
+      }, 500);
     }
 
     function closeDetailModal() {
