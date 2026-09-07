@@ -28,6 +28,40 @@
       overflow: hidden;
     }
 
+    /* --- ปุ่ม คุยกับ AI (Global / Topmost Layer / Floating Top-Right) --- */
+    .voice-btn {
+      position: fixed !important;
+      top: 15px !important;
+      right: 15px !important;
+      z-index: 1000000 !important;
+      flex: 0 0 auto;
+      height: 44px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(5px);
+      background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
+      color: white;
+    }
+    .voice-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(74, 131, 204, 0.35);
+    }
+    .voice-btn.active {
+      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+      box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
+    }
+
     /* --- ส่วนบน: AI Voice & Tabs Container --- */
     #ai-section {
       height: auto;
@@ -74,8 +108,8 @@
       transform: translateX(-50%);
     }
 
-    /* ปรับแต่งปุ่มทั้งสองให้มีขนาดพอดีกับข้อความ */
-    #locationFilterBtn, .voice-btn {
+    /* ปรับแต่งปุ่มพิกัดให้มีขนาดพอดีกับข้อความ */
+    #locationFilterBtn {
       flex: 0 0 auto;
       height: 44px;
       padding: 6px 16px;
@@ -92,9 +126,6 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 1px solid rgba(255, 255, 255, 0.6);
       backdrop-filter: blur(5px);
-    }
-
-    #locationFilterBtn {
       background: linear-gradient(135deg, #0e6b38 0%, #159947 100%);
       color: #ffffff;
     }
@@ -105,24 +136,6 @@
     #locationFilterBtn:active {
       transform: translateY(0);
       background-color: #0a522a;
-    }
-
-    /* ปุ่ม คุยกับAI อยู่ตำแหน่งบนสุดและขวาสุด */
-    .voice-btn {
-      position: relative;
-      bottom: auto;
-      right: auto;
-      z-index: 100;
-      background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
-      color: white;
-    }
-    .voice-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(74, 131, 204, 0.35);
-    }
-    .voice-btn.active {
-      background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-      box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
     }
 
     .mascot-img { 
@@ -769,15 +782,17 @@
 </head>
 <body>
 
+  <!-- ปุ่ม คุยกับAI ติดตั้งที่ Root Layout (Topmost Layer ลอยติดมุมขวาบนเสมอบนทุกหน้า) -->
+  <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️คุยกับAI</button>
+
   <div id="ai-section">
-    <!-- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัด, โลโก้บ้านและหุ่นยนต์ตรงกลาง, ปุ่มคุยกับAI บนสุดขวาสุด) -->
+    <!-- บรรทัดที่ 1: ส่วนหัว (ปุ่มพิกัด, โลโก้บ้านและหุ่นยนต์ตรงกลาง) -->
     <div class="ai-controls-row">
       <button class="filter-btn" id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <div class="header-center-logos">
         <img src="https://lh3.googleusercontent.com/d/1C8ZDsF7NCYqjwZPUuOlZ0RyjrT86k8HD" alt="Mascot" class="mascot-img">
         <div id="avatarCircle" class="ai-avatar">🤖</div>
       </div>
-      <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️คุยกับAI</button>
     </div>
 
     <!-- แถบระบบนำทาง 4 แท็บ (ดีไซน์เชื่อมติดกัน Connected Tab Style) -->
@@ -1047,8 +1062,7 @@
       </div>
     </div>
   </div>
-
-  <script>
+<script>
     // ==========================================
     // 1. CONFIGURATION & CONSTANTS
     // ==========================================
@@ -1066,8 +1080,7 @@
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
 
-
-// ตัวแปรสำหรับระบบพิกัดและแผนที่
+    // ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
@@ -2472,24 +2485,24 @@
       document.getElementById('chatActiveTitle').innerText = title;
       const items = document.querySelectorAll('.chat-item-card');
       items.forEach(el => el.classList.remove('active'));
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+      if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
       }
-      expandChatZone('room');
     }
 
     function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
+      const container = document.getElementById('chatMessagesContainer');
+      if (!input || !container) return;
       const text = input.value.trim();
-      if (text !== '') {
-        const container = document.getElementById('chatMessagesContainer');
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-bubble sent';
-        bubble.innerText = text;
-        container.appendChild(bubble);
-        input.value = '';
-        container.scrollTop = container.scrollHeight;
-      }
+      if (!text) return;
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble sent';
+      bubble.innerText = text;
+      container.appendChild(bubble);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
     }
   </script>
 </body>
