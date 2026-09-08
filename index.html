@@ -7,6 +7,8 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- เพิ่ม Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --text-main: #5c3a6b;
@@ -341,7 +343,7 @@
       margin-top: 5px;
     }
 
-    /* --- ส่วนล่าง: List View --- */
+/* --- ส่วนล่าง: List View --- */
     #list-section {
       flex: 1;
       overflow-y: auto;
@@ -780,6 +782,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- ปุ่ม คุยกับAI ติดตั้งที่ Root Layout (Topmost Layer ลอยติดมุมขวาบนเสมอบนทุกหน้า) -->
@@ -1040,19 +1043,11 @@
              onpointerdown="expandChatZone('room')" 
              onmouseenter="expandChatZone('room')">
           <div class="chat-room-header">
-            <div class="chat-room-title" id="chatActiveTitle">🐔 ร้านข้าวมันไก่ป้าต้อย</div>
+            <div class="chat-room-title" id="chatActiveTitle">ห้อง 101 - คุณนัท</div>
             <span style="font-size: 11px; color: #28a745; font-weight: bold;">🟢 ออนไลน์</span>
           </div>
           <div class="chat-messages-container" id="chatMessagesContainer">
-            <div class="chat-bubble received">
-              สวัสดีค่ะ สนใจสั่งข้าวมันไก่เมนูไหนสอบถามได้เลยนะคะ
-            </div>
-            <div class="chat-bubble sent">
-              ข้าวมันไก่เนื้อน่องพิเศษ 1 ห่อ ส่งหน้าคอนโด A ตอนนี้ได้ไหมครับ?
-            </div>
-            <div class="chat-bubble received">
-              ได้เลยจ้ะ อีก 10 นาทีเดินไปส่งให้ ฟรีค่าส่งนะ!
-            </div>
+            <!-- ข้อความจะถูกดึงมาจาก Supabase -->
           </div>
           <div class="chat-input-bar">
             <input type="text" class="chat-input-field" id="chatMessageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key === 'Enter') { sendChatMessage(); }">
@@ -1125,7 +1120,54 @@
       }
     };
 
-    function getPropValue(item, possibleKeys, defaultVal = '') {
+    // ==========================================
+    // Supabase Chat Setup
+    // ==========================================
+    const SUPABASE_URL = 'https://eywnasnyumqmlezjginj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const CURRENT_ROOM_ID = 101;
+    const CURRENT_USER_ID = 1;
+
+    function displayMessageOnUI(msg) {
+      const container = document.getElementById('chatMessagesContainer');
+      if (!container) return;
+      const bubble = document.createElement('div');
+      const isMe = msg.sender_id === CURRENT_USER_ID;
+      bubble.className = `chat-bubble ${isMe ? 'sent' : 'received'}`;
+      bubble.innerText = msg.content;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function loadChatHistory() {
+      const container = document.getElementById('chatMessagesContainer');
+      if (container) container.innerHTML = ''; 
+      
+      const { data: messages } = await supabaseClient
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', CURRENT_ROOM_ID)
+        .order('created_at', { ascending: true });
+
+      if (messages) {
+        messages.forEach(msg => displayMessageOnUI(msg));
+      }
+    }
+
+    function initRealtime() {
+      supabaseClient
+        .channel(`room_${CURRENT_ROOM_ID}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${CURRENT_ROOM_ID}` },
+          (payload) => displayMessageOnUI(payload.new)
+        )
+        .subscribe();
+    }
+
+function getPropValue(item, possibleKeys, defaultVal = '') {
       if (!item) return defaultVal;
       const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
       for (const k of keys) {
@@ -1168,6 +1210,10 @@
           startVoiceSession();
         }
       }, 1000);
+      
+      // เริ่มต้นระบบ Chat Supabase
+      loadChatHistory();
+      initRealtime();
 
       const listSection = document.getElementById('list-section');
       const aiSection = document.getElementById('ai-section');
@@ -2507,19 +2553,19 @@
       }
     }
 
-    function sendChatMessage() {
+    async function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
       const container = document.getElementById('chatMessagesContainer');
       if (!input || !container) return;
       const text = input.value.trim();
       if (!text) return;
       
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble sent';
-      bubble.innerText = text;
-      container.appendChild(bubble);
       input.value = '';
-      container.scrollTop = container.scrollHeight;
+      
+      // บันทึกข้อความเข้า Supabase
+      await supabaseClient.from('chat_messages').insert([
+        { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+      ]);
     }
   </script>
 </body>
