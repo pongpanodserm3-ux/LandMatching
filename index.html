@@ -1240,7 +1240,8 @@
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
     }
-  // === โค้ดที่นำมาวางเพิ่มตรงนี้ (ก่อนถึง window.addEventListener) ===
+  // === โค้ดที่นำมาวางเพิ่มตรงนี้ (ก่อนถึง window.addEventListener) ===1244-1279
+// === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) ===
       async function checkAndDisplayMemberStatus() {
         const urlParams = new URLSearchParams(window.location.search);
         let lineId = urlParams.get('lineId');
@@ -1254,6 +1255,7 @@
           } catch (e) {}
         }
   
+        // ทำการตรวจสอบสถานะในฐานข้อมูล Supabase เหมือนเดิม
         if (lineId) {
           let isMember = false;
           try {
@@ -1270,6 +1272,7 @@
             console.error("Error checking membership:", err);
           }
   
+          // แสดงผล LINE ID เสมอ (ไม่ว่าจะเป็นสมาชิกหรือไม่ก็ตาม) พร้อมระบุสถานะต่อท้าย
           const welcomeHeader = document.querySelector('#resultsContainer h3');
           if (welcomeHeader) {
             const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
