@@ -1240,10 +1240,49 @@
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
     }
-
+  // === โค้ดที่นำมาวางเพิ่มตรงนี้ (ก่อนถึง window.addEventListener) ===
+      async function checkAndDisplayMemberStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let lineId = urlParams.get('lineId');
+  
+        if (!lineId && typeof liff !== 'undefined' && liff.isLoggedIn()) {
+          try {
+            const profile = await liff.getProfile();
+            if (profile && profile.userId) {
+              lineId = profile.userId;
+            }
+          } catch (e) {}
+        }
+  
+        if (lineId) {
+          let isMember = false;
+          try {
+            const { data, error } = await supabaseClient
+              .from('users')
+              .select('*')
+              .eq('line_id', lineId)
+              .maybeSingle();
+  
+            if (data) {
+              isMember = true;
+            }
+          } catch (err) {
+            console.error("Error checking membership:", err);
+          }
+  
+          const welcomeHeader = document.querySelector('#resultsContainer h3');
+          if (welcomeHeader) {
+            const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
+            welcomeHeader.innerText = `LINE ID: ${lineId}${memberLabel} - ยินดีต้อนรับสู่ LINE Messaging`;
+          }
+        }
+      }
+  
     window.addEventListener('load', () => {
       // เรียกใช้งาน LIFF SDK พร้อมดึง line_id บันทึกลงตาราง users บน Supabase [b1]
-      initLIFF();
+      initLIFF().then(() => {
+          checkAndDisplayMemberStatus();
+        });
 
       setTimeout(() => {
         if (!AppState.voice.isActive && !AppState.voice.ws) {
