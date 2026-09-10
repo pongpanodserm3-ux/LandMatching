@@ -1240,24 +1240,30 @@
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
     }
-  // === โค้ดที่นำมาวางเพิ่มตรงนี้ (ก่อนถึง window.addEventListener) ===1244-1279
-// === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) ===
-      async function checkAndDisplayMemberStatus() {
+// === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) === 1243-1299
+async function checkAndDisplayMemberStatus() {
         const urlParams = new URLSearchParams(window.location.search);
         let lineId = urlParams.get('lineId');
   
-        if (!lineId && typeof liff !== 'undefined' && liff.isLoggedIn()) {
+        // ถ้าไม่มีใน URL ให้ลองดึงจาก LIFF SDK โดยตรง
+        if (!lineId && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
           try {
+            if (!liff.isLoggedIn()) {
+              liff.login();
+              return;
+            }
             const profile = await liff.getProfile();
             if (profile && profile.userId) {
               lineId = profile.userId;
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error("LIFF Profile Error:", e);
+          }
         }
   
-        // ทำการตรวจสอบสถานะในฐานข้อมูล Supabase เหมือนเดิม
+        // ตรวจสอบสถานะสมาชิกใน Supabase
+        let isMember = false;
         if (lineId) {
-          let isMember = false;
           try {
             const { data, error } = await supabaseClient
               .from('users')
@@ -1271,12 +1277,23 @@
           } catch (err) {
             console.error("Error checking membership:", err);
           }
+        }
   
-          // แสดงผล LINE ID เสมอ (ไม่ว่าจะเป็นสมาชิกหรือไม่ก็ตาม) พร้อมระบุสถานะต่อท้าย
-          const welcomeHeader = document.querySelector('#resultsContainer h3');
-          if (welcomeHeader) {
-            const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
-            welcomeHeader.innerText = `LINE ID: ${lineId}${memberLabel} - ยินดีต้อนรับสู่ LINE Messaging`;
+        // ค้นหาตำแหน่งแสดงผล (รองรับทั้ง h3 เดิม หรือสร้างกล่องแสดงผลด่วนถ้ายังไม่มี)
+        const container = document.getElementById('resultsContainer');
+        if (container) {
+          const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
+          const displayLineId = lineId ? lineId : "ไม่พบ LINE ID (เปิดนอก LIFF / เบราว์เซอร์ปกติ)";
+          
+          let targetHeading = container.querySelector('h3');
+          if (targetHeading) {
+            targetHeading.innerText = `LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching`;
+          } else {
+            // ถ้ายังไม่มี h3 ให้สร้างกล่องแสดงผลแทรกไว้ด้านบนสุดของผลลัพธ์
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid #d0e0f0;';
+            banner.innerHTML = `<h3 style="margin:0; font-size: 16px; color: var(--text-main);">LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching</h3>`;
+            container.insertBefore(banner, container.firstChild);
           }
         }
       }
