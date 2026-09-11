@@ -1242,9 +1242,8 @@
     }
 // === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) === 1243-1299
 async function checkAndDisplayMemberStatus() {
-        const userId = localStorage.getItem('line_user_id');
         const urlParams = new URLSearchParams(window.location.search);
-        let lineId = urlParams.get('lineId');
+        let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
   
         // ถ้าไม่มีใน URL ให้ลองดึงจาก LIFF SDK โดยตรง
         if (!lineId && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
