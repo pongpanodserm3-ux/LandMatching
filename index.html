@@ -1241,64 +1241,67 @@
       if (activeContent) activeContent.style.display = 'block';
     }
 // === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) === 1243-1299
-async function checkAndDisplayMemberStatus() {
-        const urlParams = new URLSearchParams(window.location.search);
-  
-        let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
-        console.log("LINE ID ของผู้ใช้คือ:", userId); // ใส่หรือไม่ก็ได้ตามต้องการเพื่อ Debug
-  
-        // ถ้าไม่มีใน URL ให้ลองดึงจาก LIFF SDK โดยตรง
-        if (!lineId && typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
-          try {
-            if (!liff.isLoggedIn()) {
-              liff.login();
-              return;
-            }
-            const profile = await liff.getProfile();
-            if (profile && profile.userId) {
-              lineId = profile.userId;
-            }
-          } catch (e) {
-            console.error("LIFF Profile Error:", e);
+    async function checkAndDisplayMemberStatus() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
+
+      // ถ้าไม่มีใน URL และ LocalStorage ให้ดึงจาก LIFF SDK โดยตรง
+      if (!lineId && typeof liff !== 'undefined') {
+        try {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
           }
-        }
-  
-        // ตรวจสอบสถานะสมาชิกใน Supabase
-        let isMember = false;
-        if (lineId) {
-          try {
-            const { data, error } = await supabaseClient
-              .from('users')
-              .select('*')
-              .eq('line_id', lineId)
-              .maybeSingle();
-  
-            if (data) {
-              isMember = true;
-            }
-          } catch (err) {
-            console.error("Error checking membership:", err);
+          const profile = await liff.getProfile();
+          if (profile && profile.userId) {
+            lineId = profile.userId;
+            currentUserLineProfile = profile;
+            localStorage.setItem('line_user_id', lineId);
+            await saveUserLineIdToSupabase(profile);
           }
-        }
-  
-        // ค้นหาตำแหน่งแสดงผล (รองรับทั้ง h3 เดิม หรือสร้างกล่องแสดงผลด่วนถ้ายังไม่มี)
-        const container = document.getElementById('resultsContainer');
-        if (container) {
-          const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
-          const displayLineId = lineId ? lineId : "ไม่พบ LINE ID (เปิดนอก LIFF / เบราว์เซอร์ปกติ)";
-          
-          let targetHeading = container.querySelector('h3');
-          if (targetHeading) {
-            targetHeading.innerText = `LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching`;
-          } else {
-            // ถ้ายังไม่มี h3 ให้สร้างกล่องแสดงผลแทรกไว้ด้านบนสุดของผลลัพธ์
-            const banner = document.createElement('div');
-            banner.style.cssText = 'background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid #d0e0f0;';
-            banner.innerHTML = `<h3 style="margin:0; font-size: 16px; color: var(--text-main);">LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching</h3>`;
-            container.insertBefore(banner, container.firstChild);
-          }
+        } catch (e) {
+          console.error("LIFF Profile Error:", e);
         }
       }
+
+      // แก้ไข: เปลี่ยนจาก userId เป็น lineId เพื่อป้องกัน ReferenceError
+      console.log("LINE ID ของผู้ใช้คือ:", lineId);
+
+      // ตรวจสอบสถานะสมาชิกใน Supabase
+      let isMember = false;
+      if (lineId) {
+        try {
+          const { data, error } = await supabaseClient
+            .from('users')
+            .select('*')
+            .eq('line_id', lineId)
+            .maybeSingle();
+
+          if (data) {
+            isMember = true;
+          }
+        } catch (err) {
+          console.error("Error checking membership:", err);
+        }
+      }
+
+      // ค้นหาตำแหน่งแสดงผลบน UI
+      const container = document.getElementById('resultsContainer');
+      if (container) {
+        const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
+        const displayLineId = lineId ? lineId : "ไม่พบ LINE ID (เปิดนอก LIFF / เบราว์เซอร์ปกติ)";
+        
+        let targetHeading = container.querySelector('h3');
+        if (targetHeading) {
+          targetHeading.innerText = `LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching`;
+        } else {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid #d0e0f0;';
+          banner.innerHTML = `<h3 style="margin:0; font-size: 16px; color: var(--text-main);">LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching</h3>`;
+          container.insertBefore(banner, container.firstChild);
+        }
+      }
+    }
   
     window.addEventListener('load', () => {
       // เรียกใช้งาน LIFF SDK พร้อมดึง line_id บันทึกลงตาราง users บน Supabase [b1]
