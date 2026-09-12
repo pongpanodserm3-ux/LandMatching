@@ -780,12 +780,13 @@
     .chat-send-btn:active {
       transform: scale(0.96);
     }
+    
+    /* --- Card Image Slider (Command 1) --- */
+    .card-img-slider::-webkit-scrollbar { display: none; }
   </style>
 </head>
-
 <body>
-
-  <!-- ปุ่ม คุยกับAI ติดตั้งที่ Root Layout (Topmost Layer ลอยติดมุมขวาบนเสมอบนทุกหน้า) -->
+<!-- ปุ่ม คุยกับAI ติดตั้งที่ Root Layout (Topmost Layer ลอยติดมุมขวาบนเสมอบนทุกหน้า) -->
   <button id="toggleBtn" onclick="toggleVoiceSession()" class="voice-btn">🎙️คุยกับAI</button>
 
   <div id="ai-section">
@@ -993,8 +994,7 @@
     <span class="chat-icon">💬</span>
     <span>user chat</span>
   </div>
-
-  <!-- หน้าต่าง User Chat แยกเป็น 2 ฝั่ง (Chat List / Chat Room) -->
+<!-- หน้าต่าง User Chat แยกเป็น 2 ฝั่ง (Chat List / Chat Room) -->
   <div class="chat-modal-overlay" id="userChatModalOverlay">
     <div class="chat-container-card">
       <div class="chat-header-bar">
@@ -1074,7 +1074,6 @@
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
 
-    // ตัวแปรสำหรับระบบพิกัดและแผนที่
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
@@ -1096,7 +1095,7 @@
         processor: null,
         audioOutCtx: null,
         nextPlayTime: 0,
-        hasGreeted: false, // ป้องกันการให้ AI แนะนำตัวซ้ำซ้อน
+        hasGreeted: false, 
         silenced: false
       },
       data: {
@@ -1120,7 +1119,7 @@
     };
 
     // ==========================================
-    // Supabase Chat Setup
+    // Supabase Chat Setup & Logic
     // ==========================================
     const SUPABASE_URL = 'https://eywnasnyumqmlezjginj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
@@ -1128,10 +1127,7 @@
 
     const CURRENT_ROOM_ID = 101;
     const CURRENT_USER_ID = 1;
-
-    // ==========================================
-    // [b1] LINE LIFF SDK Initialization & Supabase users table sync
-    // ==========================================
+    let activeChatRoomId = CURRENT_ROOM_ID; // ตัวแปรคุมห้องแชทปัจจุบัน
     let currentUserLineProfile = null;
 
     async function initLIFF() {
@@ -1157,11 +1153,7 @@
         const { data, error } = await supabaseClient
           .from('users')
           .upsert({ line_id: lineId }, { onConflict: 'line_id' });
-        if (error) {
-          console.error("Error saving line_id to Supabase users table:", error);
-        } else {
-          console.log("Successfully synced line_id to Supabase users table:", lineId);
-        }
+        if (error) console.error("Error saving line_id:", error);
       } catch (e) {
         console.error("Exception in saveUserLineIdToSupabase:", e);
       }
@@ -1171,718 +1163,52 @@
       const container = document.getElementById('chatMessagesContainer');
       if (!container) return;
       const bubble = document.createElement('div');
-      const isMe = msg.sender_id === CURRENT_USER_ID;
+      const isMe = String(msg.sender_id) === String(CURRENT_USER_ID);
       bubble.className = `chat-bubble ${isMe ? 'sent' : 'received'}`;
       bubble.innerText = msg.content;
       container.appendChild(bubble);
       container.scrollTop = container.scrollHeight;
     }
 
-    async function loadChatHistory() {
+    // ฟังก์ชันเปิดคุยกับเจ้าของโดยเฉพาะ (เชื่อมระบบแชท)
+    function openOwnerChat(ownerName, roomId) {
+      activeChatRoomId = roomId; 
+      openUserChatModal();
+      selectChatRoom(ownerName, ownerName); 
+      expandChatZone('room'); 
+      loadChatHistory(activeChatRoomId);
+    }
+
+    // สมบูรณ์การดึงข้อมูลจาก Supabase ที่ขาดหายไป
+    async function loadChatHistory(roomId = activeChatRoomId) {
       const container = document.getElementById('chatMessagesContainer');
       if (container) container.innerHTML = ''; 
       
-      const { data: messages } = await supabaseClient
-        .from('chat_messages')
-        .select('*')
-        .eq('room_id', CURRENT_ROOM_ID)
-        .order('created_at', { ascending: true });
-
-      if (messages) {
-        messages.forEach(msg => displayMessageOnUI(msg));
-      }
-    }
-
-    function initRealtime() {
-      supabaseClient
-        .channel(`room_${CURRENT_ROOM_ID}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${CURRENT_ROOM_ID}` },
-          (payload) => displayMessageOnUI(payload.new)
-        )
-        .subscribe();
-    }
-
-    function getPropValue(item, possibleKeys, defaultVal = '') {
-      if (!item) return defaultVal;
-      const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
-      for (const k of keys) {
-        if (item[k] !== undefined && item[k] !== null && String(item[k]).trim() !== '') {
-          return item[k];
-        }
-      }
-      return defaultVal;
-    }
-
-    // ==========================================
-    // 3. UI, TABS & INFINITE SCROLL BINDINGS
-    // ==========================================
-    function switchTab(tabId) {
-      stopAIVoiceSpeech();
-      
-      // ขยายแผงค้นหากลับมา (หากอยู่ในสถานะยุบตัว) เมื่อผู้ใช้กดสลับแท็บ
-      const aiSection = document.getElementById('ai-section');
-      if (aiSection && aiSection.classList.contains('collapsed')) {
-        aiSection.classList.remove('collapsed');
-      }
-
-      const tabs = ['realestate', 'decor', 'lifestyle', 'others'];
-      tabs.forEach(id => {
-        const btn = document.getElementById('tab-btn-' + id);
-        const content = document.getElementById('tab-content-' + id);
-        if (btn) btn.classList.remove('active');
-        if (content) content.style.display = 'none';
-      });
-
-      const activeBtn = document.getElementById('tab-btn-' + tabId);
-      const activeContent = document.getElementById('tab-content-' + tabId);
-      if (activeBtn) activeBtn.classList.add('active');
-      if (activeContent) activeContent.style.display = 'block';
-    }
-// === ฟังก์ชันตรวจสอบและแสดง LINE ID (แสดงทุกคน + ตรวจสอบสถานะสมาชิก) === 1243-1299
-    async function checkAndDisplayMemberStatus() {
-      const urlParams = new URLSearchParams(window.location.search);
-      let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
-
-      // ถ้าไม่มีใน URL และ LocalStorage ให้ดึงจาก LIFF SDK โดยตรง
-      if (!lineId && typeof liff !== 'undefined') {
-        try {
-          if (!liff.isLoggedIn()) {
-            liff.login();
-            return;
-          }
-          const profile = await liff.getProfile();
-          if (profile && profile.userId) {
-            lineId = profile.userId;
-            currentUserLineProfile = profile;
-            localStorage.setItem('line_user_id', lineId);
-            await saveUserLineIdToSupabase(profile);
-          }
-        } catch (e) {
-          console.error("LIFF Profile Error:", e);
-        }
-      }
-
-      // แก้ไข: เปลี่ยนจาก userId เป็น lineId เพื่อป้องกัน ReferenceError
-      console.log("LINE ID ของผู้ใช้คือ:", lineId);
-
-      // ตรวจสอบสถานะสมาชิกใน Supabase
-      let isMember = false;
-      if (lineId) {
-        try {
-          const { data, error } = await supabaseClient
-            .from('users')
-            .select('*')
-            .eq('line_id', lineId)
-            .maybeSingle();
-
-          if (data) {
-            isMember = true;
-          }
-        } catch (err) {
-          console.error("Error checking membership:", err);
-        }
-      }
-
-      // ค้นหาตำแหน่งแสดงผลบน UI
-      const container = document.getElementById('resultsContainer');
-      if (container) {
-        const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
-        const displayLineId = lineId ? lineId : "ไม่พบ LINE ID (เปิดนอก LIFF / เบราว์เซอร์ปกติ)";
-        
-        let targetHeading = container.querySelector('h3');
-        if (targetHeading) {
-          targetHeading.innerText = `LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching`;
-        } else {
-          const banner = document.createElement('div');
-          banner.style.cssText = 'background: #f0f4f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px solid #d0e0f0;';
-          banner.innerHTML = `<h3 style="margin:0; font-size: 16px; color: var(--text-main);">LINE ID: ${displayLineId}${memberLabel} - ยินดีต้อนรับสู่ Land Matching</h3>`;
-          container.insertBefore(banner, container.firstChild);
-        }
-      }
-    }
-  
-    window.addEventListener('load', () => {
-      // เรียกใช้งาน LIFF SDK พร้อมดึง line_id บันทึกลงตาราง users บน Supabase [b1]
-      initLIFF().then(() => {
-          checkAndDisplayMemberStatus();
-        });
-
-      setTimeout(() => {
-        if (!AppState.voice.isActive && !AppState.voice.ws) {
-          startVoiceSession();
-        }
-      }, 1000);
-      
-      // เริ่มต้นระบบ Chat Supabase
-      loadChatHistory();
-      initRealtime();
-
-      const listSection = document.getElementById('list-section');
-      const aiSection = document.getElementById('ai-section');
-      let lastScrollTop = 0;
-
-      if (listSection) {
-        listSection.addEventListener('scroll', () => {
-          let currentScroll = listSection.scrollTop;
+      try {
+        const { data: messages, error } = await supabaseClient
+          .from('chat_messages')
+          .select('*')
+          .eq('room_id', roomId)
+          .order('created_at', { ascending: true });
           
-          // --- Interactive Scroll Logic (ลากนิ้วยุบ/ขยายแผงตัวกรอง) ---
-          if (currentScroll > lastScrollTop && currentScroll > 20) {
-            // เลื่อนหน้าจอลง (ลากนิ้วขึ้น) -> ยุบแผง Detail
-            if (aiSection) aiSection.classList.add('collapsed');
-          } else if (currentScroll < lastScrollTop) {
-            // เลื่อนหน้าจอขึ้น (ลากนิ้วลง) -> ขยายแผง Detail
-            if (aiSection) aiSection.classList.remove('collapsed');
-          }
-          lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-
-          // --- Infinite Scroll Logic ---
-          if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-          
-          const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
-          if (remainingScroll < 600) {
-            loadNextPage();
-          }
-        });
-      }
-
-      document.addEventListener('click', (e) => {
-        const resultsDiv = document.getElementById('placeSearchResults');
-        const searchInput = document.getElementById('placeSearchInput');
-        if (resultsDiv && searchInput && !resultsDiv.contains(e.target) && e.target !== searchInput) {
-          resultsDiv.style.display = 'none';
+        if (!error && messages) {
+          messages.forEach(msg => displayMessageOnUI(msg));
         }
-      });
-    });
-
-    function triggerSearchReset() {
-      testShowList();
-    }
-
-    // ฟังก์ชันสำหรับปุ่มรีเซ็ตค่าทั้งหมด
-    function resetAllFilters() {
-      // 1. รีเซ็ตกล่องข้อความค้นหา (edit box)ในหน้าอสังหาริมทรัพย์
-      const editBox = document.getElementById('customEditBox');
-      if (editBox) editBox.value = '';
-      
-      // 2. รีเซ็ตปุ่ม Dropdown ทั้งหมดให้กลับเป็นค่าเริ่มต้น
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(btn => {
-        const onClickAttr = btn.getAttribute('onclick') || '';
-        if (onClickAttr.includes('openDropdownModal')) {
-          const topicMatch = onClickAttr.match(/openDropdownModal\('([^']+)'\)/);
-          if (topicMatch && topicMatch[1]) {
-            btn.innerText = `${topicMatch[1]} ▾`;
-          }
-        }
-      });
-      
-      // 3. รีเซ็ตพิกัดและเริ่มค้นหาใหม่ (ฟังก์ชัน clearLocationFilter มีการเรียก testShowList() อยู่แล้ว)
-      clearLocationFilter();
-    }
-
-    // ฟังก์ชันคืนค่าตัวเลือกรายการ Dropdown ตามหัวข้อ
-    function getDropdownOptionsForTopic(topic) {
-      if (topic === 'ขาย/เช่า') {
-        return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
-      } else if (topic === 'คอนโด/บ้าน') {
-        return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
-      } else if (topic === 'ราคาขาย') {
-        return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
-      } else if (topic === 'ราคาเช่า') {
-        return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
-      } else if (topic === 'จังหวัด') {
-        return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
-      } else if (topic === 'เขต/อำเภอ') {
-        return ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
-      } else if (topic === 'ถนน') {
-        return ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
-      } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
-        return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
-      } else {
-        return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      } catch (e) {
+        console.error("Chat load error:", e);
       }
     }
 
-    // ฟังก์ชันรวมตัวเลือกใน Dropdown ทั้งหมดที่มีในแท็บอสังหาริมทรัพย์เพื่อนำไปกำกับ AI และเป็นกฎกรองคำ
-    function getAllValidDropdownOptions() {
-      const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
-      let allOptions = [];
-      topics.forEach(t => {
-        allOptions = allOptions.concat(getDropdownOptionsForTopic(t));
-      });
-      return [...new Set(allOptions)];
-    }
-
-    function openDropdownModal(topic) {
-      stopAIVoiceSpeech();
-      AppState.ui.dropdownTopic = topic;
-      document.getElementById('dropdownModalTitle').innerText = `เลือก: ${topic}`;
-      document.getElementById('dropdownSearchInput').value = '';
-      
-      let options = getDropdownOptionsForTopic(topic);
-      
-      AppState.ui.dropdownOptions = options;
-      renderDropdownOptions(AppState.ui.dropdownOptions);
-      document.getElementById('dropdownModalOverlay').classList.add('active');
-    }
-
-    function renderDropdownOptions(optionsToRender) {
-      const optionsContainer = document.getElementById('dropdownOptions');
-      optionsContainer.innerHTML = '';
-      if (optionsToRender.length === 0) {
-        optionsContainer.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">ไม่พบตัวเลือกที่ค้นหา</div>';
-        return;
-      }
-      
-      optionsToRender.forEach(opt => {
-        optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${AppState.ui.dropdownTopic}', '${opt}')">${opt}</button>`;
-      });
-    }
-
-    function filterDropdownOptions() {
-      const searchText = document.getElementById('dropdownSearchInput').value.toLowerCase();
-      const filteredOptions = AppState.ui.dropdownOptions.filter(opt => 
-        opt.toLowerCase().includes(searchText)
-      );
-      renderDropdownOptions(filteredOptions);
-    }
-
-    function closeDropdownModal() {
-      stopAIVoiceSpeech();
-      document.getElementById('dropdownModalOverlay').classList.remove('active');
-    }
-
-    function selectDropdownOption(topic, value) {
-      closeDropdownModal();
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(btn => {
-        const onClickAttr = btn.getAttribute('onclick') || '';
-        if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
-          btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
+    // เปิดระบบ Realtime Subscription ให้แชทเด้งทันทีที่มีคนพิมพ์
+    supabaseClient
+      .channel('public:chat_messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+        if (String(payload.new.room_id) === String(activeChatRoomId) && String(payload.new.sender_id) !== String(CURRENT_USER_ID)) {
+          displayMessageOnUI(payload.new);
         }
-      });
-      testShowList();
-    }
+      })
+      .subscribe();
 // ==========================================
-    // 4. ฟังก์ชันจัดการระบบพิกัด & Map Pop-up & Place Search Auto-complete
-    // ==========================================
-    function updateRadiusCircle() {
-      if (!leafletMap || !selectedLat || !selectedLng) return;
-      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 1;
-      const radiusInMeters = radiusInKm * 1000;
-      const centerLatLng = new L.LatLng(selectedLat, selectedLng);
-      if (radiusCircle) {
-        radiusCircle.setLatLng(centerLatLng);
-        radiusCircle.setRadius(radiusInMeters);
-      } else {
-        radiusCircle = L.circle(centerLatLng, {
-          color: '#4a83cc',
-          fillColor: '#4a83cc',
-          fillOpacity: 0.15,
-          radius: radiusInMeters
-        }).addTo(leafletMap);
-      }
-
-      leafletMap.fitBounds(radiusCircle.getBounds());
-    }
-
-    function openLocationModal() {
-      stopAIVoiceSpeech();
-      document.getElementById('locationModalOverlay').classList.add('active');
-      
-      const defaultLat = selectedLat || 13.7563;
-      const defaultLng = selectedLng || 100.5018;
-
-      if (!leafletMap) {
-        setTimeout(() => {
-          leafletMap = L.map('locationMap').setView([defaultLat, defaultLng], 12);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-          }).addTo(leafletMap);
-
-          mapMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(leafletMap);
-
-          mapMarker.on('dragend', function (e) {
-            const pos = mapMarker.getLatLng();
-            setCoordinates(pos.lat, pos.lng);
-            updateRadiusCircle();
-          });
-
-          leafletMap.on('click', function (e) {
-            mapMarker.setLatLng(e.latlng);
-            setCoordinates(e.latlng.lat, e.latlng.lng);
-            updateRadiusCircle();
-          });
-
-          if (!selectedLat && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              leafletMap.setView([lat, lng], 14);
-              mapMarker.setLatLng([lat, lng]);
-              setCoordinates(lat, lng);
-              updateRadiusCircle();
-            }, () => {});
-          } else if (selectedLat && selectedLng) {
-            updateRadiusCircle();
-          }
-        }, 200);
-      } else {
-        setTimeout(() => {
-          leafletMap.invalidateSize();
-          if (selectedLat && selectedLng) {
-            const latLng = [selectedLat, selectedLng];
-            mapMarker.setLatLng(latLng);
-            updateRadiusCircle();
-          }
-        }, 200);
-      }
-
-      if (selectedLat && selectedLng) {
-        document.getElementById('latInput').value = selectedLat;
-        document.getElementById('lngInput').value = selectedLng;
-      }
-      const radiusSelect = document.getElementById('radiusSelect');
-      if (radiusSelect) {
-        radiusSelect.value = String(selectedRadius || 1);
-      }
-      
-      if (!AppState.voice.isActive || !AppState.voice.ws) {
-        startVoiceSession().then(() => triggerLocationAIGreeting());
-      } else {
-        triggerLocationAIGreeting();
-      }
-    }
-    
-    function triggerLocationAIGreeting() {
-      const prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "ปักหมุดที่ไหนบอกได้เลย" และรอรับคำสั่งจากผู้ใช้โดยไม่ต้องอธิบายเพิ่มเติม สรุปตำแหน่งสถานที่ที่ต้องการค้นหา เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย ***สำคัญมาก: ต้องตรวจสอบประเภทสถานที่และใส่คำนำหน้าชื่อสถานที่ให้ถูกต้องตามหลักเกณฑ์เสมอ เช่น หากสถานที่นั้นเป็นหมู่บ้าน ให้ใส่คำนำหน้าว่า "หมู่บ้าน", หากเป็นถนน ให้ใส่ "ถนน", หรือปรับเปลี่ยนตามประเภทสถานที่จริง เช่น ซอย, อาคาร, ห้างสรรพสินค้า ฯลฯ***`;
-      const checkReady = setInterval(() => {
-        if (AppState.voice.isActive && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && AppState.voice.isSetupReady) {
-          clearInterval(checkReady);
-          sendTextToAI(prompt);
-        }
-      }, 500);
-      setTimeout(() => clearInterval(checkReady), 10000);
-    }
-
-    // ฟังก์ชันเพิ่มเติมสำหรับสั่งให้ AI พูดประโยคแนะนำตัวตอนเข้าแอปครั้งแรก
-    function triggerInitialAIGreeting() {
-      const prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "1.9AI landmatching ผู้ช่วยค้นหา บ้าน ซ่อมบ้าน หาช่าง ร้านอาหาร บอกได้เลย"`;
-      sendTextToAI(prompt);
-    }
-
-    function sendTextToAI(text) {
-      AppState.voice.silenced = false;
-      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
-        AppState.voice.ws.send(JSON.stringify({
-          clientContent: {
-            turns: [{
-              role: "user",
-              parts: [{ text: text }]
-            }],
-            turnComplete: true
-          }
-        }));
-      }
-    }
-
-    function handlePlaceSearchInput(query) {
-      clearTimeout(placeSearchDebounceTimer);
-      const resultsDiv = document.getElementById('placeSearchResults');
-      
-      if (!query || query.trim().length < 4) {
-        resultsDiv.style.display = 'none';
-        resultsDiv.innerHTML = '';
-        return;
-      }
-      
-      placeSearchDebounceTimer = setTimeout(() => {
-        const rawTrimmed = query.trim();
-        const searchQueries = [rawTrimmed];
-    
-        const mappings = [
-          { from: /\bthe\s*mall\b/gi, to: "เดอะมอลล์" },
-          { from: /เดอะมอลล์/gi, to: "the mall" },
-          { from: /\bcentral\b/gi, to: "เซ็นทรัล" },
-          { from: /เซ็นทรัล/gi, to: "central" },
-          { from: /\b(?:tesco\s*)?lotus(?:'s|s)?\b/gi, to: "โลตัส" },
-          { from: /โลตัส/gi, to: "lotus" },
-          { from: /\bbig\s*c\b/gi, to: "บิ๊กซี" },
-          { from: /บิ๊กซี/gi, to: "big c" },
-          { from: /\brobinson\b/gi, to: "โรบินสัน" },
-          { from: /โรบินสัน/gi, to: "robinson" },
-          { from: /\bicon\s*siam\b|\biconsiam\b/gi, to: "ไอคอนสยาม" },
-          { from: /ไอคอนสยาม/gi, to: "iconsiam" },
-          { from: /\bterminal\s*21\b/gi, to: "เทอร์มินอล 21" },
-          { from: /เทอร์มินอล\s*21/gi, to: "terminal 21" },
-          { from: /\bfuture\s*park\b/gi, to: "ฟิวเจอร์พาร์ค" },
-          { from: /ฟิวเจอร์พาร์ค/gi, to: "future park" },
-          { from: /\bmega\s*bangna\b/gi, to: "เมกาบางนา" },
-          { from: /เมกาบางนา|เมกา\s*บางนา/gi, to: "mega bangna" },
-          { from: /\bseacon\b/gi, to: "ซีคอน" },
-          { from: /ซีคอน/gi, to: "seacon" },
-          { from: /\b7\s*-\s*11\b|\b7eleven\b|\bseven\s*eleven\b/gi, to: "เซเว่น" },
-          { from: /เซเว่น|7-11/gi, to: "7-Eleven" },
-          { from: /\bhospital\b|\bhosp\b/gi, to: "โรงพยาบาล" },
-          { from: /โรงพยาบาล/gi, to: "hospital" },
-          { from: /\bbangkok\s*hospital\b/gi, to: "โรงพยาบาลกรุงเทพ" },
-          { from: /\bbumrungrad\b/gi, to: "บำรุงราษฎร์" },
-          { from: /บำรุงราษฎร์/gi, to: "bumrungrad" },
-          { from: /\bsamitivej\b/gi, to: "สมิติเวช" },
-          { from: /สมิติเวช/gi, to: "samitivej" },
-          { from: /\bsiriraj\b/gi, to: "ศิริราช" },
-          { from: /ศิริราช/gi, to: "siriraj" },
-          { from: /\bchulalongkorn\s*hospital\b|\bchula\s*hospital\b/gi, to: "โรงพยาบาลจุฬาลงกรณ์" },
-          { from: /\bramathibodi\b/gi, to: "รามาธิบดี" },
-          { from: /\bphyathai\b/gi, to: "พญาไท" },
-          { from: /พญาไท/gi, to: "phyathai" },
-          { from: /\bpaolo\b/gi, to: "เปาโล" },
-          { from: /เปาโล/gi, to: "paolo" },
-          { from: /\bkasemrad\b/gi, to: "เกษมราษฎร์" },
-          { from: /เกษมราษฎร์/gi, to: "kasemrad" },
-          { from: /\bbts\b/gi, to: "สถานีรถไฟฟ้า BTS" },
-          { from: /\bmrt\b/gi, to: "สถานีรถไฟฟ้า MRT" },
-          { from: /\barl\b|\bairport\s*rail\s*link\b/gi, to: "สถานีรถไฟฟ้า แอร์พอร์ตลิงก์" },
-          { from: /\bstation\b/gi, to: "สถานี" },
-          { from: /\btower\b/gi, to: "ทาวเวอร์" },
-          { from: /ทาวเวอร์/gi, to: "tower" },
-          { from: /\bbuilding\b|\boffice\b/gi, to: "อาคาร" },
-          { from: /\bempire\s*tower\b/gi, to: "เอ็มไพร์ ทาวเวอร์" },
-          { from: /\bsingha\s*complex\b/gi, to: "สิงห์ คอมเพล็กซ์" },
-          { from: /\bcw\s*tower\b/gi, to: "ซีดับเบิลยู ทาวเวอร์" },
-          { from: /\bsathorn\s*square\b/gi, to: "สาทร สแควร์" },
-          { from: /\bg\s*tower\b/gi, to: "จี ทาวเวอร์" }
-        ];
-        let convertedQuery = rawTrimmed;
-        mappings.forEach(m => {
-          if (m.from.test(convertedQuery)) {
-            convertedQuery = convertedQuery.replace(m.from, m.to);
-          }
-        });
-        if (convertedQuery !== rawTrimmed && !searchQueries.includes(convertedQuery)) {
-          searchQueries.push(convertedQuery);
-        }
-    
-        const fetchPromises = searchQueries.map(q => 
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=th&limit=15&addressdetails=1`)
-            .then(res => res.json())
-            .catch(() => [])
-        );
-        Promise.all(fetchPromises)
-          .then(resultsArray => {
-            resultsDiv.innerHTML = '';
-            
-            const combined = [];
-            const seenIds = new Set();
-    
-            resultsArray.forEach(data => {
-              if (Array.isArray(data)) {
-                data.forEach(item => {
-                  const key = item.place_id || `${item.lat},${item.lon}`;
-                  if (!seenIds.has(key)) {
-                    seenIds.add(key);
-                    combined.push(item);
-                  }
-                });
-              }
-            });
-
-            combined.forEach(item => {
-              let score = 3;
-              
-              const address = item.address || {};
-              const displayName = item.display_name || "";
-              const state = address.state || address.province || "";
-              const city = address.city || address.town || address.county || "";
-              const type = item.type || "";
-              const cls = item.class || "";
-
-              const isBKK = state.includes("กรุงเทพมหานคร") || state.includes("กรุงเทพ") || state.includes("Bangkok") || city.includes("กรุงเทพ") || city.includes("Bangkok");
-              const isVicinity = state.match(/(นนทบุรี|ปทุมธานี|สมุทรปราการ|สมุทรสาคร|นครปฐม|Nonthaburi|Pathum Thani|Samut Prakan|Samut Sakhon|Nakhon Pathom)/i);
-              
-              const isRoadOrSoi = type === 'road' || cls === 'highway' || displayName.includes("ถนน") || displayName.includes("ซอย") || displayName.match(/\b(Road|Soi)\b/i);
-              const isProjectOrVillage = type === 'residential' || displayName.includes("หมู่บ้าน") || displayName.includes("โครงการ") || displayName.match(/\b(Village)\b/i);
-
-              if (isBKK && (isRoadOrSoi || isProjectOrVillage)) {
-                score = 1;
-              } else if (isBKK || isVicinity || type === 'administrative' || type === 'suburb') {
-                score = 2;
-              }
-
-              item._rankScore = score;
-            });
-
-            combined.sort((a, b) => {
-              if (a._rankScore !== b._rankScore) {
-                return a._rankScore - b._rankScore;
-              }
-              return (b.importance || 0) - (a.importance || 0);
-            });
-
-            if (combined.length > 0) {
-              combined.slice(0, 6).forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.style.cssText = 'padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; color: #333; line-height: 1.4;';
-                itemDiv.innerText = item.display_name;
-                itemDiv.onmouseover = () => { itemDiv.style.background = '#f0f4f8'; };
-                itemDiv.onmouseout = () => { itemDiv.style.background = '#ffffff'; };
-                itemDiv.onclick = () => {
-                  selectPlaceResult(item.lat, item.lon, item.display_name);
-                };
-                resultsDiv.appendChild(itemDiv);
-              });
-              resultsDiv.style.display = 'block';
-            } else {
-              resultsDiv.innerHTML = '<div style="padding: 10px; font-size: 13px; color: #888; text-align: center;">ไม่พบสถานที่ที่ค้นหา</div>';
-              resultsDiv.style.display = 'block';
-            }
-          })
-          .catch(err => {
-            console.error("Place search error:", err);
-            resultsDiv.style.display = 'none';
-          });
-      }, 400);
-    }
-
-    function selectPlaceResult(lat, lon, displayName) {
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
-      
-      document.getElementById('placeSearchInput').value = displayName;
-      document.getElementById('placeSearchResults').style.display = 'none';
-      
-      setCoordinates(latitude, longitude);
-      
-      if (leafletMap && mapMarker) {
-        const newLatLng = new L.LatLng(latitude, longitude);
-        mapMarker.setLatLng(newLatLng);
-        updateRadiusCircle(); 
-      }
-    }
-
-    function setCoordinates(lat, lng) {
-      selectedLat = parseFloat(lat).toFixed(6);
-      selectedLng = parseFloat(lng).toFixed(6);
-      document.getElementById('latInput').value = selectedLat;
-      document.getElementById('lngInput').value = selectedLng;
-    }
-
-    function updateMapFromInputs() {
-      const lat = parseFloat(document.getElementById('latInput').value);
-      const lng = parseFloat(document.getElementById('lngInput').value);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        selectedLat = lat;
-        selectedLng = lng;
-        if (leafletMap && mapMarker) {
-          const newLatLng = new L.LatLng(lat, lng);
-          mapMarker.setLatLng(newLatLng);
-          updateRadiusCircle();
-        }
-      }
-    }
-
-    // ฟังก์ชันเพิ่มเติมสำหรับปุ่มดึงตำแหน่งปัจจุบัน
-    function getCurrentUserLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          
-          setCoordinates(lat, lng);
-          if (leafletMap && mapMarker) {
-            leafletMap.setView([lat, lng], 14);
-            const newLatLng = new L.LatLng(lat, lng);
-            mapMarker.setLatLng(newLatLng);
-            updateRadiusCircle();
-          }
-        }, (err) => {
-          console.error(err);
-          alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง (Location)");
-        }, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        });
-      } else {
-        alert("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
-      }
-    }
-
-    function closeLocationModal() {
-      stopAIVoiceSpeech();
-      const resultsDiv = document.getElementById('placeSearchResults');
-      if (resultsDiv) resultsDiv.style.display = 'none';
-      document.getElementById('locationModalOverlay').classList.remove('active');
-    }
-
-    function clearLocationFilter() {
-      selectedLat = null;
-      selectedLng = null;
-      selectedRadius = 1;
-      
-      if (radiusCircle && leafletMap) {
-        leafletMap.removeLayer(radiusCircle);
-        radiusCircle = null;
-      }
-
-      document.getElementById('latInput').value = '';
-      document.getElementById('lngInput').value = '';
-      document.getElementById('placeSearchInput').value = '';
-      const resultsDiv = document.getElementById('placeSearchResults');
-      if (resultsDiv) {
-        resultsDiv.style.display = 'none';
-        resultsDiv.innerHTML = '';
-      }
-      const radiusSelect = document.getElementById('radiusSelect');
-      if (radiusSelect) radiusSelect.value = "1";
-      document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
-      closeLocationModal();
-      testShowList();
-    }
-
-    function openGoogleMaps() {
-      stopAIVoiceSpeech();
-      const lat = document.getElementById('latInput').value.trim();
-      const lng = document.getElementById('lngInput').value.trim();
-      const placeSearchInput = document.getElementById('placeSearchInput');
-      const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
-
-      if (lat && lng) {
-        let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-        if (placeName) {
-          queryUrl += `+${encodeURIComponent(placeName)}`;
-        }
-        window.open(queryUrl, '_blank');
-      } else {
-        alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
-      }
-    }
-
-    function confirmLocation() {
-      const lat = document.getElementById('latInput').value.trim();
-      const lng = document.getElementById('lngInput').value.trim();
-      const radiusSelect = document.getElementById('radiusSelect');
-      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
-      if (lat && lng) {
-        selectedLat = parseFloat(lat);
-        selectedLng = parseFloat(lng);
-        selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
-        document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
-      } else {
-        selectedLat = null;
-        selectedLng = null;
-        selectedRadius = 1;
-        document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
-      }
-      
-      closeLocationModal();
-      testShowList();
-    }
-
-    // ==========================================
     // 5. AI VOICE SESSION HANDLERS
     // ==========================================
     async function stopAIVoiceSpeech() {
@@ -2197,7 +1523,6 @@
                     }));
                   }
                 }
-// ฟังก์ชันสั่งงานด้วยเสียงเพื่อควบคุมแท็บ (คำสั่ง 3)
                 else if (call.name === "switch_tab_category") {
                   const args = call.args || {};
                   const tabId = args.tabId;
@@ -2230,7 +1555,6 @@
                     }));
                   }
                 }
-                // ฟังก์ชันสำหรับเปิดหน้าพิกัดตามที่คุณต้องการเพิ่มเติม
                 else if (call.name === "open_location_modal") {
                   openLocationModal();
                   
@@ -2245,7 +1569,6 @@
                     }));
                   }
                 }
-                // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
                 else if (call.name === "confirm_location_action") {
                   confirmLocation();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2259,7 +1582,6 @@
                     }));
                   }
                 }
-                // ฟังก์ชันเปิด Google Maps ด้วยเสียง
                 else if (call.name === "open_google_maps_action") {
                   openGoogleMaps();
                   if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
@@ -2413,8 +1735,7 @@
             statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
           }
         }
-
-    // ==========================================
+// ==========================================
     // 6. DATABASE & TARGETED INFINITE SCROLLING
     // ==========================================
     
@@ -2523,6 +1844,7 @@
       }
     }
 
+    // ฟังก์ชัน Render อัปเดตใหม่ตาม Command 1 และ 2 โดยคง Logic การจัดเรียงและดึงข้อมูลเดิม 100%
     function renderProperties(properties) {
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
@@ -2538,32 +1860,68 @@
         AppState.pagination.renderedKeys.add(key);
 
         const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer;';
-        card.onclick = () => showDetailModal(item);
+        // ปรับ CSS เพื่อแบ่งสัดส่วน Flexbox ระหว่างข้อมูลด้านซ้าย และภาพ+ปุ่มด้านขวา
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; display: flex; justify-content: space-between; align-items: stretch; gap: 12px; transition: transform 0.2s;';
         
         const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
         
+        // --- ส่วนที่เพิ่ม: ระบบภาพสไลด์ซ้ายขวาด้านขวาของการ์ด ---
+        let imagesHtml = '';
+        if (item.images && item.images.length > 0) {
+            let imgTags = item.images.map(img => `<img src="${img}" style="width: 100px; height: 80px; object-fit: cover; flex-shrink: 0; scroll-snap-align: start; border-radius: 8px;">`).join('');
+            imagesHtml = `<div class="card-img-slider" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 5px; width: 100px; height: 80px; border-radius: 8px; margin-bottom: 8px; scrollbar-width: none;">${imgTags}</div>`;
+        } else {
+             imagesHtml = `<div style="width: 100px; height: 80px; background: #f4f6f9; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-size: 11px; font-weight: bold;">ไม่มีรูปภาพ</div>`;
+        }
+
+        // แทรกเนื้อหา HTML พร้อมปุ่มคุยกับเจ้าของ
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+          <div style="flex: 1; min-width: 0; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;" class="card-left-content">
+            <div>
+              <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;">
+                ${item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์'}
+              </div>
+              <div style="font-size: 13px; color: #666; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                📍 ${item.district || ''} ${item.province || ''}${distanceText}
+              </div>
+            </div>
+            <div style="font-size: 18px; font-weight: bold; color: #d9534f; margin-top: 5px;">
+              💰 ${price}
+            </div>
           </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 5px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-            💰 ${price}
+          <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start; flex-shrink: 0; width: 100px;">
+            ${imagesHtml}
+            <!-- ปุ่มคุยกับเจ้าของ: สวยล้ำ สีเขียวพาสเทล -->
+            <button class="chat-owner-btn" style="width: 100%; background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%); color: #3b5a45; border: 1px solid #95d5b2; border-radius: 8px; padding: 6px 0; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(168, 230, 207, 0.4); transition: all 0.2s;">
+              💬 คุยกับเจ้าของ
+            </button>
           </div>
         `;
+        
+        // ผูกฟังก์ชัน Event Listener (แยกส่วนกันเพื่อไม่ให้คลิกปุ่มแชทแล้วเด้งหน้า Detail)
+        const leftContent = card.querySelector('.card-left-content');
+        if(leftContent) {
+            leftContent.addEventListener('click', () => showDetailModal(item));
+        }
+
+        const chatBtn = card.querySelector('.chat-owner-btn');
+        if(chatBtn) {
+            chatBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                openOwnerChat(item.project || item.facebookPostName || 'เจ้าของประกาศ', item.postId || item.property_id || Math.floor(Math.random()*1000));
+            });
+            chatBtn.addEventListener('mousedown', () => { chatBtn.style.transform = 'scale(0.95)'; });
+            chatBtn.addEventListener('mouseup', () => { chatBtn.style.transform = 'scale(1)'; });
+        }
+        
         container.appendChild(card);
       });
     }
 
     function showDetailModal(item) {
-      // 1. สั่งหยุดเสียง AI ก่อนตามเงื่อนไข
       stopAIVoiceSpeech(); 
     
-      // 2. โค้ดเดิมสำหรับแสดงรายละเอียดลงใน Modal
       document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
       document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
       document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
@@ -2593,10 +1951,8 @@
       
       document.getElementById('detailModalOverlay').classList.add('active');
     
-      // 3. เพิ่มส่วนนี้: ส่งข้อมูลบ้านไปให้ AI พูดอธิบายต่อทันทีหลังหยุดเสียง
       const houseSummaryText = `ผู้ใช้เพิ่งเปิดดูบ้านชื่อ ${item.project || item.facebookPostName || 'หลังนี้'} ราคา ${item.salePrice || item.rentPrice || 'ไม่ระบุราคา'} รายละเอียดคือ: ${item.detail || item.description || 'ไม่มีรายละเอียด'} กรุณาสวมบทบาทผู้เชี่ยวชาญพูดสรุปและนำเสนอจุดเด่นของบ้านหลังนี้ให้ผู้ใช้ฟังทันทีสั้นๆ ครับ`;
       
-      // หน่วงเวลาเล็กน้อย 0.5 วินาทีเพื่อให้แน่ใจว่าระบบเสียงเคลียร์เรียบร้อยแล้วค่อยให้ AI พูด
       setTimeout(() => {
         if (typeof sendTextToAI === 'function') {
           sendTextToAI(houseSummaryText);
@@ -2650,6 +2006,7 @@
       }
     }
 
+    // ฟังก์ชันส่งข้อความแชทอัปเดตให้รองรับ Dynamic Room ID และ Realtime
     async function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
       const container = document.getElementById('chatMessagesContainer');
@@ -2659,10 +2016,17 @@
       
       input.value = '';
       
-      // บันทึกข้อความเข้า Supabase
-      await supabaseClient.from('chat_messages').insert([
-        { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+      // บันทึกข้อความเข้า Supabase ไปยังห้องที่คุยล่าสุด (activeChatRoomId)
+      const { data, error } = await supabaseClient.from('chat_messages').insert([
+        { room_id: activeChatRoomId, sender_id: CURRENT_USER_ID, content: text }
       ]);
+      
+      if(!error) {
+         // แสดงผลฝั่งตัวเองทันทีเพื่อให้แชทดูลื่นไหล (Optimistic UI)
+         displayMessageOnUI({ sender_id: CURRENT_USER_ID, content: text });
+      } else {
+         console.error('Error sending message:', error);
+      }
     }
   </script>
 </body>
