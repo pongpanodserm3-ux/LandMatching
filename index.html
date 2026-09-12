@@ -1265,102 +1265,144 @@
             messages.forEach(msg => displayMessageOnUI(msg));
           }
         }
-    
-        function initRealtimeForRoom(roomId) {
-          if (activeRealtimeChannel) {
-            supabaseClient.removeChannel(activeRealtimeChannel);
-          }
-          
-          // เปิดใช้งาน Realtime รับข้อมูลทั้งตาราง chat_messages โดยกรองฝั่ง client ให้ชัวร์ว่าตรงห้อง
-          activeRealtimeChannel = supabaseClient
-            .channel(`room_realtime_${roomId}`)
-            .on(
-              'postgres_changes',
-              { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-              (payload) => {
-                if (payload && payload.new) {
-                  const msgRoomId = String(payload.new.room_id || payload.new.id);
-                  if (msgRoomId === String(roomId)) {
-                    displayMessageOnUI(payload.new);
-                  }
-                }
-              }
-            )
-            .subscribe();
-        }
-    
-        async function sendChatMessage() {
-          const input = document.getElementById('chatMessageInput');
-          if (!input) return;
-          const text = input.value.trim();
-          if (!text) return;
-        
-          let senderId = await getCurrentUserId();
-          if (!senderId) senderId = 1;
-          
-          input.value = '';
-        
-          // บันทึกข้อความลงตาราง chat_messages โดยระบุ room_id และ sender_id ให้ชัดเจน
-          const { data, error } = await supabaseClient
-            .from('chat_messages')
-            .insert([
-              { 
-                room_id: parseInt(CURRENT_ROOM_ID, 10) || CURRENT_ROOM_ID, 
-                sender_id: senderId, 
-                content: text 
-              }
-            ])
-            .select();
-        
-          if (error) {
-            console.error("Error inserting message to Supabase chat_messages:", error);
-            alert("ไม่สามารถส่งข้อความได้: " + error.message);
-          } else if (data && data.length > 0) {
-            // หากเปิด Realtime แล้ว ตัว listener จะจัดการแสดงผลให้อัตโนมัติ 
-            // แต่ถ้าต้องการให้แสดงผลทันทีโดยไม่ต้องรอพุช ให้เรียก displayMessageOnUI(data[0]) เพิ่มได้ที่นี่
-          }
+
+// ---------------------------------------------------------
+    // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
+    // ---------------------------------------------------------
+    async function openUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.add('active');
+      expandChatZone('list'); // เปิดมาให้แสดงหน้ารายการห้องแชทก่อน
+      await loadUserChatRooms(); // เรียกฟังก์ชันดึงประวัติห้องแชท
+    }
+
+    // ---------------------------------------------------------
+    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เช็กว่ามีใครทักมาไหม)
+    // ---------------------------------------------------------
+    async function loadUserChatRooms() {
+      const listContainer = document.getElementById('chatListItems');
+      listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
+
+      let currentUserId = await getCurrentUserId();
+      currentUserId = await ensureUserExists(currentUserId);
+      CURRENT_USER_ID = currentUserId; // อัปเดตตัวแปร Global
+
+      try {
+        // ดึงห้องแชททั้งหมดที่ผู้ใช้เป็นผู้ซื้อ หรือ ผู้ขาย
+        const { data: rooms, error } = await supabaseClient
+          .from('chat_rooms')
+          .select('*')
+          .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
+          .order('room_id', { ascending: false });
+
+        if (error) throw error;
+        listContainer.innerHTML = '';
+
+        if (!rooms || rooms.length === 0) {
+          listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: #777;">ยังไม่มีการสนทนา</div>';
+          return;
         }
 
+        // สร้าง UI รายการห้องแชท
+        rooms.forEach(room => {
+          const isBuyer = String(room.buyer_id) === String(currentUserId);
+          const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
+          const roomTitle = `คู่สนทนา ID: ${otherPartyId} (รหัสทรัพย์: ${room.property_id})`;
+
+          const itemCard = document.createElement('div');
+          itemCard.className = 'chat-item-card';
+          
+          // เมื่อคลิกที่ห้องแชท ให้เข้าร่วมห้องนั้น
+          itemCard.onclick = (e) => {
+            const items = document.querySelectorAll('.chat-item-card');
+            items.forEach(el => el.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            joinChatRoom(room.room_id, roomTitle);
+          };
+
+          itemCard.innerHTML = `
+            <div class="chat-item-avatar">👤</div>
+            <div class="chat-item-info">
+              <div class="chat-item-title">${roomTitle}</div>
+              <div class="chat-item-preview">คลิกเพื่อดูบทสนทนา</div>
+            </div>
+          `;
+          listContainer.appendChild(itemCard);
+        });
+      } catch (err) {
+        console.error("Error loading chat rooms:", err);
+        listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: red;">❌ โหลดข้อมูลล้มเหลว</div>';
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 3. ฟังก์ชันสำหรับเข้าร่วมห้องแชท (ดึงประวัติและเปิด Realtime)
+    // ---------------------------------------------------------
+    async function joinChatRoom(roomId, title) {
+      CURRENT_ROOM_ID = roomId;
+      document.getElementById('chatActiveTitle').innerText = title;
+      
+      expandChatZone('room'); // ขยายหน้าต่างแชท
+      await loadChatHistoryForRoom(roomId); // ดึงข้อความเก่า
+      initRealtimeForRoom(roomId); // เปิดระบบรับข้อความแบบ Realtime
+    }
+
+    // ---------------------------------------------------------
+    // 4. ฟังก์ชันรับข้อความแบบ Real-time (ปลายทางจะเห็นข้อความทันทีเพราะตัวนี้)
+    // ---------------------------------------------------------
     function initRealtimeForRoom(roomId) {
       if (activeRealtimeChannel) {
         supabaseClient.removeChannel(activeRealtimeChannel);
       }
+      
       activeRealtimeChannel = supabaseClient
-        .channel(`room_${roomId}`)
+        .channel(`room_realtime_${roomId}`)
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` },
-          (payload) => displayMessageOnUI(payload.new)
+          { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+          (payload) => {
+            if (payload && payload.new) {
+              // เช็กว่าข้อความใหม่ที่เด้งเข้ามา ตรงกับห้องแชทที่กำลังเปิดอยู่หรือไม่
+              const msgRoomId = String(payload.new.room_id || payload.new.id);
+              if (msgRoomId === String(roomId)) {
+                displayMessageOnUI(payload.new);
+              }
+            }
+          }
         )
         .subscribe();
     }
 
+    // ---------------------------------------------------------
+    // 5. ฟังก์ชันส่งข้อความ
+    // ---------------------------------------------------------
     async function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
+      if (!input) return;
       const text = input.value.trim();
       if (!text) return;
     
-      const senderId = await getCurrentUserId();
+      let senderId = await getCurrentUserId();
+      senderId = await ensureUserExists(senderId);
       CURRENT_USER_ID = senderId;
       
-      // เคลียร์ช่องพิมพ์ข้อความทันที
-      input.value = '';
+      input.value = ''; // เคลียร์ช่องพิมพ์ทันที
     
-      // ส่งลง Supabase (ให้ Realtime Channel ทำหน้าที่แสดงข้อความบน UI อัตโนมัติเมื่อ Insert สำเร็จ)
       const { error } = await supabaseClient
         .from('chat_messages')
         .insert([
-          { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+          { 
+            room_id: parseInt(CURRENT_ROOM_ID, 10), 
+            sender_id: senderId, 
+            content: text 
+          }
         ]);
     
       if (error) {
-        console.error("Error inserting message to Supabase chat_messages:", error);
-        alert("ไม่สามารถบันทึกข้อความลง Database ได้ กรุณาตรวจสอบสิทธิ์ Supabase RLS หรือประเภทข้อมูล");
+        console.error("Error inserting message:", error);
+        alert("ไม่สามารถส่งข้อความได้ กรุณาลองใหม่");
       }
     }
-
+  
     function getPropValue(item, possibleKeys, defaultVal = '') {
       if (!item) return defaultVal;
       const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
@@ -2381,10 +2423,6 @@
       loadNextPage();
     }
 
-    function openUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.add('active');
-    }
-
     function closeUserChatModal() {
       document.getElementById('userChatModalOverlay').classList.remove('active');
     }
@@ -2405,14 +2443,6 @@
       }
     }
 
-    function selectChatRoom(title, personName) {
-      document.getElementById('chatActiveTitle').innerText = title;
-      const items = document.querySelectorAll('.chat-item-card');
-      items.forEach(el => el.classList.remove('active'));
-      if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.classList.add('active');
-      }
-    }
   </script>
 </body>
 </html>
