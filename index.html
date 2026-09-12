@@ -1,7 +1,7 @@
 [cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#"> //index9-4-1_______________
+  <link rel="shortcut icon" href="#"> //index9-4-2_______________
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1306,6 +1306,9 @@
     // ---------------------------------------------------------
     // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เช็กว่ามีใครทักมาไหม)
     // ---------------------------------------------------------
+// ---------------------------------------------------------
+    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (ตรวจสอบข้อความยังไม่ได้อ่านทุกครั้งที่เข้าห้องแชท)
+    // ---------------------------------------------------------
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
@@ -1315,6 +1318,7 @@
       CURRENT_USER_ID = currentUserId;
     
       try {
+        // 1. ดึงห้องแชตทั้งหมดที่ User มีส่วนร่วม (ไม่ว่าเป็น Buyer หรือ Seller)
         const { data: rooms, error } = await supabaseClient
           .from('chat_rooms')
           .select('*')
@@ -1334,7 +1338,7 @@
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
           const roomTitle = `คู่สนทนา ID: ${otherPartyId} (รหัสทรัพย์: ${room.property_id})`;
     
-          // เช็กข้อความย้อนหลังที่ยังไม่ได้อ่านจากคู่สนทนา
+          // 2. เพิ่มคำสั่งตรวจสอบตาราง chat_messages ว่ามีข้อความที่ส่งมาถึง user แต่ยังไม่ได้อ่าน (is_read = false) หรือไม่
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
             .select('id')
@@ -1345,6 +1349,7 @@
     
           const hasUnread = unreadMsgs && unreadMsgs.length > 0;
     
+          // 3. กำหนดคลาส has-new-msg หากมีข้อความยังไม่ได้อ่าน (เพื่อเปลี่ยนสีแถบเป็นสีม่วงพาสเทลอ่อนสว่าง)
           const itemCard = document.createElement('div');
           itemCard.className = `chat-item-card ${hasUnread ? 'has-new-msg' : ''}`;
           itemCard.setAttribute('data-room-id', room.room_id);
