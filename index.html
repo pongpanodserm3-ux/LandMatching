@@ -1,6 +1,7 @@
 [cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
+  <link rel="shortcut icon" href="#"> //ใส่เอง-------------------
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1074,66 +1075,63 @@
       try {
         const { data: existingUser } = await supabaseClient
           .from('users')
-          .select('id, line_id')
+          .select('user_id, line_id') // เปลี่ยนจาก id เป็น user_id
           .eq('line_id', String(lineId))
           .maybeSingle();
-
-        if (existingUser) return existingUser.id;
-
+    
+        if (existingUser) return existingUser.user_id; // เปลี่ยนจาก existingUser.id
+    
         const { data: newUser, error } = await supabaseClient
           .from('users')
           .insert([{ line_id: String(lineId) }])
-          .select('id')
+          .select('user_id') // เปลี่ยนจาก id เป็น user_id
           .maybeSingle();
-
+    
         if (error) {
           console.error("Error saving line_id to Supabase:", error);
           return null;
         }
-        return newUser ? newUser.id : null;
+        return newUser ? newUser.user_id : null; // เปลี่ยนจาก newUser.id
       } catch (e) {
         console.error("Exception in saveUserLineIdToSupabase:", e);
         return null;
       }
     }
-
-    // ฟังก์ชันย่อยสำหรับเช็กให้มั่นใจว่า User ID มีอยู่จริงในตาราง users เสมอ
-    // ปรับปรุงฟังก์ชัน ensureUserExists ในไฟล์ของคุณ
+    
     async function ensureUserExists(userId) {
       if (!userId) userId = 1;
       const numId = parseInt(userId, 10);
       const isNumeric = !isNaN(numId);
       
       try {
-        let query = supabaseClient.from('users').select('id');
+        let query = supabaseClient.from('users').select('user_id'); // เปลี่ยนจาก id เป็น user_id
         
         if (isNumeric) {
-          query = query.eq('id', numId);
+          query = query.eq('user_id', numId); // เปลี่ยนจาก id เป็น user_id
         } else {
           query = query.eq('line_id', String(userId));
         }
     
         const { data: existing } = await query.maybeSingle();
-        if (existing) return existing.id;
+        if (existing) return existing.user_id; // เปลี่ยนจาก existing.id
     
-        // หากเป็นผู้ใช้ใหม่ ปล่อยให้ Supabase สร้าง id อัตโนมัติ
         const payload = isNumeric ? {} : { line_id: String(userId) };
         const { data: newUser, error } = await supabaseClient
           .from('users')
           .insert([payload])
-          .select('id')
+          .select('user_id') // เปลี่ยนจาก id เป็น user_id
           .maybeSingle();
     
         if (error) {
           console.error("ensureUserExists insert error:", error);
           return isNumeric ? numId : userId;
         }
-        return newUser ? newUser.id : (isNumeric ? numId : userId);
+        return newUser ? newUser.user_id : (isNumeric ? numId : userId);
       } catch (e) {
         console.error("Exception in ensureUserExists:", e);
         return isNumeric ? numId : userId;
       }
-    }
+    }  
 
     async function getCurrentUserId() {
       if (currentUserLineProfile && currentUserLineProfile.userId) {
