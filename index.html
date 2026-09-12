@@ -1116,11 +1116,11 @@
         const { data: existing } = await query.maybeSingle();
         if (existing) return existing.id;
     
-        // ใช้วิธี upsert เพื่อรองรับการบันทึก ID ใหม่ลงในตาราง users
-        const payload = isNumeric ? { id: numId } : { line_id: String(userId) };
+        // หากเป็นผู้ใช้ใหม่ ปล่อยให้ Supabase สร้าง id อัตโนมัติ
+        const payload = isNumeric ? {} : { line_id: String(userId) };
         const { data: newUser, error } = await supabaseClient
           .from('users')
-          .upsert([payload], { onConflict: isNumeric ? 'id' : 'line_id' })
+          .insert([payload])
           .select('id')
           .maybeSingle();
     
