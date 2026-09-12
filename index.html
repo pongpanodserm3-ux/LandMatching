@@ -1167,76 +1167,75 @@
       const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
 
       try {
-        // 1. ค้นหาห้องเดิมก่อน
-        const { data: existingRooms } = await supabaseClient
-          .from('chat_rooms')
-          .select('*')
-          .eq('buyer_id', buyerId)
-          .eq('seller_id', sellerId)
-          .eq('property_id', propertyId);
-
-        let targetRoomId = null;
-
-        if (existingRooms && existingRooms.length > 0) {
-          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
-        } else {
-          // 2. หา room_id สูงสุดเพื่อรัน auto-increment
-          const { data: maxRoomData } = await supabaseClient
-            .from('chat_rooms')
-            .select('room_id')
-            .order('room_id', { ascending: false })
-            .limit(1);
-
-          let nextRoomId = 101;
-          if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
-            const parsed = parseInt(maxRoomData[0].room_id, 10);
-            if (!isNaN(parsed)) nextRoomId = parsed + 1;
-          }
-
-          // 3. Insert ห้องใหม่ลง Supabase
-          const { data: insertedRoom, error: insertErr } = await supabaseClient
-            .from('chat_rooms')
-            .insert([{
-              room_id: nextRoomId,
-              buyer_id: buyerId,
-              seller_id: sellerId,
-              property_id: propertyId
-            }])
-            .select();
-
-          if (insertErr) {
-            console.error("Insert Chat Room Error:", insertErr);
-            // Fallback ค้นหาเฉพาะห้องล่าสุดที่เคยมีระหว่างคู่นี้
-            const { data: fbRooms } = await supabaseClient
-              .from('chat_rooms')
-              .select('*')
-              .eq('buyer_id', buyerId)
-              .eq('seller_id', sellerId)
-              .limit(1);
-
-            if (fbRooms && fbRooms.length > 0) {
-              targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
-            } else {
-              targetRoomId = nextRoomId;
+              // 1. ค้นหาห้องเดิม (ตรวจสอบย้อนกลับทั้งสองฝั่ง: buyer=A & seller=B หรือ buyer=B & seller=A)
+              const { data: existingRooms, error: searchErr } = await supabaseClient
+                .from('chat_rooms')
+                .select('*')
+                .eq('property_id', propertyId)
+                .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`);
+      
+              let targetRoomId = null;
+      
+              if (existingRooms && existingRooms.length > 0) {
+                targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
+              } else {
+                // 2. หา room_id สูงสุดเพื่อรัน auto-increment
+                const { data: maxRoomData } = await supabaseClient
+                  .from('chat_rooms')
+                  .select('room_id')
+                  .order('room_id', { ascending: false })
+                  .limit(1);
+      
+                let nextRoomId = 101;
+                if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
+                  const parsed = parseInt(maxRoomData[0].room_id, 10);
+                  if (!isNaN(parsed)) nextRoomId = parsed + 1;
+                }
+      
+                // 3. Insert ห้องใหม่ลง Supabase
+                const { data: insertedRoom, error: insertErr } = await supabaseClient
+                  .from('chat_rooms')
+                  .insert([{
+                    room_id: nextRoomId,
+                    buyer_id: buyerId,
+                    seller_id: sellerId,
+                    property_id: propertyId
+                  }])
+                  .select();
+      
+                if (insertErr) {
+                  console.error("Insert Chat Room Error:", insertErr);
+                  // Fallback ค้นหาเฉพาะห้องล่าสุดที่เคยมีระหว่างคู่นี้ (แบบย้อนกลับสองฝั่ง)
+                  const { data: fbRooms } = await supabaseClient
+                    .from('chat_rooms')
+                    .select('*')
+                    .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+                    .limit(1);
+      
+                  if (fbRooms && fbRooms.length > 0) {
+                    targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
+                  } else {
+                    targetRoomId = nextRoomId;
+                  }
+                } else if (insertedRoom && insertedRoom.length > 0) {
+                  targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
+                } else {
+                  targetRoomId = nextRoomId;
+                }
+              }
+      
+              CURRENT_ROOM_ID = targetRoomId;
+              CURRENT_USER_ID = buyerId;
+      
+              await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+              initRealtimeForRoom(CURRENT_ROOM_ID);
+      
+            } catch (err) {
+              console.error("Exception in openOwnerChat:", err);
+              await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+              initRealtimeForRoom(CURRENT_ROOM_ID);
             }
-          } else if (insertedRoom && insertedRoom.length > 0) {
-            targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
-          } else {
-            targetRoomId = nextRoomId;
-          }
-        }
-
-        CURRENT_ROOM_ID = targetRoomId;
-        CURRENT_USER_ID = buyerId;
-
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
-
-      } catch (err) {
-        console.error("Exception in openOwnerChat:", err);
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
-      }
+      
     }
 
     function displayMessageOnUI(msg) {
