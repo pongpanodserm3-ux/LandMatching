@@ -1070,19 +1070,54 @@
     }
 
     async function saveUserLineIdToSupabase(lineId) {
-      if (!lineId) return;
-      try {
-        const { data, error } = await supabaseClient
-          .from('users')
-          .upsert({ line_id: lineId }, { onConflict: 'line_id' });
-        if (error) {
-          console.error("Error saving line_id to Supabase users table:", error);
-        } else {
-          console.log("Successfully synced line_id to Supabase users table:", lineId);
+          if (!lineId) return null;
+          try {
+            // เช็คก่อนว่ามี user นี้หรือยัง
+            const { data: existingUser } = await supabaseClient
+              .from('users')
+              .select('id, line_id')
+              .eq('line_id', lineId)
+              .maybeSingle();
+    
+            if (existingUser) return existingUser.id;
+    
+            // ถ้ายังไม่มีให้ insert ใหม่
+            const { data: newUser, error } = await supabaseClient
+              .from('users')
+              .insert([{ line_id: lineId }])
+              .select('id')
+              .maybeSingle();
+    
+            if (error) {
+              console.error("Error saving line_id to Supabase:", error);
+              return null;
+            }
+            return newUser ? newUser.id : null;
+          } catch (e) {
+            console.error("Exception in saveUserLineIdToSupabase:", e);
+            return null;
+          }
         }
-      } catch (e) {
-        console.error("Exception in saveUserLineIdToSupabase:", e);
+
+    async function getCurrentUserId() {
+      if (currentUserLineProfile && currentUserLineProfile.userId) {
+        try {
+          const { data } = await supabaseClient
+            .from('users')
+            .select('id')
+            .eq('line_id', currentUserLineProfile.userId)
+            .maybeSingle();
+
+          if (data && data.id) return data.id;
+          
+          // ถ้ายังไม่มีใน db ให้สร้างใหม่แล้วเอา numeric id มาใช้
+          const createdId = await saveUserLineIdToSupabase(currentUserLineProfile.userId);
+          if (createdId) return createdId;
+        } catch (e) {
+          console.error("Error fetching user id:", e);
+        }
       }
+      return CURRENT_USER_ID;
     }
 
     async function getCurrentUserId() {
@@ -1106,78 +1141,83 @@
     // ตรรกะระบบแชทเมื่อกดปุ่ม "คุยกับเจ้าของ" (เช็กตาราง chat_rooms)
     // ==========================================
     async function openOwnerChat(item, event) {
-      if (event) event.stopPropagation();
-      stopAIVoiceSpeech();
-
-      const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
-      const titleEl = document.getElementById('chatActiveTitle');
-      if (titleEl) {
-        titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
-      }
-      
-      openUserChatModal();
-      expandChatZone('room');
-
-      // ดึง ID ของผู้ใช้งาน (buyer), ID เจ้าของประกาศ (seller) และ Property ID
-      const buyerId = await getCurrentUserId();
-      const sellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
-      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
-
-      try {
-        // ตรวจสอบห้องแชทในตาราง chat_rooms ของ Supabase
-        const { data: existingRooms, error: roomErr } = await supabaseClient
-          .from('chat_rooms')
-          .select('*')
-          .eq('buyer_id', buyerId)
-          .eq('seller_id', sellerId)
-          .eq('property_id', propertyId);
-
-        let targetRoomId = null;
-
-        if (existingRooms && existingRooms.length > 0) {
-          // หากตรงกันทั้งหมด ให้ดึง room_id เดิมมาใช้งาน
-          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
-        } else {
-          // หากไม่ตรงกัน ให้ดึง room_id ล่าสุดมาบวกเพิ่ม (+1)
-          const { data: maxRoomData } = await supabaseClient
-            .from('chat_rooms')
-            .select('room_id')
-            .order('room_id', { ascending: false })
-            .limit(1);
-
-          let nextRoomId = 101;
-          if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0].room_id) {
-            const parsed = parseInt(maxRoomData[0].room_id, 10);
-            if (!isNaN(parsed)) nextRoomId = parsed + 1;
-          }
-
-          // บันทึก room_id ใหม่ และข้อมูลลงตาราง chat_rooms
-          const { data: insertedRoom, error: insertErr } = await supabaseClient
-            .from('chat_rooms')
-            .insert([{
-              room_id: nextRoomId,
-              buyer_id: buyerId,
-              seller_id: sellerId,
-              property_id: propertyId
-            }])
-            .select();
-
-          targetRoomId = nextRoomId;
+        if (event) event.stopPropagation();
+        stopAIVoiceSpeech();
+  
+        const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
+        const titleEl = document.getElementById('chatActiveTitle');
+        if (titleEl) {
+          titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
         }
-
-        CURRENT_ROOM_ID = targetRoomId;
-        CURRENT_USER_ID = buyerId;
-
-        // ดึงข้อมูลข้อความเก่าในตาราง chat_messages มาแสดง และเปิดระบบ Realtime
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
-
-      } catch (err) {
-        console.error("Exception in openOwnerChat:", err);
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
+        
+        openUserChatModal();
+        expandChatZone('room');
+  
+        const buyerId = await getCurrentUserId();
+        const sellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
+        const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
+  
+        try {
+          // 1. ค้นหาห้องเดิมก่อน
+          const { data: existingRooms, error: roomErr } = await supabaseClient
+            .from('chat_rooms')
+            .select('*')
+            .eq('buyer_id', buyerId)
+            .eq('seller_id', sellerId)
+            .eq('property_id', propertyId);
+  
+          let targetRoomId = null;
+  
+          if (existingRooms && existingRooms.length > 0) {
+            targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
+          } else {
+            // 2. ถ้าไม่มีห้อง ให้หา room_id สูงสุดเพื่อบวกเพิ่ม
+            const { data: maxRoomData } = await supabaseClient
+              .from('chat_rooms')
+              .select('room_id')
+              .order('room_id', { ascending: false })
+              .limit(1);
+  
+            let nextRoomId = 101;
+            if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
+              const parsed = parseInt(maxRoomData[0].room_id, 10);
+              if (!isNaN(parsed)) nextRoomId = parsed + 1;
+            }
+  
+            // 3. Insert ห้องใหม่
+            const { data: insertedRoom, error: insertErr } = await supabaseClient
+              .from('chat_rooms')
+              .insert([{
+                room_id: nextRoomId,
+                buyer_id: buyerId,
+                seller_id: sellerId,
+                property_id: propertyId
+              }])
+              .select();
+  
+            if (insertErr) {
+              console.error("409 / Insert Chat Room Error:", insertErr);
+              // กรณีติด Duplicate constraint ให้ค้นหาเฉพาะ room_id ล่าสุดมาใช้
+              targetRoomId = nextRoomId;
+            } else if (insertedRoom && insertedRoom.length > 0) {
+              targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
+            } else {
+              targetRoomId = nextRoomId;
+            }
+          }
+  
+          CURRENT_ROOM_ID = targetRoomId;
+          CURRENT_USER_ID = buyerId;
+  
+          await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+          initRealtimeForRoom(CURRENT_ROOM_ID);
+  
+        } catch (err) {
+          console.error("Exception in openOwnerChat:", err);
+          await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+          initRealtimeForRoom(CURRENT_ROOM_ID);
+        }
       }
-    }
 
     function displayMessageOnUI(msg) {
       const container = document.getElementById('chatMessagesContainer');
@@ -1219,28 +1259,33 @@
         .subscribe();
     }
 
-    async function sendChatMessage() {
-      const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
-      const text = input.value.trim();
-      if (!text) return;
-      
-      input.value = '';
-
-      const senderId = await getCurrentUserId();
-      CURRENT_USER_ID = senderId;
-      
-      const { data, error } = await supabaseClient
-        .from('chat_messages')
-        .insert([
-          { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
-        ]);
-
-      if (error) {
-        console.error("Error inserting message to Supabase chat_messages:", error);
+  async function sendChatMessage() {
+        const input = document.getElementById('chatMessageInput');
+        const container = document.getElementById('chatMessagesContainer');
+        if (!input || !container) return;
+        const text = input.value.trim();
+        if (!text) return;
+  
+        const senderId = await getCurrentUserId();
+        CURRENT_USER_ID = senderId;
+        
+        // แสดงผลข้อความบนหน้าจอทันที (Optimistic UI)
+        const tempMsg = { sender_id: CURRENT_USER_ID, content: text };
+        displayMessageOnUI(tempMsg);
+        input.value = '';
+  
+        // ส่งลง Supabase Database
+        const { data, error } = await supabaseClient
+          .from('chat_messages')
+          .insert([
+            { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+          ]);
+  
+        if (error) {
+          console.error("Error inserting message to Supabase chat_messages:", error);
+          alert("ไม่สามารถบันทึกข้อความลง Database ได้ กรุณาตรวจสอบสิทธิ์ Supabase RLS หรือประเภทข้อมูล");
+        }
       }
-    }
 
     function getPropValue(item, possibleKeys, defaultVal = '') {
       if (!item) return defaultVal;
@@ -1343,8 +1388,8 @@
         }
       }, 1000);
       
-      loadChatHistoryForRoom(CURRENT_ROOM_ID);
-      initRealtimeForRoom(CURRENT_ROOM_ID);
+//     loadChatHistoryForRoom(CURRENT_ROOM_ID);
+//      initRealtimeForRoom(CURRENT_ROOM_ID);
 
       const listSection = document.getElementById('list-section');
       const aiSection = document.getElementById('ai-section');
