@@ -1098,37 +1098,40 @@
     }
 
     // ฟังก์ชันย่อยสำหรับเช็กให้มั่นใจว่า User ID มีอยู่จริงในตาราง users เสมอ
+    // ปรับปรุงฟังก์ชัน ensureUserExists ในไฟล์ของคุณ
     async function ensureUserExists(userId) {
       if (!userId) userId = 1;
+      const numId = parseInt(userId, 10);
+      const isNumeric = !isNaN(numId);
+      
       try {
-        const isNumeric = !isNaN(userId);
         let query = supabaseClient.from('users').select('id');
         
         if (isNumeric) {
-          query = query.eq('id', parseInt(userId, 10));
+          query = query.eq('id', numId);
         } else {
           query = query.eq('line_id', String(userId));
         }
-
+    
         const { data: existing } = await query.maybeSingle();
         if (existing) return existing.id;
-
-        // หากยังไม่มี ให้บันทึกลงใน DB ก่อน
-        const payload = isNumeric ? { id: parseInt(userId, 10) } : { line_id: String(userId) };
+    
+        // ใช้วิธี upsert เพื่อรองรับการบันทึก ID ใหม่ลงในตาราง users
+        const payload = isNumeric ? { id: numId } : { line_id: String(userId) };
         const { data: newUser, error } = await supabaseClient
           .from('users')
-          .insert([payload])
+          .upsert([payload], { onConflict: isNumeric ? 'id' : 'line_id' })
           .select('id')
           .maybeSingle();
-
+    
         if (error) {
           console.error("ensureUserExists insert error:", error);
-          return userId;
+          return isNumeric ? numId : userId;
         }
-        return newUser ? newUser.id : userId;
+        return newUser ? newUser.id : (isNumeric ? numId : userId);
       } catch (e) {
         console.error("Exception in ensureUserExists:", e);
-        return userId;
+        return isNumeric ? numId : userId;
       }
     }
 
