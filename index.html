@@ -1,7 +1,7 @@
 [cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#"> //index9-5_______________
+  <link rel="shortcut icon" href="#"> //index9-4_______________
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1255,13 +1255,11 @@
       
               await loadChatHistoryForRoom(CURRENT_ROOM_ID);
               initRealtimeForRoom(CURRENT_ROOM_ID);
-              highlightChatRoomItem(CURRENT_ROOM_ID);
       
             } catch (err) {
               console.error("Exception in openOwnerChat:", err);
               await loadChatHistoryForRoom(CURRENT_ROOM_ID);
               initRealtimeForRoom(CURRENT_ROOM_ID);
-              highlightChatRoomItem(CURRENT_ROOM_ID);
             }
       
     }
@@ -1346,7 +1344,7 @@
           itemCard.onclick = (e) => {
             const items = document.querySelectorAll('.chat-item-card');
             items.forEach(el => el.classList.remove('active'));
-            e.currentTarget.classList.add('has-new-msg'); // เปลี่ยนเป็นสีม่วงพาสเทลอ่อนสว่างเสมอเมื่อเข้าสู่ห้องแชท
+            e.currentTarget.classList.remove('has-new-msg'); // ล้างสีม่วงพาสเทลออกเมื่อกดเข้าไปอ่าน
             e.currentTarget.classList.add('active');
             joinChatRoom(room.room_id, roomTitle);
           };
@@ -1376,7 +1374,6 @@
       expandChatZone('room'); // ขยายหน้าต่างแชท
       await loadChatHistoryForRoom(roomId); // ดึงข้อความเก่า
       initRealtimeForRoom(roomId); // เปิดระบบรับข้อความแบบ Realtime
-      highlightChatRoomItem(roomId);
     }
 
     // ---------------------------------------------------------
