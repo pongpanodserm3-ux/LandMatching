@@ -7,7 +7,7 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Supabase JS SDK -->
+  <!-- เพิ่ม Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -110,7 +110,6 @@
       transform: translateX(-50%);
     }
 
-    /* ปรับแต่งปุ่มพิกัดให้มีขนาดพอดีกับข้อความ */
     #locationFilterBtn {
       flex: 0 0 auto;
       height: 44px;
@@ -170,7 +169,7 @@
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
     }
 
-    /* --- แถบระบบนำทาง 4 แท็บ (Connected Tab Style / Segmented Control) --- */
+    /* --- แถบระบบนำทาง 4 แท็บ --- */
     .tabs-nav {
       display: flex;
       flex-direction: row;
@@ -576,7 +575,6 @@
       position: relative;
     }
 
-    /* Left Zone: Chat List / Inbox List */
     .chat-zone-list {
       flex: 1;
       width: 50%;
@@ -590,7 +588,6 @@
       user-select: none;
     }
 
-    /* Right Zone: Chat Room */
     .chat-zone-room {
       flex: 1;
       width: 50%;
@@ -603,10 +600,19 @@
       user-select: none;
     }
 
-    .chat-zone-list.expanded { flex: 3 !important; }
-    .chat-zone-room.shrunk { flex: 1 !important; }
-    .chat-zone-room.expanded { flex: 3 !important; }
-    .chat-zone-list.shrunk { flex: 1 !important; }
+    .chat-zone-list.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-room.shrunk {
+      flex: 1 !important;
+    }
+
+    .chat-zone-room.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-list.shrunk {
+      flex: 1 !important;
+    }
 
     .chat-list-header {
       padding: 12px 15px;
@@ -633,29 +639,69 @@
       gap: 10px;
       padding: 10px;
       border-radius: 12px;
-      background: #f8f9fa;
+      background: #ffffff;
+      border: 1px solid #eef2f6;
       margin-bottom: 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
-      border: 1px solid #eef2f5;
+      transition: background 0.2s, transform 0.15s;
     }
-    .chat-item-card:hover { background: #eef4ff; }
-    .chat-item-card.active { background: #e1ecfe; border-color: #4a83cc; }
+    .chat-item-card:hover, .chat-item-card.active {
+      background: #eef5ff;
+      border-color: var(--btn-blue);
+    }
 
-    .chat-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--btn-blue); color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: bold; font-size: 16px; flex-shrink: 0;
+    .chat-item-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #d0e0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
     }
-    .chat-item-info { flex: 1; overflow: hidden; }
-    .chat-item-name { font-size: 14px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-item-preview { font-size: 12px; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .chat-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .chat-item-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-item-preview {
+      font-size: 11px;
+      color: #777;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-room-header {
+      padding: 12px 15px;
+      background: #ffffff;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .chat-room-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--text-main);
+    }
 
     .chat-messages-container {
       flex: 1;
-      overflow-y: auto;
       padding: 15px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -668,83 +714,108 @@
       border-radius: 16px;
       font-size: 14px;
       line-height: 1.4;
-      word-break: break-word;
+      word-wrap: break-word;
     }
+
     .chat-bubble.sent {
       align-self: flex-end;
-      background: linear-gradient(135deg, #4a83cc 0%, #3b6cb0 100%);
+      background: #4a83cc;
       color: #ffffff;
       border-bottom-right-radius: 4px;
     }
+
     .chat-bubble.received {
       align-self: flex-start;
       background: #ffffff;
       color: #333333;
+      border: 1px solid #e0e0e0;
       border-bottom-left-radius: 4px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      border: 1px solid #e5e9f0;
     }
 
-    .chat-input-bar {
+    .chat-input-row {
       display: flex;
-      gap: 8px;
-      padding: 12px;
+      padding: 10px 15px;
       background: #ffffff;
-      border-top: 1px solid #e0e6ed;
+      border-top: 1px solid #eee;
+      gap: 8px;
       align-items: center;
     }
+
     .chat-input-field {
       flex: 1;
       padding: 10px 14px;
-      border: 1px solid #d0d7de;
+      border: 1px solid #ddd;
       border-radius: 20px;
-      font-size: 14px;
       outline: none;
+      font-size: 14px;
     }
-    .chat-input-field:focus { border-color: #4a83cc; }
-    
+
     .chat-send-btn {
-      background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%);
-      color: #ffffff;
+      background: var(--btn-blue);
+      color: white;
       border: none;
-      padding: 10px 18px;
+      padding: 8px 16px;
       border-radius: 20px;
       font-weight: bold;
-      font-size: 14px;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .chat-send-btn:hover { opacity: 0.9; }
+    .chat-send-btn:hover {
+      background: #3b6fb0;
+    }
+
+    /* ปุ่มคุยกับเจ้าของบนการ์ดรายการบ้าน */
+    .chat-owner-btn {
+      background: linear-gradient(135deg, #abecd6 0%, #46cd93 100%);
+      color: #064e3b;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 6px 14px;
+      border-radius: 16px;
+      border: none;
+      box-shadow: 0 3px 8px rgba(70, 205, 147, 0.4);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chat-owner-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
+    }
+    .chat-owner-btn:active {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
+  <button class="voice-btn" id="toggleBtn" onclick="toggleVoiceSession()">🎙️คุยกับAI</button>
 
-  <!-- ปุ่ม Voice AI ลอยมุมขวาบน -->
-  <button id="toggleBtn" class="voice-btn" onclick="toggleVoiceSession()">🎙️คุยกับAI</button>
-
-  <!-- ส่วน AI Voice & Filter Top Container -->
   <div id="ai-section">
     <div class="ai-controls-row">
       <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <div class="header-center-logos">
-        <div id="avatarCircle" class="ai-avatar">🤖</div>
+        <div class="ai-avatar" id="avatarCircle">🤖</div>
       </div>
+      <div style="width: 80px;"></div>
     </div>
-<!-- แถบระบบนำทาง 4 แท็บ -->
+
+    <!-- แถบระบบนำทาง 4 แท็บ -->
     <div class="tabs-nav">
-      <button id="tab-btn-realestate" class="tab-btn active" onclick="switchTab('realestate')">🏠 อสังหาฯ</button>
-      <button id="tab-btn-decor" class="tab-btn" onclick="switchTab('decor')">🛍️ สินค้าทั่วไป</button>
-      <button id="tab-btn-lifestyle" class="tab-btn" onclick="switchTab('lifestyle')">☕ ไลฟ์สไตล์</button>
-      <button id="tab-btn-others" class="tab-btn" onclick="switchTab('others')">🛠️ ช่าง-บริการ</button>
+      <button class="tab-btn active" id="tab-btn-realestate" onclick="switchTab('realestate')">🏡 อสังหาฯ</button>
+      <button class="tab-btn" id="tab-btn-decor" onclick="switchTab('decor')">🛋️ สินค้าทั่วไป</button>
+      <button class="tab-btn" id="tab-btn-lifestyle" onclick="switchTab('lifestyle')">☕ ไลฟ์สไตล์&เที่ยว</button>
+      <button class="tab-btn" id="tab-btn-others" onclick="switchTab('others')">🛠️ ช่าง-บริการ</button>
     </div>
 
-    <!-- แท็บ 1: อสังหาริมทรัพย์ -->
-    <div id="tab-content-realestate" class="tab-content" style="display: block;">
+    <!-- เนื้อหาแท็บ 1: อสังหาริมทรัพย์ -->
+    <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
-        <input type="text" id="customEditBox" class="custom-edit" placeholder="บอกสเปกบ้าน เช่น บ้านเดี่ยว กทม. ไม่เกิน 5 ล้าน..." />
-        <div id="statusText">พร้อมฟัง... กดปุ่มเสียงด้านบนคุยได้เลยครับ</div>
+        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม.">
+        <div id="statusText">กดปุ่ม คุยกับAI เพื่อเริ่มใช้งาน</div>
       </div>
-
+      
       <div class="filter-scroll-row">
         <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
@@ -757,157 +828,154 @@
         <button class="filter-btn" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
         <button class="filter-btn" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
+        <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
+        <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
       </div>
 
-      <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 2;" onclick="testShowList()">🔍 ค้นหาบ้านตรงสเปก</button>
-        <button class="action-show-list-btn" style="flex: 1; background: #eee; border-color: #ccc; color: #555;" onclick="resetAllFilters()">🔄 ล้างตัวกรอง</button>
+      <div style="display: flex; gap: 8px; margin-top: 4px;">
+        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
+        <button class="action-show-list-btn" style="background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
       </div>
     </div>
 
-    <!-- แท็บ 2: สินค้าทั่วไป -->
-    <div id="tab-content-decor" class="tab-content" style="display: none;">
+    <!-- เนื้อหาแท็บ 2: สินค้าทั่วไปและแต่งบ้าน -->
+    <div class="tab-content" id="tab-content-decor" style="display: none;">
       <div class="input-status-row">
-        <input type="text" id="customEditBoxDecor" class="custom-edit" placeholder="ค้นหาสินค้าทั่วไป..." />
+        <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="ค้นหาของแต่งบ้าน อุปกรณ์ซ่อมบ้าน...">
       </div>
-      <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหาสินค้า</button>
+      <div class="empty-tab-box">
+        🛋️ หมวดหมู่สินค้าทั่วไปและของแต่งบ้าน<br><span style="font-size: 12px; color: #999;">พิมพ์ชื่อสินค้าที่ต้องการค้นหาได้ที่ช่องด้านบน</span>
       </div>
     </div>
 
-    <!-- แท็บ 3: ไลฟ์สไตล์ -->
-    <div id="tab-content-lifestyle" class="tab-content" style="display: none;">
+    <!-- เนื้อหาแท็บ 3: ไลฟ์สไตล์และท่องเที่ยว -->
+    <div class="tab-content" id="tab-content-lifestyle" style="display: none;">
       <div class="input-status-row">
-        <input type="text" id="customEditBoxLifestyle" class="custom-edit" placeholder="ค้นหาร้านอาหาร คาเฟ่ ตลาด..." />
+        <input type="text" class="custom-edit" id="customEditBoxLifestyle" placeholder="ค้นหาร้านอาหาร คาเฟ่ สถานที่ท่องเที่ยว...">
       </div>
-      <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหาไลฟ์สไตล์</button>
+      <div class="empty-tab-box">
+        ☕ หมวดหมู่ไลฟ์สไตล์และท่องเที่ยว<br><span style="font-size: 12px; color: #999;">ค้นหาร้านอาหาร แหล่งท่องเที่ยว หรือคาเฟ่ใกล้คุณ</span>
       </div>
     </div>
 
-    <!-- แท็บ 4: ช่าง-บริการ -->
-    <div id="tab-content-others" class="tab-content" style="display: none;">
+    <!-- เนื้อหาแท็บ 4: ช่างและบริการ -->
+    <div class="tab-content" id="tab-content-others" style="display: none;">
       <div class="input-status-row">
-        <input type="text" id="customEditBoxOthers" class="custom-edit" placeholder="ค้นหาช่าง ซ่อมบ้าน บริการ..." />
+        <input type="text" class="custom-edit" id="customEditBoxOthers" placeholder="ค้นหาช่างซ่อม งานบริการ...">
       </div>
-      <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหาบริการ</button>
+      <div class="empty-tab-box">
+        🛠️ หมวดหมู่ช่างและงานบริการ<br><span style="font-size: 12px; color: #999;">ค้นหาช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ หรือบริการต่างๆ</span>
       </div>
     </div>
   </div>
 
-  <!-- ส่วนแสดงผลรายการ (List Section) -->
+  <!-- ส่วนแสดงรายการอสังหาฯ -->
   <div id="list-section">
     <div id="resultsContainer"></div>
-    <div id="infiniteLoader" class="infinite-loader">กำลังโหลดข้อมูล...</div>
-    <div id="fallbackRetryCard" class="fallback-retry-card">
-      เกิดข้อผิดพลาดในการดึงข้อมูล <br/>
-      <button class="retry-btn" onclick="retryNextPage()">ลองใหม่อีกครั้ง</button>
+    <div class="infinite-loader" id="infiniteLoader">⏳ กำลังโหลดข้อมูล...</div>
+    <div class="fallback-retry-card" id="fallbackRetryCard">
+      <div>❌ ไม่สามารถโหลดข้อมูลได้</div>
+      <button class="retry-btn" onclick="retryNextPage()">🔄 ลองใหม่อีกครั้ง</button>
     </div>
   </div>
 
-  <!-- ปุ่มแชทลอย (Floating User Chat Button) -->
-  <div class="user-chat-float-btn" onclick="openUserChatModal()">
-    <span class="chat-icon">💬</span>ข้อความ
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="detailModalOverlay">
+    <div class="detail-modal">
+      <span class="close-modal" onclick="closeDetailModal()">&times;</span>
+      <div class="detail-title" id="modalTitle">รายละเอียดประกาศ</div>
+      <div class="detail-price" id="modalPrice">-</div>
+      <div class="image-slider" id="modalSlider"></div>
+      <div class="detail-content" id="modalDesc"></div>
+      <div style="margin-top: 15px; display: flex; gap: 10px;">
+        <a id="modalDeepLink" href="#" target="_blank" style="flex: 1; text-align: center; background: var(--btn-blue); color: #fff; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: bold; display: none;">🌐 เปิดหน้าโพสต์ต้นฉบับ</a>
+        <button onclick="closeDetailModal()" style="flex: 1; background: #e2e8f0; color: #333; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">ปิดหน้าต่าง</button>
+      </div>
+    </div>
   </div>
-<!-- Location Modal -->
-  <div id="locationModalOverlay" class="modal-overlay">
+
+  <!-- Dropdown Modal -->
+  <div class="modal-overlay" id="dropdownModalOverlay">
+    <div class="dropdown-modal">
+      <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
+      <h3 id="dropdownModalTitle" style="margin-top:0; color: var(--text-main);">เลือกข้อมูล</h3>
+      <input type="text" class="dropdown-search-input" id="dropdownSearchInput" placeholder="พิมพ์เพื่อค้นหาตัวเลือก..." oninput="filterDropdownOptions()">
+      <div class="dropdown-options-container" id="dropdownOptions"></div>
+    </div>
+  </div>
+
+  <!-- Location Map Modal -->
+  <div class="modal-overlay" id="locationModalOverlay">
     <div class="detail-modal" style="height: 90vh;">
-      <span class="close-modal" onclick="closeLocationModal()">✕</span>
-      <h3 style="margin-top: 0; color: var(--text-main);">📍 เลือกพิกัดและรัศมีการค้นหา</h3>
-      
+      <span class="close-modal" onclick="closeLocationModal()">&times;</span>
+      <h3 style="margin-top:0; color: var(--text-main); font-size: 18px;">📍 ปักหมุดเลือกพิกัดค้นหา</h3>
       <div style="position: relative; margin-bottom: 10px;">
-        <input type="text" id="placeSearchInput" class="dropdown-search-input" placeholder="พิมพ์ชื่อสถานที่..." oninput="handlePlaceSearchInput(this.value)" />
-        <div id="placeSearchResults" style="position: absolute; top: 100%; left:0; right:0; background:#fff; border:1px solid #ccc; border-radius:10px; z-index:99999; max-height:200px; overflow-y:auto; display:none; box-shadow:0 4px 10px rgba(0,0,0,0.15);"></div>
+        <input type="text" id="placeSearchInput" placeholder="พิมพ์ชื่อสถานที่ ซอย ถนน หมู่บ้าน..." oninput="handlePlaceSearchInput(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; font-size: 14px;">
+        <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 10px rgba(0,0,0,0.15);"></div>
       </div>
-
-      <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-        <input type="number" step="any" id="latInput" class="custom-edit" placeholder="Latitude" onchange="updateMapFromInputs()" />
-        <input type="number" step="any" id="lngInput" class="custom-edit" placeholder="Longitude" onchange="updateMapFromInputs()" />
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-        <label style="font-weight: bold; font-size: 13px;">รัศมี:</label>
-        <select id="radiusSelect" class="custom-edit" onchange="updateRadiusCircle()">
+      <div id="locationMap" style="width: 100%; height: 260px; border-radius: 15px; margin-bottom: 10px;"></div>
+      <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+        <input type="text" id="latInput" placeholder="Latitude" style="flex:1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;" onchange="updateMapFromInputs()">
+        <input type="text" id="lngInput" placeholder="Longitude" style="flex:1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;" onchange="updateMapFromInputs()">
+        <select id="radiusSelect" onchange="updateRadiusCircle()" style="padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;">
           <option value="1">1 กม.</option>
           <option value="3">3 กม.</option>
           <option value="5">5 กม.</option>
           <option value="10">10 กม.</option>
           <option value="20">20 กม.</option>
         </select>
-        <button class="filter-btn" onclick="getCurrentUserLocation()" style="padding: 8px 12px;">📌 ตำแหน่งฉัน</button>
       </div>
-
-      <div id="locationMap" style="flex: 1; width: 100%; border-radius: 15px; margin-bottom: 10px;"></div>
-
-      <div style="display: flex; gap: 8px;">
-        <button class="action-show-list-btn" style="flex: 1; background: #46cd93; border-color: #3bbd84; color: white;" onclick="confirmLocation()">✅ ยืนยันพิกัด</button>
-        <button class="action-show-list-btn" style="flex: 1; background: #4a83cc; border-color: #3b6cb0; color: white;" onclick="openGoogleMaps()">🗺️ Google Maps</button>
-        <button class="action-show-list-btn" style="flex: 1; background: #eee; border-color: #ccc; color: #555;" onclick="clearLocationFilter()">🗑️ ล้างพิกัด</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dropdown Modal -->
-  <div id="dropdownModalOverlay" class="modal-overlay">
-    <div class="dropdown-modal">
-      <span class="close-modal" onclick="closeDropdownModal()">✕</span>
-      <h3 id="dropdownModalTitle" style="margin-top: 0; color: var(--text-main);">เลือกตัวเลือก</h3>
-      <input type="text" id="dropdownSearchInput" class="dropdown-search-input" placeholder="พิมพ์เพื่อค้นหา..." oninput="filterDropdownOptions()" />
-      <div id="dropdownOptions" class="dropdown-options-container"></div>
-    </div>
-  </div>
-
-  <!-- Property Detail Modal -->
-  <div id="detailModalOverlay" class="modal-overlay">
-    <div class="detail-modal">
-      <span class="close-modal" onclick="closeDetailModal()">✕</span>
-      <div id="modalSlider" class="image-slider"></div>
-      <div class="detail-content">
-        <div id="modalTitle" class="detail-title"></div>
-        <div id="modalPrice" class="detail-price"></div>
-        <div id="modalDesc" style="margin-top: 10px; font-size: 14px; line-height: 1.5; color: #444;"></div>
-        <div style="margin-top: 15px;">
-          <a id="modalDeepLink" href="#" target="_blank" style="display: inline-block; padding: 10px 18px; background: var(--btn-blue); color: white; text-decoration: none; border-radius: 12px; font-weight: bold;">🔗 ดูโพสต์ต้นฉบับ</a>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <button onclick="getCurrentUserLocation()" style="background: #e2e8f0; color: #333; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px;">📍 ใช้ตำแหน่งปัจจุบันของฉัน</button>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="confirmLocation()" style="flex: 1; background: #159947; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">✅ ยืนยันพิกัด</button>
+          <button onclick="openGoogleMaps()" style="flex: 1; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">🗺️ เปิด Google Maps</button>
         </div>
+        <button onclick="clearLocationFilter()" style="background: #ff4b2b; color: white; border: none; padding: 8px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 12px; margin-top: 4px;">🗑️ ล้างพิกัด</button>
       </div>
     </div>
   </div>
 
-  <!-- Real-time User Chat Modal -->
-  <div id="userChatModalOverlay" class="chat-modal-overlay">
+  <!-- Floating User Chat Button -->
+  <div class="user-chat-float-btn" onclick="openUserChatModal()">
+    <div class="chat-icon">💬</div>
+    <div>แชท</div>
+  </div>
+
+  <!-- User Chat Modal (Dual-Pane) -->
+  <div class="chat-modal-overlay" id="userChatModalOverlay">
     <div class="chat-container-card">
       <div class="chat-header-bar">
-        <span id="chatActiveTitle">💬 ระบบข้อความแชท</span>
-        <span class="close-chat-modal" onclick="closeUserChatModal()">✕</span>
+        <span id="chatActiveTitle">💬 ระบบแชทสนทนา</span>
+        <span class="close-chat-modal" onclick="closeUserChatModal()">&times;</span>
       </div>
       <div class="chat-dual-split-body">
-        <!-- ฝั่งซ้าย: รายการห้องแชท -->
-        <div id="chatZoneList" class="chat-zone-list shrunk" onclick="expandChatZone('list')">
-          <div class="chat-list-header">📥 การสนทนาทั้งหมด</div>
-          <div id="chatListItems" class="chat-list-items">
-            <div class="chat-item-card active">
-              <div class="chat-avatar">🏠</div>
+        <div class="chat-zone-list expanded" id="chatZoneList" onclick="expandChatZone('list')">
+          <div class="chat-list-header">📥 รายการห้องแชททั้งหมด</div>
+          <div class="chat-list-items" id="chatListItems">
+            <div class="chat-item-card active" onclick="selectChatRoom('💬 ห้องแชตหลัก', 'เจ้าของอสังหาฯ')">
+              <div class="chat-item-avatar">👤</div>
               <div class="chat-item-info">
-                <div class="chat-item-name">เจ้าของประกาศ</div>
-                <div class="chat-item-preview">คลิกปุ่ม "คุยกับเจ้าของ" เพื่อสนทนา</div>
+                <div class="chat-item-title">ห้องแชทติดต่อเจ้าของ</div>
+                <div class="chat-item-preview">คลิกเพื่อดูบทสนทนา</div>
               </div>
             </div>
           </div>
         </div>
-        <!-- ฝั่งขวา: กล่องสนทนาแชท -->
-        <div id="chatZoneRoom" class="chat-zone-room expanded" onclick="expandChatZone('room')">
-          <div id="chatMessagesContainer" class="chat-messages-container"></div>
-          <div class="chat-input-bar">
-            <input type="text" id="chatMessageInput" class="chat-input-field" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
+        <div class="chat-zone-room shrunk" id="chatZoneRoom" onclick="expandChatZone('room')">
+          <div class="chat-room-header">
+            <div class="chat-room-title">กล่องข้อความ</div>
+          </div>
+          <div class="chat-messages-container" id="chatMessagesContainer"></div>
+          <div class="chat-input-row">
+            <input type="text" class="chat-input-field" id="chatMessageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendChatMessage()">
             <button class="chat-send-btn" onclick="sendChatMessage()">ส่ง</button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <script>
+<script>
     // ==========================================
     // 1. CONFIGURATION & CONSTANTS
     // ==========================================
@@ -970,7 +1038,7 @@
     };
 
     // ==========================================
-    // Supabase Setup
+    // Supabase Chat Setup
     // ==========================================
     const SUPABASE_URL = 'https://eywnasnyumqmlezjginj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
@@ -978,10 +1046,11 @@
 
     let CURRENT_ROOM_ID = 101;
     let CURRENT_USER_ID = 1;
-    let activeRealtimeChannel = null;
     let currentUserLineProfile = null;
-// ==========================================
-    // LINE LIFF SDK Initialization & Supabase user sync
+    let activeRealtimeChannel = null;
+
+    // ==========================================
+    // LINE LIFF SDK Initialization & Supabase users table sync
     // ==========================================
     async function initLIFF() {
       try {
@@ -991,7 +1060,6 @@
             const profile = await liff.getProfile();
             currentUserLineProfile = profile;
             if (profile && profile.userId) {
-              CURRENT_USER_ID = profile.userId;
               await saveUserLineIdToSupabase(profile.userId);
             }
           }
@@ -1017,66 +1085,47 @@
       }
     }
 
-    // ==========================================
-    // Supabase Chat Room Check & Message History Logic
-    // ==========================================
-    function displayMessageOnUI(msg) {
-      const container = document.getElementById('chatMessagesContainer');
-      if (!container) return;
-      if (msg.id && document.getElementById(`msg-${msg.id}`)) return;
-
-      const bubble = document.createElement('div');
-      if (msg.id) bubble.id = `msg-${msg.id}`;
-      const isMe = String(msg.sender_id) === String(CURRENT_USER_ID);
-      bubble.className = `chat-bubble ${isMe ? 'sent' : 'received'}`;
-      bubble.innerText = msg.content;
-      container.appendChild(bubble);
-      container.scrollTop = container.scrollHeight;
-    }
-
-    async function loadChatHistory() {
-      const container = document.getElementById('chatMessagesContainer');
-      if (container) container.innerHTML = ''; 
-      
-      const { data: messages, error } = await supabaseClient
-        .from('chat_messages')
-        .select('*')
-        .eq('room_id', CURRENT_ROOM_ID)
-        .order('created_at', { ascending: true });
-
-      if (messages && messages.length > 0) {
-        messages.forEach(msg => displayMessageOnUI(msg));
+    async function getCurrentUserId() {
+      if (currentUserLineProfile && currentUserLineProfile.userId) {
+        try {
+          const { data } = await supabaseClient
+            .from('users')
+            .select('id, line_id')
+            .eq('line_id', currentUserLineProfile.userId)
+            .maybeSingle();
+          if (data && data.id) return data.id;
+          return currentUserLineProfile.userId;
+        } catch (e) {
+          return currentUserLineProfile.userId;
+        }
       }
+      return CURRENT_USER_ID;
     }
 
-    function initRealtime() {
-      if (activeRealtimeChannel) {
-        supabaseClient.removeChannel(activeRealtimeChannel);
-      }
-
-      activeRealtimeChannel = supabaseClient
-        .channel(`room_${CURRENT_ROOM_ID}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${CURRENT_ROOM_ID}` },
-          (payload) => displayMessageOnUI(payload.new)
-        )
-        .subscribe();
-    }
-
-    // ฟังก์ชันสำคัญ: ทำการตรวจสอบในตาราง chat_rooms เมื่อกดปุ่ม "คุยกับเจ้าของ"
+    // ==========================================
+    // ตรรกะระบบแชทเมื่อกดปุ่ม "คุยกับเจ้าของ" (เช็กตาราง chat_rooms)
+    // ==========================================
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
 
-      const buyerId = CURRENT_USER_ID || (currentUserLineProfile ? currentUserLineProfile.userId : 1);
-      const sellerId = item ? (item.user_id || item.seller_id || item.owner_id || 1) : 1;
-      const propertyId = item ? (item.property_id || item.id || item.postId || 1) : 1;
       const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) {
+        titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
+      }
+      
+      openUserChatModal();
+      expandChatZone('room');
+
+      // ดึง ID ของผู้ใช้งาน (buyer), ID เจ้าของประกาศ (seller) และ Property ID
+      const buyerId = await getCurrentUserId();
+      const sellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
+      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
 
       try {
-        // 1. ตรวจสอบในตาราง chat_rooms โดยเช็กจาก buyer_id + seller_id + property_id
-        const { data: existingRooms, error } = await supabaseClient
+        // ตรวจสอบห้องแชทในตาราง chat_rooms ของ Supabase
+        const { data: existingRooms, error: roomErr } = await supabaseClient
           .from('chat_rooms')
           .select('*')
           .eq('buyer_id', buyerId)
@@ -1085,24 +1134,25 @@
 
         let targetRoomId = null;
 
-        if (!error && existingRooms && existingRooms.length > 0) {
-          // หากตรงกัน ให้ดึง room_id เดิมมาใช้ต่อ
-          targetRoomId = existingRooms[0].room_id;
+        if (existingRooms && existingRooms.length > 0) {
+          // หากตรงกันทั้งหมด ให้ดึง room_id เดิมมาใช้งาน
+          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
         } else {
-          // หากไม่ตรงกัน ให้ทำการขึ้น room_id (+1) ใหม่จากตัวเลขล่าสุด
+          // หากไม่ตรงกัน ให้ดึง room_id ล่าสุดมาบวกเพิ่ม (+1)
           const { data: maxRoomData } = await supabaseClient
             .from('chat_rooms')
             .select('room_id')
             .order('room_id', { ascending: false })
             .limit(1);
 
-          let nextRoomId = 1;
+          let nextRoomId = 101;
           if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0].room_id) {
-            nextRoomId = Number(maxRoomData[0].room_id) + 1;
+            const parsed = parseInt(maxRoomData[0].room_id, 10);
+            if (!isNaN(parsed)) nextRoomId = parsed + 1;
           }
 
-          // บันทึก room_id ใหม่, buyer_id ใหม่, seller_id ใหม่, property_id ใหม่ ลงใน chat_rooms
-          const { data: newRoom, error: insertErr } = await supabaseClient
+          // บันทึก room_id ใหม่ และข้อมูลลงตาราง chat_rooms
+          const { data: insertedRoom, error: insertErr } = await supabaseClient
             .from('chat_rooms')
             .insert([{
               room_id: nextRoomId,
@@ -1112,32 +1162,83 @@
             }])
             .select();
 
-          if (newRoom && newRoom.length > 0) {
-            targetRoomId = newRoom[0].room_id;
-          } else {
-            targetRoomId = nextRoomId;
-          }
+          targetRoomId = nextRoomId;
         }
 
         CURRENT_ROOM_ID = targetRoomId;
+        CURRENT_USER_ID = buyerId;
 
-        const titleEl = document.getElementById('chatActiveTitle');
-        if (titleEl) {
-          titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
-        }
-
-        // 2. นำ room_id ไปค้นหาในตาราง chat_messages เพื่อดึงข้อมูลเก่าตามลำดับเวลา
-        await loadChatHistory();
-
-        // 3. เริ่มระบบ Real-time Supabase สำหรับ room_id นี้
-        initRealtime();
-
-        // 4. แสดงผลหน้าจอแชท
-        openUserChatModal();
-        expandChatZone('room');
+        // ดึงข้อมูลข้อความเก่าในตาราง chat_messages มาแสดง และเปิดระบบ Realtime
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        initRealtimeForRoom(CURRENT_ROOM_ID);
 
       } catch (err) {
-        console.error("Error checking or creating chat room:", err);
+        console.error("Exception in openOwnerChat:", err);
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        initRealtimeForRoom(CURRENT_ROOM_ID);
+      }
+    }
+
+    function displayMessageOnUI(msg) {
+      const container = document.getElementById('chatMessagesContainer');
+      if (!container) return;
+      const bubble = document.createElement('div');
+      const isMe = String(msg.sender_id) === String(CURRENT_USER_ID);
+      bubble.className = `chat-bubble ${isMe ? 'sent' : 'received'}`;
+      bubble.innerText = msg.content;
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function loadChatHistoryForRoom(roomId) {
+      const container = document.getElementById('chatMessagesContainer');
+      if (container) container.innerHTML = ''; 
+      
+      const { data: messages } = await supabaseClient
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: true });
+
+      if (messages) {
+        messages.forEach(msg => displayMessageOnUI(msg));
+      }
+    }
+
+    function initRealtimeForRoom(roomId) {
+      if (activeRealtimeChannel) {
+        supabaseClient.removeChannel(activeRealtimeChannel);
+      }
+      activeRealtimeChannel = supabaseClient
+        .channel(`room_${roomId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` },
+          (payload) => displayMessageOnUI(payload.new)
+        )
+        .subscribe();
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      const container = document.getElementById('chatMessagesContainer');
+      if (!input || !container) return;
+      const text = input.value.trim();
+      if (!text) return;
+      
+      input.value = '';
+
+      const senderId = await getCurrentUserId();
+      CURRENT_USER_ID = senderId;
+      
+      const { data, error } = await supabaseClient
+        .from('chat_messages')
+        .insert([
+          { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+        ]);
+
+      if (error) {
+        console.error("Error inserting message to Supabase chat_messages:", error);
       }
     }
 
@@ -1153,7 +1254,7 @@
     }
 
     // ==========================================
-    // 3. UI, TABS & INFINITE SCROLL BINDINGS
+    // UI, TABS & INTERACTION HANDLERS
     // ==========================================
     function switchTab(tabId) {
       stopAIVoiceSpeech();
@@ -1191,7 +1292,6 @@
           if (profile && profile.userId) {
             lineId = profile.userId;
             currentUserLineProfile = profile;
-            CURRENT_USER_ID = lineId;
             localStorage.setItem('line_user_id', lineId);
             await saveUserLineIdToSupabase(profile.userId);
           }
@@ -1243,8 +1343,8 @@
         }
       }, 1000);
       
-      loadChatHistory();
-      initRealtime();
+      loadChatHistoryForRoom(CURRENT_ROOM_ID);
+      initRealtimeForRoom(CURRENT_ROOM_ID);
 
       const listSection = document.getElementById('list-section');
       const aiSection = document.getElementById('ai-section');
@@ -1339,7 +1439,6 @@
       document.getElementById('dropdownSearchInput').value = '';
       
       let options = getDropdownOptionsForTopic(topic);
-      
       AppState.ui.dropdownOptions = options;
       renderDropdownOptions(AppState.ui.dropdownOptions);
       document.getElementById('dropdownModalOverlay').classList.add('active');
@@ -1382,9 +1481,8 @@
       });
       testShowList();
     }
-
-    // ==========================================
-    // 4. MAP & LOCATION FUNCTIONS
+// ==========================================
+    // 4. MAP & LOCATION HANDLERS
     // ==========================================
     function updateRadiusCircle() {
       if (!leafletMap || !selectedLat || !selectedLng) return;
@@ -1529,6 +1627,7 @@
             resultsDiv.innerHTML = '';
             const combined = [];
             const seenIds = new Set();
+    
             resultsArray.forEach(data => {
               if (Array.isArray(data)) {
                 data.forEach(item => {
@@ -1546,7 +1645,11 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.style.cssText = 'padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; color: #333; line-height: 1.4;';
                 itemDiv.innerText = item.display_name;
-                itemDiv.onclick = () => { selectPlaceResult(item.lat, item.lon, item.display_name); };
+                itemDiv.onmouseover = () => { itemDiv.style.background = '#f0f4f8'; };
+                itemDiv.onmouseout = () => { itemDiv.style.background = '#ffffff'; };
+                itemDiv.onclick = () => {
+                  selectPlaceResult(item.lat, item.lon, item.display_name);
+                };
                 resultsDiv.appendChild(itemDiv);
               });
               resultsDiv.style.display = 'block';
@@ -1554,6 +1657,10 @@
               resultsDiv.innerHTML = '<div style="padding: 10px; font-size: 13px; color: #888; text-align: center;">ไม่พบสถานที่ที่ค้นหา</div>';
               resultsDiv.style.display = 'block';
             }
+          })
+          .catch(err => {
+            console.error("Place search error:", err);
+            resultsDiv.style.display = 'none';
           });
       }, 400);
     }
@@ -1561,9 +1668,11 @@
     function selectPlaceResult(lat, lon, displayName) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lon);
+      
       document.getElementById('placeSearchInput').value = displayName;
       document.getElementById('placeSearchResults').style.display = 'none';
       setCoordinates(latitude, longitude);
+      
       if (leafletMap && mapMarker) {
         const newLatLng = new L.LatLng(latitude, longitude);
         mapMarker.setLatLng(newLatLng);
@@ -1604,7 +1713,11 @@
             mapMarker.setLatLng(newLatLng);
             updateRadiusCircle();
           }
-        }, () => alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้"));
+        }, (err) => {
+          alert("ไม่สามารถดึงตำแหน่งปัจจุบันได้ กรุณาอนุญาตการเข้าถึงตำแหน่ง");
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      } else {
+        alert("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
       }
     }
 
@@ -1619,13 +1732,22 @@
       selectedLat = null;
       selectedLng = null;
       selectedRadius = 1;
+      
       if (radiusCircle && leafletMap) {
         leafletMap.removeLayer(radiusCircle);
         radiusCircle = null;
       }
+
       document.getElementById('latInput').value = '';
       document.getElementById('lngInput').value = '';
       document.getElementById('placeSearchInput').value = '';
+      const resultsDiv = document.getElementById('placeSearchResults');
+      if (resultsDiv) {
+        resultsDiv.style.display = 'none';
+        resultsDiv.innerHTML = '';
+      }
+      const radiusSelect = document.getElementById('radiusSelect');
+      if (radiusSelect) radiusSelect.value = "1";
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       closeLocationModal();
       testShowList();
@@ -1635,8 +1757,17 @@
       stopAIVoiceSpeech();
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
+      const placeSearchInput = document.getElementById('placeSearchInput');
+      const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
+
       if (lat && lng) {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+        let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+        if (placeName) {
+          queryUrl += `+${encodeURIComponent(placeName)}`;
+        }
+        window.open(queryUrl, '_blank');
+      } else {
+        alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
     }
 
@@ -1656,17 +1787,21 @@
         selectedRadius = 1;
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       }
+      
       closeLocationModal();
       testShowList();
     }
-// ==========================================
+
+    // ==========================================
     // 5. AI VOICE SESSION HANDLERS
     // ==========================================
     async function stopAIVoiceSpeech() {
       AppState.voice.silenced = true;
       if (AppState.voice.audioOutCtx) {
         if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
-          try { await AppState.voice.audioOutCtx.close(); } catch (e) {}
+          try {
+            await AppState.voice.audioOutCtx.close();
+          } catch (e) {}
         }
         AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
@@ -1691,6 +1826,7 @@
         AppState.voice.isActive = true;
         AppState.voice.isSetupReady = false;
         AppState.voice.silenced = false;
+        AppState.data.isFetching = false;
         
         if (statusText) {
           statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
@@ -1713,18 +1849,89 @@
                   speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
                 },
                 systemInstruction: {
-                  parts: [{ text: `คุณคือ AI ผู้ช่วยค้นหา ช่วยแนะนำบ้านและสินค้า บริการด้วยเสียง...` }]
-                }
+                  parts: [{
+                    text: `คุณคือ AI ผู้ช่วยค้นหา  หน้าที่หลักคือ:
+                    1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
+                    2. เมื่ออยู่ในแท็บอสังหาริมทรัพย์ หรือ เพิ่งเข้าสู่แท็บอสังหาริมทรัพย์ อันดับแรก AIถามทันทีว่า "ต้องการหาพื้นที่ใด ต้องการให้เปิดหน้าพิกัดไหม" ถ้าuserบอกต้องการ ให้AIเรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อเปิดหน้าพิกัดขึ้นมา และ  ให้AI สอบถามความต้องการบ้านที่userต้องการ โดยเน้นถามเร็วเน้นสรุป เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
+                    ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
+                    คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
+                    [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
+                    3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchTextในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
+                    4. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
+                    5. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
+                    6. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
+                    7. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย
+                    8. กฎและลำดับการทำงานเมื่อผู้ใช้ระบุความต้องการ:
+                        - ขั้นตอนที่ 1: เรียกใช้ฟังก์ชัน 'switch_tab_category' เพื่อสลับหน้าจอไปยังแท็บที่ถูกต้อง
+                        - ขั้นตอนที่ 2: พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"`
+                  }]
+                },
+                tools: [
+                  {
+                    functionDeclarations: [
+                      {
+                        name: "submit_user_summary",
+                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้า",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            userData: { type: "OBJECT" },
+                            criteria: { type: "OBJECT" }
+                          },
+                          required: ["userData", "criteria"]
+                        }
+                      },
+                      {
+                        name: "set_location_coordinates",
+                        description: "แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            latitude: { type: "NUMBER" },
+                            longitude: { type: "NUMBER" },
+                            placeName: { type: "STRING" }
+                          },
+                          required: ["latitude", "longitude", "placeName"]
+                        }
+                      },
+                      {
+                        name: "switch_tab_category",
+                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            tabId: { type: "STRING" },
+                            searchText: { type: "STRING" }
+                          },
+                          required: ["tabId"]
+                        }
+                      },
+                      {
+                        name: "open_location_modal",
+                        description: "เปิดหน้าต่างพิกัด ปักหมุดแผนที่",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "confirm_location_action",
+                        description: "กดปุ่มยืนยันพิกัด",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "open_google_maps_action",
+                        description: "กดปุ่มเปิด Google Maps",
+                        parameters: { type: "OBJECT", properties: {} }
+                      }
+                    ]
+                  }
+                ]
               }
             };
             AppState.voice.ws.send(JSON.stringify(setupData));
           }
 
-          if (btn) {
-            btn.innerHTML = "⏹️หยุดคุยกับAI";
-            btn.classList.add('active');
-          }
-          if (avatar) avatar.classList.add('pulse-animation');
+          btn.innerHTML = "⏹️หยุดคุยกับAI";
+          btn.classList.add('active');
+          avatar.classList.add('pulse-animation');
         };
 
         AppState.voice.ws.onmessage = async (event) => {
@@ -1744,7 +1951,13 @@
               return;
             }
 
-            const parts = response.serverContent?.modelTurn?.parts;
+            if (response.serverContent?.interrupted) {
+              if (AppState.voice.audioOutCtx) {
+                AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+              }
+            }
+
+            const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
                 if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
@@ -1754,18 +1967,20 @@
             }
           } catch (e) {}
         };
-        AppState.voice.ws.onclose = () => stopVoiceSession();
 
+        AppState.voice.ws.onclose = () => stopVoiceSession();
       } catch (err) {
         if (statusText) {
           statusText.classList.remove('loading-pulse');
-          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้";
+          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
         }
       }
     }
 
     async function initMicrophone() {
-      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
       AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
       const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
       AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
@@ -1774,12 +1989,15 @@
       AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
       AppState.voice.processor.onaudioprocess = (e) => {
         if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+        
         const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = convertFloat32ToPCM16(inputData);
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
 
         AppState.voice.ws.send(JSON.stringify({
-          realtimeInput: { audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio } }
+          realtimeInput: {
+            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+          }
         }));
       };
     }
@@ -1792,7 +2010,8 @@
     }
 
     function playPCMData(base64Audio) {
-      if (AppState.voice.silenced || !AppState.voice.audioOutCtx) return;
+      if (AppState.voice.silenced) return;
+      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
       const raw = atob(base64Audio);
       const bytes = new Uint8Array(raw.length);
       for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
@@ -1802,9 +2021,11 @@
 
       const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
       buffer.getChannelData(0).set(float32);
+
       const source = AppState.voice.audioOutCtx.createBufferSource();
       source.buffer = buffer;
       source.connect(AppState.voice.audioOutCtx.destination);
+
       if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
       }
@@ -1815,7 +2036,11 @@
     async function stopVoiceSession() {
       AppState.voice.isActive = false;
       AppState.voice.isSetupReady = false;
+      AppState.voice.silenced = false;
+      AppState.data.isFetching = false;
+      
       if (AppState.voice.ws) {
+        AppState.voice.ws.onclose = null;
         AppState.voice.ws.close();
         AppState.voice.ws = null;
       }
@@ -1823,30 +2048,59 @@
         AppState.voice.mediaStream.getTracks().forEach(t => t.stop());
         AppState.voice.mediaStream = null;
       }
+      
+      if (AppState.voice.audioCtx && AppState.voice.audioCtx.state !== 'closed') {
+        try { await AppState.voice.audioCtx.close(); } catch (e) {}
+      }
+      if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
+        try { await AppState.voice.audioOutCtx.close(); } catch (e) {}
+      }
+
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
-      if (btn) { btn.innerHTML = "🎙️คุยกับAI"; btn.classList.remove('active'); }
+      const statusText = document.getElementById('statusText');
+      if (btn) {
+        btn.innerHTML = "🎙️คุยกับAI";
+        btn.classList.remove('active');
+      }
       if (avatar) avatar.classList.remove('pulse-animation');
+      if (statusText) {
+        statusText.classList.remove('loading-pulse');
+        statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
+      }
     }
 
     // ==========================================
-    // 6. DATABASE & PROPERTY RENDER FUNCTIONS
+    // 6. DATABASE & SEARCH FETCHING
     // ==========================================
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
+      const defaultLabels = [
+        "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
+        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
+        "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
+      ];
+      
       filterBtns.forEach(btn => {
         const text = btn.innerText;
         if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
+        if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
         const onclick = btn.getAttribute('onclick') || '';
+        
         if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
         else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
         else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
         else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
         else if (onclick.includes('จังหวัด')) criteria.province = val;
         else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
+        else if (onclick.includes('ถนน')) criteria.road = val;
+        else if (onclick.includes('โครงการ')) criteria.project = val;
+        else if (onclick.includes('ซอย')) criteria.soi = val;
+        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
       });
+
       if (selectedLat && selectedLng) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
@@ -1861,15 +2115,18 @@
       AppState.pagination.renderedKeys.clear();
       document.getElementById('resultsContainer').innerHTML = '';
       const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : '';
+      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
       fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
 
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
       if (AppState.pagination.isLoading) return;
       AppState.pagination.isLoading = true;
+      
       const loader = document.getElementById('infiniteLoader');
+      const fallback = document.getElementById('fallbackRetryCard');
       if (loader) loader.style.display = 'block';
+      if (fallback) fallback.style.display = 'none';
 
       if (isNewSearch) {
         AppState.pagination.offset = 0;
@@ -1886,27 +2143,32 @@
           criteria: criteria,
           searchText: searchText
         };
+
         const response = await fetch(CONFIG.RENDER_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (!response.ok) throw new Error('Network response error');
+
+        if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
+
         if (data.status === 'success') {
           renderProperties(data.results);
           AppState.pagination.offset = data.nextOffset;
           AppState.pagination.hasMore = data.hasMore;
+        } else {
+          throw new Error(data.message || 'Error fetching data');
         }
       } catch (error) {
         console.error("Fetch Error:", error);
+        if (fallback) fallback.style.display = 'block';
       } finally {
         AppState.pagination.isLoading = false;
         if (loader) loader.style.display = 'none';
       }
     }
 
-    // แสดงผลรายการบ้าน พร้อมปุ่ม "คุยกับเจ้าของ" (สีเขียวพาสเทล)
     function renderProperties(properties) {
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
@@ -1940,14 +2202,12 @@
             <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
               💰 ${price}
             </div>
-            <!-- ปุ่มคุยกับเจ้าของ สีเขียวพาสเทล -->
-            <button class="chat-owner-btn" style="background: linear-gradient(135deg, #abecd6 0%, #46cd93 100%); color: #064e3b; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 16px; border: none; box-shadow: 0 3px 8px rgba(70, 205, 147, 0.4); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 4px;">
+            <button class="chat-owner-btn">
               💬 คุยกับเจ้าของ
             </button>
           </div>
         `;
 
-        // ผูก Event Listener เมื่อผู้ใช้กดปุ่ม "คุยกับเจ้าของ" ให้ไปเรียก openOwnerChat
         const chatBtn = card.querySelector('.chat-owner-btn');
         if (chatBtn) {
           chatBtn.onclick = (e) => {
@@ -1972,7 +2232,7 @@
       } else {
         deepLinkBtn.style.display = 'none';
       }
-
+    
       const slider = document.getElementById('modalSlider');
       slider.innerHTML = '';
       if (item.images && item.images.length > 0) {
@@ -1987,6 +2247,7 @@
          placeholder.innerText = 'ไม่มีรูปภาพ';
          slider.appendChild(placeholder);
       }
+      
       document.getElementById('detailModalOverlay').classList.add('active');
     }
 
@@ -1999,47 +2260,40 @@
       fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
     }
 
-    function retryNextPage() { loadNextPage(); }
-    function openUserChatModal() { document.getElementById('userChatModalOverlay').classList.add('active'); }
-    function closeUserChatModal() { document.getElementById('userChatModalOverlay').classList.remove('active'); }
+    function retryNextPage() {
+      loadNextPage();
+    }
+
+    function openUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.add('active');
+    }
+
+    function closeUserChatModal() {
+      document.getElementById('userChatModalOverlay').classList.remove('active');
+    }
 
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
       if (zone === 'list') {
-        listZone.classList.add('expanded'); listZone.classList.remove('shrunk');
-        roomZone.classList.add('shrunk'); roomZone.classList.remove('expanded');
+        listZone.classList.add('expanded');
+        listZone.classList.remove('shrunk');
+        roomZone.classList.add('shrunk');
+        roomZone.classList.remove('expanded');
       } else if (zone === 'room') {
-        roomZone.classList.add('expanded'); roomZone.classList.remove('shrunk');
-        listZone.classList.add('shrunk'); listZone.classList.remove('expanded');
+        roomZone.classList.add('expanded');
+        roomZone.classList.remove('shrunk');
+        listZone.classList.add('shrunk');
+        listZone.classList.remove('expanded');
       }
     }
 
-    // ฟังก์ชันส่งข้อความแชท และบันทึกลงตาราง chat_messages พร้อม Real-time
-    async function sendChatMessage() {
-      const input = document.getElementById('chatMessageInput');
-      const container = document.getElementById('chatMessagesContainer');
-      if (!input || !container) return;
-      const text = input.value.trim();
-      if (!text) return;
-      
-      input.value = '';
-      
-      const { data, error } = await supabaseClient
-        .from('chat_messages')
-        .insert([
-          { 
-            room_id: CURRENT_ROOM_ID, 
-            sender_id: CURRENT_USER_ID, 
-            content: text 
-          }
-        ])
-        .select();
-
-      if (error) {
-        console.error("Error inserting message to Supabase chat_messages:", error);
-      } else if (data && data.length > 0) {
-        displayMessageOnUI(data[0]);
+    function selectChatRoom(title, personName) {
+      document.getElementById('chatActiveTitle').innerText = title;
+      const items = document.querySelectorAll('.chat-item-card');
+      items.forEach(el => el.classList.remove('active'));
+      if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
       }
     }
   </script>
