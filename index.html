@@ -1287,22 +1287,20 @@
       if (!input || !container) return;
       const text = input.value.trim();
       if (!text) return;
-
+    
       const senderId = await getCurrentUserId();
       CURRENT_USER_ID = senderId;
       
-      // แสดงผลข้อความบนหน้าจอทันที (Optimistic UI)
-      const tempMsg = { sender_id: CURRENT_USER_ID, content: text };
-      displayMessageOnUI(tempMsg);
+      // เคลียร์ช่องพิมพ์ข้อความทันที
       input.value = '';
-
-      // ส่งลง Supabase Database
-      const { data, error } = await supabaseClient
+    
+      // ส่งลง Supabase (ให้ Realtime Channel ทำหน้าที่แสดงข้อความบน UI อัตโนมัติเมื่อ Insert สำเร็จ)
+      const { error } = await supabaseClient
         .from('chat_messages')
         .insert([
           { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
         ]);
-
+    
       if (error) {
         console.error("Error inserting message to Supabase chat_messages:", error);
         alert("ไม่สามารถบันทึกข้อความลง Database ได้ กรุณาตรวจสอบสิทธิ์ Supabase RLS หรือประเภทข้อมูล");
