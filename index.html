@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -1070,154 +1070,173 @@
     }
 
     async function saveUserLineIdToSupabase(lineId) {
-          if (!lineId) return null;
-          try {
-            // เช็คก่อนว่ามี user นี้หรือยัง
-            const { data: existingUser } = await supabaseClient
-              .from('users')
-              .select('id, line_id')
-              .eq('line_id', lineId)
-              .maybeSingle();
-    
-            if (existingUser) return existingUser.id;
-    
-            // ถ้ายังไม่มีให้ insert ใหม่
-            const { data: newUser, error } = await supabaseClient
-              .from('users')
-              .insert([{ line_id: lineId }])
-              .select('id')
-              .maybeSingle();
-    
-            if (error) {
-              console.error("Error saving line_id to Supabase:", error);
-              return null;
-            }
-            return newUser ? newUser.id : null;
-          } catch (e) {
-            console.error("Exception in saveUserLineIdToSupabase:", e);
-            return null;
-          }
-        }
+      if (!lineId) return null;
+      try {
+        const { data: existingUser } = await supabaseClient
+          .from('users')
+          .select('id, line_id')
+          .eq('line_id', String(lineId))
+          .maybeSingle();
 
-    async function getCurrentUserId() {
-      if (currentUserLineProfile && currentUserLineProfile.userId) {
-        try {
-          const { data } = await supabaseClient
-            .from('users')
-            .select('id')
-            .eq('line_id', currentUserLineProfile.userId)
-            .maybeSingle();
+        if (existingUser) return existingUser.id;
 
-          if (data && data.id) return data.id;
-          
-          // ถ้ายังไม่มีใน db ให้สร้างใหม่แล้วเอา numeric id มาใช้
-          const createdId = await saveUserLineIdToSupabase(currentUserLineProfile.userId);
-          if (createdId) return createdId;
-        } catch (e) {
-          console.error("Error fetching user id:", e);
+        const { data: newUser, error } = await supabaseClient
+          .from('users')
+          .insert([{ line_id: String(lineId) }])
+          .select('id')
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error saving line_id to Supabase:", error);
+          return null;
         }
+        return newUser ? newUser.id : null;
+      } catch (e) {
+        console.error("Exception in saveUserLineIdToSupabase:", e);
+        return null;
       }
-      return CURRENT_USER_ID;
+    }
+
+    // ฟังก์ชันย่อยสำหรับเช็กให้มั่นใจว่า User ID มีอยู่จริงในตาราง users เสมอ
+    async function ensureUserExists(userId) {
+      if (!userId) userId = 1;
+      try {
+        const isNumeric = !isNaN(userId);
+        let query = supabaseClient.from('users').select('id');
+        
+        if (isNumeric) {
+          query = query.eq('id', parseInt(userId, 10));
+        } else {
+          query = query.eq('line_id', String(userId));
+        }
+
+        const { data: existing } = await query.maybeSingle();
+        if (existing) return existing.id;
+
+        // หากยังไม่มี ให้บันทึกลงใน DB ก่อน
+        const payload = isNumeric ? { id: parseInt(userId, 10) } : { line_id: String(userId) };
+        const { data: newUser, error } = await supabaseClient
+          .from('users')
+          .insert([payload])
+          .select('id')
+          .maybeSingle();
+
+        if (error) {
+          console.error("ensureUserExists insert error:", error);
+          return userId;
+        }
+        return newUser ? newUser.id : userId;
+      } catch (e) {
+        console.error("Exception in ensureUserExists:", e);
+        return userId;
+      }
     }
 
     async function getCurrentUserId() {
       if (currentUserLineProfile && currentUserLineProfile.userId) {
-        try {
-          const { data } = await supabaseClient
-            .from('users')
-            .select('id, line_id')
-            .eq('line_id', currentUserLineProfile.userId)
-            .maybeSingle();
-          if (data && data.id) return data.id;
-          return currentUserLineProfile.userId;
-        } catch (e) {
-          return currentUserLineProfile.userId;
-        }
+        const dbId = await saveUserLineIdToSupabase(currentUserLineProfile.userId);
+        if (dbId) return dbId;
       }
-      return CURRENT_USER_ID;
+      return await ensureUserExists(CURRENT_USER_ID);
     }
 
     // ==========================================
     // ตรรกะระบบแชทเมื่อกดปุ่ม "คุยกับเจ้าของ" (เช็กตาราง chat_rooms)
     // ==========================================
     async function openOwnerChat(item, event) {
-        if (event) event.stopPropagation();
-        stopAIVoiceSpeech();
-  
-        const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
-        const titleEl = document.getElementById('chatActiveTitle');
-        if (titleEl) {
-          titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
-        }
-        
-        openUserChatModal();
-        expandChatZone('room');
-  
-        const buyerId = await getCurrentUserId();
-        const sellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
-        const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
-  
-        try {
-          // 1. ค้นหาห้องเดิมก่อน
-          const { data: existingRooms, error: roomErr } = await supabaseClient
+      if (event) event.stopPropagation();
+      stopAIVoiceSpeech();
+
+      const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) {
+        titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
+      }
+      
+      openUserChatModal();
+      expandChatZone('room');
+
+      // การันตีว่าทั้ง Buyer และ Seller มีเรคคอร์ดอยู่ในตาราง users เสมอ
+      let buyerId = await getCurrentUserId();
+      buyerId = await ensureUserExists(buyerId);
+
+      let rawSellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
+      let sellerId = await ensureUserExists(rawSellerId);
+
+      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
+
+      try {
+        // 1. ค้นหาห้องเดิมก่อน
+        const { data: existingRooms } = await supabaseClient
+          .from('chat_rooms')
+          .select('*')
+          .eq('buyer_id', buyerId)
+          .eq('seller_id', sellerId)
+          .eq('property_id', propertyId);
+
+        let targetRoomId = null;
+
+        if (existingRooms && existingRooms.length > 0) {
+          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
+        } else {
+          // 2. หา room_id สูงสุดเพื่อรัน auto-increment
+          const { data: maxRoomData } = await supabaseClient
             .from('chat_rooms')
-            .select('*')
-            .eq('buyer_id', buyerId)
-            .eq('seller_id', sellerId)
-            .eq('property_id', propertyId);
-  
-          let targetRoomId = null;
-  
-          if (existingRooms && existingRooms.length > 0) {
-            targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
-          } else {
-            // 2. ถ้าไม่มีห้อง ให้หา room_id สูงสุดเพื่อบวกเพิ่ม
-            const { data: maxRoomData } = await supabaseClient
+            .select('room_id')
+            .order('room_id', { ascending: false })
+            .limit(1);
+
+          let nextRoomId = 101;
+          if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
+            const parsed = parseInt(maxRoomData[0].room_id, 10);
+            if (!isNaN(parsed)) nextRoomId = parsed + 1;
+          }
+
+          // 3. Insert ห้องใหม่ลง Supabase
+          const { data: insertedRoom, error: insertErr } = await supabaseClient
+            .from('chat_rooms')
+            .insert([{
+              room_id: nextRoomId,
+              buyer_id: buyerId,
+              seller_id: sellerId,
+              property_id: propertyId
+            }])
+            .select();
+
+          if (insertErr) {
+            console.error("Insert Chat Room Error:", insertErr);
+            // Fallback ค้นหาเฉพาะห้องล่าสุดที่เคยมีระหว่างคู่นี้
+            const { data: fbRooms } = await supabaseClient
               .from('chat_rooms')
-              .select('room_id')
-              .order('room_id', { ascending: false })
+              .select('*')
+              .eq('buyer_id', buyerId)
+              .eq('seller_id', sellerId)
               .limit(1);
-  
-            let nextRoomId = 101;
-            if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
-              const parsed = parseInt(maxRoomData[0].room_id, 10);
-              if (!isNaN(parsed)) nextRoomId = parsed + 1;
-            }
-  
-            // 3. Insert ห้องใหม่
-            const { data: insertedRoom, error: insertErr } = await supabaseClient
-              .from('chat_rooms')
-              .insert([{
-                room_id: nextRoomId,
-                buyer_id: buyerId,
-                seller_id: sellerId,
-                property_id: propertyId
-              }])
-              .select();
-  
-            if (insertErr) {
-              console.error("409 / Insert Chat Room Error:", insertErr);
-              // กรณีติด Duplicate constraint ให้ค้นหาเฉพาะ room_id ล่าสุดมาใช้
-              targetRoomId = nextRoomId;
-            } else if (insertedRoom && insertedRoom.length > 0) {
-              targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
+
+            if (fbRooms && fbRooms.length > 0) {
+              targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
             } else {
               targetRoomId = nextRoomId;
             }
+          } else if (insertedRoom && insertedRoom.length > 0) {
+            targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
+          } else {
+            targetRoomId = nextRoomId;
           }
-  
-          CURRENT_ROOM_ID = targetRoomId;
-          CURRENT_USER_ID = buyerId;
-  
-          await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-          initRealtimeForRoom(CURRENT_ROOM_ID);
-  
-        } catch (err) {
-          console.error("Exception in openOwnerChat:", err);
-          await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-          initRealtimeForRoom(CURRENT_ROOM_ID);
         }
+
+        CURRENT_ROOM_ID = targetRoomId;
+        CURRENT_USER_ID = buyerId;
+
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        initRealtimeForRoom(CURRENT_ROOM_ID);
+
+      } catch (err) {
+        console.error("Exception in openOwnerChat:", err);
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        initRealtimeForRoom(CURRENT_ROOM_ID);
       }
+    }
 
     function displayMessageOnUI(msg) {
       const container = document.getElementById('chatMessagesContainer');
@@ -1259,33 +1278,33 @@
         .subscribe();
     }
 
-  async function sendChatMessage() {
-        const input = document.getElementById('chatMessageInput');
-        const container = document.getElementById('chatMessagesContainer');
-        if (!input || !container) return;
-        const text = input.value.trim();
-        if (!text) return;
-  
-        const senderId = await getCurrentUserId();
-        CURRENT_USER_ID = senderId;
-        
-        // แสดงผลข้อความบนหน้าจอทันที (Optimistic UI)
-        const tempMsg = { sender_id: CURRENT_USER_ID, content: text };
-        displayMessageOnUI(tempMsg);
-        input.value = '';
-  
-        // ส่งลง Supabase Database
-        const { data, error } = await supabaseClient
-          .from('chat_messages')
-          .insert([
-            { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
-          ]);
-  
-        if (error) {
-          console.error("Error inserting message to Supabase chat_messages:", error);
-          alert("ไม่สามารถบันทึกข้อความลง Database ได้ กรุณาตรวจสอบสิทธิ์ Supabase RLS หรือประเภทข้อมูล");
-        }
+    async function sendChatMessage() {
+      const input = document.getElementById('chatMessageInput');
+      const container = document.getElementById('chatMessagesContainer');
+      if (!input || !container) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const senderId = await getCurrentUserId();
+      CURRENT_USER_ID = senderId;
+      
+      // แสดงผลข้อความบนหน้าจอทันที (Optimistic UI)
+      const tempMsg = { sender_id: CURRENT_USER_ID, content: text };
+      displayMessageOnUI(tempMsg);
+      input.value = '';
+
+      // ส่งลง Supabase Database
+      const { data, error } = await supabaseClient
+        .from('chat_messages')
+        .insert([
+          { room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: text }
+        ]);
+
+      if (error) {
+        console.error("Error inserting message to Supabase chat_messages:", error);
+        alert("ไม่สามารถบันทึกข้อความลง Database ได้ กรุณาตรวจสอบสิทธิ์ Supabase RLS หรือประเภทข้อมูล");
       }
+    }
 
     function getPropValue(item, possibleKeys, defaultVal = '') {
       if (!item) return defaultVal;
@@ -1348,7 +1367,7 @@
       let isMember = false;
       if (lineId) {
         try {
-          const { data, error } = await supabaseClient
+          const { data } = await supabaseClient
             .from('users')
             .select('*')
             .eq('line_id', lineId)
@@ -1387,9 +1406,6 @@
           startVoiceSession();
         }
       }, 1000);
-      
-//     loadChatHistoryForRoom(CURRENT_ROOM_ID);
-//      initRealtimeForRoom(CURRENT_ROOM_ID);
 
       const listSection = document.getElementById('list-section');
       const aiSection = document.getElementById('ai-section');
@@ -1526,7 +1542,8 @@
       });
       testShowList();
     }
-// ==========================================
+
+    // ==========================================
     // 4. MAP & LOCATION HANDLERS
     // ==========================================
     function updateRadiusCircle() {
