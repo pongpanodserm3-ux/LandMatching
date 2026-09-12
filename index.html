@@ -1254,11 +1254,11 @@
           const container = document.getElementById('chatMessagesContainer');
           if (container) container.innerHTML = ''; 
           
-          // ดึงข้อความทั้งหมดโดยรองรับการค้นหาทั้งฟิลด์ room_id หรือ id
+          // ดึงข้อความทั้งหมดโดยคัดกรองตาม room_id
           const { data: messages, error } = await supabaseClient
             .from('chat_messages')
             .select('*')
-            .or(`room_id.eq.${roomId},id.eq.${roomId}`)
+            .eq('room_id', roomId)
             .order('created_at', { ascending: true });
     
           if (messages && !error) {
