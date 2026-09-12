@@ -1380,6 +1380,37 @@
       }
     }
 
+    // เพิ่มฟังก์ชันนี้ไว้ใต้ฟังก์ชัน loadUserChatRooms()
+    async function checkAndHighlightUnreadMessages() {
+      try {
+        const currentUserId = await getCurrentUserId();
+        if (!currentUserId) return;
+    
+        // ตรวจสอบตาราง chat_messages ค้นหาข้อความที่ส่งถึง User แต่ยังไม่ได้อ่าน (is_read = false)
+        const { data: unreadMessages, error } = await supabaseClient
+          .from('chat_messages')
+          .select('room_id')
+          .neq('sender_id', currentUserId)
+          .eq('is_read', false);
+    
+        if (error || !unreadMessages || unreadMessages.length === 0) return;
+    
+        // รวบรวม room_id ทั้งหมดที่มีข้อความยังไม่ได้อ่าน
+        const unreadRoomIds = new Set(unreadMessages.map(msg => String(msg.room_id)));
+    
+        // เปลี่ยนสีแถบรายการคู่สนทนาห้องนั้นๆ ให้เป็นสีม่วงพาสเทลอ่อนสว่าง
+        const chatItems = document.querySelectorAll('.chat-item-card');
+        chatItems.forEach(item => {
+          const roomId = item.getAttribute('data-room-id');
+          if (unreadRoomIds.has(String(roomId))) {
+            item.classList.add('has-new-msg');
+          }
+        });
+      } catch (err) {
+        console.error("Error checking unread messages after page load:", err);
+      }
+    }
+  
     // ---------------------------------------------------------
     // 3. ฟังก์ชันสำหรับเข้าร่วมห้องแชท (ดึงประวัติและเปิด Realtime)
     // ---------------------------------------------------------
