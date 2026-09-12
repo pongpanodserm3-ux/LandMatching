@@ -1251,19 +1251,75 @@
     }
 
     async function loadChatHistoryForRoom(roomId) {
-      const container = document.getElementById('chatMessagesContainer');
-      if (container) container.innerHTML = ''; 
-      
-      const { data: messages } = await supabaseClient
-        .from('chat_messages')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: true });
-
-      if (messages) {
-        messages.forEach(msg => displayMessageOnUI(msg));
-      }
-    }
+          const container = document.getElementById('chatMessagesContainer');
+          if (container) container.innerHTML = ''; 
+          
+          // ดึงข้อความทั้งหมดโดยรองรับการค้นหาทั้งฟิลด์ room_id หรือ id
+          const { data: messages, error } = await supabaseClient
+            .from('chat_messages')
+            .select('*')
+            .or(`room_id.eq.${roomId},id.eq.${roomId}`)
+            .order('created_at', { ascending: true });
+    
+          if (messages && !error) {
+            messages.forEach(msg => displayMessageOnUI(msg));
+          }
+        }
+    
+        function initRealtimeForRoom(roomId) {
+          if (activeRealtimeChannel) {
+            supabaseClient.removeChannel(activeRealtimeChannel);
+          }
+          
+          // เปิดใช้งาน Realtime รับข้อมูลทั้งตาราง chat_messages โดยกรองฝั่ง client ให้ชัวร์ว่าตรงห้อง
+          activeRealtimeChannel = supabaseClient
+            .channel(`room_realtime_${roomId}`)
+            .on(
+              'postgres_changes',
+              { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+              (payload) => {
+                if (payload && payload.new) {
+                  const msgRoomId = String(payload.new.room_id || payload.new.id);
+                  if (msgRoomId === String(roomId)) {
+                    displayMessageOnUI(payload.new);
+                  }
+                }
+              }
+            )
+            .subscribe();
+        }
+    
+        async function sendChatMessage() {
+          const input = document.getElementById('chatMessageInput');
+          if (!input) return;
+          const text = input.value.trim();
+          if (!text) return;
+        
+          let senderId = await getCurrentUserId();
+          if (!senderId) senderId = 1;
+          
+          input.value = '';
+        
+          // บันทึกข้อความลงตาราง chat_messages โดยระบุ room_id และ sender_id ให้ชัดเจน
+          const { data, error } = await supabaseClient
+            .from('chat_messages')
+            .insert([
+              { 
+                room_id: parseInt(CURRENT_ROOM_ID, 10) || CURRENT_ROOM_ID, 
+                sender_id: senderId, 
+                content: text 
+              }
+            ])
+            .select();
+        
+          if (error) {
+            console.error("Error inserting message to Supabase chat_messages:", error);
+            alert("ไม่สามารถส่งข้อความได้: " + error.message);
+          } else if (data && data.length > 0) {
+            // หากเปิด Realtime แล้ว ตัว listener จะจัดการแสดงผลให้อัตโนมัติ 
+            // แต่ถ้าต้องการให้แสดงผลทันทีโดยไม่ต้องรอพุช ให้เรียก displayMessageOnUI(data[0]) เพิ่มได้ที่นี่
+          }
+        }
 
     function initRealtimeForRoom(roomId) {
       if (activeRealtimeChannel) {
