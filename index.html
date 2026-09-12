@@ -1,7 +1,7 @@
 [cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#"> //index9-4-2_______________
+  <link rel="shortcut icon" href="#"> //index9-4-3_______________
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1291,22 +1291,25 @@
           }
         }
 
-// ---------------------------------------------------------
+    // ---------------------------------------------------------
     // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
     // ---------------------------------------------------------
     async function openUserChatModal() {
       const floatBtn = document.querySelector('.user-chat-float-btn');
-      if (floatBtn) floatBtn.classList.remove('has-new-msg'); // ล้างสีม่วงเรืองแสงที่ปุ่มล่างขวา
-
+      if (floatBtn) floatBtn.classList.remove('has-new-msg');
+    
       document.getElementById('userChatModalOverlay').classList.add('active');
       expandChatZone('list');
+      
+      // 1. โหลดหน้าและรายการห้องแชทให้เสร็จสมบูรณ์
       await loadUserChatRooms();
+    
+      // 2. ตรวจสอบข้อความยังไม่ได้อ่านใน chat_messages หลังจากโหลดหน้าเสร็จ แล้วเปลี่ยนสีแถบคู่สนทนา
+      await checkAndHighlightUnreadMessages();
     }
 
     // ---------------------------------------------------------
     // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เช็กว่ามีใครทักมาไหม)
-    // ---------------------------------------------------------
-// ---------------------------------------------------------
     // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (ตรวจสอบข้อความยังไม่ได้อ่านทุกครั้งที่เข้าห้องแชท)
     // ---------------------------------------------------------
     async function loadUserChatRooms() {
