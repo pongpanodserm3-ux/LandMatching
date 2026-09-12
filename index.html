@@ -1,7 +1,7 @@
 [cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#"> //index9-4_______________
+  <link rel="shortcut icon" href="#"> //index9-4-1_______________
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1309,55 +1309,63 @@
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
-
+    
       let currentUserId = await getCurrentUserId();
       currentUserId = await ensureUserExists(currentUserId);
-      CURRENT_USER_ID = currentUserId; // อัปเดตตัวแปร Global
-
+      CURRENT_USER_ID = currentUserId;
+    
       try {
-        // ดึงห้องแชททั้งหมดที่ผู้ใช้เป็นผู้ซื้อ หรือ ผู้ขาย
         const { data: rooms, error } = await supabaseClient
           .from('chat_rooms')
           .select('*')
           .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
           .order('room_id', { ascending: false });
-
+    
         if (error) throw error;
         listContainer.innerHTML = '';
-
+    
         if (!rooms || rooms.length === 0) {
           listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: #777;">ยังไม่มีการสนทนา</div>';
           return;
         }
-
-        // สร้าง UI รายการห้องแชท
-        rooms.forEach(room => {
+    
+        for (const room of rooms) {
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
           const roomTitle = `คู่สนทนา ID: ${otherPartyId} (รหัสทรัพย์: ${room.property_id})`;
-
+    
+          // เช็กข้อความย้อนหลังที่ยังไม่ได้อ่านจากคู่สนทนา
+          const { data: unreadMsgs } = await supabaseClient
+            .from('chat_messages')
+            .select('id')
+            .eq('room_id', room.room_id)
+            .neq('sender_id', currentUserId)
+            .eq('is_read', false)
+            .limit(1);
+    
+          const hasUnread = unreadMsgs && unreadMsgs.length > 0;
+    
           const itemCard = document.createElement('div');
-          itemCard.className = 'chat-item-card';
-          itemCard.setAttribute('data-room-id', room.room_id); // กำหนด id สำหรับอ้างอิงตอนมีข้อความใหม่เข้า
-          
-          // เมื่อคลิกที่ห้องแชท ให้เข้าร่วมห้องนั้น
+          itemCard.className = `chat-item-card ${hasUnread ? 'has-new-msg' : ''}`;
+          itemCard.setAttribute('data-room-id', room.room_id);
+    
           itemCard.onclick = (e) => {
             const items = document.querySelectorAll('.chat-item-card');
             items.forEach(el => el.classList.remove('active'));
-            e.currentTarget.classList.remove('has-new-msg'); // ล้างสีม่วงพาสเทลออกเมื่อกดเข้าไปอ่าน
+            e.currentTarget.classList.remove('has-new-msg');
             e.currentTarget.classList.add('active');
             joinChatRoom(room.room_id, roomTitle);
           };
-
+    
           itemCard.innerHTML = `
             <div class="chat-item-avatar">👤</div>
             <div class="chat-item-info">
               <div class="chat-item-title">${roomTitle}</div>
-              <div class="chat-item-preview">คลิกเพื่อดูบทสนทนา</div>
+              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : 'คลิกเพื่อดูบทสนทนา'}</div>
             </div>
           `;
           listContainer.appendChild(itemCard);
-        });
+        }
       } catch (err) {
         console.error("Error loading chat rooms:", err);
         listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: red;">❌ โหลดข้อมูลล้มเหลว</div>';
@@ -1367,13 +1375,25 @@
     // ---------------------------------------------------------
     // 3. ฟังก์ชันสำหรับเข้าร่วมห้องแชท (ดึงประวัติและเปิด Realtime)
     // ---------------------------------------------------------
+    async function markMessagesAsRead(roomId) {
+      if (!roomId) return;
+      const currentUserId = await getCurrentUserId();
+      await supabaseClient
+        .from('chat_messages')
+        .update({ is_read: true })
+        .eq('room_id', roomId)
+        .neq('sender_id', currentUserId)
+        .eq('is_read', false);
+    }
+    
     async function joinChatRoom(roomId, title) {
       CURRENT_ROOM_ID = roomId;
       document.getElementById('chatActiveTitle').innerText = title;
       
-      expandChatZone('room'); // ขยายหน้าต่างแชท
-      await loadChatHistoryForRoom(roomId); // ดึงข้อความเก่า
-      initRealtimeForRoom(roomId); // เปิดระบบรับข้อความแบบ Realtime
+      expandChatZone('room');
+      await markMessagesAsRead(roomId);
+      await loadChatHistoryForRoom(roomId);
+      initRealtimeForRoom(roomId);
     }
 
     // ---------------------------------------------------------
@@ -1456,7 +1476,7 @@
       senderId = await ensureUserExists(senderId);
       CURRENT_USER_ID = senderId;
       
-      input.value = ''; // เคลียร์ช่องพิมพ์ทันที
+      input.value = '';
     
       const { error } = await supabaseClient
         .from('chat_messages')
@@ -1464,7 +1484,8 @@
           { 
             room_id: parseInt(CURRENT_ROOM_ID, 10), 
             sender_id: senderId, 
-            content: text 
+            content: text,
+            is_read: false
           }
         ]);
     
