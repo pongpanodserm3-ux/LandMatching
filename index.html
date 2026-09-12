@@ -512,6 +512,32 @@
       margin-bottom: 2px;
     }
 
+    /* --- สไตล์เมื่อมีข้อความใหม่เข้ามา (สีม่วงพาสเทลอ่อนสว่าง + เรืองแสงแวบๆ) --- */
+    .chat-item-card.has-new-msg {
+      background-color: #f3e8ff !important;
+      border-color: #c084fc !important;
+    }
+
+    .user-chat-float-btn.has-new-msg {
+      background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%) !important;
+      animation: pulse-purple 1.5s infinite !important;
+    }
+
+    @keyframes pulse-purple {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.8), 0 0 15px rgba(192, 132, 252, 0.6);
+      }
+      70% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 14px rgba(192, 132, 252, 0), 0 0 25px rgba(192, 132, 252, 0.8);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0), 0 0 15px rgba(192, 132, 252, 0.6);
+      }
+    }
+    
     /* --- Chat Modal & Dual-Pane Screen Layout --- */
     .chat-modal-overlay {
       position: fixed;
@@ -1269,9 +1295,12 @@
     // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
     // ---------------------------------------------------------
     async function openUserChatModal() {
+      const floatBtn = document.querySelector('.user-chat-float-btn');
+      if (floatBtn) floatBtn.classList.remove('has-new-msg'); // ล้างสีม่วงเรืองแสงที่ปุ่มล่างขวา
+
       document.getElementById('userChatModalOverlay').classList.add('active');
-      expandChatZone('list'); // เปิดมาให้แสดงหน้ารายการห้องแชทก่อน
-      await loadUserChatRooms(); // เรียกฟังก์ชันดึงประวัติห้องแชท
+      expandChatZone('list');
+      await loadUserChatRooms();
     }
 
     // ---------------------------------------------------------
@@ -1309,11 +1338,13 @@
 
           const itemCard = document.createElement('div');
           itemCard.className = 'chat-item-card';
+          itemCard.setAttribute('data-room-id', room.room_id); // กำหนด id สำหรับอ้างอิงตอนมีข้อความใหม่เข้า
           
           // เมื่อคลิกที่ห้องแชท ให้เข้าร่วมห้องนั้น
           itemCard.onclick = (e) => {
             const items = document.querySelectorAll('.chat-item-card');
             items.forEach(el => el.classList.remove('active'));
+            e.currentTarget.classList.remove('has-new-msg'); // ล้างสีม่วงพาสเทลออกเมื่อกดเข้าไปอ่าน
             e.currentTarget.classList.add('active');
             joinChatRoom(room.room_id, roomTitle);
           };
@@ -1371,6 +1402,47 @@
         .subscribe();
     }
 
+    // Highlight รายการแถบห้องแชตของคู่สนทนาเป็นสีม่วงพาสเทล
+    function highlightChatRoomItem(roomId) {
+      const card = document.querySelector(`.chat-item-card[data-room-id="${roomId}"]`);
+      if (card) {
+        card.classList.add('has-new-msg');
+      }
+    }
+
+    // ระบบตรวจจับข้อความใหม่จากทุกคู่สนทนาแบบ Global
+    function initGlobalChatRealtime() {
+      supabaseClient
+        .channel('global_chat_notifications')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+          async (payload) => {
+            if (payload && payload.new) {
+              const msg = payload.new;
+              const currentUserId = await getCurrentUserId();
+              
+              // ตรวจสอบว่าข้อความส่งมาจากคู่สนทนา (ไม่ใช่เราส่งเอง)
+              if (String(msg.sender_id) !== String(currentUserId)) {
+                // 1. เปลี่ยนสีปุ่มแชตวงกลมสีชมพูขวาล่างเป็นสีม่วงพาสเทลเรืองแสง
+                const floatBtn = document.querySelector('.user-chat-float-btn');
+                if (floatBtn) floatBtn.classList.add('has-new-msg');
+
+                // 2. เปลี่ยนสีแถบรายการของคู่สนทนานั้นให้เป็นสีม่วงพาสเทลอ่อนสว่าง
+                highlightChatRoomItem(msg.room_id);
+
+                // 3. หากผู้ใช้กำลังเปิดห้องแชตนั้นอยู่นี้ ให้แสดงข้อความเพิ่มเข้าไปทันที
+                const chatModal = document.getElementById('userChatModalOverlay');
+                if (chatModal && chatModal.classList.contains('active') && String(msg.room_id) === String(CURRENT_ROOM_ID)) {
+                  displayMessageOnUI(msg);
+                }
+              }
+            }
+          }
+        )
+        .subscribe();
+    }
+  
     // ---------------------------------------------------------
     // 5. ฟังก์ชันส่งข้อความ
     // ---------------------------------------------------------
@@ -1495,6 +1567,7 @@
     window.addEventListener('load', () => {
       initLIFF().then(() => {
         checkAndDisplayMemberStatus();
+        initGlobalChatRealtime(); // เริ่มการทำงานของตัวดึงข้อความ Realtime ทุกคู่สนทนา
       });
 
       setTimeout(() => {
