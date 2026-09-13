@@ -1063,7 +1063,8 @@
         dropdownOptions: []
       }
     };
-
+    // เพิ่มตัวแปรสถานะเสียงแจ้งเตือน
+    let isNotificationSoundEnabled = true;
     // ==========================================
     // Supabase Chat Setup
     // ==========================================
@@ -1071,6 +1072,34 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    function playNotificationSound() {
+      if (!isNotificationSoundEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // โน้ต D5
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch (e) {
+        console.error("Audio playback error:", e);
+      }
+    }
+
+function toggleNotificationSound() {
+  isNotificationSoundEnabled = !isNotificationSoundEnabled;
+  const bellBtn = document.getElementById('notificationBellBtn');
+  if (bellBtn) {
+    bellBtn.innerText = isNotificationSoundEnabled ? "🔔" : "🔕";
+    bellBtn.title = isNotificationSoundEnabled ? "ปิดเสียงแจ้งเตือน" : "เปิดเสียงแจ้งเตือน";
+  }
+}
+  
     let CURRENT_ROOM_ID = 101;
     let CURRENT_USER_ID = 1;
     let currentUserLineProfile = null;
@@ -1489,7 +1518,7 @@
 
                 // 2. เปลี่ยนสีแถบรายการของคู่สนทนานั้นให้เป็นสีม่วงพาสเทลอ่อนสว่าง
                 highlightChatRoomItem(msg.room_id);
-
+                playNotificationSound();
                 // 3. หากผู้ใช้กำลังเปิดห้องแชตนั้นอยู่นี้ ให้แสดงข้อความเพิ่มเข้าไปทันที
                 const chatModal = document.getElementById('userChatModalOverlay');
                 if (chatModal && chatModal.classList.contains('active') && String(msg.room_id) === String(CURRENT_ROOM_ID)) {
@@ -1863,7 +1892,9 @@
         triggerLocationAIGreeting();
       }
     }
-    
+
+    <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
+  
     function triggerLocationAIGreeting() {
       const prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "ปักหมุดที่ไหนบอกได้เลย" และรอรับคำสั่งจากผู้ใช้โดยไม่ต้องอธิบายเพิ่มเติม สรุปตำแหน่งสถานที่ที่ต้องการค้นหา เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย ***สำคัญมาก: ต้องตรวจสอบประเภทสถานที่และใส่คำนำหน้าชื่อสถานที่ให้ถูกต้องตามหลักเกณฑ์เสมอ เช่น หากสถานที่นั้นเป็นหมู่บ้าน ให้ใส่คำนำหน้าว่า "หมู่บ้าน", หากเป็นถนน ให้ใส่ "ถนน", หรือปรับเปลี่ยนตามประเภทสถานที่จริง เช่น ซอย, อาคาร, ห้างสรรพสินค้า ฯลฯ***`;
       const checkReady = setInterval(() => {
