@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-9
+  <link rel="shortcut icon" href="#">//index9-4-10
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1186,9 +1186,6 @@
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
     
-      openUserChatModal();
-      expandChatZone('room');
-    
       let buyerId = await getCurrentUserId();
       buyerId = await ensureUserExists(buyerId);
     
@@ -1197,7 +1194,6 @@
     
       const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
     
-      // 1. ดึงชื่อเจ้าของ/Username จาก Supabase (หรือใช้ชื่อ Facebook ผู้โพสต์เป็นค่าสำรอง)
       let ownerName = getPropValue(item, ['facebookPostName', 'username', 'owner_name', 'ชื่อ Facebook ผู้โพสต์'], '');
       if (sellerId) {
         const { data: userData } = await supabaseClient
@@ -1211,7 +1207,6 @@
       }
       if (!ownerName) ownerName = 'เจ้าของอสังหาฯ';
     
-      // 2. ดึงชื่อโครงการ และจัดรูปแบบหัวแชต: [ชื่อเจ้าของ] ([ชื่อโครงการ])
       const projectName = item ? (item.project || 'ทั่วไป') : 'ทั่วไป';
       const fullTitle = `💬 คุยกับเจ้าของ: ${ownerName} (${projectName})`;
     
@@ -1274,14 +1269,24 @@
           }
         }
     
+        // กำหนดค่าห้องแชทปัจจุบันก่อนแสดงผล
         CURRENT_ROOM_ID = targetRoomId;
         CURRENT_USER_ID = buyerId;
     
+        // เปิดหน้าต่าง Modal
+        const floatBtn = document.querySelector('.user-chat-float-btn');
+        if (floatBtn) floatBtn.classList.remove('has-new-msg');
+        document.getElementById('userChatModalOverlay').classList.add('active');
+        expandChatZone('room');
+    
+        // โหลดห้องแชทและประวัติข้อความ
+        await loadUserChatRooms();
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         initRealtimeForRoom(CURRENT_ROOM_ID);
     
       } catch (err) {
         console.error("Exception in openOwnerChat:", err);
+        await loadUserChatRooms();
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         initRealtimeForRoom(CURRENT_ROOM_ID);
       }
@@ -1353,11 +1358,13 @@
           return;
         }
     
+        // รวบรวมข้อมูลห้องแชททั้งหมดเพื่อนำมาเรียง Priority
+        const roomListDetails = [];
+    
         for (const room of rooms) {
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
           
-          // 1. ดึงข้อมูล username ของคู่สนทนาจากตาราง users (ตรวจสอบค่าก่อน query)
           let otherUserData = null;
           if (otherPartyId) {
             const { data } = await supabaseClient
@@ -1368,7 +1375,6 @@
             otherUserData = data;
           }
           
-          // 2. ดึงชื่อโครงการ (project) จากตาราง properties (ตรวจสอบค่า room.property_id ก่อน query เพื่อป้องกัน Error 400)
           let propData = null;
           if (room.property_id) {
             const { data } = await supabaseClient
@@ -1379,13 +1385,11 @@
             propData = data;
           }
     
-          // กำหนดชื่อโครงการ (หากไม่พบข้อมูล ให้แสดงรหัสสำรองไว้)
           const projectName = propData?.project || (room.property_id ? `โครงการ: ${room.property_id}` : 'ทั่วไป');
-          
-          // กำหนดตัวแปรชื่อผู้ใช้
           const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId || ''}`;
           const roomTitle = `${username} (${projectName})`;
-          
+    
+          // เช็กข้อความที่ยังไม่ได้อ่าน
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
             .select('message_id')
@@ -1395,9 +1399,38 @@
             .limit(1);
     
           const hasUnread = unreadMsgs && unreadMsgs.length > 0;
+          const isCurrentActive = String(room.room_id) === String(CURRENT_ROOM_ID);
+    
+          roomListDetails.push({
+            room,
+            username,
+            projectName,
+            roomTitle,
+            hasUnread,
+            isCurrentActive
+          });
+        }
+    
+        // จัดลำดับ Priority ตามเงื่อนไข:
+        // 1. ห้องที่มีข้อความยังไม่ได้อ่านขึ้นก่อน
+        // 2. ถ้าสถานะอ่านเหมือนกัน ห้องที่กำลังเปิดอยู่ (เจ้าของทรัพย์ที่เพิ่งกดคุย) อยู่รองลงมา
+        // 3. เรียงตามรหัสห้องแชทล่าสุด
+        roomListDetails.sort((a, b) => {
+          if (a.hasUnread !== b.hasUnread) {
+            return a.hasUnread ? -1 : 1;
+          }
+          if (a.isCurrentActive !== b.isCurrentActive) {
+            return a.isCurrentActive ? -1 : 1;
+          }
+          return b.room.room_id - a.room.room_id;
+        });
+    
+        // สร้าง Element เรนเดอร์บนหน้าจอ
+        for (const itemData of roomListDetails) {
+          const { room, username, projectName, roomTitle, hasUnread, isCurrentActive } = itemData;
     
           const itemCard = document.createElement('div');
-          itemCard.className = `chat-item-card ${hasUnread ? 'has-new-msg' : ''}`;
+          itemCard.className = `chat-item-card ${hasUnread ? 'has-new-msg' : ''} ${isCurrentActive ? 'active' : ''}`;
           itemCard.setAttribute('data-room-id', room.room_id);
     
           itemCard.onclick = (e) => {
