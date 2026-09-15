@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-6
+  <link rel="shortcut icon" href="#">//index9-4-7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1340,16 +1340,27 @@
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
           
-          // ดึงข้อมูล username ของคู่สนทนาจากตาราง users
+          // 1. ดึงข้อมูล username ของคู่สนทนาจากตาราง users
           const { data: otherUserData } = await supabaseClient
             .from('users')
             .select('username')
             .eq('user_id', otherPartyId)
             .maybeSingle();
           
-          // กำหนดตัวแปรชื่อผู้ใช้ (หากไม่มีในระบบจะแสดงชื่อสำรอง)
+          // 2. ดึงชื่อโครงการ (project) จากตาราง properties โดยใช้ property_id
+          const { data: propData } = await supabaseClient
+            .from('properties')
+            .select('project')
+            .eq('property_id', room.property_id)
+            .maybeSingle();
+
+          // กำหนดชื่อโครงการ (หากไม่พบข้อมูล ให้แสดงรหัสสำรองไว้)
+          const projectName = propData?.project || `โครงการ: ${room.property_id}`;
+          
+          // กำหนดตัวแปรชื่อผู้ใช้
           const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId}`;
-          const roomTitle = `${username} (รหัส: ${room.property_id})`;
+          const roomTitle = `${username} (${projectName})`;
+          
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
             .select('message_id')
@@ -1376,7 +1387,7 @@
             <div class="chat-item-avatar">👤</div>
             <div class="chat-item-info">
               <div class="chat-item-title">${username}</div>
-              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : `รหัส: ${room.property_id}`}</div>
+              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : projectName}</div>
             </div>
           `;
           listContainer.appendChild(itemCard);
