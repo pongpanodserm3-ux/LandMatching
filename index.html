@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-7
+  <link rel="shortcut icon" href="#">//index9-4-8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1311,7 +1311,7 @@
     }
 
     // ---------------------------------------------------------
-    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม
+    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เวอร์ชันแก้ไข Error 400)
     // ---------------------------------------------------------
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
@@ -1340,25 +1340,33 @@
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
           
-          // 1. ดึงข้อมูล username ของคู่สนทนาจากตาราง users
-          const { data: otherUserData } = await supabaseClient
-            .from('users')
-            .select('username')
-            .eq('user_id', otherPartyId)
-            .maybeSingle();
+          // 1. ดึงข้อมูล username ของคู่สนทนาจากตาราง users (ตรวจสอบค่าก่อน query)
+          let otherUserData = null;
+          if (otherPartyId) {
+            const { data } = await supabaseClient
+              .from('users')
+              .select('username')
+              .eq('user_id', otherPartyId)
+              .maybeSingle();
+            otherUserData = data;
+          }
           
-          // 2. ดึงชื่อโครงการ (project) จากตาราง properties โดยใช้ property_id
-          const { data: propData } = await supabaseClient
-            .from('properties')
-            .select('project')
-            .eq('property_id', room.property_id)
-            .maybeSingle();
-
+          // 2. ดึงชื่อโครงการ (project) จากตาราง properties (ตรวจสอบค่า room.property_id ก่อน query เพื่อป้องกัน Error 400)
+          let propData = null;
+          if (room.property_id) {
+            const { data } = await supabaseClient
+              .from('properties')
+              .select('project')
+              .eq('property_id', room.property_id)
+              .maybeSingle();
+            propData = data;
+          }
+    
           // กำหนดชื่อโครงการ (หากไม่พบข้อมูล ให้แสดงรหัสสำรองไว้)
-          const projectName = propData?.project || `โครงการ: ${room.property_id}`;
+          const projectName = propData?.project || (room.property_id ? `โครงการ: ${room.property_id}` : 'ทั่วไป');
           
           // กำหนดตัวแปรชื่อผู้ใช้
-          const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId}`;
+          const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId || ''}`;
           const roomTitle = `${username} (${projectName})`;
           
           const { data: unreadMsgs } = await supabaseClient
