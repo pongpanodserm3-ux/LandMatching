@@ -1376,8 +1376,8 @@
           itemCard.innerHTML = `
             <div class="chat-item-avatar">👤</div>
             <div class="chat-item-info">
-              <div class="chat-item-title">${roomTitle}</div>
-              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : 'คลิกเพื่อดูบทสนทนา'}</div>
+              <div class="chat-item-title">${username}</div>
+              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : `รหัสทรัพย์: ${room.property_id}`}</div>
             </div>
           `;
           listContainer.appendChild(itemCard);
