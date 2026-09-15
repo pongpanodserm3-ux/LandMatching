@@ -1343,7 +1343,7 @@
     
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
-            .select('id')
+            .select('message_id')
             .eq('room_id', room.room_id)
             .neq('sender_id', currentUserId)
             .eq('is_read', false)
