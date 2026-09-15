@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//-- index9-4-5 --
+  <link rel="shortcut icon" href="#">//index9-4-6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1339,7 +1339,17 @@
         for (const room of rooms) {
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
-          const roomTitle = `คู่สนทนา ID: ${otherPartyId} (รหัสทรัพย์: ${room.property_id})`;
+          
+          // ดึงข้อมูล username ของคู่สนทนาจากตาราง users
+          const { data: otherUserData } = await supabaseClient
+            .from('users')
+            .select('username')
+            .eq('user_id', otherPartyId)
+            .maybeSingle();
+          
+          // กำหนดตัวแปรชื่อผู้ใช้ (หากไม่มีในระบบจะแสดงชื่อสำรอง)
+          const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId}`;
+          const roomTitle = `${username} (รหัสทรัพย์: ${room.property_id})`;
     
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
