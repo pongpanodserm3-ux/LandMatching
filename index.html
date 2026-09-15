@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-8
+  <link rel="shortcut icon" href="#">//index9-4-9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1185,33 +1185,50 @@
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
-
-      const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
-      const titleEl = document.getElementById('chatActiveTitle');
-      if (titleEl) {
-        titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
-      }
-      
+    
       openUserChatModal();
       expandChatZone('room');
-
+    
       let buyerId = await getCurrentUserId();
       buyerId = await ensureUserExists(buyerId);
-
+    
       let rawSellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
       let sellerId = await ensureUserExists(rawSellerId);
-
+    
       const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
-
+    
+      // 1. ดึงชื่อเจ้าของ/Username จาก Supabase (หรือใช้ชื่อ Facebook ผู้โพสต์เป็นค่าสำรอง)
+      let ownerName = getPropValue(item, ['facebookPostName', 'username', 'owner_name', 'ชื่อ Facebook ผู้โพสต์'], '');
+      if (sellerId) {
+        const { data: userData } = await supabaseClient
+          .from('users')
+          .select('username')
+          .eq('user_id', sellerId)
+          .maybeSingle();
+        if (userData && userData.username) {
+          ownerName = userData.username;
+        }
+      }
+      if (!ownerName) ownerName = 'เจ้าของอสังหาฯ';
+    
+      // 2. ดึงชื่อโครงการ และจัดรูปแบบหัวแชต: [ชื่อเจ้าของ] ([ชื่อโครงการ])
+      const projectName = item ? (item.project || 'ทั่วไป') : 'ทั่วไป';
+      const fullTitle = `💬 คุยกับเจ้าของ: ${ownerName} (${projectName})`;
+    
+      const titleEl = document.getElementById('chatActiveTitle');
+      if (titleEl) {
+        titleEl.innerText = fullTitle;
+      }
+    
       try {
         const { data: existingRooms, error: searchErr } = await supabaseClient
           .from('chat_rooms')
           .select('*')
           .eq('property_id', propertyId)
           .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`);
-  
+    
         let targetRoomId = null;
-  
+    
         if (existingRooms && existingRooms.length > 0) {
           targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
         } else {
@@ -1220,13 +1237,13 @@
             .select('room_id')
             .order('room_id', { ascending: false })
             .limit(1);
-  
+    
           let nextRoomId = 101;
           if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
             const parsed = parseInt(maxRoomData[0].room_id, 10);
             if (!isNaN(parsed)) nextRoomId = parsed + 1;
           }
-  
+    
           const { data: insertedRoom, error: insertErr } = await supabaseClient
             .from('chat_rooms')
             .insert([{
@@ -1236,7 +1253,7 @@
               property_id: propertyId
             }])
             .select();
-  
+    
           if (insertErr) {
             console.error("Insert Chat Room Error:", insertErr);
             const { data: fbRooms } = await supabaseClient
@@ -1244,7 +1261,7 @@
               .select('*')
               .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
               .limit(1);
-  
+    
             if (fbRooms && fbRooms.length > 0) {
               targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
             } else {
@@ -1256,13 +1273,13 @@
             targetRoomId = nextRoomId;
           }
         }
-  
+    
         CURRENT_ROOM_ID = targetRoomId;
         CURRENT_USER_ID = buyerId;
-  
+    
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         initRealtimeForRoom(CURRENT_ROOM_ID);
-  
+    
       } catch (err) {
         console.error("Exception in openOwnerChat:", err);
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
