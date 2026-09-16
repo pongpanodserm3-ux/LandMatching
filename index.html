@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-12
+  <link rel="shortcut icon" href="#">//index9-4-13.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1827,7 +1827,27 @@
       });
       testShowList();
     }
-
+    // ฟังก์ชันวิเคราะห์ข้อความจาก Edit Box แล้วอัปเดตปุ่ม Dropdown อัตโนมัติ
+    function applyEditToDropdowns(text) {
+      if (!text) return;
+      const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
+      topics.forEach(topic => {
+        const options = getDropdownOptionsForTopic(topic);
+        for (const opt of options) {
+          if (text.includes(opt)) {
+            filterBtns.forEach(btn => {
+              const onClickAttr = btn.getAttribute('onclick') || '';
+              if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
+                btn.innerText = `${opt} ▾`;
+              }
+            });
+            break; // เมื่อเจอคำตรงใน Dropdown หัวข้อนี้แล้ว ให้ข้ามไปหัวข้อถัดไป
+          }
+        }
+      });
+    }
     // ==========================================
     // 4. MAP & LOCATION HANDLERS
     // ==========================================
@@ -2281,7 +2301,7 @@
                       },
                       {
                         name: "submit_user_summary",
-                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเพื่อนำไปเขียนลงในช่อง customEditBox",
+                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเพื่อนำไปเขียนลงในช่อง customEditBox โดยต้องใช้คำจากรายการ Dropdown เท่านั้น",
                         parameters: {
                           type: "OBJECT",
                           properties: {
@@ -2289,9 +2309,9 @@
                             criteria: { 
                               type: "OBJECT",
                               properties: {
-                                summary: { type: "STRING", description: "ข้อความสรุปความต้องการที่ตรงกับ Dropdown" }
+                                summary: { type: "STRING", description: "สรุปความต้องการโดยใช้ข้อความที่ตรงเป๊ะกับคำในรายการ Dropdown เท่านั้น ห้ามคิดคำขึ้นเองนอกเหนือจาก Dropdown คั่นด้วยช่องว่าง เช่น 'ขาย คอนโด ไม่เกิน 2 ล้าน กทม.'" }
                               },
-                              required: ["summary"] // บังคับให้ AI ต้องสรุปค่าส่งมาเสมอ
+                              required: ["summary"]
                             }
                           },
                           required: ["userData", "criteria"]
@@ -2332,9 +2352,10 @@
                     } else if (name === "submit_user_summary") {
                       if (args.criteria) {
                         const editBox = document.getElementById('customEditBox');
-                        if (editBox) {
-                          // หากมี summary ให้ใช้ค่า summary แต่ถ้าไม่มีให้ดึงโครงสร้างแปลงเป็นตัวอักษรแทน
-                          editBox.value = args.criteria.summary || JSON.stringify(args.criteria);
+                        const summaryText = args.criteria.summary || (typeof args.criteria === 'string' ? args.criteria : '');
+                        if (editBox && summaryText) {
+                          editBox.value = summaryText;
+                          applyEditToDropdowns(summaryText); // เชื่อมโยงข้อความจาก Edit Box ไปยังปุ่ม Dropdown ทันที
                         }
                       }
                       testShowList();
@@ -2484,6 +2505,11 @@
     // ==========================================
     function getSelectedCriteria() {
       let criteria = {};
+      // อ่านค่าจากช่อง Edit Box มาอัปเดตเข้าปุ่ม Dropdown ก่อนประมวลผลค้นหาเสมอ
+      const editBox = document.getElementById('customEditBox');
+      if (editBox && editBox.value.trim()) {
+        applyEditToDropdowns(editBox.value.trim());
+      }
       const filterBtns = document.querySelectorAll('.filter-btn');
       const defaultLabels = [
         "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
