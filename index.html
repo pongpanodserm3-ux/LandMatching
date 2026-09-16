@@ -2289,7 +2289,7 @@
                       },
                       {
                         name: "confirm_location_action",
-                        description: "กดปุ่ม 'ยืนยันพิกัด' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ยืนยันพิกัดใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                        description: "กดปุ่ม 'ยืนยันพิกัด' บนหน้าต่างแผนที่ทันที เมื่อผู้ใช้สั่งยืนยันพิกัด ตกลง หรือ ปักหมุด ",
                         parameters: { type: "OBJECT", properties: {} }
                       },
                       {
@@ -2367,7 +2367,24 @@
                       openLocationModal();
                     } else if (name === "set_location_coordinates") {
                       selectPlaceResult(args.latitude, args.longitude, args.placeName);
-                    } else if (name === "switch_tab_category") {
+                    }
+                      // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
+                      else if (call.name === "confirm_location_action") {
+                        confirmLocation();
+                        if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                          AppState.voice.ws.send(JSON.stringify({
+                            toolResponse: {
+                              functionResponses: [{
+                                response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว" } },
+                                id: call.id
+                              }]
+                            }
+                          }));
+                        }
+                    }
+                          
+                    
+                      else if (name === "switch_tab_category") {
                       switchTab(args.tabId);
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
