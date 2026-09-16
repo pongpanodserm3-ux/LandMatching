@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-11
+  <link rel="shortcut icon" href="#">//index9-4-12
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2165,13 +2165,17 @@
       else await stopVoiceSession();
     }
     // ฟังก์ชันสำหรับส่ง Tool Response กลับไปหา Gemini WebSocket
-    function sendToolResponse(callId, outputData) {
+    function sendToolResponse(callId, name, outputData) {
+      // ยกเลิกการปิดเสียง (Mute) เพื่อให้ AI สามารถพูดตอบโต้ต่อได้หลังจากกดปุ่มสำเร็จ
+      AppState.voice.silenced = false; 
+
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && callId) {
         AppState.voice.ws.send(JSON.stringify({
           toolResponse: {
             functionResponses: [{
-              response: { output: outputData },
-              id: callId
+              id: callId,
+              name: name, // จำเป็นต้องส่ง name กลับไปด้วย
+              response: { result: outputData } // มาตรฐาน API ต้องใช้ key ชื่อ result
             }]
           }
         }));
@@ -2282,7 +2286,13 @@
                           type: "OBJECT",
                           properties: {
                             userData: { type: "OBJECT" },
-                            criteria: { type: "OBJECT" }
+                            criteria: { 
+                              type: "OBJECT",
+                              properties: {
+                                summary: { type: "STRING", description: "ข้อความสรุปความต้องการที่ตรงกับ Dropdown" }
+                              },
+                              required: ["summary"] // บังคับให้ AI ต้องสรุปค่าส่งมาเสมอ
+                            }
                           },
                           required: ["userData", "criteria"]
                         }
@@ -2322,13 +2332,16 @@
                     } else if (name === "submit_user_summary") {
                       if (args.criteria) {
                         const editBox = document.getElementById('customEditBox');
-                        if (editBox && args.criteria.summary) editBox.value = args.criteria.summary;
+                        if (editBox) {
+                          // หากมี summary ให้ใช้ค่า summary แต่ถ้าไม่มีให้ดึงโครงสร้างแปลงเป็นตัวอักษรแทน
+                          editBox.value = args.criteria.summary || JSON.stringify(args.criteria);
+                        }
                       }
                       testShowList();
                     }
             
                     // ส่งสัญญาณตอบกลับยืนยันการทำงานของ Tool ให้ Gemini ทราบ
-                    sendToolResponse(id, output);
+                    sendToolResponse(id, name, output);
                   }
                   return;
                 }
