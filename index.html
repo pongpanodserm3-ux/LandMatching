@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-10
+  <link rel="shortcut icon" href="#">//index9-4-11
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2289,6 +2289,8 @@
         AppState.voice.ws.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
+            
+            // 1. ตรวจสอบ Setup Complete
             if (response.setupComplete) {
               AppState.voice.isSetupReady = true;
               if (statusText) {
@@ -2302,13 +2304,59 @@
               }
               return;
             }
-
+        
+            // 2. ดักจับและประมวลผล Tool Calls จาก AI (แก้ไขปัญหาเปิดหน้าพิกัดไม่ได้)
+            if (response.toolCall) {
+              const functionCalls = response.toolCall.functionCalls || [];
+              const functionResponses = [];
+        
+              for (const fc of functionCalls) {
+                const { name, args, id } = fc;
+                let result = { success: true };
+        
+                if (name === "open_location_modal") {
+                  openLocationModal();
+                } else if (name === "set_location_coordinates") {
+                  if (args.latitude && args.longitude) {
+                    setCoordinates(args.latitude, args.longitude);
+                    if (args.placeName) {
+                      const placeInput = document.getElementById('placeSearchInput');
+                      if (placeInput) placeInput.value = args.placeName;
+                    }
+                    updateMapFromInputs();
+                  }
+                } else if (name === "switch_tab_category") {
+                  if (args.tabId) switchTab(args.tabId);
+                } else if (name === "submit_user_summary") {
+                  if (args.criteria) {
+                    const editBox = document.getElementById('customEditBox');
+                    if (editBox && typeof args.criteria === 'string') {
+                      editBox.value = args.criteria;
+                    }
+                  }
+                  testShowList();
+                }
+        
+                functionResponses.push({
+                  response: { output: result },
+                  id: id
+                });
+              }
+        
+              // ส่ง toolResponse กลับไปหา Gemini เพื่อให้ AI พูดโต้ตอบต่อได้
+              AppState.voice.ws.send(JSON.stringify({
+                toolResponse: { functionResponses }
+              }));
+            }
+        
+            // 3. จัดการกรณี AI โดนพูดแทรก (Interrupted)
             if (response.serverContent?.interrupted) {
               if (AppState.voice.audioOutCtx) {
                 AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
               }
             }
-
+        
+            // 4. เล่นเสียงตอบกลับจาก AI
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
@@ -2317,7 +2365,9 @@
                 }
               }
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error("WS Message Error:", e);
+          }
         };
 
         AppState.voice.ws.onclose = () => stopVoiceSession();
@@ -2329,29 +2379,58 @@
       }
     }
 
+    // ฟังก์ชันแปลงข้อมูลสัญญาณเสียงเป็น PCM 16-bit 16kHz สำหรับส่งให้ Gemini
+    function floatTo16BitPCM(input) {
+      const output = new Int16Array(input.length);
+      for (let i = 0; i < input.length; i++) {
+        const s = Math.max(-1, Math.min(1, input[i]));
+        output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      return output.buffer;
+    }
+    
     async function initMicrophone() {
-      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-      });
-      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
-      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
-
-      source.connect(AppState.voice.processor);
-      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
-      AppState.voice.processor.onaudioprocess = (e) => {
-        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+      try {
+        AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
         
-        const inputData = e.inputBuffer.getChannelData(0);
-        const pcm16 = convertFloat32ToPCM16(inputData);
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-
-        AppState.voice.ws.send(JSON.stringify({
-          realtimeInput: {
-            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+        AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
+        
+        // ใช้ ScriptProcessorNode ที่ตั้งค่า Buffer 2048 เพื่อลด Latency และป้องกัน Frame Drop
+        const processor = AppState.voice.audioCtx.createScriptProcessor(2048, 1, 1);
+        AppState.voice.processor = processor;
+    
+        processor.onaudioprocess = (e) => {
+          if (!AppState.voice.isActive || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+          
+          const inputData = e.inputBuffer.getChannelData(0);
+          const pcmBuffer = floatTo16BitPCM(inputData);
+          
+          // แปลง Buffer เป็น Base64
+          const bytes = new Uint8Array(pcmBuffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
           }
-        }));
-      };
+          const base64Audio = btoa(binary);
+    
+          // ส่ง Stream ข้อมูลเสียงเข้า WebSocket
+          AppState.voice.ws.send(JSON.stringify({
+            realtimeInput: {
+              mediaChunks: [
+                { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+              ]
+            }
+          }));
+        };
+    
+        source.connect(processor);
+        processor.connect(AppState.voice.audioCtx.destination);
+      } catch (err) {
+        console.error("Microphone Initialization Error:", err);
+      }
     }
 
     function convertFloat32ToPCM16(buffer) {
