@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-11
+  <link rel="shortcut icon" href="#">//index9-4-10
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1096,15 +1096,15 @@
         if (typeof liff !== 'undefined' && CONFIG.LIFF_ID) {
           await liff.init({ liffId: CONFIG.LIFF_ID });
           if (liff.isLoggedIn()) {
-            const profile = await liff.getProfile().catch(() => null);
+            const profile = await liff.getProfile();
+            currentUserLineProfile = profile;
             if (profile && profile.userId) {
-              currentUserLineProfile = profile;
               await saveUserLineIdToSupabase(profile.userId);
             }
           }
         }
       } catch (err) {
-        console.warn("LIFF initialization warning/error bypassed:", err);
+        console.error("LIFF Init Error:", err);
       }
     }
 
@@ -1693,45 +1693,49 @@
     }
   
     window.addEventListener('load', () => {
-          initLIFF().then(() => {
-            checkAndDisplayMemberStatus();
-            initGlobalChatRealtime();
-          });
-    
-          // ลบส่วน setTimeout ที่สั่ง startVoiceSession() อัตโนมัติออกเพื่อไม่ให้โดน Browser บล็อกสิทธิ์ไมค์
-    
-          const listSection = document.getElementById('list-section');
-          const aiSection = document.getElementById('ai-section');
-          let lastScrollTop = 0;
-    
-          if (listSection) {
-            listSection.addEventListener('scroll', () => {
-              let currentScroll = listSection.scrollTop;
-              
-              if (currentScroll > lastScrollTop && currentScroll > 20) {
-                if (aiSection) aiSection.classList.add('collapsed');
-              } else if (currentScroll < lastScrollTop) {
-                if (aiSection) aiSection.classList.remove('collapsed');
-              }
-              lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-    
-              if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-              
-              const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
-              if (remainingScroll < 600) {
-                loadNextPage();
-              }
-            });
+      initLIFF().then(() => {
+        checkAndDisplayMemberStatus();
+        initGlobalChatRealtime();
+      });
+
+      setTimeout(() => {
+        if (!AppState.voice.isActive && !AppState.voice.ws) {
+          startVoiceSession();
+        }
+      }, 1000);
+
+      const listSection = document.getElementById('list-section');
+      const aiSection = document.getElementById('ai-section');
+      let lastScrollTop = 0;
+
+      if (listSection) {
+        listSection.addEventListener('scroll', () => {
+          let currentScroll = listSection.scrollTop;
+          
+          if (currentScroll > lastScrollTop && currentScroll > 20) {
+            if (aiSection) aiSection.classList.add('collapsed');
+          } else if (currentScroll < lastScrollTop) {
+            if (aiSection) aiSection.classList.remove('collapsed');
           }
-    
-          document.addEventListener('click', (e) => {
-            const resultsDiv = document.getElementById('placeSearchResults');
-            const searchInput = document.getElementById('placeSearchInput');
-            if (resultsDiv && searchInput && !resultsDiv.contains(e.target) && e.target !== searchInput) {
-              resultsDiv.style.display = 'none';
-            }
-          });
+          lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+
+          if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+          
+          const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
+          if (remainingScroll < 600) {
+            loadNextPage();
+          }
         });
+      }
+
+      document.addEventListener('click', (e) => {
+        const resultsDiv = document.getElementById('placeSearchResults');
+        const searchInput = document.getElementById('placeSearchInput');
+        if (resultsDiv && searchInput && !resultsDiv.contains(e.target) && e.target !== searchInput) {
+          resultsDiv.style.display = 'none';
+        }
+      });
+    });
 
     function triggerSearchReset() {
       testShowList();
@@ -2162,226 +2166,193 @@
     }
 
     async function startVoiceSession() {
-          const btn = document.getElementById('toggleBtn');
-          const avatar = document.getElementById('avatarCircle');
-          const statusText = document.getElementById('statusText');
-    
-          if (AppState.voice.ws || AppState.voice.isActive) {
-            await stopVoiceSession();
-          }
-    
-          try {
-            AppState.voice.isActive = true;
-            AppState.voice.isSetupReady = false;
-            AppState.voice.silenced = false;
-            AppState.data.isFetching = false;
-    
-            if (statusText) {
-              statusText.innerText = "กำลังขอสิทธิ์ใช้งานไมโครโฟน...";
-              statusText.classList.add('loading-pulse'); 
-            }
-    
-            // *** สำคัญ: ต้องเปิดใช้งานไมค์ทันทีใน User Gesture Stack ***
-            await initMicrophone();
-    
-            if (statusText) {
-              statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
-            }
-    
-            // สร้าง AudioContext สำหรับเสียงตอบกลับพร้อม Fallback
-            try {
-              AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-            } catch (e) {
-              AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            if (AppState.voice.audioOutCtx.state === 'suspended') {
-              await AppState.voice.audioOutCtx.resume();
-            }
-            AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-    
-            AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
-    
-            AppState.voice.ws.onopen = () => {
-              if (AppState.voice.ws.readyState === WebSocket.OPEN) {
-                const validDropdowns = getAllValidDropdownOptions().join(', ');
-                const setupData = {
-                  setup: {
-                    model: "models/gemini-3.1-flash-live-preview", 
-                    generationConfig: {
-                      responseModalities: ["AUDIO"],
-                      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
-                    },
-                    systemInstruction: {
-                      parts: [{
-                        text: `คุณคือ AI ผู้ช่วยค้นหา หน้าที่หลักคือ:...`
-                      }]
-                    },
-                    tools: [
+      const btn = document.getElementById('toggleBtn');
+      const avatar = document.getElementById('avatarCircle');
+      const statusText = document.getElementById('statusText');
+
+      if (AppState.voice.ws || AppState.voice.isActive) {
+        await stopVoiceSession();
+      }
+
+      try {
+        AppState.voice.isActive = true;
+        AppState.voice.isSetupReady = false;
+        AppState.voice.silenced = false;
+        AppState.data.isFetching = false;
+        
+        if (statusText) {
+          statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+          statusText.classList.add('loading-pulse'); 
+        }
+
+        AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+
+        AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
+
+        AppState.voice.ws.onopen = () => {
+          if (AppState.voice.ws.readyState === WebSocket.OPEN) {
+            const validDropdowns = getAllValidDropdownOptions().join(', ');
+            const setupData = {
+              setup: {
+                model: "models/gemini-3.1-flash-live-preview", 
+                generationConfig: {
+                  responseModalities: ["AUDIO"],
+                  speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
+                },
+                systemInstruction: {
+                  parts: [{
+                    text: `คุณคือ AI ผู้ช่วยค้นหา  หน้าที่หลักคือ:
+                    1. พูดคุยสอบถามความต้องการลูกค้าด้วยเสียง (ใช้สรรพนาม 'ผม' และลงท้าย 'ครับ')
+                    2. เมื่ออยู่ในแท็บอสังหาริมทรัพย์ หรือ เพิ่งเข้าสู่แท็บอสังหาริมทรัพย์ อันดับแรก AIถามทันทีว่า "ต้องการหาพื้นที่ใด ต้องการให้เปิดหน้าพิกัดไหม" ถ้าuserบอกต้องการ ให้AIเรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อเปิดหน้าพิกัดขึ้นมา และ  ให้AI สอบถามความต้องการบ้านที่userต้องการ โดยเน้นถามเร็วเน้นสรุป เมื่อได้ข้อมูลความต้องการของลูกค้าครบแล้ว ให้เรียกใช้ฟังก์ชัน submit_user_summary ทันทีเพื่อส่งข้อมูลเข้าสู่ระบบ
+                    ***ข้อบังคับสำคัญที่สุดสำหรับการสรุปความต้องการในแท็บอสังหาริมทรัพย์***:
+                    คำสรุปความต้องการของลูกค้าทุกคำที่จะส่งผ่านฟังก์ชัน submit_user_summary เพื่อนำไปเขียนในกล่อง edit (customEditBox) ในแท็บอสังหาริมทรัพย์ จะต้องเลือกใช้เฉพาะข้อความคำตัวเลือกที่มีอยู่ในรายการ Dropdown ด้านล่างกล่อง edit ต่อไปนี้เท่านั้น ห้ามคิดคำขึ้นเอง หรือห้ามเขียนนอกเหนือจากข้อความใน Dropdown เหล่านี้เด็ดขาด:
+                    [รายการข้อความ Dropdown ที่อนุญาตให้ใช้]: ${validDropdowns}
+                    3. เมื่อเปลี่ยนแท็บมาเลือกไลฟ์สไตล์และท่องเที่ยว (lifestyle) ให้ AI นำข้อความที่ลูกค้าต้องการไปพิมพ์ลงใน tab ด้วย (โดยส่งข้อความผ่าน parameter searchTextในฟังก์ชัน switch_tab_category) และถาม user ทันทีว่า "ต้องการปักหมุดพิกัดไหม" ถ้า user ตอบว่าต้องการ ให้เรียกใช้ฟังก์ชัน 'open_location_modal' เพื่อกดปุ่มปักหมุดสีเขียวและแสดงหน้าพิกัดขึ้นมาทันที
+                    4. หากได้รับแจ้งจากระบบว่า "คัดบ้านมาให้แล้ว..." ให้คุณพูดตามที่ระบบสั่งทันที
+                    5. หากผู้ใช้เลือกดูบ้านเฉพาะหลัง ระบบจะส่งข้อมูลบ้านไปให้ ให้เปลี่ยนโหมดเป็นผู้เชี่ยวชาญอธิบายบ้านหลังนั้น อ้างอิงจากฐานข้อมูล Supabase ที่เด้งขึ้นมางใหม่จากด้านล่างจอ
+                    6. ถ้าลูกค้าสอบถามข้อมูลบ้าน ให้สวมบทบาทนักเจรจาต่อรอง สอบถามความต้องการเพิ่ม หากลูกค้าลังเล ให้ถามเรื่องต่อรองราคา
+                    7. หากอยู่ในหน้าต่างปักหมุดพิกัดหรือค้นหาสถานที่ ให้ทำหน้าที่ช่วยเหลือแปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน set_location_coordinates เพื่อปักหมุด พร้อมระบุชื่อสถานที่ลงในช่องค้นหาด้วย
+                    8. กฎและลำดับการทำงานเมื่อผู้ใช้ระบุความต้องการ:
+                        - ขั้นตอนที่ 1: เรียกใช้ฟังก์ชัน 'switch_tab_category' เพื่อสลับหน้าจอไปยังแท็บที่ถูกต้อง
+                        - ขั้นตอนที่ 2: พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"`
+                  }]
+                },
+                tools: [
+                  {
+                    functionDeclarations: [
                       {
-                        functionDeclarations: [
-                          { name: "submit_user_summary", description: "ส่งสรุปข้อมูลความต้องการของลูกค้า", parameters: { type: "OBJECT", properties: { userData: { type: "OBJECT" }, criteria: { type: "OBJECT" } }, required: ["userData", "criteria"] } },
-                          { name: "set_location_coordinates", description: "แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่", parameters: { type: "OBJECT", properties: { latitude: { type: "NUMBER" }, longitude: { type: "NUMBER" }, placeName: { type: "STRING" } }, required: ["latitude", "longitude", "placeName"] } },
-                          { name: "switch_tab_category", description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก", parameters: { type: "OBJECT", properties: { tabId: { type: "STRING" }, searchText: { type: "STRING" } }, required: ["tabId"] } },
-                          { name: "open_location_modal", description: "เปิดหน้าต่างพิกัด ปักหมุดแผนที่", parameters: { type: "OBJECT", properties: {} } }
-                        ]
+                        name: "submit_user_summary",
+                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้า",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            userData: { type: "OBJECT" },
+                            criteria: { type: "OBJECT" }
+                          },
+                          required: ["userData", "criteria"]
+                        }
+                      },
+                      {
+                        name: "set_location_coordinates",
+                        description: "แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            latitude: { type: "NUMBER" },
+                            longitude: { type: "NUMBER" },
+                            placeName: { type: "STRING" }
+                          },
+                          required: ["latitude", "longitude", "placeName"]
+                        }
+                      },
+                      {
+                        name: "switch_tab_category",
+                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            tabId: { type: "STRING" },
+                            searchText: { type: "STRING" }
+                          },
+                          required: ["tabId"]
+                        }
+                      },
+                      {
+                        name: "open_location_modal",
+                        description: "เปิดหน้าต่างพิกัด ปักหมุดแผนที่",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "confirm_location_action",
+                        description: "กดปุ่มยืนยันพิกัด",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "open_google_maps_action",
+                        description: "กดปุ่มเปิด Google Maps",
+                        parameters: { type: "OBJECT", properties: {} }
                       }
                     ]
                   }
-                };
-                AppState.voice.ws.send(JSON.stringify(setupData));
-              }
-    
-              btn.innerHTML = "⏹️หยุดคุยกับAI";
-              btn.classList.add('active');
-              avatar.classList.add('pulse-animation');
-            };
-    
-            AppState.voice.ws.onmessage = async (event) => {
-              try {
-                const response = JSON.parse(event.data);
-                
-                if (response.setupComplete) {
-                  AppState.voice.isSetupReady = true;
-                  if (statusText) {
-                    statusText.classList.remove('loading-pulse');
-                    statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
-                  }
-                  if (!AppState.voice.hasGreeted) {
-                    triggerInitialAIGreeting();
-                    AppState.voice.hasGreeted = true;
-                  }
-                  return;
-                }
-    
-                if (response.toolCall) {
-                  const functionCalls = response.toolCall.functionCalls || [];
-                  const functionResponses = [];
-            
-                  for (const fc of functionCalls) {
-                    const { name, args, id } = fc;
-                    let result = { success: true };
-            
-                    if (name === "open_location_modal") {
-                      openLocationModal();
-                    } else if (name === "set_location_coordinates") {
-                      if (args.latitude && args.longitude) {
-                        setCoordinates(args.latitude, args.longitude);
-                        if (args.placeName) {
-                          const placeInput = document.getElementById('placeSearchInput');
-                          if (placeInput) placeInput.value = args.placeName;
-                        }
-                        updateMapFromInputs();
-                      }
-                    } else if (name === "switch_tab_category") {
-                      if (args.tabId) switchTab(args.tabId);
-                    } else if (name === "submit_user_summary") {
-                      if (args.criteria) {
-                        const editBox = document.getElementById('customEditBox');
-                        if (editBox && typeof args.criteria === 'string') {
-                          editBox.value = args.criteria;
-                        }
-                      }
-                      testShowList();
-                    }
-            
-                    functionResponses.push({
-                      response: { output: result },
-                      id: id
-                    });
-                  }
-            
-                  AppState.voice.ws.send(JSON.stringify({
-                    toolResponse: { functionResponses }
-                  }));
-                }
-            
-                if (response.serverContent?.interrupted) {
-                  if (AppState.voice.audioOutCtx) {
-                    AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-                  }
-                }
-            
-                const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
-                if (parts) {
-                  for (let part of parts) {
-                    if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
-                      playPCMData(part.inlineData.data);
-                    }
-                  }
-                }
-              } catch (e) {
-                console.error("WS Message Error:", e);
-              }
-            };
-    
-            AppState.voice.ws.onclose = () => stopVoiceSession();
-          } catch (err) {
-            console.error("Voice Session Error:", err);
-            if (statusText) {
-              statusText.classList.remove('loading-pulse');
-              statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
-            }
-            await stopVoiceSession();
-          }
-        }
-
-    // ฟังก์ชันแปลงข้อมูลสัญญาณเสียงเป็น PCM 16-bit 16kHz สำหรับส่งให้ Gemini
-    function floatTo16BitPCM(input) {
-      const output = new Int16Array(input.length);
-      for (let i = 0; i < input.length; i++) {
-        const s = Math.max(-1, Math.min(1, input[i]));
-        output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-      }
-      return output.buffer;
-    }
-    
-    async function initMicrophone() {
-          AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-          });
-          
-          // ป้องกัน Error บน iOS เมื่อไม่รองรับ sampleRate 16000
-          try {
-            AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-          } catch (e) {
-            AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-    
-          if (AppState.voice.audioCtx.state === 'suspended') {
-            await AppState.voice.audioCtx.resume();
-          }
-    
-          const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
-          const processor = AppState.voice.audioCtx.createScriptProcessor(2048, 1, 1);
-          AppState.voice.processor = processor;
-    
-          processor.onaudioprocess = (e) => {
-            if (!AppState.voice.isActive || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN || !AppState.voice.isSetupReady) return;
-            
-            const inputData = e.inputBuffer.getChannelData(0);
-            const pcmBuffer = floatTo16BitPCM(inputData);
-            
-            const bytes = new Uint8Array(pcmBuffer);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-              binary += String.fromCharCode(bytes[i]);
-            }
-            const base64Audio = btoa(binary);
-    
-            const currentSampleRate = AppState.voice.audioCtx.sampleRate || 16000;
-            AppState.voice.ws.send(JSON.stringify({
-              realtimeInput: {
-                mediaChunks: [
-                  { mimeType: `audio/pcm;rate=${currentSampleRate}`, data: base64Audio }
                 ]
               }
-            }));
-          };
-    
-          source.connect(processor);
-          processor.connect(AppState.voice.audioCtx.destination);
+            };
+            AppState.voice.ws.send(JSON.stringify(setupData));
+          }
+
+          btn.innerHTML = "⏹️หยุดคุยกับAI";
+          btn.classList.add('active');
+          avatar.classList.add('pulse-animation');
+        };
+
+        AppState.voice.ws.onmessage = async (event) => {
+          try {
+            const response = JSON.parse(event.data);
+            if (response.setupComplete) {
+              AppState.voice.isSetupReady = true;
+              if (statusText) {
+                statusText.classList.remove('loading-pulse');
+                statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+              }
+              await initMicrophone(); 
+              if (!AppState.voice.hasGreeted) {
+                triggerInitialAIGreeting();
+                AppState.voice.hasGreeted = true;
+              }
+              return;
+            }
+
+            if (response.serverContent?.interrupted) {
+              if (AppState.voice.audioOutCtx) {
+                AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
+              }
+            }
+
+            const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
+            if (parts) {
+              for (let part of parts) {
+                if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
+                  playPCMData(part.inlineData.data);
+                }
+              }
+            }
+          } catch (e) {}
+        };
+
+        AppState.voice.ws.onclose = () => stopVoiceSession();
+      } catch (err) {
+        if (statusText) {
+          statusText.classList.remove('loading-pulse');
+          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
         }
+      }
+    }
+
+    async function initMicrophone() {
+      AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
+      AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
+
+      source.connect(AppState.voice.processor);
+      AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
+      AppState.voice.processor.onaudioprocess = (e) => {
+        if (!AppState.voice.isActive || !AppState.voice.isSetupReady || !AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcm16 = convertFloat32ToPCM16(inputData);
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+
+        AppState.voice.ws.send(JSON.stringify({
+          realtimeInput: {
+            audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+          }
+        }));
+      };
+    }
 
     function convertFloat32ToPCM16(buffer) {
       let l = buffer.length;
