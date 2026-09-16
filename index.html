@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-14
+  <link rel="shortcut icon" href="#">//index9-4-14.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1847,6 +1847,12 @@
           }
         }
       });
+    
+      // --- เพิ่ม 4 บรรทัดนี้ลงไปเพื่อล้างข้อความในกล่อง Edit ทิ้งทันที ---
+      const editBox = document.getElementById('customEditBox');
+      if (editBox) {
+        editBox.value = '';
+      }
     }
     // ==========================================
     // 4. MAP & LOCATION HANDLERS
@@ -2377,11 +2383,7 @@
           
                     // 2. นำข้อความที่ได้ไปใส่กล่องค้นหาและปรับ Dropdown
                     if (summaryText) {
-                      const editBox = document.getElementById('customEditBox');
-                      if (editBox) {
-                        editBox.value = summaryText;
-                        applyEditToDropdowns(summaryText); // เชื่อมโยงข้อความจาก Edit Box ไปยังปุ่ม Dropdown ทันที
-                      }
+                      applyEditToDropdowns(summaryText); // ส่งข้อความไปปรับปุ่ม Dropdown โดยตรง
                     }
                     
                     // 3. หน่วงเวลาเล็กน้อย (300ms) เพื่อให้ UI ของ Dropdown อัปเดตตัวเองเสร็จสมบูรณ์ก่อนเรียกฟังก์ชันค้นหา
