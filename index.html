@@ -1,13 +1,14 @@
-<!DOCTYPE html>
+[cite: 1]<!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-10
+  <link rel="shortcut icon" href="#"> //index9-3_______________
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- เพิ่ม Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -511,32 +512,6 @@
       margin-bottom: 2px;
     }
 
-    /* --- สไตล์เมื่อมีข้อความใหม่เข้ามา --- */
-    .chat-item-card.has-new-msg {
-      background-color: #f3e8ff !important;
-      border-color: #c084fc !important;
-    }
-
-    .user-chat-float-btn.has-new-msg {
-      background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%) !important;
-      animation: pulse-purple 1.5s infinite !important;
-    }
-
-    @keyframes pulse-purple {
-      0% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.8), 0 0 15px rgba(192, 132, 252, 0.6);
-      }
-      70% {
-        transform: scale(1.08);
-        box-shadow: 0 0 0 14px rgba(192, 132, 252, 0), 0 0 25px rgba(192, 132, 252, 0.8);
-      }
-      100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0), 0 0 15px rgba(192, 132, 252, 0.6);
-      }
-    }
-    
     /* --- Chat Modal & Dual-Pane Screen Layout --- */
     .chat-modal-overlay {
       position: fixed;
@@ -548,7 +523,9 @@
       align-items: center;
       z-index: 99999;
     }
-    .chat-modal-overlay.active { display: flex !important; }
+    .chat-modal-overlay.active {
+      display: flex !important;
+    }
 
     .chat-container-card {
       background: #ffffff;
@@ -583,9 +560,11 @@
       line-height: 1;
       transition: opacity 0.2s;
     }
-    .close-chat-modal:hover { opacity: 0.8; }
+    .close-chat-modal:hover {
+      opacity: 0.8;
+    }
 
-    /* --- Split Dual-Pane View --- */
+    /* --- Split Dual-Pane View (Chat List Left / Chat Room Right) --- */
     .chat-dual-split-body {
       display: flex;
       flex-direction: row;
@@ -622,10 +601,19 @@
       user-select: none;
     }
 
-    .chat-zone-list.expanded { flex: 2 !important; }
-    .chat-zone-room.shrunk { flex: 1 !important; }
-    .chat-zone-room.expanded { flex: 2 !important; }
-    .chat-zone-list.shrunk { flex: 1 !important; }
+    .chat-zone-list.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-room.shrunk {
+      flex: 1 !important;
+    }
+
+    .chat-zone-room.expanded {
+      flex: 3 !important;
+    }
+    .chat-zone-list.shrunk {
+      flex: 1 !important;
+    }
 
     .chat-list-header {
       padding: 12px 15px;
@@ -675,7 +663,10 @@
       flex-shrink: 0;
     }
 
-    .chat-item-info { flex: 1; min-width: 0; }
+    .chat-item-info {
+      flex: 1;
+      min-width: 0;
+    }
     .chat-item-title {
       font-size: 13px;
       font-weight: bold;
@@ -770,9 +761,11 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .chat-send-btn:hover { background: #3b6fb0; }
+    .chat-send-btn:hover {
+      background: #3b6fb0;
+    }
 
-    /* ปุ่มคุยกับเจ้าของ */
+    /* ปุ่มคุยกับเจ้าของบนการ์ดรายการบ้าน */
     .chat-owner-btn {
       background: linear-gradient(135deg, #abecd6 0%, #46cd93 100%);
       color: #064e3b;
@@ -792,7 +785,9 @@
       transform: translateY(-1px);
       box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
     }
-    .chat-owner-btn:active { transform: translateY(0); }
+    .chat-owner-btn:active {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -803,8 +798,6 @@
       <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <div class="header-center-logos">
         <div class="ai-avatar" id="avatarCircle">🤖</div>
-        <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
-
       </div>
       <div style="width: 80px;"></div>
     </div>
@@ -1044,10 +1037,7 @@
         dropdownOptions: []
       }
     };
-    
-    // เพิ่มตัวแปรสถานะเสียงแจ้งเตือน
-    let isNotificationSoundEnabled = true;
-    
+
     // ==========================================
     // Supabase Chat Setup
     // ==========================================
@@ -1055,34 +1045,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function playNotificationSound() {
-      if (!isNotificationSoundEnabled) return;
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // โน้ต D5
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-      } catch (e) {
-        console.error("Audio playback error:", e);
-      }
-    }
-
-    function toggleNotificationSound() {
-      isNotificationSoundEnabled = !isNotificationSoundEnabled;
-      const bellBtn = document.getElementById('notificationBellBtn');
-      if (bellBtn) {
-        bellBtn.innerText = isNotificationSoundEnabled ? "🔔" : "🔕";
-        bellBtn.title = isNotificationSoundEnabled ? "ปิดเสียงแจ้งเตือน" : "เปิดเสียงแจ้งเตือน";
-      }
-    }
-  
     let CURRENT_ROOM_ID = 101;
     let CURRENT_USER_ID = 1;
     let currentUserLineProfile = null;
@@ -1113,23 +1075,23 @@
       try {
         const { data: existingUser } = await supabaseClient
           .from('users')
-          .select('user_id, line_id')
+          .select('user_id, line_id') // เปลี่ยนจาก id เป็น user_id
           .eq('line_id', String(lineId))
           .maybeSingle();
     
-        if (existingUser) return existingUser.user_id;
+        if (existingUser) return existingUser.user_id; // เปลี่ยนจาก existingUser.id
     
         const { data: newUser, error } = await supabaseClient
           .from('users')
           .insert([{ line_id: String(lineId) }])
-          .select('user_id')
+          .select('user_id') // เปลี่ยนจาก id เป็น user_id
           .maybeSingle();
     
         if (error) {
           console.error("Error saving line_id to Supabase:", error);
           return null;
         }
-        return newUser ? newUser.user_id : null;
+        return newUser ? newUser.user_id : null; // เปลี่ยนจาก newUser.id
       } catch (e) {
         console.error("Exception in saveUserLineIdToSupabase:", e);
         return null;
@@ -1142,22 +1104,22 @@
       const isNumeric = !isNaN(numId);
       
       try {
-        let query = supabaseClient.from('users').select('user_id');
+        let query = supabaseClient.from('users').select('user_id'); // เปลี่ยนจาก id เป็น user_id
         
         if (isNumeric) {
-          query = query.eq('user_id', numId);
+          query = query.eq('user_id', numId); // เปลี่ยนจาก id เป็น user_id
         } else {
           query = query.eq('line_id', String(userId));
         }
     
         const { data: existing } = await query.maybeSingle();
-        if (existing) return existing.user_id;
+        if (existing) return existing.user_id; // เปลี่ยนจาก existing.id
     
         const payload = isNumeric ? {} : { line_id: String(userId) };
         const { data: newUser, error } = await supabaseClient
           .from('users')
           .insert([payload])
-          .select('user_id')
+          .select('user_id') // เปลี่ยนจาก id เป็น user_id
           .maybeSingle();
     
         if (error) {
@@ -1185,111 +1147,95 @@
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
-    
-      let buyerId = await getCurrentUserId();
-      buyerId = await ensureUserExists(buyerId);
-    
-      let rawSellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
-      let sellerId = await ensureUserExists(rawSellerId);
-    
-      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
-    
-      let ownerName = getPropValue(item, ['facebookPostName', 'username', 'owner_name', 'ชื่อ Facebook ผู้โพสต์'], '');
-      if (sellerId) {
-        const { data: userData } = await supabaseClient
-          .from('users')
-          .select('username')
-          .eq('user_id', sellerId)
-          .maybeSingle();
-        if (userData && userData.username) {
-          ownerName = userData.username;
-        }
-      }
-      if (!ownerName) ownerName = 'เจ้าของอสังหาฯ';
-    
-      const projectName = item ? (item.project || 'ทั่วไป') : 'ทั่วไป';
-      const fullTitle = `💬 คุยกับเจ้าของ: ${ownerName} (${projectName})`;
-    
+
+      const title = item ? (item.project || item.facebookPostName || 'เจ้าของประกาศ') : 'เจ้าของอสังหาฯ';
       const titleEl = document.getElementById('chatActiveTitle');
       if (titleEl) {
-        titleEl.innerText = fullTitle;
+        titleEl.innerText = `💬 คุยกับเจ้าของ: ${title}`;
       }
-    
+      
+      openUserChatModal();
+      expandChatZone('room');
+
+      // การันตีว่าทั้ง Buyer และ Seller มีเรคคอร์ดอยู่ในตาราง users เสมอ
+      let buyerId = await getCurrentUserId();
+      buyerId = await ensureUserExists(buyerId);
+
+      let rawSellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
+      let sellerId = await ensureUserExists(rawSellerId);
+
+      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
+
       try {
-        const { data: existingRooms, error: searchErr } = await supabaseClient
-          .from('chat_rooms')
-          .select('*')
-          .eq('property_id', propertyId)
-          .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`);
-    
-        let targetRoomId = null;
-    
-        if (existingRooms && existingRooms.length > 0) {
-          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
-        } else {
-          const { data: maxRoomData } = await supabaseClient
-            .from('chat_rooms')
-            .select('room_id')
-            .order('room_id', { ascending: false })
-            .limit(1);
-    
-          let nextRoomId = 101;
-          if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
-            const parsed = parseInt(maxRoomData[0].room_id, 10);
-            if (!isNaN(parsed)) nextRoomId = parsed + 1;
-          }
-    
-          const { data: insertedRoom, error: insertErr } = await supabaseClient
-            .from('chat_rooms')
-            .insert([{
-              room_id: nextRoomId,
-              buyer_id: buyerId,
-              seller_id: sellerId,
-              property_id: propertyId
-            }])
-            .select();
-    
-          if (insertErr) {
-            console.error("Insert Chat Room Error:", insertErr);
-            const { data: fbRooms } = await supabaseClient
-              .from('chat_rooms')
-              .select('*')
-              .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
-              .limit(1);
-    
-            if (fbRooms && fbRooms.length > 0) {
-              targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
-            } else {
-              targetRoomId = nextRoomId;
+              // 1. ค้นหาห้องเดิม (ตรวจสอบย้อนกลับทั้งสองฝั่ง: buyer=A & seller=B หรือ buyer=B & seller=A)
+              const { data: existingRooms, error: searchErr } = await supabaseClient
+                .from('chat_rooms')
+                .select('*')
+                .eq('property_id', propertyId)
+                .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`);
+      
+              let targetRoomId = null;
+      
+              if (existingRooms && existingRooms.length > 0) {
+                targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
+              } else {
+                // 2. หา room_id สูงสุดเพื่อรัน auto-increment
+                const { data: maxRoomData } = await supabaseClient
+                  .from('chat_rooms')
+                  .select('room_id')
+                  .order('room_id', { ascending: false })
+                  .limit(1);
+      
+                let nextRoomId = 101;
+                if (maxRoomData && maxRoomData.length > 0 && maxRoomData[0] && maxRoomData[0].room_id) {
+                  const parsed = parseInt(maxRoomData[0].room_id, 10);
+                  if (!isNaN(parsed)) nextRoomId = parsed + 1;
+                }
+      
+                // 3. Insert ห้องใหม่ลง Supabase
+                const { data: insertedRoom, error: insertErr } = await supabaseClient
+                  .from('chat_rooms')
+                  .insert([{
+                    room_id: nextRoomId,
+                    buyer_id: buyerId,
+                    seller_id: sellerId,
+                    property_id: propertyId
+                  }])
+                  .select();
+      
+                if (insertErr) {
+                  console.error("Insert Chat Room Error:", insertErr);
+                  // Fallback ค้นหาเฉพาะห้องล่าสุดที่เคยมีระหว่างคู่นี้ (แบบย้อนกลับสองฝั่ง)
+                  const { data: fbRooms } = await supabaseClient
+                    .from('chat_rooms')
+                    .select('*')
+                    .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+                    .limit(1);
+      
+                  if (fbRooms && fbRooms.length > 0) {
+                    targetRoomId = fbRooms[0].room_id || fbRooms[0].id;
+                  } else {
+                    targetRoomId = nextRoomId;
+                  }
+                } else if (insertedRoom && insertedRoom.length > 0) {
+                  targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
+                } else {
+                  targetRoomId = nextRoomId;
+                }
+              }
+      
+              CURRENT_ROOM_ID = targetRoomId;
+              CURRENT_USER_ID = buyerId;
+      
+              await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+              initRealtimeForRoom(CURRENT_ROOM_ID);
+      
+            } catch (err) {
+              console.error("Exception in openOwnerChat:", err);
+              await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+              initRealtimeForRoom(CURRENT_ROOM_ID);
             }
-          } else if (insertedRoom && insertedRoom.length > 0) {
-            targetRoomId = insertedRoom[0].room_id || insertedRoom[0].id;
-          } else {
-            targetRoomId = nextRoomId;
-          }
-        }
-    
-        // กำหนดค่าห้องแชทปัจจุบันก่อนแสดงผล
-        CURRENT_ROOM_ID = targetRoomId;
-        CURRENT_USER_ID = buyerId;
-    
-        // เปิดหน้าต่าง Modal
-        const floatBtn = document.querySelector('.user-chat-float-btn');
-        if (floatBtn) floatBtn.classList.remove('has-new-msg');
-        document.getElementById('userChatModalOverlay').classList.add('active');
-        expandChatZone('room');
-    
-        // โหลดห้องแชทและประวัติข้อความ
-        await loadUserChatRooms();
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
-    
-      } catch (err) {
-        console.error("Exception in openOwnerChat:", err);
-        await loadUserChatRooms();
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        initRealtimeForRoom(CURRENT_ROOM_ID);
-      }
+      
     }
 
     function displayMessageOnUI(msg) {
@@ -1304,211 +1250,103 @@
     }
 
     async function loadChatHistoryForRoom(roomId) {
-      const container = document.getElementById('chatMessagesContainer');
-      if (container) container.innerHTML = ''; 
-      
-      const { data: messages, error } = await supabaseClient
-        .from('chat_messages')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: true });
+          const container = document.getElementById('chatMessagesContainer');
+          if (container) container.innerHTML = ''; 
+          
+          // ดึงข้อความทั้งหมดโดยคัดกรองตาม room_id
+          const { data: messages, error } = await supabaseClient
+            .from('chat_messages')
+            .select('*')
+            .eq('room_id', roomId)
+            .order('created_at', { ascending: true });
+    
+          if (messages && !error) {
+            messages.forEach(msg => displayMessageOnUI(msg));
+          }
+        }
 
-      if (messages && !error) {
-        messages.forEach(msg => displayMessageOnUI(msg));
-      }
-    }
-
-    // ---------------------------------------------------------
+// ---------------------------------------------------------
     // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
     // ---------------------------------------------------------
     async function openUserChatModal() {
-      const floatBtn = document.querySelector('.user-chat-float-btn');
-      if (floatBtn) floatBtn.classList.remove('has-new-msg');
-    
       document.getElementById('userChatModalOverlay').classList.add('active');
-      expandChatZone('list');
-      
-      await loadUserChatRooms();
-      await checkAndHighlightUnreadMessages();
+      expandChatZone('list'); // เปิดมาให้แสดงหน้ารายการห้องแชทก่อน
+      await loadUserChatRooms(); // เรียกฟังก์ชันดึงประวัติห้องแชท
     }
 
     // ---------------------------------------------------------
-    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เวอร์ชันแก้ไข Error 400)
+    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เช็กว่ามีใครทักมาไหม)
     // ---------------------------------------------------------
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
-    
+
       let currentUserId = await getCurrentUserId();
       currentUserId = await ensureUserExists(currentUserId);
-      CURRENT_USER_ID = currentUserId;
-    
+      CURRENT_USER_ID = currentUserId; // อัปเดตตัวแปร Global
+
       try {
+        // ดึงห้องแชททั้งหมดที่ผู้ใช้เป็นผู้ซื้อ หรือ ผู้ขาย
         const { data: rooms, error } = await supabaseClient
           .from('chat_rooms')
           .select('*')
           .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
           .order('room_id', { ascending: false });
-    
+
         if (error) throw error;
         listContainer.innerHTML = '';
-    
+
         if (!rooms || rooms.length === 0) {
           listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: #777;">ยังไม่มีการสนทนา</div>';
           return;
         }
-    
-        // รวบรวมข้อมูลห้องแชททั้งหมดเพื่อนำมาเรียง Priority
-        const roomListDetails = [];
-    
-        for (const room of rooms) {
+
+        // สร้าง UI รายการห้องแชท
+        rooms.forEach(room => {
           const isBuyer = String(room.buyer_id) === String(currentUserId);
           const otherPartyId = isBuyer ? room.seller_id : room.buyer_id;
-          
-          let otherUserData = null;
-          if (otherPartyId) {
-            const { data } = await supabaseClient
-              .from('users')
-              .select('username')
-              .eq('user_id', otherPartyId)
-              .maybeSingle();
-            otherUserData = data;
-          }
-          
-          let propData = null;
-          if (room.property_id) {
-            const { data } = await supabaseClient
-              .from('properties')
-              .select('project')
-              .eq('property_id', room.property_id)
-              .maybeSingle();
-            propData = data;
-          }
-    
-          const projectName = propData?.project || (room.property_id ? `โครงการ: ${room.property_id}` : 'ทั่วไป');
-          const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId || ''}`;
-          const roomTitle = `${username} (${projectName})`;
-    
-          // เช็กข้อความที่ยังไม่ได้อ่าน
-          const { data: unreadMsgs } = await supabaseClient
-            .from('chat_messages')
-            .select('message_id')
-            .eq('room_id', room.room_id)
-            .neq('sender_id', currentUserId)
-            .eq('is_read', false)
-            .limit(1);
-    
-          const hasUnread = unreadMsgs && unreadMsgs.length > 0;
-          const isCurrentActive = String(room.room_id) === String(CURRENT_ROOM_ID);
-    
-          roomListDetails.push({
-            room,
-            username,
-            projectName,
-            roomTitle,
-            hasUnread,
-            isCurrentActive
-          });
-        }
-    
-        // จัดลำดับ Priority ตามเงื่อนไข:
-        // 1. ห้องที่มีข้อความยังไม่ได้อ่านขึ้นก่อน
-        // 2. ถ้าสถานะอ่านเหมือนกัน ห้องที่กำลังเปิดอยู่ (เจ้าของทรัพย์ที่เพิ่งกดคุย) อยู่รองลงมา
-        // 3. เรียงตามรหัสห้องแชทล่าสุด
-        roomListDetails.sort((a, b) => {
-          if (a.hasUnread !== b.hasUnread) {
-            return a.hasUnread ? -1 : 1;
-          }
-          if (a.isCurrentActive !== b.isCurrentActive) {
-            return a.isCurrentActive ? -1 : 1;
-          }
-          return b.room.room_id - a.room.room_id;
-        });
-    
-        // สร้าง Element เรนเดอร์บนหน้าจอ
-        for (const itemData of roomListDetails) {
-          const { room, username, projectName, roomTitle, hasUnread, isCurrentActive } = itemData;
-    
+          const roomTitle = `คู่สนทนา ID: ${otherPartyId} (รหัสทรัพย์: ${room.property_id})`;
+
           const itemCard = document.createElement('div');
-          itemCard.className = `chat-item-card ${hasUnread ? 'has-new-msg' : ''} ${isCurrentActive ? 'active' : ''}`;
-          itemCard.setAttribute('data-room-id', room.room_id);
-    
+          itemCard.className = 'chat-item-card';
+          
+          // เมื่อคลิกที่ห้องแชท ให้เข้าร่วมห้องนั้น
           itemCard.onclick = (e) => {
             const items = document.querySelectorAll('.chat-item-card');
             items.forEach(el => el.classList.remove('active'));
-            e.currentTarget.classList.remove('has-new-msg');
             e.currentTarget.classList.add('active');
             joinChatRoom(room.room_id, roomTitle);
           };
-    
+
           itemCard.innerHTML = `
             <div class="chat-item-avatar">👤</div>
             <div class="chat-item-info">
-              <div class="chat-item-title">${username}</div>
-              <div class="chat-item-preview">${hasUnread ? '📩 มีข้อความใหม่ที่ยังไม่ได้อ่าน' : projectName}</div>
+              <div class="chat-item-title">${roomTitle}</div>
+              <div class="chat-item-preview">คลิกเพื่อดูบทสนทนา</div>
             </div>
           `;
           listContainer.appendChild(itemCard);
-        }
+        });
       } catch (err) {
         console.error("Error loading chat rooms:", err);
         listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: red;">❌ โหลดข้อมูลล้มเหลว</div>';
       }
     }
 
-    async function checkAndHighlightUnreadMessages() {
-      try {
-        const currentUserId = await getCurrentUserId();
-        if (!currentUserId) return;
-    
-        const { data: unreadMessages, error } = await supabaseClient
-          .from('chat_messages')
-          .select('room_id')
-          .neq('sender_id', currentUserId)
-          .eq('is_read', false);
-    
-        if (error || !unreadMessages || unreadMessages.length === 0) return;
-    
-        const unreadRoomIds = new Set(unreadMessages.map(msg => String(msg.room_id)));
-    
-        const chatItems = document.querySelectorAll('.chat-item-card');
-        chatItems.forEach(item => {
-          const roomId = item.getAttribute('data-room-id');
-          if (unreadRoomIds.has(String(roomId))) {
-            item.classList.add('has-new-msg');
-          }
-        });
-      } catch (err) {
-        console.error("Error checking unread messages after page load:", err);
-      }
-    }
-  
     // ---------------------------------------------------------
     // 3. ฟังก์ชันสำหรับเข้าร่วมห้องแชท (ดึงประวัติและเปิด Realtime)
     // ---------------------------------------------------------
-    async function markMessagesAsRead(roomId) {
-      if (!roomId) return;
-      const currentUserId = await getCurrentUserId();
-      await supabaseClient
-        .from('chat_messages')
-        .update({ is_read: true })
-        .eq('room_id', roomId)
-        .neq('sender_id', currentUserId)
-        .eq('is_read', false);
-    }
-    
     async function joinChatRoom(roomId, title) {
       CURRENT_ROOM_ID = roomId;
       document.getElementById('chatActiveTitle').innerText = title;
       
-      expandChatZone('room');
-      await markMessagesAsRead(roomId);
-      await loadChatHistoryForRoom(roomId);
-      initRealtimeForRoom(roomId);
+      expandChatZone('room'); // ขยายหน้าต่างแชท
+      await loadChatHistoryForRoom(roomId); // ดึงข้อความเก่า
+      initRealtimeForRoom(roomId); // เปิดระบบรับข้อความแบบ Realtime
     }
 
     // ---------------------------------------------------------
-    // 4. ฟังก์ชันรับข้อความแบบ Real-time
+    // 4. ฟังก์ชันรับข้อความแบบ Real-time (ปลายทางจะเห็นข้อความทันทีเพราะตัวนี้)
     // ---------------------------------------------------------
     function initRealtimeForRoom(roomId) {
       if (activeRealtimeChannel) {
@@ -1522,40 +1360,10 @@
           { event: 'INSERT', schema: 'public', table: 'chat_messages' },
           (payload) => {
             if (payload && payload.new) {
+              // เช็กว่าข้อความใหม่ที่เด้งเข้ามา ตรงกับห้องแชทที่กำลังเปิดอยู่หรือไม่
               const msgRoomId = String(payload.new.room_id || payload.new.id);
               if (msgRoomId === String(roomId)) {
                 displayMessageOnUI(payload.new);
-              }
-            }
-          }
-        )
-        .subscribe();
-    }
-
-    function highlightChatRoomItem(roomId) {
-      const card = document.querySelector(`.chat-item-card[data-room-id="${roomId}"]`);
-      if (card) {
-        card.classList.add('has-new-msg');
-      }
-    }
-
-    function initGlobalChatRealtime() {
-      supabaseClient
-        .channel('global_chat_notifications')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-          async (payload) => {
-            if (payload && payload.new) {
-              const msg = payload.new;
-              const currentUserId = await getCurrentUserId();
-              
-              if (String(msg.sender_id) !== String(currentUserId)) {
-                const floatBtn = document.querySelector('.user-chat-float-btn');
-                if (floatBtn) floatBtn.classList.add('has-new-msg');
-
-                highlightChatRoomItem(msg.room_id);
-                playNotificationSound();
               }
             }
           }
@@ -1572,27 +1380,19 @@
       const text = input.value.trim();
       if (!text) return;
     
-      // [FIX LOGIC BUG] - ป้องกันการบันทึกถ้าไม่มี CURRENT_ROOM_ID หรือแปลค่าแล้วได้ NaN
-      const roomIdInt = parseInt(CURRENT_ROOM_ID, 10);
-      if (!CURRENT_ROOM_ID || isNaN(roomIdInt)) {
-        alert("กรุณาเลือกคู่สนทนาก่อนส่งข้อความ");
-        return;
-      }
-
       let senderId = await getCurrentUserId();
       senderId = await ensureUserExists(senderId);
       CURRENT_USER_ID = senderId;
       
-      input.value = '';
+      input.value = ''; // เคลียร์ช่องพิมพ์ทันที
     
       const { error } = await supabaseClient
         .from('chat_messages')
         .insert([
           { 
-            room_id: roomIdInt, 
+            room_id: parseInt(CURRENT_ROOM_ID, 10), 
             sender_id: senderId, 
-            content: text,
-            is_read: false
+            content: text 
           }
         ]);
     
@@ -1695,7 +1495,6 @@
     window.addEventListener('load', () => {
       initLIFF().then(() => {
         checkAndDisplayMemberStatus();
-        initGlobalChatRealtime();
       });
 
       setTimeout(() => {
@@ -1760,21 +1559,33 @@
     }
 
     function getDropdownOptionsForTopic(topic) {
-      if (topic === 'ขาย/เช่า') return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
-      if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
-      if (topic === 'ราคาขาย') return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
-      if (topic === 'ราคาเช่า') return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
-      if (topic === 'จังหวัด') return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
-      if (topic === 'เขต/อำเภอ') return ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
-      if (topic === 'ถนน') return ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
-      if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
-      return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      if (topic === 'ขาย/เช่า') {
+        return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
+      } else if (topic === 'คอนโด/บ้าน') {
+        return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
+      } else if (topic === 'ราคาขาย') {
+        return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
+      } else if (topic === 'ราคาเช่า') {
+        return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
+      } else if (topic === 'จังหวัด') {
+        return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
+      } else if (topic === 'เขต/อำเภอ') {
+        return ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
+      } else if (topic === 'ถนน') {
+        return ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
+      } else if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') {
+        return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
+      } else {
+        return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
+      }
     }
 
     function getAllValidDropdownOptions() {
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       let allOptions = [];
-      topics.forEach(t => { allOptions = allOptions.concat(getDropdownOptionsForTopic(t)); });
+      topics.forEach(t => {
+        allOptions = allOptions.concat(getDropdownOptionsForTopic(t));
+      });
       return [...new Set(allOptions)];
     }
 
@@ -1919,7 +1730,7 @@
         triggerLocationAIGreeting();
       }
     }
-  
+    
     function triggerLocationAIGreeting() {
       const prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "ปักหมุดที่ไหนบอกได้เลย" และรอรับคำสั่งจากผู้ใช้โดยไม่ต้องอธิบายเพิ่มเติม สรุปตำแหน่งสถานที่ที่ต้องการค้นหา เมื่อได้ข้อสรุปแล้ว ให้คุณคิดคำนวณและแปลงข้อมูลสถานที่เป็นพิกัด Latitude และ Longitude แล้วทำการเรียกใช้ฟังก์ชัน set_location_coordinates ทันทีเพื่อนำพิกัดไปปักหมุดบนแผนที่ พร้อมทั้งส่งชื่อสถานที่นั้นมาด้วย ***สำคัญมาก: ต้องตรวจสอบประเภทสถานที่และใส่คำนำหน้าชื่อสถานที่ให้ถูกต้องตามหลักเกณฑ์เสมอ เช่น หากสถานที่นั้นเป็นหมู่บ้าน ให้ใส่คำนำหน้าว่า "หมู่บ้าน", หากเป็นถนน ให้ใส่ "ถนน", หรือปรับเปลี่ยนตามประเภทสถานที่จริง เช่น ซอย, อาคาร, ห้างสรรพสินค้า ฯลฯ***`;
       const checkReady = setInterval(() => {
@@ -2144,19 +1955,14 @@
     // ==========================================
     async function stopAIVoiceSpeech() {
       AppState.voice.silenced = true;
-      // [FIX LOGIC BUG] ป้องกันการ new AudioContext ถ้าผู้ใช้ไม่ได้โต้ตอบโดยตรง
       if (AppState.voice.audioOutCtx) {
         if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
           try {
             await AppState.voice.audioOutCtx.close();
           } catch (e) {}
         }
-        try {
-          AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-          AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-        } catch (e) {
-          console.warn("AudioContext blocked by browser policy:", e);
-        }
+        AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
       }
     }
 
@@ -2635,6 +2441,7 @@
         listZone.classList.remove('expanded');
       }
     }
+
   </script>
 </body>
 </html>
