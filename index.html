@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-12
+  <link rel="shortcut icon" href="#">//index9-4-13
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -820,7 +820,7 @@
     <!-- เนื้อหาแท็บ 1: อสังหาริมทรัพย์ -->
     <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
-        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม.">
+        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." onkeypress="if(event.key==='Enter') testShowList()">
         <div id="statusText">กดปุ่ม คุยกับAI เพื่อเริ่มใช้งาน</div>
       </div>
       
@@ -983,6 +983,7 @@
       </div>
     </div>
   </div>
+
 <script>
     // ==========================================
     // 1. CONFIGURATION & CONSTANTS
@@ -1180,7 +1181,7 @@
     }
 
     // ==========================================
-    // ตรรกะระบบแชทเมื่อกดปุ่ม "คุยกับเจ้าของ" (เช็กตาราง chat_rooms)
+    // ตรรกะระบบแชทเมื่อกดปุ่ม "คุยกับเจ้าของ"
     // ==========================================
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
@@ -1269,17 +1270,14 @@
           }
         }
     
-        // กำหนดค่าห้องแชทปัจจุบันก่อนแสดงผล
         CURRENT_ROOM_ID = targetRoomId;
         CURRENT_USER_ID = buyerId;
     
-        // เปิดหน้าต่าง Modal
         const floatBtn = document.querySelector('.user-chat-float-btn');
         if (floatBtn) floatBtn.classList.remove('has-new-msg');
         document.getElementById('userChatModalOverlay').classList.add('active');
         expandChatZone('room');
     
-        // โหลดห้องแชทและประวัติข้อความ
         await loadUserChatRooms();
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         initRealtimeForRoom(CURRENT_ROOM_ID);
@@ -1318,9 +1316,6 @@
       }
     }
 
-    // ---------------------------------------------------------
-    // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
-    // ---------------------------------------------------------
     async function openUserChatModal() {
       const floatBtn = document.querySelector('.user-chat-float-btn');
       if (floatBtn) floatBtn.classList.remove('has-new-msg');
@@ -1332,9 +1327,6 @@
       await checkAndHighlightUnreadMessages();
     }
 
-    // ---------------------------------------------------------
-    // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เวอร์ชันแก้ไข Error 400)
-    // ---------------------------------------------------------
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
@@ -1358,7 +1350,6 @@
           return;
         }
     
-        // รวบรวมข้อมูลห้องแชททั้งหมดเพื่อนำมาเรียง Priority
         const roomListDetails = [];
     
         for (const room of rooms) {
@@ -1389,7 +1380,6 @@
           const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId || ''}`;
           const roomTitle = `${username} (${projectName})`;
     
-          // เช็กข้อความที่ยังไม่ได้อ่าน
           const { data: unreadMsgs } = await supabaseClient
             .from('chat_messages')
             .select('message_id')
@@ -1411,10 +1401,6 @@
           });
         }
     
-        // จัดลำดับ Priority ตามเงื่อนไข:
-        // 1. ห้องที่มีข้อความยังไม่ได้อ่านขึ้นก่อน
-        // 2. ถ้าสถานะอ่านเหมือนกัน ห้องที่กำลังเปิดอยู่ (เจ้าของทรัพย์ที่เพิ่งกดคุย) อยู่รองลงมา
-        // 3. เรียงตามรหัสห้องแชทล่าสุด
         roomListDetails.sort((a, b) => {
           if (a.hasUnread !== b.hasUnread) {
             return a.hasUnread ? -1 : 1;
@@ -1425,7 +1411,6 @@
           return b.room.room_id - a.room.room_id;
         });
     
-        // สร้าง Element เรนเดอร์บนหน้าจอ
         for (const itemData of roomListDetails) {
           const { room, username, projectName, roomTitle, hasUnread, isCurrentActive } = itemData;
     
@@ -1479,13 +1464,10 @@
           }
         });
       } catch (err) {
-        console.error("Error checking unread messages after page load:", err);
+        console.error("Error checking unread messages:", err);
       }
     }
-  
-    // ---------------------------------------------------------
-    // 3. ฟังก์ชันสำหรับเข้าร่วมห้องแชท (ดึงประวัติและเปิด Realtime)
-    // ---------------------------------------------------------
+
     async function markMessagesAsRead(roomId) {
       if (!roomId) return;
       const currentUserId = await getCurrentUserId();
@@ -1507,9 +1489,6 @@
       initRealtimeForRoom(roomId);
     }
 
-    // ---------------------------------------------------------
-    // 4. ฟังก์ชันรับข้อความแบบ Real-time
-    // ---------------------------------------------------------
     function initRealtimeForRoom(roomId) {
       if (activeRealtimeChannel) {
         supabaseClient.removeChannel(activeRealtimeChannel);
@@ -1563,16 +1542,12 @@
         .subscribe();
     }
 
-    // ---------------------------------------------------------
-    // 5. ฟังก์ชันส่งข้อความ
-    // ---------------------------------------------------------
     async function sendChatMessage() {
       const input = document.getElementById('chatMessageInput');
       if (!input) return;
       const text = input.value.trim();
       if (!text) return;
     
-      // [FIX LOGIC BUG] - ป้องกันการบันทึกถ้าไม่มี CURRENT_ROOM_ID หรือแปลค่าแล้วได้ NaN
       const roomIdInt = parseInt(CURRENT_ROOM_ID, 10);
       if (!CURRENT_ROOM_ID || isNaN(roomIdInt)) {
         alert("กรุณาเลือกคู่สนทนาก่อนส่งข้อความ");
@@ -1776,6 +1751,48 @@
       let allOptions = [];
       topics.forEach(t => { allOptions = allOptions.concat(getDropdownOptionsForTopic(t)); });
       return [...new Set(allOptions)];
+    }
+
+    // กรองข้อความให้เหลือเฉพาะคำที่มีใน Dropdown เท่านั้น
+    function sanitizeToDropdownOptions(text) {
+      if (!text || typeof text !== 'string') return '';
+      const allOptions = getAllValidDropdownOptions();
+      allOptions.sort((a, b) => b.length - a.length);
+
+      let matchedOptions = [];
+      let tempText = text;
+
+      allOptions.forEach(opt => {
+        if (tempText.includes(opt)) {
+          matchedOptions.push(opt);
+          tempText = tempText.replace(opt, '');
+        }
+      });
+
+      return matchedOptions.join(' ');
+    }
+
+    // อัปเดตชื่อปุ่ม Dropdown ให้ตรงกับตัวเลือกในช่อง Edit
+    function applyEditBoxToDropdownButtons(text) {
+      if (!text) return;
+      const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
+      
+      topics.forEach(topic => {
+        const opts = getDropdownOptionsForTopic(topic);
+        opts.sort((a, b) => b.length - a.length);
+        for (let opt of opts) {
+          if (text.includes(opt)) {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+              const onClickAttr = btn.getAttribute('onclick') || '';
+              if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
+                btn.innerText = `${opt} ▾`;
+              }
+            });
+            break;
+          }
+        }
+      });
     }
 
     function openDropdownModal(topic) {
@@ -2144,7 +2161,6 @@
     // ==========================================
     async function stopAIVoiceSpeech() {
       AppState.voice.silenced = true;
-      // [FIX LOGIC BUG] ป้องกันการ new AudioContext ถ้าผู้ใช้ไม่ได้โต้ตอบโดยตรง
       if (AppState.voice.audioOutCtx) {
         if (AppState.voice.audioOutCtx.state !== 'closed' && AppState.voice.audioOutCtx.state !== 'closing') {
           try {
@@ -2164,9 +2180,8 @@
       if (!AppState.voice.isActive) await startVoiceSession();
       else await stopVoiceSession();
     }
-    // ฟังก์ชันสำหรับส่ง Tool Response กลับไปหา Gemini WebSocket
+
     function sendToolResponse(callId, name, outputData) {
-      // ยกเลิกการปิดเสียง (Mute) เพื่อให้ AI สามารถพูดตอบโต้ต่อได้หลังจากกดปุ่มสำเร็จ
       AppState.voice.silenced = false; 
 
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && callId) {
@@ -2174,13 +2189,14 @@
           toolResponse: {
             functionResponses: [{
               id: callId,
-              name: name, // จำเป็นต้องส่ง name กลับไปด้วย
-              response: { result: outputData } // มาตรฐาน API ต้องใช้ key ชื่อ result
+              name: name,
+              response: { result: outputData }
             }]
           }
         }));
       }
     }
+
     async function startVoiceSession() {
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
@@ -2289,9 +2305,9 @@
                             criteria: { 
                               type: "OBJECT",
                               properties: {
-                                summary: { type: "STRING", description: "ข้อความสรุปความต้องการที่ตรงกับ Dropdown" }
+                                summary: { type: "STRING", description: "ข้อความสรุปความต้องการที่ดึงมาจากตัวเลือกใน Dropdown เท่านั้น" }
                               },
-                              required: ["summary"] // บังคับให้ AI ต้องสรุปค่าส่งมาเสมอ
+                              required: ["summary"]
                             }
                           },
                           required: ["userData", "criteria"]
@@ -2314,38 +2330,46 @@
           try {
             const response = JSON.parse(event.data);
             if (response.toolCall) {
-                  const functionCalls = response.toolCall.functionCalls;
-                  for (let call of functionCalls) {
-                    const { name, args, id } = call;
-                    let output = { success: true };
-            
-                    if (name === "open_location_modal") {
-                      openLocationModal();
-                    } else if (name === "set_location_coordinates") {
-                      selectPlaceResult(args.latitude, args.longitude, args.placeName);
-                    } else if (name === "switch_tab_category") {
-                      switchTab(args.tabId);
-                      if (args.searchText) {
-                        const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-                        if (activeInput) activeInput.value = args.searchText;
-                      }
-                    } else if (name === "submit_user_summary") {
-                      if (args.criteria) {
-                        const editBox = document.getElementById('customEditBox');
-                        if (editBox) {
-                          // หากมี summary ให้ใช้ค่า summary แต่ถ้าไม่มีให้ดึงโครงสร้างแปลงเป็นตัวอักษรแทน
-                          editBox.value = args.criteria.summary || JSON.stringify(args.criteria);
-                        }
-                      }
-                      testShowList();
-                    }
-            
-                    // ส่งสัญญาณตอบกลับยืนยันการทำงานของ Tool ให้ Gemini ทราบ
-                    sendToolResponse(id, name, output);
+              const functionCalls = response.toolCall.functionCalls;
+              for (let call of functionCalls) {
+                const { name, args, id } = call;
+                let output = { success: true };
+        
+                if (name === "open_location_modal") {
+                  openLocationModal();
+                } else if (name === "set_location_coordinates") {
+                  selectPlaceResult(args.latitude, args.longitude, args.placeName);
+                } else if (name === "switch_tab_category") {
+                  switchTab(args.tabId);
+                  if (args.searchText) {
+                    const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+                    if (activeInput) activeInput.value = args.searchText;
                   }
-                  return;
+                } else if (name === "submit_user_summary") {
+                  if (args.criteria) {
+                    const editBox = document.getElementById('customEditBox');
+                    let rawSummary = args.criteria.summary || (typeof args.criteria === 'string' ? args.criteria : JSON.stringify(args.criteria));
+                    
+                    // กรองข้อความให้ดึงมาเฉพาะคำจาก Dropdown เท่านั้น
+                    const cleanSummary = sanitizeToDropdownOptions(rawSummary);
+                    const finalSummary = cleanSummary || rawSummary;
+
+                    if (editBox) {
+                      editBox.value = finalSummary;
+                    }
+
+                    // ปรับแต่งปุ่ม Dropdown ให้ตรงกับตัวเลือกอัตโนมัติ
+                    applyEditBoxToDropdownButtons(finalSummary);
+                  }
+                  // เรียกฟังก์ชันค้นหาบ้านทันทีหลังจาก AI สรุปข้อมูล
+                  testShowList();
                 }
-            // --- โค้ดเดิมของคุณต่อจากตรงนี้ ---
+        
+                sendToolResponse(id, name, output);
+              }
+              return;
+            }
+
             if (response.setupComplete) {
               AppState.voice.isSetupReady = true;
               if (statusText) {
@@ -2507,191 +2531,257 @@
         else if (onclick.includes('ถนน')) criteria.road = val;
         else if (onclick.includes('โครงการ')) criteria.project = val;
         else if (onclick.includes('ซอย')) criteria.soi = val;
-        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.area = val;
+        else if (onclick.includes('สถานที่ใกล้เคียง')) criteria.nearby = val;
+        else if (onclick.includes('สาธารณูปโภคพิเศษ')) criteria.utility = val;
+        else if (onclick.includes('อื่นๆ')) criteria.others = val;
       });
+
+      // เชื่อมโยงค่าจาก customEditBox เข้าสู่เงื่อนไขการค้นหา
+      const editBox = document.getElementById('customEditBox');
+      if (editBox && editBox.value.trim() !== '') {
+        const searchText = editBox.value.trim();
+        criteria.searchText = searchText;
+        
+        // หากตัวเลือกใดใน Dropdown ยังไม่ได้ถูกเลือกผ่านปุ่ม ให้ดึงจากข้อความใน customEditBox มาใช้ทันที
+        const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
+        topics.forEach(t => {
+          const opts = getDropdownOptionsForTopic(t);
+          opts.forEach(opt => {
+            if (searchText.includes(opt)) {
+              if (t === 'ขาย/เช่า' && !criteria.priceType) criteria.priceType = opt;
+              if (t === 'คอนโด/บ้าน' && !criteria.propertyType) criteria.propertyType = opt;
+              if (t === 'ราคาขาย' && !criteria.priceSale) criteria.priceSale = opt;
+              if (t === 'ราคาเช่า' && !criteria.priceRent) criteria.priceRent = opt;
+              if (t === 'จังหวัด' && !criteria.province) criteria.province = opt;
+              if (t === 'เขต/อำเภอ' && !criteria.district) criteria.district = opt;
+              if (t === 'ถนน' && !criteria.road) criteria.road = opt;
+              if (t === 'โครงการ' && !criteria.project) criteria.project = opt;
+              if (t === 'ซอย' && !criteria.soi) criteria.soi = opt;
+              if ((t === 'เนื้อที่' || t === 'ขนาด') && !criteria.area) criteria.area = opt;
+            }
+          });
+        });
+      }
 
       if (selectedLat && selectedLng) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
+
       return criteria;
     }
 
-    function testShowList() {
+    async function testShowList() {
       AppState.pagination.offset = 0;
       AppState.pagination.hasMore = true;
       AppState.pagination.renderedKeys.clear();
-      document.getElementById('resultsContainer').innerHTML = '';
-      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
-      fetchDatabase({}, getSelectedCriteria(), true, searchText);
-    }
+      AppState.pagination.reqId++;
 
-    async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
-      if (AppState.pagination.isLoading) return;
-      AppState.pagination.isLoading = true;
-      
-      const loader = document.getElementById('infiniteLoader');
-      const fallback = document.getElementById('fallbackRetryCard');
-      if (loader) loader.style.display = 'block';
-      if (fallback) fallback.style.display = 'none';
-
-      if (isNewSearch) {
-        AppState.pagination.offset = 0;
-        AppState.pagination.hasMore = true;
-        document.getElementById('resultsContainer').innerHTML = '';
+      const container = document.getElementById('resultsContainer');
+      if (container) {
+        const banner = container.querySelector('div');
+        container.innerHTML = '';
+        if (banner) container.appendChild(banner);
       }
 
+      await loadNextPage();
+    }
+
+    async function loadNextPage() {
+      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
+      
+      AppState.pagination.isLoading = true;
+      const loader = document.getElementById('infiniteLoader');
+      if (loader) loader.style.display = 'block';
+
+      const currentReqId = AppState.pagination.reqId;
+      const criteria = getSelectedCriteria();
+
       try {
-        const payload = {
-          action: "searchAll",
-          offset: AppState.pagination.offset,
-          limit: AppState.pagination.limit,
-          userData: userData,
-          criteria: criteria,
-          searchText: searchText
-        };
+        const data = await fetchPropertiesFromBackend(criteria, AppState.pagination.offset, AppState.pagination.limit);
+        
+        if (currentReqId !== AppState.pagination.reqId) return;
 
-        const response = await fetch(CONFIG.RENDER_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-
-        if (data.status === 'success') {
-          renderProperties(data.results);
-          AppState.pagination.offset = data.nextOffset;
-          AppState.pagination.hasMore = data.hasMore;
+        if (data && data.length > 0) {
+          renderProperties(data);
+          AppState.pagination.offset += data.length;
+          if (data.length < AppState.pagination.limit) {
+            AppState.pagination.hasMore = false;
+          }
         } else {
-          throw new Error(data.message || 'Error fetching data');
+          AppState.pagination.hasMore = false;
+          if (AppState.pagination.offset === 0) {
+            const container = document.getElementById('resultsContainer');
+            if (container) {
+              const noDataMsg = document.createElement('div');
+              noDataMsg.style.cssText = 'text-align: center; padding: 30px; color: #888; font-weight: bold;';
+              noDataMsg.innerText = '❌ ไม่พบข้อมูลบ้านตามเงื่อนไขที่ระบุ';
+              container.appendChild(noDataMsg);
+            }
+          }
         }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-        if (fallback) fallback.style.display = 'block';
+      } catch (err) {
+        console.error("Fetch properties error:", err);
+        const fallbackCard = document.getElementById('fallbackRetryCard');
+        if (fallbackCard) fallbackCard.style.display = 'block';
       } finally {
         AppState.pagination.isLoading = false;
         if (loader) loader.style.display = 'none';
       }
     }
 
-    function renderProperties(properties) {
-      const container = document.getElementById('resultsContainer');
-      if (!properties || properties.length === 0) {
-        if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
-        }
-        return;
-      }
+    function retryNextPage() {
+      const fallbackCard = document.getElementById('fallbackRetryCard');
+      if (fallbackCard) fallbackCard.style.display = 'none';
+      loadNextPage();
+    }
 
-      properties.forEach(item => {
-        const key = item.postId || item.url || item.id;
-        if (AppState.pagination.renderedKeys.has(key)) return;
-        AppState.pagination.renderedKeys.add(key);
+    async function fetchPropertiesFromBackend(criteria, offset, limit) {
+      try {
+        let queryParams = new URLSearchParams();
+        queryParams.append('offset', offset);
+        queryParams.append('limit', limit);
+
+        if (criteria.searchText) queryParams.append('search', criteria.searchText);
+        if (criteria.priceType) queryParams.append('priceType', criteria.priceType);
+        if (criteria.propertyType) queryParams.append('propertyType', criteria.propertyType);
+        if (criteria.priceSale) queryParams.append('priceSale', criteria.priceSale);
+        if (criteria.priceRent) queryParams.append('priceRent', criteria.priceRent);
+        if (criteria.province) queryParams.append('province', criteria.province);
+        if (criteria.district) queryParams.append('district', criteria.district);
+        if (criteria.road) queryParams.append('road', criteria.road);
+        if (criteria.project) queryParams.append('project', criteria.project);
+        if (criteria.lat && criteria.lng) {
+          queryParams.append('lat', criteria.lat);
+          queryParams.append('lng', criteria.lng);
+          queryParams.append('radius', criteria.radius);
+        }
+
+        const response = await fetch(`${CONFIG.RENDER_API_URL}?${queryParams.toString()}`);
+        if (!response.ok) throw new Error("API response not ok");
+        const json = await response.json();
+        return json.data || json || [];
+      } catch (e) {
+        try {
+          let query = supabaseClient.from('properties').select('*');
+          if (criteria.propertyType) query = query.ilike('use', `%${criteria.propertyType}%`);
+          if (criteria.priceType) query = query.ilike('use2', `%${criteria.priceType}%`);
+          if (criteria.province) query = query.ilike('province', `%${criteria.province}%`);
+          if (criteria.district) query = query.ilike('district', `%${criteria.district}%`);
+          if (criteria.searchText) query = query.or(`project.ilike.%${criteria.searchText}%,use.ilike.%${criteria.searchText}%,use2.ilike.%${criteria.searchText}%`);
+          
+          query = query.range(offset, offset + limit - 1);
+          const { data, error } = await query;
+          if (error) throw error;
+          return data || [];
+        } catch (subErr) {
+          console.error("Supabase query error:", subErr);
+          return [];
+        }
+      }
+    }
+
+    function renderProperties(items) {
+      const container = document.getElementById('resultsContainer');
+      if (!container) return;
+
+      items.forEach(item => {
+        const uniqueKey = item.id || item.property_id || item.post_id || item.url || (item.project + item.priceSale);
+        if (AppState.pagination.renderedKeys.has(uniqueKey)) return;
+        AppState.pagination.renderedKeys.add(uniqueKey);
 
         const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer; position: relative;';
-        card.onclick = () => showDetailModal(item);
+        card.style.cssText = 'background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #eef2f6; cursor: pointer; transition: transform 0.2s;';
         
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        const titleText = item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์';
-        
+        const title = getPropValue(item, ['project', 'โครงการ', 'ประเภทอสังหา'], 'ประกาศอสังหาริมทรัพย์');
+        const priceSale = getPropValue(item, ['priceSale', 'ราคาขาย', 'ราคาขาย ตัวเลข'], '');
+        const priceRent = getPropValue(item, ['priceRent', 'ราคาเช่า', 'ราคาเช่า ตัวเลข'], '');
+        let priceDisplay = '';
+        if (priceSale) priceDisplay += `ขาย: ${priceSale} `;
+        if (priceRent) priceDisplay += `เช่า: ${priceRent}`;
+        if (!priceDisplay) priceDisplay = 'ติดต่อสอบถามราคา';
+
+        const location = [
+          getPropValue(item, ['district', 'เขต/อำเภอ'], ''),
+          getPropValue(item, ['province', 'จังหวัด'], '')
+        ].filter(Boolean).join(', ');
+
+        const desc = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'description', 'detail'], '');
+
+        card.onclick = () => openDetailModal(item);
+
         card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${titleText}
-          </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 8px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-            <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-              💰 ${price}
-            </div>
-            <button class="chat-owner-btn">
-              💬 คุยกับเจ้าของ
-            </button>
+          <div style="font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 6px;">${title}</div>
+          <div style="font-size: 15px; font-weight: bold; color: #d9534f; margin-bottom: 6px;">💰 ${priceDisplay}</div>
+          <div style="font-size: 13px; color: #666; margin-bottom: 8px;">📍 ${location || 'ไม่ระบุทำเล'}</div>
+          <div style="font-size: 12px; color: #888; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 10px;">${desc}</div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="chat-owner-btn" onclick="openOwnerChat(${JSON.stringify(item).replace(/"/g, '&quot;')}, event)">💬 คุยกับเจ้าของ</button>
           </div>
         `;
-
-        const chatBtn = card.querySelector('.chat-owner-btn');
-        if (chatBtn) {
-          chatBtn.onclick = (e) => {
-            openOwnerChat(item, e);
-          };
-        }
 
         container.appendChild(card);
       });
     }
 
-    function showDetailModal(item) {
-      stopAIVoiceSpeech(); 
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
-      
+    function openDetailModal(item) {
+      stopAIVoiceSpeech();
+      const modal = document.getElementById('detailModalOverlay');
+      if (!modal) return;
+
+      const title = getPropValue(item, ['project', 'โครงการ', 'ประเภทอสังหา'], 'รายละเอียดประกาศ');
+      const priceSale = getPropValue(item, ['priceSale', 'ราคาขาย'], '');
+      const priceRent = getPropValue(item, ['priceRent', 'ราคาเช่า'], '');
+      let priceDisplay = priceSale ? `ขาย: ${priceSale}` : (priceRent ? `เช่า: ${priceRent}` : 'ติดต่อผู้ขาย');
+
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalPrice').innerText = priceDisplay;
+      document.getElementById('modalDesc').innerText = getPropValue(item, ['บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'description'], 'ไม่มีรายละเอียดเพิ่มเติม');
+
+      const deepLink = getPropValue(item, ['url', 'deepLink'], '');
       const deepLinkBtn = document.getElementById('modalDeepLink');
-      if (item.url) {
-        deepLinkBtn.href = item.url;
-        deepLinkBtn.style.display = 'inline-block';
-      } else {
-        deepLinkBtn.style.display = 'none';
+      if (deepLinkBtn) {
+        if (deepLink) {
+          deepLinkBtn.href = deepLink;
+          deepLinkBtn.style.display = 'block';
+        } else {
+          deepLinkBtn.style.display = 'none';
+        }
       }
-    
-      const slider = document.getElementById('modalSlider');
-      slider.innerHTML = '';
-      if (item.images && item.images.length > 0) {
-        item.images.forEach(imgUrl => {
-          const img = document.createElement('img');
-          img.src = imgUrl;
-          slider.appendChild(img);
-        });
-      } else {
-         const placeholder = document.createElement('div');
-         placeholder.style.cssText = 'width: 100%; height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; border-radius: 15px; color: #aaa; font-weight: bold;';
-         placeholder.innerText = 'ไม่มีรูปภาพ';
-         slider.appendChild(placeholder);
-      }
-      
-      document.getElementById('detailModalOverlay').classList.add('active');
+
+      modal.classList.add('active');
     }
 
     function closeDetailModal() {
-      document.getElementById('detailModalOverlay').classList.remove('active');
-    }
-
-    function loadNextPage() {
-      if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
-      fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
-    }
-
-    function retryNextPage() {
-      loadNextPage();
-    }
-
-    function closeUserChatModal() {
-      document.getElementById('userChatModalOverlay').classList.remove('active');
+      const modal = document.getElementById('detailModalOverlay');
+      if (modal) modal.classList.remove('active');
     }
 
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
+      if (!listZone || !roomZone) return;
+
       if (zone === 'list') {
-        listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
-        roomZone.classList.add('shrunk');
+        listZone.classList.add('expanded');
         roomZone.classList.remove('expanded');
-      } else if (zone === 'room') {
-        roomZone.classList.add('expanded');
+        roomZone.classList.add('shrunk');
+      } else {
         roomZone.classList.remove('shrunk');
-        listZone.classList.add('shrunk');
+        roomZone.classList.add('expanded');
         listZone.classList.remove('expanded');
+        listZone.classList.add('shrunk');
       }
     }
-  </script>
+
+    function closeUserChatModal() {
+      stopAIVoiceSpeech();
+      const overlay = document.getElementById('userChatModalOverlay');
+      if (overlay) overlay.classList.remove('active');
+    }
+</script>
 </body>
 </html>
