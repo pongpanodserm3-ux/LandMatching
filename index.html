@@ -2163,7 +2163,19 @@
       if (!AppState.voice.isActive) await startVoiceSession();
       else await stopVoiceSession();
     }
-
+    // ฟังก์ชันสำหรับส่ง Tool Response กลับไปหา Gemini WebSocket
+    function sendToolResponse(callId, outputData) {
+      if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && callId) {
+        AppState.voice.ws.send(JSON.stringify({
+          toolResponse: {
+            functionResponses: [{
+              response: { output: outputData },
+              id: callId
+            }]
+          }
+        }));
+      }
+    }
     async function startVoiceSession() {
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
@@ -2290,6 +2302,36 @@
         AppState.voice.ws.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
+            if (response.toolCall) {
+                  const functionCalls = response.toolCall.functionCalls;
+                  for (let call of functionCalls) {
+                    const { name, args, id } = call;
+                    let output = { success: true };
+            
+                    if (name === "open_location_modal") {
+                      openLocationModal();
+                    } else if (name === "set_location_coordinates") {
+                      selectPlaceResult(args.latitude, args.longitude, args.placeName);
+                    } else if (name === "switch_tab_category") {
+                      switchTab(args.tabId);
+                      if (args.searchText) {
+                        const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+                        if (activeInput) activeInput.value = args.searchText;
+                      }
+                    } else if (name === "submit_user_summary") {
+                      if (args.criteria) {
+                        const editBox = document.getElementById('customEditBox');
+                        if (editBox && args.criteria.summary) editBox.value = args.criteria.summary;
+                      }
+                      testShowList();
+                    }
+            
+                    // ส่งสัญญาณตอบกลับยืนยันการทำงานของ Tool ให้ Gemini ทราบ
+                    sendToolResponse(id, output);
+                  }
+                  return;
+                }
+            // --- โค้ดเดิมของคุณต่อจากตรงนี้ ---
             if (response.setupComplete) {
               AppState.voice.isSetupReady = true;
               if (statusText) {
