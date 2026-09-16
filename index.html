@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-15
+  <link rel="shortcut icon" href="#">//index9-4-15.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2294,7 +2294,7 @@
                       },
                       {
                         name: "open_google_maps_action",
-                        description: "กดปุ่ม 'เปิด Google Maps' ให้ทำงาน (ต้องถามผู้ใช้ก่อนว่า 'ต้องการ เพิ่มความแม่นยำปักหมุดโดยใช้ Google Maps ช่วย ใช่ไหม' และรอผู้ใช้ยืนยันก่อนเรียกใช้)",
+                        description: "กดปุ่ม 'เปิด Google Maps' บนหน้าต่างแผนที่ทันที เมื่อผู้ใช้สั่งยืนยัน ตกลง หรือ เปิด Google Maps ",
                         parameters: { type: "OBJECT", properties: {} }
                       },
 
@@ -2382,7 +2382,20 @@
                           }));
                         }
                     }
-                          
+                      // ฟังก์ชันเปิด Google Maps ด้วยเสียง
+                      else if (call.name === "open_google_maps_action") {
+                        openGoogleMaps();
+                        if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
+                          AppState.voice.ws.send(JSON.stringify({
+                            toolResponse: {
+                              functionResponses: [{
+                                response: { output: { success: true, message: "เปิด Google Maps เรียบร้อยแล้ว" } },
+                                id: call.id
+                              }]
+                            }
+                          }));
+                        }
+                      }                        
                     
                       else if (name === "switch_tab_category") {
                       switchTab(args.tabId);
