@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-13.1
+  <link rel="shortcut icon" href="#">//index9-4-13.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2350,16 +2350,28 @@
                         if (activeInput) activeInput.value = args.searchText;
                       }
                     } else if (name === "submit_user_summary") {
-                      if (args.criteria) {
-                        const editBox = document.getElementById('customEditBox');
-                        const summaryText = args.criteria.summary || (typeof args.criteria === 'string' ? args.criteria : '');
-                        if (editBox && summaryText) {
-                          editBox.value = summaryText;
-                          applyEditToDropdowns(summaryText); // เชื่อมโยงข้อความจาก Edit Box ไปยังปุ่ม Dropdown ทันที
-                        }
-                      }
-                      testShowList();
+                    // 1. ป้องกัน Error จากกรณี AI ส่งค่า args มาเป็น null หรือโครงสร้างไม่ตรง
+                    let summaryText = "";
+                    if (args && args.criteria) {
+                      summaryText = args.criteria.summary || (typeof args.criteria === 'string' ? args.criteria : '');
+                    } else if (args && args.summary) {
+                      summaryText = args.summary;
                     }
+          
+                    // 2. นำข้อความที่ได้ไปใส่กล่องค้นหาและปรับ Dropdown
+                    if (summaryText) {
+                      const editBox = document.getElementById('customEditBox');
+                      if (editBox) {
+                        editBox.value = summaryText;
+                        applyEditToDropdowns(summaryText); // เชื่อมโยงข้อความจาก Edit Box ไปยังปุ่ม Dropdown ทันที
+                      }
+                    }
+                    
+                    // 3. หน่วงเวลาเล็กน้อย (300ms) เพื่อให้ UI ของ Dropdown อัปเดตตัวเองเสร็จสมบูรณ์ก่อนเรียกฟังก์ชันค้นหา
+                    setTimeout(() => {
+                      testShowList();
+                    }, 300);
+                  }
             
                     // ส่งสัญญาณตอบกลับยืนยันการทำงานของ Tool ให้ Gemini ทราบ
                     sendToolResponse(id, name, output);
