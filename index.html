@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-15.1
+  <link rel="shortcut icon" href="#">//index9-4-15.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2132,13 +2132,23 @@
       const lng = document.getElementById('lngInput').value.trim();
       const placeSearchInput = document.getElementById('placeSearchInput');
       const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
-
+    
       if (lat && lng) {
         let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
         if (placeName) {
           queryUrl += `+${encodeURIComponent(placeName)}`;
         }
-        window.open(queryUrl, '_blank');
+        
+        // ตรวจสอบว่าเปิดใช้งานผ่าน LINE LIFF หรือไม่
+        if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
+          liff.openWindow({
+            url: queryUrl,
+            external: true // บังคับสลับไปเปิดในแอป Google Maps ภายนอก LINE
+          });
+        } else {
+          // เปิดโดยการเปลี่ยนหน้าปัจจุบัน ป้องกันการถูกเบราว์เซอร์บล็อก Pop-up จาก AI
+          window.location.href = queryUrl;
+        }
       } else {
         alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
