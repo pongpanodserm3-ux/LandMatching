@@ -2228,24 +2228,30 @@
                   }]
 
                 },
+
                 tools: [
                   {
                     functionDeclarations: [
                       {
-                        name: "submit_user_summary",
-                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้า",
+                        name: "open_location_modal",
+                        description: "เรียกใช้ฟังก์ชันนี้เมื่อผู้ใช้ต้องการเปิดหน้าพิกัด ปักหมุดแผนที่ หรือกดปุ่มพิกัดสีเขียว",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "switch_tab_category",
+                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก พร้อมพิมพ์ข้อความค้นหาลงในแท็บนั้นๆ",
                         parameters: {
                           type: "OBJECT",
                           properties: {
-                            userData: { type: "OBJECT" },
-                            criteria: { type: "OBJECT" }
+                            tabId: { type: "STRING", description: "ID ของแท็บ: 'realestate', 'decor', 'lifestyle', 'others'" },
+                            searchText: { type: "STRING", description: "ข้อความที่จะพิมพ์ลงในช่องค้นหา" }
                           },
-                          required: ["userData", "criteria"]
+                          required: ["tabId"]
                         }
                       },
                       {
                         name: "set_location_coordinates",
-                        description: "แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่",
+                        description: "แปลงเป็นพิกัดละติจูดและลองจิจูด พร้อมชื่อสถานที่ แล้วเปิดหน้าต่างพิกัดและปักหมุดอัตโนมัติ",
                         parameters: {
                           type: "OBJECT",
                           properties: {
@@ -2257,31 +2263,16 @@
                         }
                       },
                       {
-                        name: "switch_tab_category",
-                        description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก",
+                        name: "submit_user_summary",
+                        description: "ส่งสรุปข้อมูลความต้องการของลูกค้าเพื่อนำไปเขียนลงในช่อง customEditBox",
                         parameters: {
                           type: "OBJECT",
                           properties: {
-                            tabId: { type: "STRING" },
-                            searchText: { type: "STRING" }
+                            userData: { type: "OBJECT" },
+                            criteria: { type: "OBJECT" }
                           },
-                          required: ["tabId"]
+                          required: ["userData", "criteria"]
                         }
-                      },
-                      {
-                        name: "open_location_modal",
-                        description: "เปิดหน้าต่างพิกัด ปักหมุดแผนที่",
-                        parameters: { type: "OBJECT", properties: {} }
-                      },
-                      {
-                        name: "confirm_location_action",
-                        description: "กดปุ่มยืนยันพิกัด",
-                        parameters: { type: "OBJECT", properties: {} }
-                      },
-                      {
-                        name: "open_google_maps_action",
-                        description: "กดปุ่มเปิด Google Maps",
-                        parameters: { type: "OBJECT", properties: {} }
                       }
                     ]
                   }
