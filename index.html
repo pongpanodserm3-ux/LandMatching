@@ -2143,7 +2143,60 @@
         }
       }
     }
+// ==========================================
+    // PROPERTY CARD RENDERER
+    // ==========================================
+    function createPropertyCardHTML(item) {
+      if (!item) return '';
 
+      // ดึงค่าข้อมูลจาก item
+      const title = getPropValue(item, ['โครงการ', 'project', 'title'], 'ไม่ระบุชื่อโครงการ');
+      const propType = getPropValue(item, ['ประเภทอสังหา', 'property_type', 'type'], '-');
+      const priceSell = getPropValue(item, ['ราคาขาย', 'price_sell'], '');
+      const priceRent = getPropValue(item, ['ราคาเช่า', 'price_rent'], '');
+      const priceDisplay = priceSell ? `ขาย ฿${priceSell}` : (priceRent ? `เช่า ฿${priceRent}` : 'ติดต่อสอบถาม');
+      
+      const district = getPropValue(item, ['เขต/อำเภอ', 'district'], '');
+      const province = getPropValue(item, ['จังหวัด', 'province'], '');
+      const locationText = [district, province].filter(Boolean).join(' ');
+
+      // ดึงรูปภาพสำหรับสไลเดอร์ฝั่งขวา
+      let imagesHTML = '';
+      const images = item.images || item.urls || [];
+      if (Array.isArray(images) && images.length > 0) {
+        imagesHTML = images.map(img => `<img src="${img}" alt="รูปอสังหาฯ" loading="lazy">`).join('');
+      } else {
+        imagesHTML = `<img src="https://via.placeholder.com/140x90?text=No+Image" alt="ไม่มีรูปภาพ">`;
+      }
+
+      // แปลง object item เป็น string เพื่อส่งเข้า openOwnerChat
+      const itemJsonString = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+      return `
+        <div class="property-card">
+          <!-- ฝั่งซ้าย: ข้อมูลรายละเอียดบ้าน/อสังหาฯ -->
+          <div class="card-left-info">
+            <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${title}</div>
+            <div style="font-size: 12px; color: #666;">ประเภท: ${propType}</div>
+            <div style="font-size: 12px; color: #666;">ทำเล: ${locationText || 'ไม่ระบุทำเล'}</div>
+            <div style="font-weight: bold; color: #d9534f; font-size: 14px; margin-top: 2px;">${priceDisplay}</div>
+          </div>
+
+          <!-- ตรงกลาง: ปุ่มคุยกับเจ้าของ -->
+          <div class="card-center-action">
+            <button class="chat-owner-btn" onclick='openOwnerChat(${itemJsonString}, event)'>
+              💬 คุยกับเจ้าของ
+            </button>
+          </div>
+
+          <!-- ฝั่งขวา: แถบสไลด์รูปภาพเลื่อนแนวนอน -->
+          <div class="card-right-slider">
+            ${imagesHTML}
+          </div>
+        </div>
+      `;
+    }
+  
     function getCurrentUserLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
