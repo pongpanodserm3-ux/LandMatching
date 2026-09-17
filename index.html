@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_index_1-1
+  <link rel="shortcut icon" href="#">//Git_index_1-1.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1792,9 +1792,10 @@
           if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
           
           const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
-          if (remainingScroll < 600) {
-            loadNextPage();
-          }
+            if (remainingScroll < 600) {
+              AppState.pagination.isLoading = true; // เพิ่มบรรทัดนี้: ล็อคสถานะทันทีเพื่อหยุดการทำงานซ้ำซ้อน (Infinite Loop)
+              loadNextPage();
+            }
         });
       }
 
