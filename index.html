@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-7
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -854,7 +854,48 @@
       scroll-snap-align: start;
       flex-shrink: 0;
     }
+    /* --- เริ่ม: สไตล์สำหรับโซนอัปโหลดรูปภาพ 8 ช่อง --- */
+    .upload-header {
+      font-size: 14px; font-weight: bold; color: var(--text-main);
+      margin: 10px 0 5px 0; display: flex; justify-content: space-between; align-items: center;
+    }
+    .upload-main-btn {
+      background: #bcece0; color: #064e3b; border: 1px dashed #46cd93;
+      padding: 10px; border-radius: 8px; width: 100%; font-weight: bold;
+      cursor: pointer; margin-bottom: 8px; font-size: 13px; transition: all 0.2s;
+    }
+    .upload-main-btn:active { transform: scale(0.98); background: #a0d8c8; }
     
+    .upload-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    }
+    .upload-box {
+      aspect-ratio: 1; /* บังคับให้เป็นสี่เหลี่ยมจัตุรัสเสมอ */
+      border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .upload-box.has-image { border: none; cursor: grab; }
+    .upload-box.drag-over { border: 2px solid var(--btn-blue); opacity: 0.7; }
+    .upload-box img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+    
+    .upload-box .empty-text { font-size: 14px; color: #94a3b8; font-weight: bold; pointer-events: none; line-height: 1.2; }
+    
+    /* ป้ายกำกับภาพปก (ซ้ายบนสุด) */
+    .cover-label {
+      position: absolute; top: 0; left: 0; background: #ff4b2b; color: white;
+      font-size: 9px; padding: 2px 6px; border-radius: 0 0 6px 0; z-index: 2; font-weight: bold;
+    }
+    .box-1-highlight { border: 2px solid #ff4b2b !important; }
+    
+    /* ปุ่ม X ลบภาพ */
+    .delete-img-btn {
+      position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.65);
+      color: white; border: none; border-radius: 50%; width: 22px; height: 22px;
+      font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2;
+    }
+    .delete-img-btn:hover { background: rgba(255,0,0,0.8); }
+    /* --- จบ: สไตล์สำหรับโซนอัปโหลดรูปภาพ 8 ช่อง --- */    
   </style> 
     
 </head>
@@ -986,6 +1027,31 @@
         </div>
         
         <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>
+
+        <!-- ... Code เดิม (ปุ่มสาธารณูปโภคพิเศษ) ... -->
+        <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
+        </div>
+        
+        <!-- เริ่ม: โซนอัปโหลดรูปภาพ (เพิ่มใหม่) -->
+        <div id="imageUploadSection" style="margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
+          <div class="upload-header">
+            <span id="uploadStatusText">อัปโหลดรูปภาพ (0/8)</span>
+          </div>
+          <!-- กล่อง input สำหรับเลือกไฟล์ ซ่อนเอาไว้เพื่อให้ปุ่มเราสวยงามทำงานแทน -->
+          <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFilesSelected(event)">
+          
+          <button class="upload-main-btn" onclick="document.getElementById('fileInput').click()">
+            📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)
+          </button>
+          
+          <!-- พื้นที่ ที่จะให้ JavaScript มาสร้างกล่อง 8 กล่อง -->
+          <div class="upload-grid" id="uploadGrid"></div>
+        </div>
+        <!-- จบ: โซนอัปโหลดรูปภาพ -->
+
+        <!-- ... Code เดิม (ปุ่มปิดหน้าต่าง) ... -->
+        <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>      
+      
       </div>
     </div>
   <!-- Dropdown Modal -->
@@ -1903,9 +1969,10 @@
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
 
-    // ฟังก์ชันเปิดหน้าต่างลงประกาศ
+    // ฟังก์ชันเปิดหน้าต่างลงประกาศ (แก้ใหม่)
     function openPostModal() {
       document.getElementById('postModalOverlay').classList.add('active');
+      renderUploadGrid(); // <--- เพิ่มบรรทัดนี้ เพื่อให้ระบบวาดช่อง 8 ช่องทันทีที่เปิดหน้าต่าง
     }
 
     // ฟังก์ชันปิดหน้าต่างลงประกาศ
@@ -2929,6 +2996,118 @@
         listZone.classList.remove('expanded');
       }
     }
+
+    // ==========================================
+    // ระบบอัปโหลดรูปภาพ 8 ช่อง (Drag & Drop)
+    // ==========================================
+    let uploadedImages = new Array(8).fill(null); // สร้างกล่องความจำว่างๆ 8 ช่อง
+    let draggedIndex = null; // ตัวแปรจำว่าเรากำลังลากรูปที่เท่าไหร่
+
+    // 1. ฟังก์ชันวาดกล่อง 8 ช่อง
+    function renderUploadGrid() {
+      const grid = document.getElementById('uploadGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      let count = 0;
+
+      for (let i = 0; i < 8; i++) {
+        const box = document.createElement('div');
+        box.className = 'upload-box';
+        
+        // ถ้าเป็นกล่องแรก (i=0) ให้เน้นกรอบแดง
+        if (i === 0) box.classList.add('box-1-highlight');
+        
+        // --- ใส่ความสามารถลากและวาง (Drag & Drop) ---
+        box.setAttribute('draggable', true);
+        box.addEventListener('dragstart', (e) => handleDragStart(e, i));
+        box.addEventListener('dragover', handleDragOver);
+        box.addEventListener('drop', (e) => handleDrop(e, i));
+        box.addEventListener('dragenter', (e) => e.target.classList.add('drag-over'));
+        box.addEventListener('dragleave', (e) => e.target.classList.remove('drag-over'));
+
+        // ใส่ป้ายคำว่า "ภาพปก" ที่กล่องแรก
+        if (i === 0) {
+          box.innerHTML += `<div class="cover-label">ภาพปก</div>`;
+        }
+
+        if (uploadedImages[i]) {
+          // กรณีช่องนั้นมีรูปแล้ว
+          box.classList.add('has-image');
+          box.innerHTML += `<img src="${uploadedImages[i]}" alt="img-${i+1}">`;
+          box.innerHTML += `<button class="delete-img-btn" onclick="deleteImage(${i}, event)">✕</button>`;
+          count++;
+        } else {
+          // กรณีช่องนั้นยังว่างอยู่
+          box.innerHTML += `<span class="empty-text">📷<br><span style="font-size:10px; font-weight:normal;">${i+1}</span></span>`;
+        }
+        grid.appendChild(box);
+      }
+      
+      // อัปเดตข้อความบน Header (เช่น อัปโหลดรูปภาพ 3/8)
+      document.getElementById('uploadStatusText').innerText = `อัปโหลดรูปภาพ (${count}/8)`;
+    }
+
+    // 2. ฟังก์ชันเมื่อผู้ใช้กดเลือกไฟล์รูป (กระจายรูปลงกล่อง)
+    function handleFilesSelected(event) {
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
+
+      let fileIndex = 0;
+      // วนลูปหาช่องว่างใน 8 ช่อง
+      for (let i = 0; i < 8; i++) {
+        // ถ้าช่องว่าง และ ยังมีไฟล์รูปเหลือที่ยังไม่ได้ยัดลงช่อง
+        if (!uploadedImages[i] && fileIndex < files.length) {
+          const file = files[fileIndex];
+          const reader = new FileReader();
+          
+          (function(index) {
+            reader.onload = function(e) {
+              uploadedImages[index] = e.target.result; // เก็บรูปแปลงเป็น Base64
+              renderUploadGrid(); // วาดกล่องใหม่เพื่อให้รูปโชว์
+            };
+          })(i);
+          
+          reader.readAsDataURL(file);
+          fileIndex++;
+        }
+      }
+      event.target.value = ''; // เคลียร์ค่า input ป้องกันบัคเลือกรูปเดิมไม่ติด
+    }
+
+    // 3. ฟังก์ชันลบรูป
+    function deleteImage(index, event) {
+      event.stopPropagation(); // กันไม่ให้ไปเผลอกดโดนลากรูปเวลาคลิกลบ
+      uploadedImages[index] = null; // สั่งเคลียร์รูปให้เป็นค่าว่าง
+      renderUploadGrid(); // วาดกล่องใหม่
+    }
+
+    // 4. ชุดฟังก์ชันระบบลากวาง (สลับตำแหน่งรูป)
+    function handleDragStart(e, index) {
+      draggedIndex = index; // จำไว้ว่าลากจากช่องไหน
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    function handleDragOver(e) {
+      e.preventDefault(); // บังคับอนุญาตให้วางลงช่องนี้ได้
+      e.dataTransfer.dropEffect = 'move';
+    }
+    
+    function handleDrop(e, targetIndex) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      
+      // ถ้าไม่ได้ลากอะไรเลย หรือลากไปวางช่องเดิม ให้หยุดการทำงาน
+      if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+      // สลับข้อมูลใน Array
+      const temp = uploadedImages[draggedIndex];
+      uploadedImages[draggedIndex] = uploadedImages[targetIndex];
+      uploadedImages[targetIndex] = temp;
+      
+      draggedIndex = null;
+      renderUploadGrid(); // วาดกล่องใหม่เพื่อให้โชว์รูปที่สลับแล้ว
+    }
+  
   </script>
 </body>
 </html>
