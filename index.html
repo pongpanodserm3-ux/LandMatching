@@ -1893,7 +1893,14 @@
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
         if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
-          btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
+          // เก็บค่าจริงไว้ใน attribute data-value เพื่อไม่ให้ติดอักขระลูกศร ▾ ไปใช้ค้นหา
+          if (value === "เคลียร์ค่า" || value === "ทั้งหมด") {
+            btn.innerText = `${topic} ▾`;
+            btn.removeAttribute('data-value');
+          } else {
+            btn.innerText = `${value} ▾`;
+            btn.setAttribute('data-value', value);
+          }
         }
       });
       testShowList();
