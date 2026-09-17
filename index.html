@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-1.1
+  <link rel="shortcut icon" href="#">//Git_Index_1.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -30,7 +30,7 @@
       overflow: hidden;
     }
 
-     --- ปุ่ม คุยกับ AI (Global / Topmost Layer / Floating Top-Right) --- */
+    /* --- ปุ่ม คุยกับ AI (Global / Topmost Layer / Floating Top-Right) --- */
     .voice-btn {
       position: fixed !important;
       top: 15px !important;
@@ -793,18 +793,6 @@
       box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
     }
     .chat-owner-btn:active { transform: translateY(0); }
-    
-    /* สไตล์ภาพบ้าน 1 ภาพบนการ์ดรายการ */
-    .property-card-img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 12px;
-      margin-bottom: 10px;
-      display: block;
-      background-color: #f0f0f0;
-    }
-    
   </style>
 </head>
 <body>
@@ -853,7 +841,7 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="()">🔍 ค้นหารายการบ้าน</button>
+        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
         <button class="action-show-list-btn" style="background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
       </div>
     </div>
@@ -1750,7 +1738,7 @@
     });
 
     function triggerSearchReset() {
-      ();
+      testShowList();
     }
 
     function resetAllFilters() {
@@ -1837,7 +1825,7 @@
           btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
         }
       });
-      ();
+      testShowList();
     }
     // ฟังก์ชันวิเคราะห์ข้อความจาก Edit Box แล้วอัปเดตปุ่ม Dropdown อัตโนมัติ
     function applyEditToDropdowns(text) {
@@ -2135,7 +2123,7 @@
       if (radiusSelect) radiusSelect.value = "1";
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       closeLocationModal();
-      ();
+      testShowList();
     }
 
     function openGoogleMaps() {
@@ -2174,7 +2162,7 @@
       }
       
       closeLocationModal();
-      ();
+      testShowList();
     }
 
     // ==========================================
@@ -2431,7 +2419,7 @@
                     
                     // 3. หน่วงเวลาเล็กน้อย (300ms) เพื่อให้ UI ของ Dropdown อัปเดตตัวเองเสร็จสมบูรณ์ก่อนเรียกฟังก์ชันค้นหา
                     setTimeout(() => {
-                      ();
+                      testShowList();
                     }, 300);
                   }
             
@@ -2711,27 +2699,15 @@
             <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
               💰 ${price}
             </div>
-
-            // --- ส่วน Logic ดึงภาพบ้าน 1 ภาพจาก Database ---
-            let houseImgUrl = "";
-            if (Array.isArray(item.images) && item.images.length > 0) {
-              houseImgUrl = item.images[0];
-            } else if (typeof item.images === 'string' && item.images.trim() !== '') {
-              houseImgUrl = item.images.trim();
-            } else {
-              houseImgUrl = getPropValue(item, ['image_url', 'image', 'img', 'photo_url', 'url'], '');
-            }
             
-            const houseImageHtml = houseImgUrl 
-              ? `<img src="${houseImgUrl}" alt="ภาพอสังหาริมทรัพย์" class="property-card-img" onerror="this.style.display='none'">` 
-              : '';  
-            // --- ส่วนเรนเดอร์วางภาพไว้เหนือปุ่มคุยกับเจ้าของ ---
-            //${houseImageHtml}
-
-            
-            <button class="chat-owner-btn">
+          ${ (item.image_url || item.image || item.url) 
+              ? `<img src="${item.image_url || item.image || item.url}" alt="ภาพบ้าน" style="width: 100%; height: 160px; object-fit: cover; border-radius: 12px; margin-bottom: 10px; border: 1px solid #f0f0f0; background-color: #f9f9f9;">` 
+              : '' 
+          }
+          <button class="chat-owner-btn">
               💬 คุยกับเจ้าของ
-            </button>
+          </button>
+            
           </div>
         `;
 
