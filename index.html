@@ -2739,14 +2739,80 @@
       return criteria;
     }
 
+    // ==========================================
+    // ฟังก์ชันสร้างและแสดงผลรายการอสังหาฯ (renderPropertyList)
+    // ==========================================
+    function renderPropertyList(properties) {
+      const container = document.getElementById('resultsContainer');
+      if (!container) return;
+    
+      // ถ้าไม่มีข้อมูล ให้แสดงข้อความแจ้งเตือน
+      if (!properties || properties.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: #777;">
+            🏚️ ไม่พบรายการอสังหาริมทรัพย์ที่ตรงตามเงื่อนไข
+          </div>
+        `;
+        return;
+      }
+    
+      // วนลูปสร้าง HTML ของการ์ดแต่ละรายการ
+      let htmlContent = '';
+      properties.forEach(item => {
+        const title = item.project || item.title || 'ประกาศอสังหาริมทรัพย์';
+        const price = item.price || item.ราคาขาย || item.ราคาเช่า || 'โปรดสอบถามราคา';
+        const location = `${item.district || item['เขต/อำเภอ'] || ''} ${item.province || item['จังหวัด'] || ''}`.trim();
+        const imageUrl = item.image || item.imageUrl || 'https://via.placeholder.com/150';
+    
+        htmlContent += `
+          <div class="property-card">
+            <div class="card-left-info">
+              <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${title}</div>
+              <div style="color: #d9534f; font-weight: bold; font-size: 14px;">💰 ${price}</div>
+              <div style="font-size: 12px; color: #666;">📍 ${location || 'ไม่ระบุตำแหน่ง'}</div>
+            </div>
+            <div class="card-center-action">
+              <button class="chat-owner-btn" onclick='openOwnerChat(${JSON.stringify(item)}, event)'>💬 คุยกับเจ้าของ</button>
+            </div>
+            <div class="card-right-slider">
+              <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/150'">
+            </div>
+          </div>
+        `;
+      });
+    
+      // นำ HTML ทั้งหมดไปใส่ไว้ใน resultsContainer
+      container.innerHTML = htmlContent;
+    }
+    
+    // ==========================================
+    // ฟังก์ชันทดสอบดึงข้อมูล/ค้นหา แล้วส่งต่อให้ renderPropertyList
+    // ==========================================
     function testShowList() {
-      AppState.pagination.offset = 0;
-      AppState.pagination.hasMore = true;
-      AppState.pagination.renderedKeys.clear();
-      document.getElementById('resultsContainer').innerHTML = '';
-      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
-      fetchDatabase({}, getSelectedCriteria(), true, searchText);
+      console.log("กำลังค้นหารายการบ้าน...");
+    
+      // ตัวอย่างข้อมูลจำลอง (Mock Data) สำหรับทดสอบการแสดงผล
+      const mockProperties = [
+        {
+          id: 1,
+          project: 'บ้านเดี่ยว 2 ชั้น หลังมุม สุขุมวิท',
+          price: '5,900,000 บาท',
+          'เขต/อำเภอ': 'วัฒนา',
+          'จังหวัด': 'กทม.',
+          image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=300'
+        },
+        {
+          id: 2,
+          project: 'คอนโดวิวสระว่ายน้ำ ใกล้ BTS',
+          price: '15,000 บาท/เดือน',
+          'เขต/อำเภอ': 'จตุจักร',
+          'จังหวัด': 'กทม.',
+          image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300'
+        }
+      ];
+    
+      // เรียกใช้ฟังก์ชันแสดงผลโดยส่งข้อมูลเข้าไป
+      renderPropertyList(mockProperties);
     }
 
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
