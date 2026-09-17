@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_index_1-1.1
+  <link rel="shortcut icon" href="#">//index9-4-15.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -349,77 +349,7 @@
       padding: 20px;
       background-color: #ffffff;
     }
-/* --- สไตล์การ์ดอสังหาริมทรัพย์ (Property Card Layout) --- */
-    .property-card {
-      display: flex;
-      flex-direction: row;
-      background: #ffffff;
-      border: 1px solid #e0e6ed;
-      border-radius: 16px;
-      padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      gap: 12px;
-      align-items: center;
-      transition: all 0.2s ease;
-    }
-    .property-card:hover {
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-      border-color: var(--btn-blue);
-    }
 
-    /* ฝั่งซ้าย: ข้อมูลรายละเอียดบ้าน/อสังหาฯ */
-    .card-left-info {
-      flex: 1.2;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    /* ตรงกลาง: ปุ่มการทำงาน (เช่น ปุ่มคุยกับเจ้าของ / ดูรายละเอียด) */
-    .card-center-action {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-      padding: 0 8px;
-    }
-
-    /* ฝั่งขวา: แถบสไลด์รูปภาพเลื่อนแนวนอน */
-    .card-right-slider {
-      flex: 1;
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 6px;
-      max-width: 140px;
-      height: 90px;
-      border-radius: 10px;
-      scrollbar-width: thin;
-    }
-
-    /* ปรับแต่งแถบ Scrollbar ของสไลด์รูปภาพ */
-    .card-right-slider::-webkit-scrollbar {
-      height: 4px;
-    }
-    .card-right-slider::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 4px;
-    }
-
-    /* รูปภาพแต่ละรูปในสไลด์ฝั่งขวา */
-    .card-right-slider img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      scroll-snap-align: center;
-      flex-shrink: 0;
-      border-radius: 8px;
-      background-color: #eee;
-    }    
-    
     /* --- Modal --- */
     .modal-overlay {
       position: fixed;
@@ -1792,10 +1722,9 @@
           if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
           
           const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
-            if (remainingScroll < 600) {
-              AppState.pagination.isLoading = true; // เพิ่มบรรทัดนี้: ล็อคสถานะทันทีเพื่อหยุดการทำงานซ้ำซ้อน (Infinite Loop)
-              loadNextPage();
-            }
+          if (remainingScroll < 600) {
+            loadNextPage();
+          }
         });
       }
 
@@ -1893,14 +1822,7 @@
       filterBtns.forEach(btn => {
         const onClickAttr = btn.getAttribute('onclick') || '';
         if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
-          // เก็บค่าจริงไว้ใน attribute data-value เพื่อไม่ให้ติดอักขระลูกศร ▾ ไปใช้ค้นหา
-          if (value === "เคลียร์ค่า" || value === "ทั้งหมด") {
-            btn.innerText = `${topic} ▾`;
-            btn.removeAttribute('data-value');
-          } else {
-            btn.innerText = `${value} ▾`;
-            btn.setAttribute('data-value', value);
-          }
+          btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
         }
       });
       testShowList();
@@ -2151,60 +2073,7 @@
         }
       }
     }
-// ==========================================
-    // PROPERTY CARD RENDERER
-    // ==========================================
-    function createPropertyCardHTML(item) {
-      if (!item) return '';
 
-      // ดึงค่าข้อมูลจาก item
-      const title = getPropValue(item, ['โครงการ', 'project', 'title'], 'ไม่ระบุชื่อโครงการ');
-      const propType = getPropValue(item, ['ประเภทอสังหา', 'property_type', 'type'], '-');
-      const priceSell = getPropValue(item, ['ราคาขาย', 'price_sell'], '');
-      const priceRent = getPropValue(item, ['ราคาเช่า', 'price_rent'], '');
-      const priceDisplay = priceSell ? `ขาย ฿${priceSell}` : (priceRent ? `เช่า ฿${priceRent}` : 'ติดต่อสอบถาม');
-      
-      const district = getPropValue(item, ['เขต/อำเภอ', 'district'], '');
-      const province = getPropValue(item, ['จังหวัด', 'province'], '');
-      const locationText = [district, province].filter(Boolean).join(' ');
-
-      // ดึงรูปภาพสำหรับสไลเดอร์ฝั่งขวา
-      let imagesHTML = '';
-      const images = item.images || item.urls || [];
-      if (Array.isArray(images) && images.length > 0) {
-        imagesHTML = images.map(img => `<img src="${img}" alt="รูปอสังหาฯ" loading="lazy">`).join('');
-      } else {
-        imagesHTML = `<img src="https://via.placeholder.com/140x90?text=No+Image" alt="ไม่มีรูปภาพ">`;
-      }
-
-      // แปลง object item เป็น string เพื่อส่งเข้า openOwnerChat
-      const itemJsonString = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-      return `
-        <div class="property-card">
-          <!-- ฝั่งซ้าย: ข้อมูลรายละเอียดบ้าน/อสังหาฯ -->
-          <div class="card-left-info">
-            <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${title}</div>
-            <div style="font-size: 12px; color: #666;">ประเภท: ${propType}</div>
-            <div style="font-size: 12px; color: #666;">ทำเล: ${locationText || 'ไม่ระบุทำเล'}</div>
-            <div style="font-weight: bold; color: #d9534f; font-size: 14px; margin-top: 2px;">${priceDisplay}</div>
-          </div>
-
-          <!-- ตรงกลาง: ปุ่มคุยกับเจ้าของ -->
-          <div class="card-center-action">
-            <button class="chat-owner-btn" onclick='openOwnerChat(${itemJsonString}, event)'>
-              💬 คุยกับเจ้าของ
-            </button>
-          </div>
-
-          <!-- ฝั่งขวา: แถบสไลด์รูปภาพเลื่อนแนวนอน -->
-          <div class="card-right-slider">
-            ${imagesHTML}
-          </div>
-        </div>
-      `;
-    }
-  
     function getCurrentUserLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -2263,23 +2132,13 @@
       const lng = document.getElementById('lngInput').value.trim();
       const placeSearchInput = document.getElementById('placeSearchInput');
       const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
-    
+
       if (lat && lng) {
         let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
         if (placeName) {
           queryUrl += `+${encodeURIComponent(placeName)}`;
         }
-        
-        // ตรวจสอบว่าเปิดใช้งานผ่าน LINE LIFF หรือไม่
-        if (typeof liff !== 'undefined' && liff.isInClient && liff.isInClient()) {
-          liff.openWindow({
-            url: queryUrl,
-            external: true // บังคับสลับไปเปิดในแอป Google Maps ภายนอก LINE
-          });
-        } else {
-          // เปิดโดยการเปลี่ยนหน้าปัจจุบัน ป้องกันการถูกเบราว์เซอร์บล็อก Pop-up จาก AI
-          window.location.href = queryUrl;
-        }
+        window.open(queryUrl, '_blank');
       } else {
         alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
@@ -2747,98 +2606,14 @@
       return criteria;
     }
 
-    // ==========================================
-    // ฟังก์ชันสร้างและแสดงผลรายการอสังหาฯ (renderPropertyList)
-    // ==========================================
-    function renderPropertyList(properties) {
-      const container = document.getElementById('resultsContainer');
-      if (!container) return;
-    
-      // ถ้าไม่มีข้อมูล ให้แสดงข้อความแจ้งเตือน
-      if (!properties || properties.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 30px; color: #777;">
-            🏚️ ไม่พบรายการอสังหาริมทรัพย์ที่ตรงตามเงื่อนไข
-          </div>
-        `;
-        return;
-      }
-    
-      // วนลูปสร้าง HTML ของการ์ดแต่ละรายการ
-      let htmlContent = '';
-      properties.forEach(item => {
-        const title = item.project || item.title || 'ประกาศอสังหาริมทรัพย์';
-        const price = item.price || item.ราคาขาย || item.ราคาเช่า || 'โปรดสอบถามราคา';
-        const location = `${item.district || item['เขต/อำเภอ'] || ''} ${item.province || item['จังหวัด'] || ''}`.trim();
-        const imageUrl = item.image || item.imageUrl || 'https://via.placeholder.com/150';
-    
-        htmlContent += `
-          <div class="property-card">
-            <div class="card-left-info">
-              <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${title}</div>
-              <div style="color: #d9534f; font-weight: bold; font-size: 14px;">💰 ${price}</div>
-              <div style="font-size: 12px; color: #666;">📍 ${location || 'ไม่ระบุตำแหน่ง'}</div>
-            </div>
-            <div class="card-center-action">
-              <button class="chat-owner-btn" onclick='openOwnerChat(${JSON.stringify(item)}, event)'>💬 คุยกับเจ้าของ</button>
-            </div>
-            <div class="card-right-slider">
-              <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/150'">
-            </div>
-          </div>
-        `;
-      });
-    
-      // นำ HTML ทั้งหมดไปใส่ไว้ใน resultsContainer
-      container.innerHTML = htmlContent;
-    }
-    
-// ==========================================
-    // ฟังก์ชันค้นหาและดึงรายการบ้านจาก Supabase
-    // ==========================================
-    async function testShowList() {
-      const container = document.getElementById('resultsContainer');
-      if (!container) return;
-
-      container.innerHTML = '<div style="text-align:center; padding:30px; font-weight:bold; color:var(--btn-blue);">⏳ กำลังโหลดรายการบ้าน...</div>';
-
-      try {
-        let query = supabaseClient.from('properties').select('*');
-
-        // 1. อ่านค่าจากปุ่มตัวกรอง (ใช้ data-value หรือลบลูกศร ▾ ออก)
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        filterBtns.forEach(btn => {
-          const rawVal = btn.getAttribute('data-value') || btn.innerText.replace('▾', '').trim();
-          const onClick = btn.getAttribute('onclick') || '';
-
-          if (rawVal && !rawVal.includes('▾') && !rawVal.startsWith('เลือก')) {
-            if (onClick.includes('ขาย/เช่า')) query = query.ilike('แบบราคา', `%${rawVal}%`);
-            else if (onClick.includes('คอนโด/บ้าน')) query = query.ilike('ประเภทอสังหา', `%${rawVal}%`);
-            else if (onClick.includes('จังหวัด')) query = query.ilike('จังหวัด', `%${rawVal}%`);
-            else if (onClick.includes('เขต/อำเภอ')) query = query.ilike('เขต/อำเภอ', `%${rawVal}%`);
-            else if (onClick.includes('ถนน')) query = query.ilike('ถนน', `%${rawVal}%`);
-            else if (onClick.includes('โครงการ')) query = query.ilike('โครงการ', `%${rawVal}%`);
-          }
-        });
-
-        // 2. อ่านค่าจาก Edit Box และแปลงคำว่า "หาซื้อ" / "ต้องการซื้อ" เป็น "ขาย"
-        let searchText = document.getElementById('customEditBox')?.value.trim() || '';
-        if (searchText) {
-          if (searchText.includes('หาซื้อ') || searchText.includes('ต้องการซื้อ')) {
-            searchText = searchText.replace(/หาซื้อ|ต้องการซื้อ/g, 'ขาย');
-          }
-          query = query.or(`โครงการ.ilike.%${searchText}%,ประเภทอสังหา.ilike.%${searchText}%,จังหวัด.ilike.%${searchText}%,เขต/อำเภอ.ilike.%${searchText}%`);
-        }
-
-        const { data: properties, error } = await query.limit(20);
-
-        if (error) throw error;
-
-        renderPropertiesList(properties || []);
-      } catch (err) {
-        console.error("Fetch properties error:", err);
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:red;">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ${err.message}</div>`;
-      }
+    function testShowList() {
+      AppState.pagination.offset = 0;
+      AppState.pagination.hasMore = true;
+      AppState.pagination.renderedKeys.clear();
+      document.getElementById('resultsContainer').innerHTML = '';
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
 
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
@@ -2891,60 +2666,54 @@
       }
     }
 
-// ==========================================
-    // ฟังก์ชันแสดงผลการ์ดรายการบ้าน
-    // ==========================================
-    function renderPropertiesList(items) {
+    function renderProperties(properties) {
       const container = document.getElementById('resultsContainer');
-      if (!container) return;
-
-      if (!items || items.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#777; font-size:15px;">🔍 ไม่พบรายการบ้านที่ตรงกับเงื่อนไขการค้นหา</div>';
+      if (!properties || properties.length === 0) {
+        if (AppState.pagination.offset === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
+        }
         return;
       }
 
-      let html = '';
-      items.forEach(item => {
-        const title = getPropValue(item, ['โครงการ', 'project', 'title'], 'บ้านพักอาศัย');
-        const type = getPropValue(item, ['ประเภทอสังหา', 'type'], 'อสังหาริมทรัพย์');
-        const price = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'price'], 'สอบถามราคา');
-        const location = `${getPropValue(item, ['เขต/อำเภอ'], '')} ${getPropValue(item, ['จังหวัด'], '')}`.trim() || 'ไม่ระบุตำแหน่ง';
+      properties.forEach(item => {
+        const key = item.postId || item.url || item.id;
+        if (AppState.pagination.renderedKeys.has(key)) return;
+        AppState.pagination.renderedKeys.add(key);
+
+        const card = document.createElement('div');
+        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer; position: relative;';
+        card.onclick = () => showDetailModal(item);
         
-        // จัดการเรื่องรูปภาพ
-        let images = [];
-        const rawImg = getPropValue(item, ['url', 'images', 'image_url'], '');
-        if (rawImg) {
-          if (rawImg.startsWith('[')) {
-            try { images = JSON.parse(rawImg); } catch(e) { images = [rawImg]; }
-          } else {
-            images = rawImg.split(',').map(s => s.trim());
-          }
-        }
-        if (images.length === 0 || !images[0]) {
-          images = ['https://via.placeholder.com/300x200?text=No+Image'];
-        }
-
-        const imgSliderHtml = images.map(imgUrl => `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'" />`).join('');
-
-        html += `
-          <div class="property-card">
-            <div class="card-left-info">
-              <div style="font-weight:bold; font-size:15px; color:var(--text-main);">${title}</div>
-              <div style="font-size:13px; color:#666;">🏷️ ${type}</div>
-              <div style="font-size:13px; color:#888;">📍 ${location}</div>
-              <div style="font-weight:bold; font-size:15px; color:#d9534f; margin-top:4px;">💰 ${price}</div>
+        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
+        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
+        const titleText = item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์';
+        
+        card.innerHTML = `
+          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
+            ${titleText}
+          </div>
+          <div style="font-size: 14px; color: #555; margin-bottom: 8px;">
+            📍 ${item.district || ''} ${item.province || ''}${distanceText}
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+            <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
+              💰 ${price}
             </div>
-            <div class="card-center-action">
-              <button class="chat-owner-btn" onclick='openOwnerChat(${JSON.stringify(item).replace(/'/g, "&apos;")}, event)'>💬 คุยกับเจ้าของ</button>
-            </div>
-            <div class="card-right-slider">
-              ${imgSliderHtml}
-            </div>
+            <button class="chat-owner-btn">
+              💬 คุยกับเจ้าของ
+            </button>
           </div>
         `;
-      });
 
-      container.innerHTML = html;
+        const chatBtn = card.querySelector('.chat-owner-btn');
+        if (chatBtn) {
+          chatBtn.onclick = (e) => {
+            openOwnerChat(item, e);
+          };
+        }
+
+        container.appendChild(card);
+      });
     }
 
     function showDetailModal(item) {
