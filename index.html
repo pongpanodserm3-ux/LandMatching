@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-3.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -808,18 +808,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      flex-wrap: wrap; /* อนุญาตให้ชิ้นส่วนตัดขึ้นบรรทัดใหม่ได้ */
     }
 
     .card-left-info {
       flex: 1;
       min-width: 0;
-    }
-
-    .card-center-action {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      order: 1; /* ลำดับที่ 1: แสดงข้อมูลบ้านฝั่งซ้ายบน */
     }
 
     .card-right-slider {
@@ -833,6 +828,19 @@
       background: #f0f4f8;
       flex-shrink: 0;
       -webkit-overflow-scrolling: touch;
+      order: 2; /* ลำดับที่ 2: แสดงรูปภาพฝั่งขวาบน */
+    }
+
+    .card-center-action {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start; /* ปรับเป็น center ได้หากต้องการให้อยู่ตรงกลางบรรทัดล่าง */
+      flex-shrink: 0;
+      width: 100%; /* ยืดเต็มบรรทัดเพื่อดันลงมาอยู่ล่างสุด */
+      order: 3; /* ลำดับที่ 3: สั่งให้กล่องปุ่มแชทไปอยู่บรรทัดล่างสุด */
+      margin-top: 6px; /* เว้นระยะห่างด้านบนเล็กน้อย */
+      padding-top: 6px;
+      border-top: 1px dashed #f0f0f0; /* เพิ่มเส้นคั่นบางๆ ให้ดูสวยงามเป็นระเบียบ */
     }
 
     .card-right-slider::-webkit-scrollbar {
