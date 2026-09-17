@@ -784,11 +784,13 @@
       box-shadow: 0 3px 8px rgba(70, 205, 147, 0.4);
       cursor: pointer;
       transition: all 0.2s ease;
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       width: 100%; /* ขยายให้เต็มความกว้างด้านล่างสุด หรือเอาบรรทัดนี้ออกถ้าต้องการให้ปุ่มยาวพอดีข้อความ */
       margin-top: auto; /* ดันให้ลงมาอยู่ตำแหน่งล่างสุดของการ์ดเสมอ */
+      order: 99;
     }
     .chat-owner-btn:hover {
       transform: translateY(-1px);
