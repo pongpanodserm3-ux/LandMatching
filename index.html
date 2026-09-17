@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//index9-4-15.2
+  <link rel="shortcut icon" href="#">//Git_index_1-1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -349,7 +349,77 @@
       padding: 20px;
       background-color: #ffffff;
     }
+/* --- สไตล์การ์ดอสังหาริมทรัพย์ (Property Card Layout) --- */
+    .property-card {
+      display: flex;
+      flex-direction: row;
+      background: #ffffff;
+      border: 1px solid #e0e6ed;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      gap: 12px;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .property-card:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      border-color: var(--btn-blue);
+    }
 
+    /* ฝั่งซ้าย: ข้อมูลรายละเอียดบ้าน/อสังหาฯ */
+    .card-left-info {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    /* ตรงกลาง: ปุ่มการทำงาน (เช่น ปุ่มคุยกับเจ้าของ / ดูรายละเอียด) */
+    .card-center-action {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+    }
+
+    /* ฝั่งขวา: แถบสไลด์รูปภาพเลื่อนแนวนอน */
+    .card-right-slider {
+      flex: 1;
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 6px;
+      max-width: 140px;
+      height: 90px;
+      border-radius: 10px;
+      scrollbar-width: thin;
+    }
+
+    /* ปรับแต่งแถบ Scrollbar ของสไลด์รูปภาพ */
+    .card-right-slider::-webkit-scrollbar {
+      height: 4px;
+    }
+    .card-right-slider::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    /* รูปภาพแต่ละรูปในสไลด์ฝั่งขวา */
+    .card-right-slider img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      scroll-snap-align: center;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background-color: #eee;
+    }    
+    
     /* --- Modal --- */
     .modal-overlay {
       position: fixed;
