@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-3
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -784,13 +784,9 @@
       box-shadow: 0 3px 8px rgba(70, 205, 147, 0.4);
       cursor: pointer;
       transition: all 0.2s ease;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 4px;
-      width: 100%; /* ขยายให้เต็มความกว้างด้านล่างสุด หรือเอาบรรทัดนี้ออกถ้าต้องการให้ปุ่มยาวพอดีข้อความ */
-      margin-top: auto; /* ดันให้ลงมาอยู่ตำแหน่งล่างสุดของการ์ดเสมอ */
-      order: 99;
     }
     .chat-owner-btn:hover {
       transform: translateY(-1px);
@@ -808,7 +804,7 @@
       border: 1px solid #eee;
       cursor: pointer;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
@@ -2783,7 +2779,7 @@
           <!-- 2. ตรงกลาง: ปุ่มคุยกับเจ้าของ -->
           <div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <button class="chat-owner-btn">
-              💬chat.
+              💬<br>chat.
             </button>
           </div>
     
