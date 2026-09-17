@@ -853,7 +853,7 @@
       </div>
 
       <div style="display: flex; gap: 8px; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
+        <button class="action-show-list-btn" style="flex: 1;" onclick="()">🔍 ค้นหารายการบ้าน</button>
         <button class="action-show-list-btn" style="background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
       </div>
     </div>
@@ -1750,7 +1750,7 @@
     });
 
     function triggerSearchReset() {
-      testShowList();
+      ();
     }
 
     function resetAllFilters() {
@@ -1837,7 +1837,7 @@
           btn.innerText = (value === "เคลียร์ค่า") ? `${topic} ▾` : `${value} ▾`;
         }
       });
-      testShowList();
+      ();
     }
     // ฟังก์ชันวิเคราะห์ข้อความจาก Edit Box แล้วอัปเดตปุ่ม Dropdown อัตโนมัติ
     function applyEditToDropdowns(text) {
@@ -2135,7 +2135,7 @@
       if (radiusSelect) radiusSelect.value = "1";
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       closeLocationModal();
-      testShowList();
+      ();
     }
 
     function openGoogleMaps() {
@@ -2174,7 +2174,7 @@
       }
       
       closeLocationModal();
-      testShowList();
+      ();
     }
 
     // ==========================================
@@ -2431,7 +2431,7 @@
                     
                     // 3. หน่วงเวลาเล็กน้อย (300ms) เพื่อให้ UI ของ Dropdown อัปเดตตัวเองเสร็จสมบูรณ์ก่อนเรียกฟังก์ชันค้นหา
                     setTimeout(() => {
-                      testShowList();
+                      ();
                     }, 300);
                   }
             
@@ -2711,7 +2711,7 @@
             <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
               💰 ${price}
             </div>
-
+            /*
             // --- ส่วน Logic ดึงภาพบ้าน 1 ภาพจาก Database ---
             let houseImgUrl = "";
             if (Array.isArray(item.images) && item.images.length > 0) {
@@ -2727,6 +2727,7 @@
               : '';  
             // --- ส่วนเรนเดอร์วางภาพไว้เหนือปุ่มคุยกับเจ้าของ ---
             ${houseImageHtml}
+            */
             
             <button class="chat-owner-btn">
               💬 คุยกับเจ้าของ
