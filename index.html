@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-5
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -975,17 +975,14 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 65vh; overflow-y: auto; padding-right: 4px;">
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ราคาเช่า')">ราคาเช่า ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
+          <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ราคาขาย (ตัวเลขเต็ม)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+          <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ราคาเช่า (ตัวเลขเต็ม)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('เขต/อำเภอ')">เขต/อำเภอ ▾</button>
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
+          <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="เนื้อที่ (ตัวเลขเต็ม)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openLocationModal()">📍 ปักหมุดพิกัด</button>          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
         </div>
         
         <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>
