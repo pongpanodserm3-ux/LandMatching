@@ -2218,7 +2218,16 @@
       }
       const radiusSelect = document.getElementById('radiusSelect');
       if (radiusSelect) radiusSelect.value = "1";
+      
+      // 1. คืนค่าปุ่มพิกัดหน้าแรก (ของเดิม)
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
+      
+      // 2. คืนค่าปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+      if (postLocationBtn) {
+        postLocationBtn.innerText = '📍 ปักหมุดพิกัด';
+      }
+
       closeLocationModal();
       testShowList();
     }
