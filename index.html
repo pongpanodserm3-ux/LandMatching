@@ -2793,34 +2793,52 @@
       container.innerHTML = htmlContent;
     }
     
+// ==========================================
+    // ฟังก์ชันค้นหาและดึงรายการบ้านจาก Supabase
     // ==========================================
-    // ฟังก์ชันทดสอบดึงข้อมูล/ค้นหา แล้วส่งต่อให้ renderPropertyList
-    // ==========================================
-    function testShowList() {
-      console.log("กำลังค้นหารายการบ้าน...");
-    
-      // ตัวอย่างข้อมูลจำลอง (Mock Data) สำหรับทดสอบการแสดงผล
-      const mockProperties = [
-        {
-          id: 1,
-          project: 'บ้านเดี่ยว 2 ชั้น หลังมุม สุขุมวิท',
-          price: '5,900,000 บาท',
-          'เขต/อำเภอ': 'วัฒนา',
-          'จังหวัด': 'กทม.',
-          image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=300'
-        },
-        {
-          id: 2,
-          project: 'คอนโดวิวสระว่ายน้ำ ใกล้ BTS',
-          price: '15,000 บาท/เดือน',
-          'เขต/อำเภอ': 'จตุจักร',
-          'จังหวัด': 'กทม.',
-          image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300'
+    async function testShowList() {
+      const container = document.getElementById('resultsContainer');
+      if (!container) return;
+
+      container.innerHTML = '<div style="text-align:center; padding:30px; font-weight:bold; color:var(--btn-blue);">⏳ กำลังโหลดรายการบ้าน...</div>';
+
+      try {
+        let query = supabaseClient.from('properties').select('*');
+
+        // 1. อ่านค่าจากปุ่มตัวกรอง (ใช้ data-value หรือลบลูกศร ▾ ออก)
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+          const rawVal = btn.getAttribute('data-value') || btn.innerText.replace('▾', '').trim();
+          const onClick = btn.getAttribute('onclick') || '';
+
+          if (rawVal && !rawVal.includes('▾') && !rawVal.startsWith('เลือก')) {
+            if (onClick.includes('ขาย/เช่า')) query = query.ilike('แบบราคา', `%${rawVal}%`);
+            else if (onClick.includes('คอนโด/บ้าน')) query = query.ilike('ประเภทอสังหา', `%${rawVal}%`);
+            else if (onClick.includes('จังหวัด')) query = query.ilike('จังหวัด', `%${rawVal}%`);
+            else if (onClick.includes('เขต/อำเภอ')) query = query.ilike('เขต/อำเภอ', `%${rawVal}%`);
+            else if (onClick.includes('ถนน')) query = query.ilike('ถนน', `%${rawVal}%`);
+            else if (onClick.includes('โครงการ')) query = query.ilike('โครงการ', `%${rawVal}%`);
+          }
+        });
+
+        // 2. อ่านค่าจาก Edit Box และแปลงคำว่า "หาซื้อ" / "ต้องการซื้อ" เป็น "ขาย"
+        let searchText = document.getElementById('customEditBox')?.value.trim() || '';
+        if (searchText) {
+          if (searchText.includes('หาซื้อ') || searchText.includes('ต้องการซื้อ')) {
+            searchText = searchText.replace(/หาซื้อ|ต้องการซื้อ/g, 'ขาย');
+          }
+          query = query.or(`โครงการ.ilike.%${searchText}%,ประเภทอสังหา.ilike.%${searchText}%,จังหวัด.ilike.%${searchText}%,เขต/อำเภอ.ilike.%${searchText}%`);
         }
-      ];
-    
-      // เรียกใช้ฟังก์ชันแสดงผลโดยส่งข้อมูลเข้าไป
-      renderPropertyList(mockProperties);
+
+        const { data: properties, error } = await query.limit(20);
+
+        if (error) throw error;
+
+        renderPropertiesList(properties || []);
+      } catch (err) {
+        console.error("Fetch properties error:", err);
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:red;">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: ${err.message}</div>`;
+      }
     }
 
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
@@ -2873,54 +2891,60 @@
       }
     }
 
-    function renderProperties(properties) {
+// ==========================================
+    // ฟังก์ชันแสดงผลการ์ดรายการบ้าน
+    // ==========================================
+    function renderPropertiesList(items) {
       const container = document.getElementById('resultsContainer');
-      if (!properties || properties.length === 0) {
-        if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
-        }
+      if (!container) return;
+
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#777; font-size:15px;">🔍 ไม่พบรายการบ้านที่ตรงกับเงื่อนไขการค้นหา</div>';
         return;
       }
 
-      properties.forEach(item => {
-        const key = item.postId || item.url || item.id;
-        if (AppState.pagination.renderedKeys.has(key)) return;
-        AppState.pagination.renderedKeys.add(key);
-
-        const card = document.createElement('div');
-        card.style.cssText = 'background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer; position: relative;';
-        card.onclick = () => showDetailModal(item);
+      let html = '';
+      items.forEach(item => {
+        const title = getPropValue(item, ['โครงการ', 'project', 'title'], 'บ้านพักอาศัย');
+        const type = getPropValue(item, ['ประเภทอสังหา', 'type'], 'อสังหาริมทรัพย์');
+        const price = getPropValue(item, ['ราคาขาย', 'ราคาเช่า', 'price'], 'สอบถามราคา');
+        const location = `${getPropValue(item, ['เขต/อำเภอ'], '')} ${getPropValue(item, ['จังหวัด'], '')}`.trim() || 'ไม่ระบุตำแหน่ง';
         
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        const titleText = item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์';
-        
-        card.innerHTML = `
-          <div style="font-size: 16px; font-weight: bold; color: var(--text-main); margin-bottom: 5px;">
-            ${titleText}
-          </div>
-          <div style="font-size: 14px; color: #555; margin-bottom: 8px;">
-            📍 ${item.district || ''} ${item.province || ''}${distanceText}
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-            <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
-              💰 ${price}
-            </div>
-            <button class="chat-owner-btn">
-              💬 คุยกับเจ้าของ
-            </button>
-          </div>
-        `;
-
-        const chatBtn = card.querySelector('.chat-owner-btn');
-        if (chatBtn) {
-          chatBtn.onclick = (e) => {
-            openOwnerChat(item, e);
-          };
+        // จัดการเรื่องรูปภาพ
+        let images = [];
+        const rawImg = getPropValue(item, ['url', 'images', 'image_url'], '');
+        if (rawImg) {
+          if (rawImg.startsWith('[')) {
+            try { images = JSON.parse(rawImg); } catch(e) { images = [rawImg]; }
+          } else {
+            images = rawImg.split(',').map(s => s.trim());
+          }
+        }
+        if (images.length === 0 || !images[0]) {
+          images = ['https://via.placeholder.com/300x200?text=No+Image'];
         }
 
-        container.appendChild(card);
+        const imgSliderHtml = images.map(imgUrl => `<img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Error'" />`).join('');
+
+        html += `
+          <div class="property-card">
+            <div class="card-left-info">
+              <div style="font-weight:bold; font-size:15px; color:var(--text-main);">${title}</div>
+              <div style="font-size:13px; color:#666;">🏷️ ${type}</div>
+              <div style="font-size:13px; color:#888;">📍 ${location}</div>
+              <div style="font-weight:bold; font-size:15px; color:#d9534f; margin-top:4px;">💰 ${price}</div>
+            </div>
+            <div class="card-center-action">
+              <button class="chat-owner-btn" onclick='openOwnerChat(${JSON.stringify(item).replace(/'/g, "&apos;")}, event)'>💬 คุยกับเจ้าของ</button>
+            </div>
+            <div class="card-right-slider">
+              ${imgSliderHtml}
+            </div>
+          </div>
+        `;
       });
+
+      container.innerHTML = html;
     }
 
     function showDetailModal(item) {
