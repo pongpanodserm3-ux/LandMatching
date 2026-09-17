@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-6
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2246,16 +2246,34 @@
       const lng = document.getElementById('lngInput').value.trim();
       const radiusSelect = document.getElementById('radiusSelect');
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
+      
+      // ส่วนที่เพิ่มใหม่: ค้นหาปุ่ม "ปักหมุดพิกัด" ที่อยู่ในหน้าต่างลงประกาศขายบ้าน (postModalOverlay)
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+
       if (lat && lng) {
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
         selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
+        
+        // 1. อัปเดตข้อความปุ่มพิกัดหน้าแรก (ของเดิม ยังคงอยู่)
         document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
+        
+        // 2. อัปเดตข้อความปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
+        if (postLocationBtn) {
+          postLocationBtn.innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)}`;
+        }
       } else {
         selectedLat = null;
         selectedLng = null;
         selectedRadius = 1;
+        
+        // คืนค่าข้อความปุ่มพิกัดหน้าแรก (ของเดิม)
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
+        
+        // คืนค่าข้อความปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
+        if (postLocationBtn) {
+          postLocationBtn.innerText = '📍 ปักหมุดพิกัด';
+        }
       }
       
       closeLocationModal();
