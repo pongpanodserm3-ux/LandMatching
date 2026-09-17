@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1
+  <link rel="shortcut icon" href="#">//Git_Index_1.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -793,6 +793,18 @@
       box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
     }
     .chat-owner-btn:active { transform: translateY(0); }
+    
+    /* สไตล์ภาพบ้าน 1 ภาพบนการ์ดรายการ */
+    .property-card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      display: block;
+      background-color: #f0f0f0;
+    }
+    
   </style>
 </head>
 <body>
@@ -2699,6 +2711,23 @@
             <div style="font-size: 18px; font-weight: bold; color: #d9534f;">
               💰 ${price}
             </div>
+
+            // --- ส่วน Logic ดึงภาพบ้าน 1 ภาพจาก Database ---
+            let houseImgUrl = "";
+            if (Array.isArray(item.images) && item.images.length > 0) {
+              houseImgUrl = item.images[0];
+            } else if (typeof item.images === 'string' && item.images.trim() !== '') {
+              houseImgUrl = item.images.trim();
+            } else {
+              houseImgUrl = getPropValue(item, ['image_url', 'image', 'img', 'photo_url', 'url'], '');
+            }
+            
+            const houseImageHtml = houseImgUrl 
+              ? `<img src="${houseImgUrl}" alt="ภาพอสังหาริมทรัพย์" class="property-card-img" onerror="this.style.display='none'">` 
+              : '';  
+            // --- ส่วนเรนเดอร์วางภาพไว้เหนือปุ่มคุยกับเจ้าของ ---
+            ${houseImageHtml}
+            
             <button class="chat-owner-btn">
               💬 คุยกับเจ้าของ
             </button>
