@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-4
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -903,9 +903,10 @@
         <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
       </div>
 
-      <div style="display: flex; gap: 8px; margin-top: 4px;">
-        <button class="action-show-list-btn" style="flex: 1;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
-        <button class="action-show-list-btn" style="background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
+      <div style="display: flex; gap: 6px; margin-top: 4px;">
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #bcece0; border-color: #a0d8c8;" onclick="openPostModal()">📝 ลงประกาศ</button>
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
       </div>
     </div>
 
@@ -964,7 +965,32 @@
       </div>
     </div>
   </div>
-
+  <!-- Post Modal (หน้าต่างลงประกาศ) -->
+    <div class="modal-overlay" id="postModalOverlay" style="z-index: 8500; align-items: center;">
+      <div class="dropdown-modal" style="width: 95%; max-width: 420px; padding: 15px;">
+        <span class="close-modal" onclick="closePostModal()">&times;</span>
+        <h3 style="margin-top:0; color: var(--text-main); font-size: 18px; margin-bottom: 12px; text-align: center;">📝 ลงประกาศขายบ้าน</h3>
+        
+        <!-- ใช้ CSS Grid วางดรอปดาวน์ให้เป็นระเบียบและช่องว่างแคบที่สุด (gap: 4px) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 65vh; overflow-y: auto; padding-right: 4px;">
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ราคาเช่า')">ราคาเช่า ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('เขต/อำเภอ')">เขต/อำเภอ ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
+        </div>
+        
+        <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
   <!-- Dropdown Modal -->
   <div class="modal-overlay" id="dropdownModalOverlay">
     <div class="dropdown-modal">
@@ -1879,6 +1905,16 @@
       stopAIVoiceSpeech();
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
+
+    // ฟังก์ชันเปิดหน้าต่างลงประกาศ
+    function openPostModal() {
+      document.getElementById('postModalOverlay').classList.add('active');
+    }
+
+    // ฟังก์ชันปิดหน้าต่างลงประกาศ
+    function closePostModal() {
+      document.getElementById('postModalOverlay').classList.remove('active');
+    }  
 
     function selectDropdownOption(topic, value) {
       closeDropdownModal();
