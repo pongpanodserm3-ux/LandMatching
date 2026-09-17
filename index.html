@@ -1030,26 +1030,24 @@
 
         <!-- ... Code เดิม (ปุ่มสาธารณูปโภคพิเศษ) ... -->
         <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
-        </div>
+</div>
         
-        <!-- เริ่ม: โซนอัปโหลดรูปภาพ (เพิ่มใหม่) -->
+        <!-- เริ่ม: โซนอัปโหลดรูปภาพ (ย้ายเข้ามาอยู่ในโมเดลให้ถูกต้อง) -->
         <div id="imageUploadSection" style="margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
           <div class="upload-header">
             <span id="uploadStatusText">อัปโหลดรูปภาพ (0/8)</span>
           </div>
-          <!-- กล่อง input สำหรับเลือกไฟล์ ซ่อนเอาไว้เพื่อให้ปุ่มเราสวยงามทำงานแทน -->
           <input type="file" id="fileInput" accept="image/*" multiple style="display: none;" onchange="handleFilesSelected(event)">
           
           <button class="upload-main-btn" onclick="document.getElementById('fileInput').click()">
             📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)
           </button>
           
-          <!-- พื้นที่ ที่จะให้ JavaScript มาสร้างกล่อง 8 กล่อง -->
           <div class="upload-grid" id="uploadGrid"></div>
         </div>
         <!-- จบ: โซนอัปโหลดรูปภาพ -->
 
-        <!-- ... Code เดิม (ปุ่มปิดหน้าต่าง) ... -->
+        <!-- ปุ่มปิดหน้าต่าง (มีเพียง 1 ปุ่มด้านล่างสุด) -->
         <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>      
       
       </div>
