@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2089,7 +2089,7 @@
         // 3. ดึงรายการชื่อภาพทั้งหมดจาก Supabase bucket 'property-images' มาเปรียบเทียบ
         const { data: existingFiles, error: listError } = await supabaseClient.storage
           .from('property-images')
-          .list('', { limit: 100 });
+          .list('', { limit: 100, search: `${userId}-` });
 
         // 🔍 เพิ่มจุดตรวจสอบ 1: เช็กว่ามี Error หรือไม่
         if (listError) {
