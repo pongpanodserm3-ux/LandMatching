@@ -3109,47 +3109,6 @@
       }
     }
 
-    // ==========================================
-    // ระบบอัปโหลดรูปภาพ 8 ช่อง (Drag & Drop)
-    // ==========================================
-    let uploadedImages = new Array(8).fill(null); // สร้างกล่องความจำว่างๆ 8 ช่อง
-    let draggedIndex = null; // ตัวแปรจำว่าเรากำลังลากรูปที่เท่าไหร่
-
-    // 1. ฟังก์ชันวาดกล่อง 8 ช่อง
-
-
-    // 2. ฟังก์ชันเมื่อผู้ใช้กดเลือกไฟล์รูป (กระจายรูปลงกล่อง)
-
-
-    // 3. ฟังก์ชันลบรูป
-
-    // 4. ชุดฟังก์ชันระบบลากวาง (สลับตำแหน่งรูป)
-    function handleDragStart(e, index) {
-      draggedIndex = index; // จำไว้ว่าลากจากช่องไหน
-      e.dataTransfer.effectAllowed = 'move';
-    }
-    
-    function handleDragOver(e) {
-      e.preventDefault(); // บังคับอนุญาตให้วางลงช่องนี้ได้
-      e.dataTransfer.dropEffect = 'move';
-    }
-    
-    function handleDrop(e, targetIndex) {
-      e.preventDefault();
-      e.currentTarget.classList.remove('drag-over');
-      
-      // ถ้าไม่ได้ลากอะไรเลย หรือลากไปวางช่องเดิม ให้หยุดการทำงาน
-      if (draggedIndex === null || draggedIndex === targetIndex) return;
-
-      // สลับข้อมูลใน Array
-      const temp = uploadedImages[draggedIndex];
-      uploadedImages[draggedIndex] = uploadedImages[targetIndex];
-      uploadedImages[targetIndex] = temp;
-      
-      draggedIndex = null;
-      renderUploadGrid(); // วาดกล่องใหม่เพื่อให้โชว์รูปที่สลับแล้ว
-    }
-  
   </script>
 </body>
 </html>
