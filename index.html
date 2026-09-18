@@ -3122,11 +3122,6 @@
 
 
     // 3. ฟังก์ชันลบรูป
-    function deleteImage(index, event) {
-      event.stopPropagation(); // กันไม่ให้ไปเผลอกดโดนลากรูปเวลาคลิกลบ
-      uploadedImages[index] = null; // สั่งเคลียร์รูปให้เป็นค่าว่าง
-      renderUploadGrid(); // วาดกล่องใหม่
-    }
 
     // 4. ชุดฟังก์ชันระบบลากวาง (สลับตำแหน่งรูป)
     function handleDragStart(e, index) {
