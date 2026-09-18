@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2118,7 +2118,7 @@
           while (loopCount < 10) {
             let paddedNum = currentNum.toString().padStart(3, '0');
             // ตั้งชื่อไฟล์เป็นตัวเลขเพียวๆ ไม่มีขีดกลาง (เช่น 10001.jpg)
-            let candidateFileName = `${userId}${propertyId}${paddedNum}.${fileExt}`;
+            let candidateFileName = `${userId}-${propertyId}-${paddedNum}.${fileExt}`;
             
             // เปรียบเทียบชื่อไฟล์ที่สร้างกับชื่อที่มีใน Supabase bucket และชื่อที่ใช้ในรอบนี้
             if (existingFileNames.includes(candidateFileName) || usedFileNamesInSession.includes(candidateFileName)) {
