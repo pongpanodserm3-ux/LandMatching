@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-10.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-10.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1969,40 +1969,34 @@
     window.uploadedFiles = window.uploadedFiles || [];
 
     function handleFilesSelected(event) {
-      const files = (event.target && event.target.files) ? Array.from(event.target.files) : [];
+      const fileInput = document.getElementById('fileInput');
+      // ดึงไฟล์จากช่องรับภาพ
+      const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
       if (files.length === 0) return;
 
       if (!window.uploadedFiles) window.uploadedFiles = [];
 
       for (let file of files) {
         if (window.uploadedFiles.length < 8) {
-          window.uploadedFiles.push(file);
+          window.uploadedFiles.push(file); // นำรูปไปเก็บในหน่วยความจำ
         } else {
           alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ");
           break;
         }
       }
+      
+      // เคลียร์ค่า input ทันที ป้องกันปัญหาเลือกไฟล์ซ้ำแล้วไม่ตอบสนอง
+      if (fileInput) fileInput.value = ''; 
+      
       renderUploadGrid();
     }
 
-    function renderUploadGrid() {
+  function renderUploadGrid() {
       const grid = document.getElementById('uploadGrid');
       const statusText = document.getElementById('uploadStatusText');
       if (!grid) return;
 
       if (!window.uploadedFiles) window.uploadedFiles = [];
-
-      // ซิงก์รูปภาพทั้งหมดกลับเข้าไปในตัวแประบบเพื่อป้องกันปัญหามองไม่เห็นไฟล์
-      const fileInput = document.getElementById('fileInput');
-      if (fileInput && typeof DataTransfer !== 'undefined') {
-        try {
-          const dt = new DataTransfer();
-          window.uploadedFiles.forEach(f => dt.items.add(f));
-          fileInput.files = dt.files;
-        } catch (e) {
-          console.error("DataTransfer sync error:", e);
-        }
-      }
 
       if (statusText) {
         statusText.innerText = `อัปโหลดรูปภาพ (${window.uploadedFiles.length}/8)`;
@@ -2030,8 +2024,8 @@
         const emptyBox = document.createElement('div');
         emptyBox.className = 'upload-box';
         emptyBox.onclick = () => {
-          if (fileInput) fileInput.value = '';
-          fileInput.click();
+          const fileInput = document.getElementById('fileInput');
+          if (fileInput) fileInput.click();
         };
         emptyBox.innerHTML = '<span class="empty-text">+</span>';
         grid.appendChild(emptyBox);
@@ -2045,11 +2039,15 @@
     }
 
   // ฟังก์ชันเปิดหน้าต่างลงประกาศ
+  // ฟังก์ชันเปิดหน้าต่างลงประกาศ
     function openPostModal() {
+      // เคลียร์รูปภาพเก่าที่อาจจะค้างอยู่ทิ้งไปก่อน
+      window.uploadedFiles = []; 
       const fileInput = document.getElementById('fileInput');
       if (fileInput) fileInput.value = '';
+      
       document.getElementById('postModalOverlay').classList.add('active');
-      renderUploadGrid(); // วาดช่อง 8 ช่องทันทีที่เปิดหน้าต่าง
+      renderUploadGrid(); // วาดช่อง 8 ช่องใหม่ทันทีที่เปิดหน้าต่าง
     }
 
     // ฟังก์ชันปิดหน้าต่างลงประกาศ
@@ -2057,21 +2055,15 @@
       document.getElementById('postModalOverlay').classList.remove('active');
     }  
 
-    // ==========================================
+// ==========================================
     // ฟังก์ชันทำงานเมื่อกดปุ่ม "ลงประกาศ"
     // ==========================================
     async function submitPost() {
-      // 1. ดึงรูปภาพทั้งหมดจากอาเรย์ window.uploadedFiles หรือ fileInput
-      const fileInput = document.getElementById('fileInput');
-      let files = [];
-      if (window.uploadedFiles && window.uploadedFiles.length > 0) {
-        files = window.uploadedFiles;
-      } else if (fileInput && fileInput.files && fileInput.files.length > 0) {
-        files = Array.from(fileInput.files);
-      }
+      // 1. ดึงรูปภาพทั้งหมดจากหน่วยความจำที่เราเก็บไว้ (window.uploadedFiles)
+      let files = window.uploadedFiles || [];
       
-      // 2. ตรวจสอบว่าผู้ใช้เลือกรูปไว้หรือยัง
-      if (!files || files.length === 0) {
+      // 2. ตรวจสอบว่ามีรูปภาพในหน่วยความจำหรือไม่
+      if (files.length === 0) {
         alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป ก่อนลงประกาศนะครับ");
         return;
       }
@@ -2087,8 +2079,9 @@
         
         alert("เตรียมบันทึกรูปภาพและลงประกาศสำเร็จ! (นำโค้ด API/Database ของคุณมาใส่ตรงนี้ได้เลย)");
         
-        // 4. ล้างค่ารูปและปิดหน้าต่าง
+        // 4. ล้างค่ารูปและปิดหน้าต่างหลังทำสำเร็จ
         window.uploadedFiles = [];
+        const fileInput = document.getElementById('fileInput');
         if (fileInput) fileInput.value = '';
         renderUploadGrid();
         closePostModal();
