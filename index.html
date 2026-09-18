@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-11-1
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-11-2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2082,9 +2082,9 @@
           const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์ เช่น .jpg, .png
           const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
           
-          // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property_image'
+          // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property-images'
           const { data, error } = await supabaseClient.storage
-            .from('property_image')
+            .from('property-images')
             .upload(fileName, file, {
               cacheControl: '3600',
               upsert: false // ไม่เขียนทับไฟล์เดิม
@@ -2099,7 +2099,7 @@
           // หากอัปโหลดผ่าน ให้ดึง URL สาธารณะ (Public URL) ของรูปภาพเก็บไว้ 
           // (เผื่อนำไปบันทึกลงตารางประกาศขายบ้านในขั้นตอนต่อไป)
           const { data: publicUrlData } = supabaseClient.storage
-            .from('property_image')
+            .from('property-images')
             .getPublicUrl(fileName);
             
           if (publicUrlData) {
