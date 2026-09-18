@@ -2086,64 +2086,56 @@
         // 2. กำหนด property_id (ตอนนี้ในฟังก์ชันก่อนกดบันทึกยังไม่มี property_id จึงให้เป็น 0 ตามเงื่อนไข)
         let propertyId = 0; 
         
-        // 3. ไปเช็คที่ฐานข้อมูล (Storage) ก่อนว่า ผู้ใช้คนนี้และโพสต์นี้ มีรูปเบอร์อะไรอยู่แล้วบ้าง
-        const filePrefix = `${userId}${propertyId}`;
+        // 3. ดึงรายการชื่อภาพทั้งหมดจาก Supabase bucket 'property-images' มาเปรียบเทียบ
         const { data: existingFiles, error: listError } = await supabaseClient.storage
           .from('property-images')
-          .list('', { search: filePrefix });
+          .list('', { limit: 100 });
           
-        let usedNumbers = []; // ตัวแปรสำหรับเก็บ "เบอร์ภาพ" ที่เคยถูกใช้ไปแล้ว
+        let existingFileNames = [];
         if (existingFiles && !listError) {
-          existingFiles.forEach(file => {
-            // เช็คว่าชื่อไฟล์ที่เคยมีอยู่ ลงท้ายด้วยเลข 3 หลักอะไร (เช่น -001.jpg จะดึงเอา 001 มาเก็บไว้)
-            const match = file.name.match(/(\d{3})\.\w+$/);
-            if (match) {
-              usedNumbers.push(match[1]); 
-            }
-          });
+          existingFileNames = existingFiles.map(file => file.name);
         }
+        
+        let usedFileNamesInSession = []; // เก็บชื่อภาพที่ถูกสร้างขึ้นในรอบนี้เพื่อกันซ้ำกันเอง
         
         // วนลูปตามจำนวนรูปที่ผู้ใช้อัปโหลดเข้ามาใหม่
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์ เช่น .jpg, .png
+          const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์
           
-        // 4. เช็คชื่อจาก Supabase เริ่มต้นที่เบอร์ 1 หากซ้ำให้บวกทีละ 1
-        // (เพิ่มเงื่อนไข: ถ้าเลขถึง 009 ให้เซตกลับเป็น 001 ใหม่ และวนซ้ำแบบนี้สูงสุด 10 รอบ)
-          let imageNumberStr = "";
-          let currentNum = 1; // กำหนดค่าเริ่มต้นเป็นเบอร์ 1
-          let loopCount = 0;  // ตัวแปรสำหรับนับรอบที่วน
+          let fileName = "";
+          let currentNum = 1; // เริ่มต้นที่เบอร์ 1
+          let loopCount = 0;  // ตัวแปรนับจำนวนรอบที่วนซ้ำ
           
           while (loopCount < 10) {
-            // แปลงตัวเลขให้เป็นรูปแบบ 3 หลัก (เช่น 1 เปลี่ยนเป็น "001", 8 เปลี่ยนเป็น "008")
-            let paddedNum = currentNum.toString().padStart(3, '0'); 
+            let paddedNum = currentNum.toString().padStart(3, '0');
+            // ตั้งชื่อไฟล์เป็นตัวเลขเพียวๆ ไม่มีขีดกลาง (เช่น 10001.jpg)
+            let candidateFileName = `${userId}${propertyId}${paddedNum}.${fileExt}`;
             
-            // นำชื่อเบอร์ไปตรวจสอบกับข้อมูลที่ Supabase ส่งมา (usedNumbers) ว่าซ้ำไหม
-            if (usedNumbers.includes(paddedNum)) {
-              // 👉 "ถ้าเกิดชื่อมีการซ้ำ ให้เพิ่มไปทีละ 1"
-              currentNum++; 
+            // เปรียบเทียบชื่อไฟล์ที่สร้างกับชื่อที่มีใน Supabase bucket และชื่อที่ใช้ในรอบนี้
+            if (existingFileNames.includes(candidateFileName) || usedFileNamesInSession.includes(candidateFileName)) {
+              // ถ้าซ้ำ ให้บวกเพิ่ม 1
+              currentNum++;
               
-              // 👉 ถ้าเพิ่มจนถึง 9 เมื่อไหร่ ให้ปรับเป็น 1 ใหม่ และนับว่าวนไปแล้ว 1 รอบ
-              if (currentNum >= 9) {
+              // เมื่อเป็น 9 ให้เซตกลับเป็น 1 และนับรอบเพิ่ม 1 รอบ
+              if (currentNum > 9) {
                 currentNum = 1;
-                loopCount++; // เพิ่มจำนวนรอบให้ระบบรู้ว่าวนกลับมาเริ่มต้นใหม่แล้ว
+                loopCount++;
               }
             } else {
-              // 👉 "หากชื่อไม่ซ้ำ ก็โยนเข้าไปได้เลย"
-              imageNumberStr = paddedNum; // ยึดเอาเบอร์นี้เป็นชื่อไฟล์
-              usedNumbers.push(paddedNum); // บันทึกชื่อนี้เก็บไว้ เพื่อให้รูปลำดับต่อไปไม่ใช้ชื่อซ้ำกัน
-              break; // ได้เบอร์ภาพแล้ว สั่งหยุดลูปทันที
+              // ถ้าไม่ซ้ำ ยึดชื่อนี้แล้วบันทึกลงรายการ
+              fileName = candidateFileName;
+              usedFileNamesInSession.push(candidateFileName);
+              break;
             }
           }
           
-          // 👉 "ห้ามมากกว่านี้หรือห้ามน้อยกว่านี้" (ถ้าบวกลบเลขจนเกิน 8 แล้ว ยังหาเบอร์ว่างไม่ได้)
-          if (imageNumberStr === "") {
-            console.warn("ไม่สามารถเซฟรูปนี้ได้ เพราะรูปเต็มโควต้า 001 ถึง 008 แล้ว");
-            continue; // ให้ข้ามการอัปโหลดไฟล์ภาพนี้ไปเลย
+          // หากวนซ้ำครบ 10 รอบแล้วยังซ้ำทั้งหมด ไม่ต้องบันทึกภาพนี้
+          if (fileName === "") {
+            console.warn(`ไม่สามารถบันทึกภาพที่ ${i + 1} ได้ เนื่องจากชื่อซ้ำครบ 10 รอบแล้ว`);
+            continue;
           }
-          
-          // 5. ตั้งชื่อไฟล์ภาพใหม่ ตามเงื่อนไขเป๊ะๆ: "user_id-property_id-เบอร์ภาพ"
-          const fileName = `${userId}${propertyId}${imageNumberStr}.${fileExt}`;
+
           
           // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property-images'
           const { data, error } = await supabaseClient.storage
