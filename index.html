@@ -3116,75 +3116,10 @@
     let draggedIndex = null; // ตัวแปรจำว่าเรากำลังลากรูปที่เท่าไหร่
 
     // 1. ฟังก์ชันวาดกล่อง 8 ช่อง
-    function renderUploadGrid() {
-      const grid = document.getElementById('uploadGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-      let count = 0;
 
-      for (let i = 0; i < 8; i++) {
-        const box = document.createElement('div');
-        box.className = 'upload-box';
-        
-        // ถ้าเป็นกล่องแรก (i=0) ให้เน้นกรอบแดง
-        if (i === 0) box.classList.add('box-1-highlight');
-        
-        // --- ใส่ความสามารถลากและวาง (Drag & Drop) ---
-        box.setAttribute('draggable', true);
-        box.addEventListener('dragstart', (e) => handleDragStart(e, i));
-        box.addEventListener('dragover', handleDragOver);
-        box.addEventListener('drop', (e) => handleDrop(e, i));
-        box.addEventListener('dragenter', (e) => e.target.classList.add('drag-over'));
-        box.addEventListener('dragleave', (e) => e.target.classList.remove('drag-over'));
-
-        // ใส่ป้ายคำว่า "ภาพปก" ที่กล่องแรก
-        if (i === 0) {
-          box.innerHTML += `<div class="cover-label">ภาพปก</div>`;
-        }
-
-        if (uploadedImages[i]) {
-          // กรณีช่องนั้นมีรูปแล้ว
-          box.classList.add('has-image');
-          box.innerHTML += `<img src="${uploadedImages[i]}" alt="img-${i+1}">`;
-          box.innerHTML += `<button class="delete-img-btn" onclick="deleteImage(${i}, event)">✕</button>`;
-          count++;
-        } else {
-          // กรณีช่องนั้นยังว่างอยู่
-          box.innerHTML += `<span class="empty-text">📷<br><span style="font-size:10px; font-weight:normal;">${i+1}</span></span>`;
-        }
-        grid.appendChild(box);
-      }
-      
-      // อัปเดตข้อความบน Header (เช่น อัปโหลดรูปภาพ 3/8)
-      document.getElementById('uploadStatusText').innerText = `อัปโหลดรูปภาพ (${count}/8)`;
-    }
 
     // 2. ฟังก์ชันเมื่อผู้ใช้กดเลือกไฟล์รูป (กระจายรูปลงกล่อง)
-    function handleFilesSelected(event) {
-      const files = Array.from(event.target.files);
-      if (files.length === 0) return;
 
-      let fileIndex = 0;
-      // วนลูปหาช่องว่างใน 8 ช่อง
-      for (let i = 0; i < 8; i++) {
-        // ถ้าช่องว่าง และ ยังมีไฟล์รูปเหลือที่ยังไม่ได้ยัดลงช่อง
-        if (!uploadedImages[i] && fileIndex < files.length) {
-          const file = files[fileIndex];
-          const reader = new FileReader();
-          
-          (function(index) {
-            reader.onload = function(e) {
-              uploadedImages[index] = e.target.result; // เก็บรูปแปลงเป็น Base64
-              renderUploadGrid(); // วาดกล่องใหม่เพื่อให้รูปโชว์
-            };
-          })(i);
-          
-          reader.readAsDataURL(file);
-          fileIndex++;
-        }
-      }
-      event.target.value = ''; // เคลียร์ค่า input ป้องกันบัคเลือกรูปเดิมไม่ติด
-    }
 
     // 3. ฟังก์ชันลบรูป
     function deleteImage(index, event) {
