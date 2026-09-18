@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-10
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-10.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1963,10 +1963,70 @@
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
 
-    // ฟังก์ชันเปิดหน้าต่างลงประกาศ (แก้ใหม่)
+    // ==========================================
+    // ตัวแปรและฟังก์ชันจัดการการอัปโหลดรูปภาพ (8 ช่อง)
+    // ==========================================
+    let uploadedFiles = [];
+
+    function handleFilesSelected(event) {
+      const files = Array.from(event.target.files);
+      for (let file of files) {
+        if (uploadedFiles.length < 8) {
+          uploadedFiles.push(file);
+        } else {
+          alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ");
+          break;
+        }
+      }
+      event.target.value = ''; // เคลียร์ค่า input เพื่อให้เลือกรูปซ้ำหรือเลือกเพิ่มได้
+      renderUploadGrid();
+    }
+
+    function renderUploadGrid() {
+      const grid = document.getElementById('uploadGrid');
+      const statusText = document.getElementById('uploadStatusText');
+      if (!grid) return;
+
+      if (statusText) {
+        statusText.innerText = `อัปโหลดรูปภาพ (${uploadedFiles.length}/8)`;
+      }
+
+      grid.innerHTML = '';
+
+      // 1. แสดงช่องรูปภาพที่อัปโหลดแล้ว
+      uploadedFiles.forEach((file, index) => {
+        const box = document.createElement('div');
+        box.className = `upload-box has-image ${index === 0 ? 'box-1-highlight' : ''}`;
+        
+        const imgUrl = URL.createObjectURL(file);
+        box.innerHTML = `
+          <img src="${imgUrl}" alt="uploaded-${index}">
+          ${index === 0 ? '<span class="cover-label">ภาพปก</span>' : ''}
+          <button class="delete-img-btn" onclick="deleteImage(${index}); event.stopPropagation();">&times;</button>
+        `;
+        grid.appendChild(box);
+      });
+
+      // 2. แสดงช่องว่างส่วนที่เหลือให้ครบ 8 ช่อง
+      const remainingSlots = 8 - uploadedFiles.length;
+      for (let i = 0; i < remainingSlots; i++) {
+        const emptyBox = document.createElement('div');
+        emptyBox.className = 'upload-box';
+        emptyBox.onclick = () => document.getElementById('fileInput').click();
+        emptyBox.innerHTML = '<span class="empty-text">+</span>';
+        grid.appendChild(emptyBox);
+      }
+    }
+
+    function deleteImage(index) {
+      uploadedFiles.splice(index, 1);
+      renderUploadGrid();
+    }
+
+    // ฟังก์ชันเปิดหน้าต่างลงประกาศ
     function openPostModal() {
       document.getElementById('postModalOverlay').classList.add('active');
-      renderUploadGrid(); // <--- เพิ่มบรรทัดนี้ เพื่อให้ระบบวาดช่อง 8 ช่องทันทีที่เปิดหน้าต่าง
+      renderUploadGrid(); // วาดช่อง 8 ช่องทันทีที่เปิดหน้าต่าง
     }
 
     // ฟังก์ชันปิดหน้าต่างลงประกาศ
@@ -1975,42 +2035,36 @@
     }  
 
     // ==========================================
-    // ฟังก์ชันใหม่: ทำงานเมื่อกดปุ่ม "ลงประกาศ"
+    // ฟังก์ชันทำงานเมื่อกดปุ่ม "ลงประกาศ"
     // ==========================================
     async function submitPost() {
-      // 1. ไปสั่งให้ระบบมองหา "ช่องอัปโหลดไฟล์" ในหน้าเว็บ (อ้างอิงจาก id="fileInput")
+      // 1. ดึงรูปภาพทั้งหมดจากอาเรย์ uploadedFiles
       const fileInput = document.getElementById('fileInput');
+      const files = uploadedFiles.length > 0 ? uploadedFiles : (fileInput && fileInput.files ? Array.from(fileInput.files) : []); 
       
-      // 2. ดึงรูปภาพทั้งหมดที่ผู้ใช้เลือกเอาไว้ออกมา
-      const files = fileInput.files; 
-      
-      // 3. ตรวจสอบก่อนว่าผู้ใช้ได้เลือกรูปไว้หรือยัง?
-      if (files.length === 0) {
+      // 2. ตรวจสอบว่าผู้ใช้เลือกรูปไว้หรือยัง
+      if (!files || files.length === 0) {
         alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป ก่อนลงประกาศนะครับ");
-        return; // ถ้ายังไม่เลือกรูป ให้ระบบหยุดทำงานตรงนี้ ไม่ต้องไปต่อ
+        return;
       }
 
-      // 4. ถ้ามีรูปแล้ว เราจะนำรูปทั้งหมดมาจัดเตรียมใส่กล่อง (FormData) เพื่อส่งไปเซฟ
+      // 3. จัดเตรียมไฟล์รูปใส่ FormData
       const formData = new FormData();
       for (let i = 0; i < files.length; i++) {
         formData.append('images[]', files[i]);
       }
 
       try {
-        // --- 🔴 ถึงตรงนี้ ระบบจับรูปภาพมาได้สำเร็จ 100% แล้วครับ! ---
-        // (เนื่องจากครูไม่เห็นภาพที่คุณแนบมา จึงเขียนเป็นโครงสร้างที่สมบูรณ์เตรียมไว้ให้)
-        // พื้นที่ตรงนี้ คุณสามารถนำโค้ดเซฟรูปลง Database (เช่น โค้ดของ Supabase Storage) มาวางได้เลยครับ
-        
         console.log("จำนวนรูปภาพที่เตรียมเซฟคือ:", files.length, "รูป");
         
-        // สมมติว่าเซฟรูปเสร็จแล้ว เราจะแสดงข้อความแจ้งผู้ใช้
         alert("เตรียมบันทึกรูปภาพและลงประกาศสำเร็จ! (นำโค้ด API/Database ของคุณมาใส่ตรงนี้ได้เลย)");
         
-        // 5. เมื่อทุกอย่างทำงานเสร็จเรียบร้อย ให้ปิดหน้าต่างอัตโนมัติ
+        // 4. ล้างค่ารูปและปิดหน้าต่าง
+        uploadedFiles = [];
+        if (fileInput) fileInput.value = '';
         closePostModal();
 
       } catch (error) {
-        // ถ้าเกิดปัญหาระหว่างเซฟรูปภาพ จะเด้งข้อความแจ้งเตือน
         console.error("เกิดข้อผิดพลาดในการเซฟภาพ:", error);
         alert("เซฟภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้งครับ");
       }
