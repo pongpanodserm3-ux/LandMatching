@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-9
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-10
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1044,9 +1044,8 @@
         </div>
         <!-- จบ: โซนอัปโหลดรูปภาพ -->
 
-        <!-- ปุ่มปิดหน้าต่าง (มีเพียง 1 ปุ่มด้านล่างสุด) -->
-        <button style="margin-top: 15px; width: 100%; background: #4a83cc; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="closePostModal()">ปิดหน้าต่าง</button>      
-      
+        <!-- ปุ่มลงประกาศ (แทนปุ่มปิดหน้าต่างเดิม) -->
+        <button style="margin-top: 15px; width: 100%; background: #159947; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="submitPost()">ลงประกาศ</button>      
       </div>
     </div>
   <!-- Dropdown Modal -->
@@ -1975,6 +1974,48 @@
       document.getElementById('postModalOverlay').classList.remove('active');
     }  
 
+    // ==========================================
+    // ฟังก์ชันใหม่: ทำงานเมื่อกดปุ่ม "ลงประกาศ"
+    // ==========================================
+    async function submitPost() {
+      // 1. ไปสั่งให้ระบบมองหา "ช่องอัปโหลดไฟล์" ในหน้าเว็บ (อ้างอิงจาก id="fileInput")
+      const fileInput = document.getElementById('fileInput');
+      
+      // 2. ดึงรูปภาพทั้งหมดที่ผู้ใช้เลือกเอาไว้ออกมา
+      const files = fileInput.files; 
+      
+      // 3. ตรวจสอบก่อนว่าผู้ใช้ได้เลือกรูปไว้หรือยัง?
+      if (files.length === 0) {
+        alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป ก่อนลงประกาศนะครับ");
+        return; // ถ้ายังไม่เลือกรูป ให้ระบบหยุดทำงานตรงนี้ ไม่ต้องไปต่อ
+      }
+
+      // 4. ถ้ามีรูปแล้ว เราจะนำรูปทั้งหมดมาจัดเตรียมใส่กล่อง (FormData) เพื่อส่งไปเซฟ
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images[]', files[i]);
+      }
+
+      try {
+        // --- 🔴 ถึงตรงนี้ ระบบจับรูปภาพมาได้สำเร็จ 100% แล้วครับ! ---
+        // (เนื่องจากครูไม่เห็นภาพที่คุณแนบมา จึงเขียนเป็นโครงสร้างที่สมบูรณ์เตรียมไว้ให้)
+        // พื้นที่ตรงนี้ คุณสามารถนำโค้ดเซฟรูปลง Database (เช่น โค้ดของ Supabase Storage) มาวางได้เลยครับ
+        
+        console.log("จำนวนรูปภาพที่เตรียมเซฟคือ:", files.length, "รูป");
+        
+        // สมมติว่าเซฟรูปเสร็จแล้ว เราจะแสดงข้อความแจ้งผู้ใช้
+        alert("เตรียมบันทึกรูปภาพและลงประกาศสำเร็จ! (นำโค้ด API/Database ของคุณมาใส่ตรงนี้ได้เลย)");
+        
+        // 5. เมื่อทุกอย่างทำงานเสร็จเรียบร้อย ให้ปิดหน้าต่างอัตโนมัติ
+        closePostModal();
+
+      } catch (error) {
+        // ถ้าเกิดปัญหาระหว่างเซฟรูปภาพ จะเด้งข้อความแจ้งเตือน
+        console.error("เกิดข้อผิดพลาดในการเซฟภาพ:", error);
+        alert("เซฟภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้งครับ");
+      }
+    }
+  
     function selectDropdownOption(topic, value) {
       closeDropdownModal();
       const filterBtns = document.querySelectorAll('.filter-btn');
