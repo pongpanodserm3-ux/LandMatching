@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-12-3
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-12-4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2090,11 +2090,19 @@
         const { data: existingFiles, error: listError } = await supabaseClient.storage
           .from('property-images')
           .list('', { limit: 100 });
-          
+
+        // 🔍 เพิ่มจุดตรวจสอบ 1: เช็กว่ามี Error หรือไม่
+        if (listError) {
+          console.error("❌ เกิดข้อผิดพลาดในการดึงชื่อไฟล์จาก Storage:", listError.message);
+        }
+        
         let existingFileNames = [];
         if (existingFiles && !listError) {
           existingFileNames = existingFiles.map(file => file.name);
         }
+
+        // 🔍 เพิ่มจุดตรวจสอบ 2: ปริ้นท์รายชื่อไฟล์ทั้งหมดที่ดึงมาได้
+        console.log("📁 รายชื่อไฟล์ทั้งหมดที่ดึงมาจาก Supabase Storage (จำนวน", existingFileNames.length, "ไฟล์):", existingFileNames);
         
         let usedFileNamesInSession = []; // เก็บชื่อภาพที่ถูกสร้างขึ้นในรอบนี้เพื่อกันซ้ำกันเอง
         
@@ -2114,6 +2122,8 @@
             
             // เปรียบเทียบชื่อไฟล์ที่สร้างกับชื่อที่มีใน Supabase bucket และชื่อที่ใช้ในรอบนี้
             if (existingFileNames.includes(candidateFileName) || usedFileNamesInSession.includes(candidateFileName)) {
+              // 🔍 เพิ่มจุดตรวจสอบ 3: ดูขั้นตอนการเปรียบเทียบชื่อไฟล์แต่ละชื่อ
+              console.warn(`⚠️ ชื่อไฟล์ [${candidateFileName}] ซ้ำในระบบ! กำลังเปลี่ยนลำดับ...`);
               // ถ้าซ้ำ ให้บวกเพิ่ม 1
               currentNum++;
               
@@ -2123,6 +2133,7 @@
                 loopCount++;
               }
             } else {
+              console.log(`✅ ชื่อไฟล์ [${candidateFileName}] ไม่ซ้ำ สามารถใช้ชื่อนี้ได้`);
               // ถ้าไม่ซ้ำ ยึดชื่อนี้แล้วบันทึกลงรายการ
               fileName = candidateFileName;
               usedFileNamesInSession.push(candidateFileName);
