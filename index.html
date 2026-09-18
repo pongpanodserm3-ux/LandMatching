@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-12-2
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-12-3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2087,7 +2087,7 @@
         let propertyId = 0; 
         
         // 3. ไปเช็คที่ฐานข้อมูล (Storage) ก่อนว่า ผู้ใช้คนนี้และโพสต์นี้ มีรูปเบอร์อะไรอยู่แล้วบ้าง
-        const filePrefix = `${userId}-${propertyId}-`;
+        const filePrefix = `${userId}${propertyId}`;
         const { data: existingFiles, error: listError } = await supabaseClient.storage
           .from('property-images')
           .list('', { search: filePrefix });
@@ -2096,7 +2096,7 @@
         if (existingFiles && !listError) {
           existingFiles.forEach(file => {
             // เช็คว่าชื่อไฟล์ที่เคยมีอยู่ ลงท้ายด้วยเลข 3 หลักอะไร (เช่น -001.jpg จะดึงเอา 001 มาเก็บไว้)
-            const match = file.name.match(/-(\d{3})\.\w+$/);
+            const match = file.name.match(/(\d{3})\.\w+$/);
             if (match) {
               usedNumbers.push(match[1]); 
             }
