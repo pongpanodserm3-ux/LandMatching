@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-10.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-10.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1966,13 +1966,17 @@
     // ==========================================
     // ตัวแปรและฟังก์ชันจัดการการอัปโหลดรูปภาพ (8 ช่อง)
     // ==========================================
-    let uploadedFiles = [];
+    window.uploadedFiles = window.uploadedFiles || [];
 
     function handleFilesSelected(event) {
-      const files = Array.from(event.target.files);
+      const files = (event.target && event.target.files) ? Array.from(event.target.files) : [];
+      if (files.length === 0) return;
+
+      if (!window.uploadedFiles) window.uploadedFiles = [];
+
       for (let file of files) {
-        if (uploadedFiles.length < 8) {
-          uploadedFiles.push(file);
+        if (window.uploadedFiles.length < 8) {
+          window.uploadedFiles.push(file);
         } else {
           alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ");
           break;
@@ -1987,14 +1991,16 @@
       const statusText = document.getElementById('uploadStatusText');
       if (!grid) return;
 
+      if (!window.uploadedFiles) window.uploadedFiles = [];
+
       if (statusText) {
-        statusText.innerText = `อัปโหลดรูปภาพ (${uploadedFiles.length}/8)`;
+        statusText.innerText = `อัปโหลดรูปภาพ (${window.uploadedFiles.length}/8)`;
       }
 
       grid.innerHTML = '';
 
       // 1. แสดงช่องรูปภาพที่อัปโหลดแล้ว
-      uploadedFiles.forEach((file, index) => {
+      window.uploadedFiles.forEach((file, index) => {
         const box = document.createElement('div');
         box.className = `upload-box has-image ${index === 0 ? 'box-1-highlight' : ''}`;
         
@@ -2008,7 +2014,7 @@
       });
 
       // 2. แสดงช่องว่างส่วนที่เหลือให้ครบ 8 ช่อง
-      const remainingSlots = 8 - uploadedFiles.length;
+      const remainingSlots = 8 - window.uploadedFiles.length;
       for (let i = 0; i < remainingSlots; i++) {
         const emptyBox = document.createElement('div');
         emptyBox.className = 'upload-box';
@@ -2019,7 +2025,8 @@
     }
 
     function deleteImage(index) {
-      uploadedFiles.splice(index, 1);
+      if (!window.uploadedFiles) window.uploadedFiles = [];
+      window.uploadedFiles.splice(index, 1);
       renderUploadGrid();
     }
 
@@ -2038,9 +2045,11 @@
     // ฟังก์ชันทำงานเมื่อกดปุ่ม "ลงประกาศ"
     // ==========================================
     async function submitPost() {
-      // 1. ดึงรูปภาพทั้งหมดจากอาเรย์ uploadedFiles
+      // 1. ดึงรูปภาพทั้งหมดจากอาเรย์ window.uploadedFiles หรือ fileInput
       const fileInput = document.getElementById('fileInput');
-      const files = uploadedFiles.length > 0 ? uploadedFiles : (fileInput && fileInput.files ? Array.from(fileInput.files) : []); 
+      const files = (window.uploadedFiles && window.uploadedFiles.length > 0)
+        ? window.uploadedFiles
+        : ((fileInput && fileInput.files && fileInput.files.length > 0) ? Array.from(fileInput.files) : []); 
       
       // 2. ตรวจสอบว่าผู้ใช้เลือกรูปไว้หรือยัง
       if (!files || files.length === 0) {
@@ -2060,7 +2069,7 @@
         alert("เตรียมบันทึกรูปภาพและลงประกาศสำเร็จ! (นำโค้ด API/Database ของคุณมาใส่ตรงนี้ได้เลย)");
         
         // 4. ล้างค่ารูปและปิดหน้าต่าง
-        uploadedFiles = [];
+        window.uploadedFiles = [];
         if (fileInput) fileInput.value = '';
         closePostModal();
 
