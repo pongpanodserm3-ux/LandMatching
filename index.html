@@ -2103,33 +2103,31 @@
           const file = files[i];
           const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์
           
-          let fileName = "";
+        let fileName = "";
           let currentNum = 1; // เริ่มต้นที่เบอร์ 1
           let loopCount = 0;  // ตัวแปรนับจำนวนรอบที่วนซ้ำ
           
           while (loopCount < 10) {
-            let paddedNum = currentNum.toString().padStart(3, '0');
-            // ตั้งชื่อไฟล์เป็นตัวเลขเพียวๆ ไม่มีขีดกลาง (เช่น 10001.jpg)
-            let candidateFileName = `${userId}${propertyId}${paddedNum}.${fileExt}`;
+            // สร้างชื่อไฟล์เป็นตัวเลขเพียวๆ โดยใช้ userId + propertyId + เลขปัจจุบัน (เช่น 101, 102 ไปจนถึง 109)
+            let candidateFileName = `${userId}${propertyId}${currentNum}.${fileExt}`;
             
-            // เปรียบเทียบชื่อไฟล์ที่สร้างกับชื่อที่มีใน Supabase bucket และชื่อที่ใช้ในรอบนี้
+            // ตรวจสอบว่าชื่อนี้มีอยู่ใน Supabase หรือถูกสร้างไปแล้วในรอบนี้หรือไม่
             if (existingFileNames.includes(candidateFileName) || usedFileNamesInSession.includes(candidateFileName)) {
-              // ถ้าซ้ำ ให้บวกเพิ่ม 1
+              // ถ้าพบว่าซ้ำ ให้บวกเพิ่มทีละ 1
               currentNum++;
               
-              // เมื่อเป็น 9 ให้เซตกลับเป็น 1 และนับรอบเพิ่ม 1 รอบ
+              // เมื่อบวกจนเกิน 9 ให้เซตตัวเลขกลับไปเป็น 1 ใหม่ และนับรอบเพิ่ม 1 รอบ
               if (currentNum > 9) {
                 currentNum = 1;
                 loopCount++;
               }
             } else {
-              // ถ้าไม่ซ้ำ ยึดชื่อนี้แล้วบันทึกลงรายการ
+              // ถ้าไม่ซ้ำแล้ว ให้ยึดชื่อตัวเลขเพียวๆ นี้ แล้วหยุดหา
               fileName = candidateFileName;
               usedFileNamesInSession.push(candidateFileName);
               break;
             }
-          }
-          
+          }          
           // หากวนซ้ำครบ 10 รอบแล้วยังซ้ำทั้งหมด ไม่ต้องบันทึกภาพนี้
           if (fileName === "") {
             console.warn(`ไม่สามารถบันทึกภาพที่ ${i + 1} ได้ เนื่องจากชื่อซ้ำครบ 10 รอบแล้ว`);
