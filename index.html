@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-11
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-11-1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2068,17 +2068,48 @@
         alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป ก่อนลงประกาศนะครับ");
         return;
       }
-
-      // 3. จัดเตรียมไฟล์รูปใส่ FormData
-      const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append('images[]', files[i]);
-      }
-
       try {
         console.log("จำนวนรูปภาพที่เตรียมเซฟคือ:", files.length, "รูป");
         
-        alert("เตรียมบันทึกรูปภาพและลงประกาศสำเร็จ! (นำโค้ด API/Database ของคุณมาใส่ตรงนี้ได้เลย)");
+        // --- เริ่มส่วนที่เพิ่มใหม่: อัปโหลดรูปภาพไปยัง Supabase ---
+        let uploadedUrls = []; // สร้างตัวแปรมาเก็บ URL ของรูปที่อัปโหลดผ่านแล้ว
+        
+        // วนลูปตามจำนวนรูปที่ผู้ใช้อัปโหลดเข้ามา
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          
+          // สร้างชื่อไฟล์ใหม่เพื่อไม่ให้ชื่อซ้ำกัน (ใช้วันเวลา + เลขสุ่ม)
+          const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์ เช่น .jpg, .png
+          const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+          
+          // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property_image'
+          const { data, error } = await supabaseClient.storage
+            .from('property_image')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false // ไม่เขียนทับไฟล์เดิม
+            });
+            
+          // ถ้ามี Error ให้หยุดทำแล้วเด้งข้อความแจ้งผู้ใช้
+          if (error) {
+            console.error("อัปโหลดรูปภาพที่", i + 1, "ไม่สำเร็จ:", error.message);
+            throw error; // โยน Error ไปให้บล็อก catch ด้านล่างจัดการ
+          }
+          
+          // หากอัปโหลดผ่าน ให้ดึง URL สาธารณะ (Public URL) ของรูปภาพเก็บไว้ 
+          // (เผื่อนำไปบันทึกลงตารางประกาศขายบ้านในขั้นตอนต่อไป)
+          const { data: publicUrlData } = supabaseClient.storage
+            .from('property_image')
+            .getPublicUrl(fileName);
+            
+          if (publicUrlData) {
+            uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        }
+        
+        console.log("อัปโหลดสำเร็จ! ได้ลิงก์รูปภาพดังนี้:", uploadedUrls);
+        alert("อัปโหลดรูปภาพลงฐานข้อมูลสำเร็จเรียบร้อยแล้วครับ!");
+        // --- จบส่วนที่เพิ่มใหม่ ---
         
         // 4. ล้างค่ารูปและปิดหน้าต่างหลังทำสำเร็จ
         window.uploadedFiles = [];
