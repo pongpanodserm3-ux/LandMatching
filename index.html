@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-3-12
+  <link rel="shortcut icon" href="#">//Git_Index_1-3-12-1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2108,24 +2108,30 @@
           const file = files[i];
           const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์ เช่น .jpg, .png
           
-          // 4. หา "เบอร์ภาพ" ใหม่ที่ยังไม่ซ้ำ โดยเริ่มตั้งแต่ 001 ไปจนถึง 008
+        // 4. เช็คชื่อจาก Supabase เริ่มต้นที่เบอร์ 1 หากซ้ำให้บวกทีละ 1 (จำกัดที่ 001 ถึง 008)
           let imageNumberStr = "";
-          for (let num = 1; num <= 8; num++) {
-            // แปลงตัวเลข 1 ให้เป็นข้อความ 001 (เติมเลขศูนย์ด้านหน้าให้ครบ 3 หลัก)
-            let paddedNum = num.toString().padStart(3, '0'); 
+          let currentNum = 1; // กำหนดค่าเริ่มต้นเป็นเบอร์ 1
+          
+          while (currentNum <= 8) {
+            // แปลงตัวเลขให้เป็นรูปแบบ 3 หลัก (เช่น 1 เปลี่ยนเป็น "001", 8 เปลี่ยนเป็น "008")
+            let paddedNum = currentNum.toString().padStart(3, '0'); 
             
-            // ถ้าเบอร์นี้ (paddedNum) ยังไม่เคยถูกใช้ (เช็คจาก usedNumbers)
-            if (!usedNumbers.includes(paddedNum)) {
-              imageNumberStr = paddedNum; // ให้ใช้เบอร์นี้ได้เลย
-              usedNumbers.push(paddedNum); // เอาเบอร์นี้ไปใส่ในคลังว่า "ถูกใช้งานแล้วนะ" รูปถัดไปจะได้ไม่ใช้ซ้ำ
-              break; // เจอเบอร์ที่ว่างแล้ว สั่งหยุดการค้นหาเบอร์ได้เลย
+            // นำชื่อเบอร์ไปตรวจสอบกับข้อมูลที่ Supabase ส่งมา (usedNumbers) ว่าซ้ำไหม
+            if (usedNumbers.includes(paddedNum)) {
+              // 👉 "ถ้าเกิดชื่อมีการซ้ำ ให้เพิ่มไปทีละ 1"
+              currentNum++; 
+            } else {
+              // 👉 "หากชื่อไม่ซ้ำ ก็โยนเข้าไปได้เลย"
+              imageNumberStr = paddedNum; // ยึดเอาเบอร์นี้เป็นชื่อไฟล์
+              usedNumbers.push(paddedNum); // บันทึกชื่อนี้เก็บไว้ เพื่อให้รูปลำดับต่อไปไม่ใช้ชื่อซ้ำกัน
+              break; // ได้เบอร์ภาพแล้ว สั่งหยุดลูปทันที
             }
           }
           
-          // ถ้าเลขรันจนหมดโควต้าแล้ว (เกิน 008) ให้หยุดและข้ามไฟล์ภาพนี้ไปเลย
+          // 👉 "ห้ามมากกว่านี้หรือห้ามน้อยกว่านี้" (ถ้าบวกลบเลขจนเกิน 8 แล้ว ยังหาเบอร์ว่างไม่ได้)
           if (imageNumberStr === "") {
-            console.warn("ไม่สามารถเซฟรูปนี้ได้ เพราะเบอร์ภาพเต็มโควต้า 008 รูปแล้ว");
-            continue; 
+            console.warn("ไม่สามารถเซฟรูปนี้ได้ เพราะรูปเต็มโควต้า 001 ถึง 008 แล้ว");
+            continue; // ให้ข้ามการอัปโหลดไฟล์ภาพนี้ไปเลย
           }
           
           // 5. ตั้งชื่อไฟล์ภาพใหม่ ตามเงื่อนไขเป๊ะๆ: "user_id-property_id-เบอร์ภาพ"
