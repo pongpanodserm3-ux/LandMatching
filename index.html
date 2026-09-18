@@ -2135,7 +2135,7 @@
           }
           
           // 5. ตั้งชื่อไฟล์ภาพใหม่ ตามเงื่อนไขเป๊ะๆ: "user_id-property_id-เบอร์ภาพ"
-          const fileName = `${userId}-${propertyId}-${imageNumberStr}.${fileExt}`;
+          const fileName = `${userId}${propertyId}${imageNumberStr}.${fileExt}`;
           
           // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property-images'
           const { data, error } = await supabaseClient.storage
