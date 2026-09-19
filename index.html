@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-4.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -3212,7 +3212,39 @@
         listZone.classList.remove('expanded');
       }
     }
-
+    // ฟังก์ชันสำหรับเคลียร์ค่าในหน้าลงประกาศขายบ้านทั้งหมด
+    function clearPostModalValues() {
+      // 1. เคลียร์ค่า input ทั้งหมดในหน้าต่างลงประกาศ
+      const postModal = document.getElementById('postModalOverlay');
+      if (postModal) {
+        const inputs = postModal.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => input.value = '');
+      }
+    
+      // 2. เคลียร์ค่า dropdown ปุ่มทั้งหมดให้กลับเป็นข้อความเริ่มต้น (มีคำว่า ▾)
+      const filterBtns = postModal.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        const onclickAttr = btn.getAttribute('onclick') || '';
+        if (onclickAttr.includes('openDropdownModal')) {
+          const match = onclickAttr.match(/openDropdownModal\('([^']+)'\)/);
+          if (match && match[1]) {
+            btn.innerText = `${match[1]} ▾`;
+          }
+        } else if (btn.innerText.includes('ปักหมุดพิกัด')) {
+          btn.innerText = '📍 ปักหมุดพิกัด';
+        }
+      });
+    
+      // 3. เคลียร์รูปลอย/รูปที่อัปโหลดทั้งหมดในหน่วยความจำ
+      window.uploadedFiles = [];
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+    
+      // เรียกฟังก์ชันรีเฟรชตารางอัปโหลดรูปภาพให้กลับเป็นค่าว่าง
+      if (typeof renderUploadGrid === 'function') {
+        renderUploadGrid();
+      }
+    }
   </script>
 </body>
 </html>
