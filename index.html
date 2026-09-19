@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1009,9 +1009,9 @@
   <!-- Post Modal (หน้าต่างลงประกาศ) -->
     <div class="modal-overlay" id="postModalOverlay" style="z-index: 8500; align-items: center;">
       <div class="dropdown-modal" style="width: 95%; max-width: 420px; padding: 15px;">
-        <span class="close-modal" onclick="closePostModal()">&times;</span>
-        <h3 style="margin-top:0; color: var(--text-main); font-size: 18px; margin-bottom: 12px; text-align: center;">📝 ลงประกาศขายบ้าน</h3>
-        
+      <span class="close-modal" onclick="closePostModal()">&times;</span>
+      <span onclick="clearPostModalValues()" style="position: absolute; top: 15px; right: 50px; font-size: 14px; color: red; cursor: pointer; font-weight: bold;">เคลียร์ค่า</span>
+      <h3 style="margin-top:0; color: var(--text-main); font-size: 18px; margin-bottom: 12px; text-align: center;">📝 ลงประกาศขายบ้าน</h3>        
         <!-- ใช้ CSS Grid วางดรอปดาวน์ให้เป็นระเบียบและช่องว่างแคบที่สุด (gap: 4px) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-height: 65vh; overflow-y: auto; padding-right: 4px;">
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
@@ -1026,7 +1026,8 @@
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="เนื้อที่ (ตัวเลขเต็ม)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="เบอร์โทรศัพท์ (ใส่เลข 9-10 หลัก)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" onblur="if(this.value.length > 0 && ((this.value.length !== 9 && this.value.length !== 10) || !this.value.startsWith('0'))) { alert('เบอร์โทรศัพท์ต้องขึ้นต้นด้วยเลข 0 และมีจำนวน 9 หรือ 10 หลักเท่านั้นครับ'); this.value = ''; }">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ไอดีไลน์">
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; grid-column: span 2;" onclick="openLocationModal()">📍 ปักหมุดพิกัด</button>          
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openLocationModal()">📍 ปักหมุดพิกัด</button>          
+          <input type="text" id="locationDetailEdit" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="รายละเอียดพิกัดเพิ่มเติม">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ลิงก์หรือเว็บไซต์">
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
 
