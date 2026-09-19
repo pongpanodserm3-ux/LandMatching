@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2527,7 +2527,16 @@
         if (placeName) {
           queryUrl += `+${encodeURIComponent(placeName)}`;
         }
-        window.open(queryUrl, '_blank');
+        
+        // [ส่วนที่แก้ไข] สร้างลิงก์จำลองเพื่อเลี่ยง Popup Blocker ให้ AI สามารถสั่งเปิดได้
+        const tempLink = document.createElement('a');
+        tempLink.href = queryUrl;
+        tempLink.target = '_blank';
+        tempLink.rel = 'noopener noreferrer'; // เพิ่มความปลอดภัยตามมาตรฐาน
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        
       } else {
         alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
