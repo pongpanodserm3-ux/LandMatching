@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-6.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-6.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2177,7 +2177,12 @@
           if (uploadError) {
             console.error(`อัปโหลดรูปภาพที่ ${i + 1} ไม่สำเร็จ:`, uploadError.message);
           } else {
-            uploadedImageNames.push(fileName);
+            // ดึง Public URL แบบเต็มจาก Supabase Storage
+            const { data: publicUrlData } = supabaseClient.storage
+              .from('property-images')
+              .getPublicUrl(fileName);
+          
+            uploadedImageNames.push(publicUrlData.publicUrl);
           }
         }
     
