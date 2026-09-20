@@ -3161,7 +3161,7 @@
       stopAIVoiceSpeech(); 
       document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
       document.getElementById('modalPrice').innerText = item.price_sell || item.price_rent || 'ไม่ระบุ';
-      document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
+      document.getElementById('modalDesc').innerHTML = item.details || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
       const deepLinkBtn = document.getElementById('modalDeepLink');
       if (item.url) {
