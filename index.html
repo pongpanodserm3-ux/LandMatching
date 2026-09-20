@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1346,9 +1346,9 @@
       let rawSellerId = getPropValue(item, ['user_id', 'seller_id', 'userId', 'owner_id'], 1);
       let sellerId = await ensureUserExists(rawSellerId);
     
-      const propertyId = getPropValue(item, ['property_id', 'id', 'postId', 'post_id'], 1);
+      const propertyId = getPropValue(item, ['property_id', 'id', 'post_id', 'post_id'], 1);
     
-      let ownerName = getPropValue(item, ['facebookPostName', 'username', 'owner_name', 'ชื่อ Facebook ผู้โพสต์'], '');
+      let ownerName = getPropValue(item, ['facebook_name', 'username', 'owner_name', 'ชื่อ Facebook ผู้โพสต์'], '');
       if (sellerId) {
         const { data: userData } = await supabaseClient
           .from('users')
@@ -3092,7 +3092,7 @@
       }
     
       properties.forEach(item => {
-        const key = item.postId || item.url || item.id;
+        const key = item.post_id || item.url || item.id;
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
     
@@ -3102,9 +3102,9 @@
         
         card.onclick = () => showDetailModal(item);
     
-        const price = item.salePrice || item.rentPrice || 'ไม่ระบุราคา';
+        const price = item.price_sell || item.price_rent || 'ไม่ระบุราคา';
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        const titleText = item.project || item.facebookPostName || 'ประกาศอสังหาริมทรัพย์';
+        const titleText = item.project || item.facebook_name || 'ประกาศอสังหาริมทรัพย์';
     
         // 1. ดึงภาพบ้านจาก database (คอลัมน์ images) ถ้าไม่มีให้ใช้ภาพสำรอง
         const images = (Array.isArray(item.images) && item.images.length > 0)
@@ -3159,8 +3159,8 @@
 
     function showDetailModal(item) {
       stopAIVoiceSpeech(); 
-      document.getElementById('modalTitle').innerText = item.project || item.facebookPostName || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.salePrice || item.rentPrice || 'ไม่ระบุ';
+      document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
+      document.getElementById('modalPrice').innerText = item.price_sell || item.price_rent || 'ไม่ระบุ';
       document.getElementById('modalDesc').innerHTML = item.detail || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
       const deepLinkBtn = document.getElementById('modalDeepLink');
