@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2066,133 +2066,150 @@
     // ฟังก์ชันทำงานเมื่อกดปุ่ม "ลงประกาศ"
     // ==========================================
     async function submitPost() {
-      // 1. ดึงรูปภาพทั้งหมดจากหน่วยความจำที่เราเก็บไว้ (window.uploadedFiles)
+      // 1. ตรวจสอบว่ามีการเลือกรูปภาพหรือไม่
       let files = window.uploadedFiles || [];
-      
-      // 2. ตรวจสอบว่ามีรูปภาพในหน่วยความจำหรือไม่
       if (files.length === 0) {
         alert("กรุณาอัปโหลดรูปภาพอย่างน้อย 1 รูป ก่อนลงประกาศนะครับ");
         return;
       }
+    
       try {
-        console.log("จำนวนรูปภาพที่เตรียมเซฟคือ:", files.length, "รูป");
-        
-        // --- เริ่มส่วนที่เพิ่มใหม่: อัปโหลดรูปภาพไปยัง Supabase ---
-        let uploadedUrls = []; // สร้างตัวแปรมาเก็บ URL ของรูปที่อัปโหลดผ่านแล้ว
-        
-        // 1. กำหนด user_id (ดึงจากระบบ หรือถ้าหาไม่พบ/เกิดข้อผิดพลาด ให้ค่าเป็น 0)
-        let userId = 0;
-        try {
-          userId = await getCurrentUserId();
-          if (!userId) userId = 0;
-        } catch (e) {
-          userId = 0;
+        // 2. ดึงข้อมูล user_id ของผู้ใช้ปัจจุบัน
+        let userId = await getCurrentUserId();
+        if (!userId) userId = 1;
+    
+        // -------------------------------------------------------------
+        // กรณีที่ 1 : ตรวจสอบจำนวนประกาศปัจจุบันของ user_id ในตาราง properties
+        // -------------------------------------------------------------
+        const { count, error: countError } = await supabaseClient
+          .from('properties')
+          .select('property_id', { count: 'exact', head: true })
+          .eq('user_id', userId);
+    
+        if (countError) {
+          console.error("เกิดข้อผิดพลาดในการตรวจสอบจำนวนประกาศ:", countError.message);
         }
-        
-        // 2. กำหนด property_id (ตอนนี้ในฟังก์ชันก่อนกดบันทึกยังไม่มี property_id จึงให้เป็น 0 ตามเงื่อนไข)
-        let propertyId = 0; 
-        
-        // 3. ดึงรายการชื่อภาพทั้งหมดจาก Supabase bucket 'property-images' มาเปรียบเทียบ
-        const { data: existingFiles, error: listError } = await supabaseClient.storage
-          .from('property-images')
-          .list('', { limit: 100, search: `${userId}-` });
-
-        // 🔍 เพิ่มจุดตรวจสอบ 1: เช็กว่ามี Error หรือไม่
-        if (listError) {
-          console.error("❌ เกิดข้อผิดพลาดในการดึงชื่อไฟล์จาก Storage:", listError.message);
+    
+        if (count !== null && count >= 9) {
+          alert("ไม่สามารถลงได้ เพราะเต็มโควต้า หากต้องการลงเพิ่มจะต้อง ลบประกาศเก่าที่ไม่ใช่ออก");
+          return;
         }
+    
+        // -------------------------------------------------------------
+        // กรณีที่ 2 : หากยังไม่ถึง 9 ชิ้น ให้ดำเนินการบันทึกข้อมูล
+        // -------------------------------------------------------------
         
-        let existingFileNames = [];
-        if (existingFiles && !listError) {
-          existingFileNames = existingFiles.map(file => file.name);
-        }
-
-        // 🔍 เพิ่มจุดตรวจสอบ 2: ปริ้นท์รายชื่อไฟล์ทั้งหมดที่ดึงมาได้
-        console.log("📁 รายชื่อไฟล์ทั้งหมดที่ดึงมาจาก Supabase Storage (จำนวน", existingFileNames.length, "ไฟล์):", existingFileNames);
-        
-        let usedFileNamesInSession = []; // เก็บชื่อภาพที่ถูกสร้างขึ้นในรอบนี้เพื่อกันซ้ำกันเอง
-        
-        // วนลูปตามจำนวนรูปที่ผู้ใช้อัปโหลดเข้ามาใหม่
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const fileExt = file.name.split('.').pop(); // ดึงนามสกุลไฟล์
-          
-          let fileName = "";
-          let currentNum = 1; // เริ่มต้นที่เบอร์ 1
-          let loopCount = 0;  // ตัวแปรนับจำนวนรอบที่วนซ้ำ
-          
-          while (loopCount < 10) {
-            let paddedNum = currentNum.toString().padStart(3, '0');
-            // ตั้งชื่อไฟล์เป็นตัวเลขเพียวๆ ไม่มีขีดกลาง (เช่น 10001.jpg)
-            let candidateFileName = `${userId}-${propertyId}-${paddedNum}.${fileExt}`;
-            
-            // เปรียบเทียบชื่อไฟล์ที่สร้างกับชื่อที่มีใน Supabase bucket และชื่อที่ใช้ในรอบนี้
-            if (existingFileNames.includes(candidateFileName) || usedFileNamesInSession.includes(candidateFileName)) {
-              // 🔍 เพิ่มจุดตรวจสอบ 3: ดูขั้นตอนการเปรียบเทียบชื่อไฟล์แต่ละชื่อ
-              console.warn(`⚠️ ชื่อไฟล์ [${candidateFileName}] ซ้ำในระบบ! กำลังเปลี่ยนลำดับ...`);
-              // ถ้าซ้ำ ให้บวกเพิ่ม 1
-              currentNum++;
-              
-              // เมื่อเป็น 9 ให้เซตกลับเป็น 1 และนับรอบเพิ่ม 1 รอบ
-              if (currentNum > 9) {
-                currentNum = 1;
-                loopCount++;
-              }
-            } else {
-              console.log(`✅ ชื่อไฟล์ [${candidateFileName}] ไม่ซ้ำ สามารถใช้ชื่อนี้ได้`);
-              // ถ้าไม่ซ้ำ ยึดชื่อนี้แล้วบันทึกลงรายการ
-              fileName = candidateFileName;
-              usedFileNamesInSession.push(candidateFileName);
-              break;
+        // 2.1 อ่านค่าจาก Dropdown และช่องกรอกข้อมูลในหน้าต่างลงประกาศ
+        function getPostDropdownValue(topic) {
+          const btns = document.querySelectorAll('#postModalOverlay .filter-btn');
+          for (let btn of btns) {
+            if (btn.tagName === 'BUTTON' && btn.getAttribute('onclick')?.includes(`'${topic}'`)) {
+              let text = btn.innerText.replace(' ▾', '').trim();
+              return text === topic ? '' : text;
             }
           }
-          
-          // หากวนซ้ำครบ 10 รอบแล้วยังซ้ำทั้งหมด ไม่ต้องบันทึกภาพนี้
-          if (fileName === "") {
-            console.warn(`ไม่สามารถบันทึกภาพที่ ${i + 1} ได้ เนื่องจากชื่อซ้ำครบ 10 รอบแล้ว`);
-            continue;
+          return '';
+        }
+    
+        function getPostInputValue(placeholderKeyword) {
+          const inputs = document.querySelectorAll('#postModalOverlay input');
+          for (let input of inputs) {
+            if (input.placeholder && input.placeholder.includes(placeholderKeyword)) {
+              return input.value.trim();
+            }
           }
-
-          
-          // สั่งอัปโหลดไฟล์ไปที่ Supabase ใน Bucket ชื่อ 'property-images'
-          const { data, error } = await supabaseClient.storage
+          return '';
+        }
+    
+        const postPayload = {
+          user_id: userId,
+          deal_type: getPostDropdownValue('ขาย/เช่า'),
+          property_type: getPostDropdownValue('คอนโด/บ้าน'),
+          price_sell: getPostInputValue('ราคาขาย') ? parseInt(getPostInputValue('ราคาขาย'), 10) : null,
+          price_rent: getPostInputValue('ราคาเช่า') ? parseInt(getPostInputValue('ราคาเช่า'), 10) : null,
+          province: getPostDropdownValue('จังหวัด'),
+          district: getPostDropdownValue('เขต/อำเภอ'),
+          road: getPostDropdownValue('ถนน'),
+          project: getPostDropdownValue('โครงการ'),
+          soi: getPostDropdownValue('ซอย'),
+          area: getPostInputValue('เนื้อที่'),
+          phone: getPostInputValue('เบอร์โทรศัพท์'),
+          line_id: getPostInputValue('ไอดีไลน์'),
+          latitude: selectedLat || null,
+          longitude: selectedLng || null,
+          location_detail: document.getElementById('locationDetailEdit')?.value.trim() || '',
+          url: getPostInputValue('ลิงก์หรือเว็บไซต์'),
+          facilities: getPostDropdownValue('สาธารณูปโภคพิเศษ'),
+          images: [] // ใส่ค่า default เป็นอาร์เรย์ว่างไว้ก่อน
+        };
+    
+        // 2.2 จอง/สร้างแถวข้อมูลลงตาราง properties เพื่อรับเลข property_id ใหม่
+        const { data: newProperty, error: insertError } = await supabaseClient
+          .from('properties')
+          .insert([postPayload])
+          .select('property_id')
+          .single();
+    
+        if (insertError || !newProperty) {
+          console.error("เกิดข้อผิดพลาดในการจองแถวข้อมูล:", insertError?.message);
+          alert("ไม่สามารถสร้างประกาศใหม่ได้ กรุณาลองใหม่อีกครั้งครับ");
+          return;
+        }
+    
+        const newPropertyId = newProperty.property_id;
+        console.log("ได้รับเลข property_id ใหม่เรียบร้อยแล้วคือ:", newPropertyId);
+    
+        // 2.3 ตั้งชื่อรูปภาพตามโครงสร้าง user_id-property_id-เบอร์ภาพ แล้วอัปโหลดเข้า Bucket 'property-images'
+        let uploadedImageNames = [];
+    
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileExt = file.name.split('.').pop();
+          const imageIndexStr = String(i + 1).padStart(3, '0'); // เลขเบอร์ภาพ เช่น 001, 002
+          const fileName = `${userId}-${newPropertyId}-${imageIndexStr}.${fileExt}`;
+    
+          const { error: uploadError } = await supabaseClient.storage
             .from('property-images')
             .upload(fileName, file, {
               cacheControl: '3600',
-              upsert: false // ไม่เขียนทับไฟล์เดิม
+              upsert: true
             });
-            
-          // ถ้ามี Error ให้หยุดทำแล้วเด้งข้อความแจ้งผู้ใช้
-          if (error) {
-            console.error("อัปโหลดรูปภาพที่", i + 1, "ไม่สำเร็จ:", error.message);
-            throw error; // โยน Error ไปให้บล็อก catch ด้านล่างจัดการ
-          }
-          
-          // หากอัปโหลดผ่าน ให้ดึง URL สาธารณะ (Public URL) ของรูปภาพเก็บไว้ 
-          // (เผื่อนำไปบันทึกลงตารางประกาศขายบ้านในขั้นตอนต่อไป)
-          const { data: publicUrlData } = supabaseClient.storage
-            .from('property-images')
-            .getPublicUrl(fileName);
-            
-          if (publicUrlData) {
-            uploadedUrls.push(publicUrlData.publicUrl);
+    
+          if (uploadError) {
+            console.error(`อัปโหลดรูปภาพที่ ${i + 1} ไม่สำเร็จ:`, uploadError.message);
+          } else {
+            uploadedImageNames.push(fileName);
           }
         }
+    
+        // 2.4 นำชื่อรูปภาพทั้งหมดที่ถูกตั้งขึ้นใหม่ อัปเดตกลับลงคอลัมน์ images ในรูปแบบ []
+        const { error: updateError } = await supabaseClient
+          .from('properties')
+          .update({ images: uploadedImageNames })
+          .eq('property_id', newPropertyId);
+    
+        if (updateError) {
+          console.error("เกิดข้อผิดพลาดในการอัปเดตคอลัมน์ images:", updateError.message);
+        }
+    
+        // 2.5 แสดงข้อความสำเร็จ และล้างค่าหน้าต่างลงประกาศ
+        alert("ลงประกาศขายบ้านเรียบร้อยแล้วครับ!");
         
-        console.log("อัปโหลดสำเร็จ! ได้ลิงก์รูปภาพดังนี้:", uploadedUrls);
-        alert("อัปโหลดรูปภาพลงฐานข้อมูลสำเร็จเรียบร้อยแล้วครับ!");
-        // --- จบส่วนที่เพิ่มใหม่ ---
-        
-        // 4. ล้างค่ารูปและปิดหน้าต่างหลังทำสำเร็จ
         window.uploadedFiles = [];
         const fileInput = document.getElementById('fileInput');
         if (fileInput) fileInput.value = '';
+        
         renderUploadGrid();
         closePostModal();
-
+        
+        // โหลดรายการบ้านใหม่บนหน้าจอ
+        if (typeof testShowList === 'function') {
+          testShowList();
+        }
+    
       } catch (error) {
-        console.error("เกิดข้อผิดพลาดในการเซฟภาพ:", error);
-        alert("เซฟภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้งครับ");
+        console.error("เกิดข้อผิดพลาดในการลงประกาศ:", error);
+        alert("เกิดข้อผิดพลาดในการลงประกาศ กรุณาลองใหม่อีกครั้งครับ");
       }
     }
   
