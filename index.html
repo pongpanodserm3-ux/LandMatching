@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-6.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-6.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2120,7 +2120,9 @@
           }
           return '';
         }
-    
+        // สร้างตัวแปรแปลงวันที่ปัจจุบันให้อยู่ในรูปแบบ DD-MM-YYYY
+        const today = new Date();
+        const currentDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
         const postPayload = {
           user_id: userId,
           price_type: getPostDropdownValue('ขาย/เช่า'),
@@ -2139,6 +2141,7 @@
           use2_lng: selectedLng || null,
           details: document.getElementById('DetailEdit')?.value.trim() || '',
           url: getPostInputValue('ลิงก์หรือเว็บไซต์'),
+          date: currentDate, // เพิ่มคีย์ date สำหรับบันทึกวันเดือนปี (รูปแบบ DD-MM-YYYY)
           images: [] // ใส่ค่า default เป็นอาร์เรย์ว่างไว้ก่อน
         };
     
