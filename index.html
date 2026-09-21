@@ -1801,9 +1801,13 @@
       // อัปเดตสถานะแท็บปัจจุบันใน AppState
       AppState.voice.currentTab = tabId;
 
-      // ส่ง Prompt แจ้งบทบาทใหม่ให้ AI รับรู้การเปลี่ยนสลับแท็บทันที
+      // ส่ง Prompt แจ้งบทบาทใหม่ให้ AI รับรู้การเปลี่ยนสลับแท็บทันที  และแสดง Log ตรวจสอบ
       if (TAB_PROMPTS[tabId] && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
+        console.log(`[AI Tab Switch] เปลี่ยนเป็นแท็บ: ${tabId}`);
+        console.log(`[AI Prompt Sent]: ${TAB_PROMPTS[tabId]}`);
         sendTextToAI(TAB_PROMPTS[tabId]);
+      } else {
+        console.warn(`[AI Tab Switch] ไม่สามารถส่ง Prompt ได้ (WebSocket ยังไม่เชื่อมต่อ หรือไม่มี Prompt)`);
       }
     }
 
