@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1147,7 +1147,13 @@
       GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
       LIFF_ID: "2011006139-Wn6PhY6D"
     };
-
+    // กำหนดชุดคำสั่ง Prompt ประจำแต่ละแท็บทั้ง 4 หมวด
+    const TAB_PROMPTS = {
+      realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ",
+      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านสินค้าทั่วไป ของแต่งบ้าน และอุปกรณ์ซ่อมแซมบ้าน ให้คำแนะนำและค้นหาสินค้าอย่างคุ้มค่า",
+      lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
+      others: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ช่างและงานบริการ' ให้คุณรับบทบาทเป็น AI ผู้ช่วยค้นหาและแนะนำช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ และงานบริการต่างๆ ให้คำแนะนำที่ตรงจุดและเชื่อถือได้"
+    };
     const SHEET_COLUMNS = [
       'ชื่อ Facebook ผู้โพสต์', 'โครงการ', 'ประเภทอสังหา', 'จังหวัด', 'เขต/อำเภอ',
       'ถนน', 'แบบราคา', 'ราคาขาย', 'ราคาเช่า', 'เนื้อที่', 'เนื้อที่ ตัวเลข',
@@ -1177,7 +1183,8 @@
         audioOutCtx: null,
         nextPlayTime: 0,
         hasGreeted: false,
-        silenced: false
+        silenced: false,
+        currentTab: 'realestate'
       },
       data: {
         isFetching: false,
@@ -1790,6 +1797,14 @@
       const activeContent = document.getElementById('tab-content-' + tabId);
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
+
+      // อัปเดตสถานะแท็บปัจจุบันใน AppState
+      AppState.voice.currentTab = tabId;
+
+      // ส่ง Prompt แจ้งบทบาทใหม่ให้ AI รับรู้การเปลี่ยนสลับแท็บทันที
+      if (TAB_PROMPTS[tabId] && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
+        sendTextToAI(TAB_PROMPTS[tabId]);
+      }
     }
 
     async function checkAndDisplayMemberStatus() {
@@ -2793,7 +2808,7 @@
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
         };
-
+        //ส่วนล่าง คือ AI voice ทำหน้าที่ เรียกฟังก์ชัน กดปุ่มต่างๆ 
         AppState.voice.ws.onmessage = async (event) => {
           try {
             const response = JSON.parse(event.data);
@@ -2836,9 +2851,9 @@
                           }));
                         }
                       }                        
-                    
+                      //AI สั่งสลับแท็บ ผ่านเสียง(Function Calling / Tool Handling) Function Nameชื่อ"switch_tab_category"
                       else if (name === "switch_tab_category") {
-                      switchTab(args.tabId);
+                      switchTab(args.tabId); //ตัวแปร Parameter: ในโค้ด ใช้ args.tabId (รูปแบบ camelCase)
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
                         if (activeInput) activeInput.value = args.searchText;
