@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -895,7 +895,45 @@
       font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2;
     }
     .delete-img-btn:hover { background: rgba(255,0,0,0.8); }
-    /* --- จบ: สไตล์สำหรับโซนอัปโหลดรูปภาพ 8 ช่อง --- */    
+    /* --- จบ: สไตล์สำหรับโซนอัปโหลดรูปภาพ 8 ช่อง --- */ 
+    /* --- เริ่ม: สไตล์สำหรับ Multi-level Flyout Dropdown (สินค้าทั่วไป) --- */
+    .flyout-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.1); z-index: 99990; display: none;
+    }
+    .flyout-overlay.active { display: block; }
+
+    .flyout-menu {
+      position: absolute; background: #ffffff; border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2); width: 250px;
+      padding: 5px 0; display: none; z-index: 99995;
+      max-height: 60vh; overflow-y: auto; border: 1px solid var(--btn-blue);
+    }
+    .flyout-menu.active { display: block; }
+
+    .flyout-group { border-bottom: 1px solid #f0f0f0; }
+    .flyout-group:last-child { border-bottom: none; }
+
+    .flyout-item {
+      padding: 12px 16px; font-size: 14px; color: #333; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: background 0.2s;
+    }
+    .flyout-item:active { background: #eef5ff; }
+    .flyout-item.expanded { background: #f0f4f8; font-weight: bold; color: var(--btn-blue); }
+    .flyout-item.expanded .arrow { transform: rotate(90deg); transition: transform 0.2s; }
+    
+    .flyout-submenu { display: none; background: #f8fafc; border-top: 1px solid #eee; }
+    .flyout-group.active .flyout-submenu { display: block; }
+
+    .flyout-sub-item {
+      padding: 10px 16px 10px 30px; font-size: 13px; color: #555;
+      border-bottom: 1px solid #eee; cursor: pointer;
+    }
+    .flyout-sub-item:last-child { border-bottom: none; }
+    .flyout-sub-item:active { background: #d0e0f0; color: var(--btn-blue); font-weight: bold; }
+    /* --- จบ: สไตล์สำหรับ Multi-level Flyout Dropdown --- */
+    
   </style> 
     
 </head>
@@ -955,9 +993,22 @@
     <div class="tab-content" id="tab-content-decor" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="ค้นหาของแต่งบ้าน อุปกรณ์ซ่อมบ้าน...">
+        <div style="font-size: 12px; color: #555; font-weight: bold; flex: 1; text-align: right; line-height: 1.2;">พร้อมใช้งาน</div>
       </div>
-      <div class="empty-tab-box">
-        🛋️ หมวดหมู่สินค้าทั่วไปและของแต่งบ้าน<br><span style="font-size: 12px; color: #999;">พิมพ์ชื่อสินค้าที่ต้องการค้นหาได้ที่ช่องด้านบน</span>
+      
+      <!-- แผง Dropdown เลื่อนซ้ายขวาได้ -->
+      <div class="filter-scroll-row" id="decor-filter-row">
+        <!-- ปุ่ม Dropdown เรียกเมนูหลายชั้น -->
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'furnitureFlyout')">เฟอร์นิเจอร์และของแต่งบ้าน ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'lampFlyout')">โคมไฟและอุปกรณ์ ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'doorFlyout')">ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน ▾</button>
+      </div>
+
+      <!-- ปุ่มกด 3 ปุ่ม คล้ายในแท็บอสังหา -->
+      <div style="display: flex; gap: 6px; margin-top: 4px;">
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px;" onclick="testShowList()">🔍 ค้นหาสินค้า</button>
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #bcece0; border-color: #a0d8c8;" onclick="openPostModal()">📝 ลงประกาศ</button>
+        <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFiltersDecor()">🔄 ล้างค่า</button>
       </div>
     </div>
 
@@ -1096,7 +1147,80 @@
       </div>
     </div>
   </div>
+  <!-- ================= โซน Multi-level Flyout Menus (ดรอปดาวน์หลายชั้น) ================= -->
+  <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
 
+  <!-- คำสั่ง 1. ดรอปดาวน์ เฟอร์นิเจอร์และของแต่งบ้าน -->
+  <div class="flyout-menu" id="furnitureFlyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>เฟอร์นิเจอร์ห้องรับแขก</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟา / เก้าอี้พักผ่อน')">โซฟา / เก้าอี้พักผ่อน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะกลาง / ชั้นทีวี')">โต๊ะกลาง / ชั้นทีวี</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>เฟอร์นิเจอร์ห้องนอน</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เตียงนอน / ฟูก')">เตียงนอน / ฟูก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เสื้อผ้า / โต๊ะเครื่องแป้ง')">ตู้เสื้อผ้า / โต๊ะเครื่องแป้ง</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="selectFlyoutValue('ของตกแต่งบ้านทั่วไป')">
+        <span>ของตกแต่งบ้านทั่วไป</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- คำสั่ง 2. ดรอปดาวน์ โคมไฟและอุปกรณ์ -->
+  <div class="flyout-menu" id="lampFlyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>โคมไฟภายในบ้าน</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟเพดาน / แชนเดอเลียร์')">โคมไฟเพดาน / แชนเดอเลียร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟตั้งโต๊ะ / ตั้งพื้น')">โคมไฟตั้งโต๊ะ / ตั้งพื้น</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>หลอดไฟและอุปกรณ์</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ LED / สมาร์ทโฮม')">หลอดไฟ LED / สมาร์ทโฮม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สวิตช์ / ปลั๊กไฟ / สายไฟ')">สวิตช์ / ปลั๊กไฟ / สายไฟ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- คำสั่ง 3. ดรอปดาวน์ ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน -->
+  <div class="flyout-menu" id="doorFlyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>ประตูและหน้าต่าง</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูไม้ / ประตู PVC')">ประตูไม้ / ประตู PVC</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานเลื่อน / กระจก')">หน้าต่างบานเลื่อน / กระจก</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)">
+        <span>อุปกรณ์ซ่อมบ้าน</span><span class="arrow">▸</span>
+      </div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กลอน / ลูกบิดประตู / บานพับ')">กลอน / ลูกบิดประตู / บานพับ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องมือช่าง / ซ่อมแซม')">เครื่องมือช่าง / ซ่อมแซม</div>
+      </div>
+    </div>
+  </div>
+  <!-- ================= จบโซน Multi-level Flyout Menus ================= -->
   <!-- Floating User Chat Button -->
   <div class="user-chat-float-btn" onclick="openUserChatModal()">
     <div class="chat-icon">💬</div>
@@ -3296,6 +3420,78 @@
       if (typeof renderUploadGrid === 'function') {
         renderUploadGrid();
       }
+    }
+
+    // ==========================================
+    // ระบบ Multi-level Flyout Dropdown (เฉพาะแท็บสินค้าทั่วไป)
+    // ==========================================
+    let currentFlyoutBtn = null;
+
+    // 1. ฟังก์ชันกางเมนูออกมาใต้ปุ่มที่กด
+    function openMultiFlyout(event, menuId) {
+      currentFlyoutBtn = event.currentTarget;
+      const overlay = document.getElementById('multiFlyoutOverlay');
+      
+      // ปิดทุกเมนูก่อนเปิดอันใหม่
+      document.querySelectorAll('.flyout-menu').forEach(m => m.classList.remove('active'));
+      
+      const targetMenu = document.getElementById(menuId);
+      if(targetMenu) {
+        overlay.classList.add('active');
+        targetMenu.classList.add('active');
+        
+        // ค้นหาตำแหน่งของปุ่มเพื่อเอาเมนูไปวางให้ตรงจุด
+        const rect = currentFlyoutBtn.getBoundingClientRect();
+        targetMenu.style.top = (rect.bottom + 8) + 'px';
+        targetMenu.style.left = rect.left + 'px';
+        
+        // ป้องกันกรณีที่เมนูโผล่ทะลุขอบจอด้านขวา (ในมือถือ)
+        if (rect.left + 260 > window.innerWidth) {
+           targetMenu.style.left = (window.innerWidth - 270) + 'px';
+        }
+      }
+    }
+
+    // 2. ฟังก์ชันปิดเมนู
+    function closeMultiFlyout() {
+      const overlay = document.getElementById('multiFlyoutOverlay');
+      if(overlay) overlay.classList.remove('active');
+      document.querySelectorAll('.flyout-menu').forEach(m => m.classList.remove('active'));
+    }
+
+    // 3. ฟังก์ชันกางเมนูย่อย (Accordion)
+    function toggleSubFlyout(element) {
+      const group = element.parentElement;
+      group.classList.toggle('active');
+      element.classList.toggle('expanded');
+    }
+
+    // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย
+    function selectFlyoutValue(value) {
+      if(currentFlyoutBtn) {
+        currentFlyoutBtn.innerText = value + ' ▾'; // เปลี่ยนชื่อปุ่มเป็นค่าที่เลือก
+      }
+      closeMultiFlyout(); // เลือกเสร็จให้ปิดเมนู
+      
+      // สั่งให้ระบบค้นหาข้อมูล (ถ้าฟังก์ชันค้นหาเก่ามีอยู่ จะได้ทำงานอัตโนมัติ)
+      if (typeof testShowList === 'function') {
+        testShowList();
+      }
+    }
+
+    // 5. ฟังก์ชันสำหรับปุ่ม "ล้างค่า" ในหน้าสินค้าทั่วไป
+    function resetAllFiltersDecor() {
+      const editBox = document.getElementById('customEditBoxDecor');
+      if (editBox) editBox.value = '';
+      
+      // คืนค่าปุ่มให้กลับมาเป็นชื่อหมวดหมู่เหมือนเดิม
+      const btns = document.querySelectorAll('.decor-btn');
+      btns.forEach(btn => {
+        const onClickAttr = btn.getAttribute('onclick') || '';
+        if (onClickAttr.includes('furnitureFlyout')) btn.innerText = 'เฟอร์นิเจอร์และของแต่งบ้าน ▾';
+        if (onClickAttr.includes('lampFlyout')) btn.innerText = 'โคมไฟและอุปกรณ์ ▾';
+        if (onClickAttr.includes('doorFlyout')) btn.innerText = 'ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน ▾';
+      });
     }
   </script>
 </body>
