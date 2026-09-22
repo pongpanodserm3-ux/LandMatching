@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.1meta
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.2meta
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -911,27 +911,43 @@
     }
     .flyout-menu.active { display: block; }
 
+    
     .flyout-group { border-bottom: 1px solid #f0f0f0; }
     .flyout-group:last-child { border-bottom: none; }
 
     .flyout-item {
-      padding: 12px 16px; font-size: 14px; color: #333; cursor: pointer;
-      display: flex; justify-content: space-between; align-items: center;
+      padding: 0; font-size: 14px; color: #333; 
+      display: flex; justify-content: space-between; align-items: stretch;
       transition: background 0.2s;
+      user-select: none;
     }
-    .flyout-item:active { background: #eef5ff; }
-    .flyout-item.expanded { background: #f0f4f8; font-weight: bold; color: var(--btn-blue); }
-    .flyout-item.expanded .arrow { transform: rotate(90deg); transition: transform 0.2s; }
+    .flyout-label {
+      flex: 1;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex; align-items: center;
+      font-weight: 500;
+    }
+    .flyout-label:hover { background: #f0f7ff; color: var(--btn-blue); }
+    .flyout-label:active { background: #dbeafe; }
+    
+    .flyout-arrow-btn {
+      width: 56px; min-width: 56px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border-left: 1px solid #eee;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+    .flyout-arrow-btn:hover { background: #eef2ff; }
+    .flyout-arrow-btn:active { background: #c7d2fe; }
+    .flyout-item.expanded { background: #f0f4f8; }
+    .flyout-item.expanded .flyout-label { font-weight: bold; color: var(--btn-blue); }
+    .flyout-item.expanded .arrow { transform: rotate(90deg); display: inline-block; transition: transform 0.2s; }
+    .arrow { transition: transform 0.2s; display: inline-block; }
     
     .flyout-submenu { display: none; background: #f8fafc; border-top: 1px solid #eee; }
     .flyout-group.active .flyout-submenu { display: block; }
-
-    .flyout-sub-item {
-      padding: 10px 16px 10px 30px; font-size: 13px; color: #555;
-      border-bottom: 1px solid #eee; cursor: pointer;
-    }
-    .flyout-sub-item:last-child { border-bottom: none; }
-    .flyout-sub-item:active { background: #d0e0f0; color: var(--btn-blue); font-weight: bold; }
     /* --- จบ: สไตล์สำหรับ Multi-level Flyout Dropdown --- */
     
   </style> 
@@ -1160,7 +1176,7 @@
   <!-- หมวดที่ 1. เฟอร์นิเจอร์ แต่งบ้าน -->
   <div class="flyout-menu" id="cat1Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เก้าอี้และโซฟา</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เก้าอี้และโซฟา')">เก้าอี้และโซฟา</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟาเบด')">โซฟาเบด</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟาเข้ามุม')">โซฟาเข้ามุม</div>
@@ -1171,7 +1187,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โต๊ะและตู้</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'โต๊ะและตู้')">โต๊ะและตู้</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะทำงาน')">โต๊ะทำงาน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะทานอาหาร')">โต๊ะทานอาหาร</div>
@@ -1182,7 +1198,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เตียงและห้องนอน</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เตียงและห้องนอน')">เตียงและห้องนอน</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เตียงนอน')">เตียงนอน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ฟูก/ที่นอน')">ฟูก/ที่นอน</div>
@@ -1191,7 +1207,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เฟอร์นิเจอร์ภายนอก</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เฟอร์นิเจอร์ภายนอก')">เฟอร์นิเจอร์ภายนอก</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ชุดโต๊ะสนาม')">ชุดโต๊ะสนาม</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ชิงช้า')">ชิงช้า</div>
@@ -1199,7 +1215,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ของแต่งบ้าน</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'ของแต่งบ้าน')">ของแต่งบ้าน</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ผ้าม่าน')">ผ้าม่าน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('พรม')">พรม</div>
@@ -1213,7 +1229,7 @@
   <!-- หมวดที่ 2. โคมไฟ และระบบแสงสว่าง -->
   <div class="flyout-menu" id="cat2Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โคมไฟตกแต่ง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'โคมไฟตกแต่ง')">โคมไฟตกแต่ง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟเพดาน/ช่อ (Chandelier)')">โคมไฟเพดาน/ช่อ (Chandelier)</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟตั้งโต๊ะ')">โคมไฟตั้งโต๊ะ</div>
@@ -1222,7 +1238,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โคมไฟใช้งาน</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'โคมไฟใช้งาน')">โคมไฟใช้งาน</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟดาวน์ไลท์')">โคมไฟดาวน์ไลท์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟอ่านหนังสือ')">โคมไฟอ่านหนังสือ</div>
@@ -1231,7 +1247,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>หลอดไฟและอุปกรณ์</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'หลอดไฟและอุปกรณ์')">หลอดไฟและอุปกรณ์</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ LED')">หลอดไฟ LED</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ Smart Wi-Fi')">หลอดไฟ Smart Wi-Fi</div>
@@ -1244,7 +1260,7 @@
   <!-- หมวดที่ 3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน -->
   <div class="flyout-menu" id="cat3Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>หน้าต่าง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'หน้าต่าง')">หน้าต่าง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานสไลด์')">หน้าต่างบานสไลด์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานกระทุ้ง')">หน้าต่างบานกระทุ้ง</div>
@@ -1253,7 +1269,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ประตู</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'ประตู')">ประตู</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูไม้')">ประตูไม้</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตู UPVC/PVC')">ประตู UPVC/PVC</div>
@@ -1263,7 +1279,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สุขภัณฑ์และห้องน้ำ</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'สุขภัณฑ์และห้องน้ำ')">สุขภัณฑ์และห้องน้ำ</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ฝักบัว')">ฝักบัว</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ชักโครก')">ชักโครก</div>
@@ -1272,7 +1288,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>วัสดุและเครื่องมือช่าง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'วัสดุและเครื่องมือช่าง')">วัสดุและเครื่องมือช่าง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('สว่าน/เครื่องมือไฟฟ้า')">สว่าน/เครื่องมือไฟฟ้า</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('สีทาบ้าน')">สีทาบ้าน</div>
@@ -1285,7 +1301,7 @@
   <!-- หมวดที่ 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ -->
   <div class="flyout-menu" id="cat4Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>คอมพิวเตอร์และโน้ตบุ๊ก</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'คอมพิวเตอร์และโน้ตบุ๊ก')">คอมพิวเตอร์และโน้ตบุ๊ก</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โน้ตบุ๊กทำงาน')">โน้ตบุ๊กทำงาน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โน้ตบุ๊กเกมมิ่ง')">โน้ตบุ๊กเกมมิ่ง</div>
@@ -1294,7 +1310,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์เสริมคอมพิวเตอร์</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อุปกรณ์เสริมคอมพิวเตอร์')">อุปกรณ์เสริมคอมพิวเตอร์</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('จอมอนิเตอร์')">จอมอนิเตอร์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('คีย์บอร์ด/เมาส์')">คีย์บอร์ด/เมาส์</div>
@@ -1304,7 +1320,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สมาร์ทโฟนและแท็บเล็ต</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'สมาร์ทโฟนและแท็บเล็ต')">สมาร์ทโฟนและแท็บเล็ต</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('iPhone')">iPhone</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('Android')">Android</div>
@@ -1313,7 +1329,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>กล้องและอุปกรณ์บันทึก</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'กล้องและอุปกรณ์บันทึก')">กล้องและอุปกรณ์บันทึก</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('กล้อง Mirrorless/DSLR')">กล้อง Mirrorless/DSLR</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('กล้องวงจรปิด (CCTV)')">กล้องวงจรปิด (CCTV)</div>
@@ -1321,7 +1337,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องเสียงและแกดเจ็ต</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องเสียงและแกดเจ็ต')">เครื่องเสียงและแกดเจ็ต</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หูฟังบลูทูธ')">หูฟังบลูทูธ</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ลำโพงไร้สาย')">ลำโพงไร้สาย</div>
@@ -1334,7 +1350,7 @@
   <!-- หมวดที่ 5. ยานพาหนะ และอะไหล่ -->
   <div class="flyout-menu" id="cat5Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รถยนต์</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'รถยนต์')">รถยนต์</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รถเก๋ง')">รถเก๋ง</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รถ SUV')">รถ SUV</div>
@@ -1344,7 +1360,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รถจักรยานยนต์</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'รถจักรยานยนต์')">รถจักรยานยนต์</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('มอเตอร์ไซค์ทั่วไป')">มอเตอร์ไซค์ทั่วไป</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('บิ๊กไบค์ (Bigbike)')">บิ๊กไบค์ (Bigbike)</div>
@@ -1352,7 +1368,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>จักรยานและสกู๊ตเตอร์</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'จักรยานและสกู๊ตเตอร์')">จักรยานและสกู๊ตเตอร์</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('จักรยานเสือหมอบ/เสือภูเขา')">จักรยานเสือหมอบ/เสือภูเขา</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('จักรยานพับ')">จักรยานพับ</div>
@@ -1360,7 +1376,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อะไหล่และอุปกรณ์ตกแต่ง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อะไหล่และอุปกรณ์ตกแต่ง')">อะไหล่และอุปกรณ์ตกแต่ง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ยางรถยนต์')">ยางรถยนต์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ล้อแม็ก')">ล้อแม็ก</div>
@@ -1374,7 +1390,7 @@
   <!-- หมวดที่ 6. เครื่องใช้ไฟฟ้าภายในบ้าน -->
   <div class="flyout-menu" id="cat6Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าใหญ่</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องใช้ไฟฟ้าใหญ่')">เครื่องใช้ไฟฟ้าใหญ่</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เย็น/ตู้แช่')">ตู้เย็น/ตู้แช่</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องซักผ้า/เครื่องอบผ้า')">เครื่องซักผ้า/เครื่องอบผ้า</div>
@@ -1383,7 +1399,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าในครัว</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องใช้ไฟฟ้าในครัว')">เครื่องใช้ไฟฟ้าในครัว</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ไมโครเวฟ/เตาอบ')">ไมโครเวฟ/เตาอบ</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หม้อทอดไร้น้ำมัน')">หม้อทอดไร้น้ำมัน</div>
@@ -1393,7 +1409,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าทำความสะอาด</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องใช้ไฟฟ้าทำความสะอาด')">เครื่องใช้ไฟฟ้าทำความสะอาด</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('หุ่นยนต์ดูดฝุ่น')">หุ่นยนต์ดูดฝุ่น</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องดูดฝุ่น')">เครื่องดูดฝุ่น</div>
@@ -1406,7 +1422,7 @@
   <!-- หมวดที่ 7. แฟชั่น เครื่องแต่งกาย -->
   <div class="flyout-menu" id="cat7Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เสื้อผ้า</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เสื้อผ้า')">เสื้อผ้า</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เสื้อผ้าผู้ชาย')">เสื้อผ้าผู้ชาย</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เสื้อผ้าผู้หญิง')">เสื้อผ้าผู้หญิง</div>
@@ -1415,7 +1431,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รองเท้าและกระเป๋า</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'รองเท้าและกระเป๋า')">รองเท้าและกระเป๋า</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รองเท้าผ้าใบ')">รองเท้าผ้าใบ</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รองเท้าหนัง')">รองเท้าหนัง</div>
@@ -1424,7 +1440,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องประดับและนาฬิกา</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องประดับและนาฬิกา')">เครื่องประดับและนาฬิกา</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('นาฬิกาข้อมือ')">นาฬิกาข้อมือ</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('แว่นตา')">แว่นตา</div>
@@ -1436,7 +1452,7 @@
   <!-- หมวดที่ 8. แม่และเด็ก / สัตว์เลี้ยง -->
   <div class="flyout-menu" id="cat8Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>แม่และเด็ก</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'แม่และเด็ก')">แม่และเด็ก</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รถดันเด็ก')">รถดันเด็ก</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('คาร์ซีท')">คาร์ซีท</div>
@@ -1445,7 +1461,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สัตว์เลี้ยง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'สัตว์เลี้ยง')">สัตว์เลี้ยง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('อาหารสัตว์')">อาหารสัตว์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('กรง/คอนโดแมว')">กรง/คอนโดแมว</div>
@@ -1458,7 +1474,7 @@
   <!-- หมวดที่ 9. กีฬา และของสะสม -->
   <div class="flyout-menu" id="cat9Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์กีฬาและฟิตเนส</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อุปกรณ์กีฬาและฟิตเนส')">อุปกรณ์กีฬาและฟิตเนส</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ลู่วิ่งไฟฟ้า')">ลู่วิ่งไฟฟ้า</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ดัมเบล')">ดัมเบล</div>
@@ -1467,7 +1483,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>การแคมป์ปิ้ง</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'การแคมป์ปิ้ง')">การแคมป์ปิ้ง</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เต็นท์')">เต็นท์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ถุงนอน')">ถุงนอน</div>
@@ -1476,7 +1492,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องดนตรี</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องดนตรี')">เครื่องดนตรี</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('กีตาร์')">กีตาร์</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เปียโน/คีย์บอร์ด')">เปียโน/คีย์บอร์ด</div>
@@ -1484,7 +1500,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ของสะสม</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'ของสะสม')">ของสะสม</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('พระเครื่อง/วัตถุมงคล')">พระเครื่อง/วัตถุมงคล</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('โมเดล/ฟิกเกอร์')">โมเดล/ฟิกเกอร์</div>
@@ -1496,7 +1512,7 @@
   <!-- หมวดที่ 10. สินค้าอุตสาหกรรม และร้านค้า -->
   <div class="flyout-menu" id="cat10Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์ร้านค้า</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อุปกรณ์ร้านค้า')">อุปกรณ์ร้านค้า</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เคาน์เตอร์คิดเงิน')">เคาน์เตอร์คิดเงิน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้แช่เครื่องดื่ม')">ตู้แช่เครื่องดื่ม</div>
@@ -1505,7 +1521,7 @@
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องจักรและเกษตรกรรม</span><span class="arrow">▸</span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องจักรและเกษตรกรรม')">เครื่องจักรและเกษตรกรรม</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องตัดหญ้า')">เครื่องตัดหญ้า</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('รถไถ')">รถไถ</div>
@@ -3754,21 +3770,38 @@
       document.querySelectorAll('.flyout-menu').forEach(m => m.classList.remove('active'));
     }
 
-    // 3. ฟังก์ชันกางเมนูย่อย (Accordion)
-    function toggleSubFlyout(element) {
-      const group = element.parentElement;
+    // 3. ฟังก์ชันกางเมนูย่อย (Accordion) - แยกคลิกชัดเจน
+    function toggleSubFlyout(e, arrowBtn) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      // ถ้าคลิกโดนตัวลูกศรข้างใน ให้หา parent ที่เป็นปุ่มจริง
+      let btn = arrowBtn;
+      if (!btn.classList.contains('flyout-arrow-btn')) {
+        btn = btn.closest('.flyout-arrow-btn');
+      }
+      const group = btn.closest('.flyout-group');
+      const item = group.querySelector('.flyout-item');
+      const isActive = group.classList.contains('active');
+      // ปิดกลุ่มอื่น (optional - ทำให้เปิดทีละอัน)
+      // document.querySelectorAll('.flyout-group').forEach(g => { if(g!==group){ g.classList.remove('active'); g.querySelector('.flyout-item')?.classList.remove('expanded'); }});
       group.classList.toggle('active');
-      element.classList.toggle('expanded');
+      if(item) item.classList.toggle('expanded', !isActive);
+      console.log('toggle submenu:', group, !isActive);
     }
 
-    // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย
-    function selectFlyoutValue(value) {
-      if(currentFlyoutBtn) {
-        currentFlyoutBtn.innerText = value + ' ▾'; // เปลี่ยนชื่อปุ่มเป็นค่าที่เลือก
+    // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย - รองรับเลือกได้ทุกชั้น
+    function selectFlyoutValue(e, value) {
+      // รองรับเรียกแบบเก่า selectFlyoutValue('xxx') ด้วย
+      if (typeof e === 'string' && value === undefined) {
+        value = e;
+        e = null;
       }
-      closeMultiFlyout(); // เลือกเสร็จให้ปิดเมนู
-      
-      // สั่งให้ระบบค้นหาข้อมูล (ถ้าฟังก์ชันค้นหาเก่ามีอยู่ จะได้ทำงานอัตโนมัติ)
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      console.log('selected:', value);
+      if(currentFlyoutBtn) {
+        currentFlyoutBtn.innerText = value + ' ▾';
+        currentFlyoutBtn.dataset.selectedValue = value; // เก็บค่าจริงไว้ใช้ค้นหา
+      }
+      closeMultiFlyout();
       if (typeof testShowList === 'function') {
         testShowList();
       }
