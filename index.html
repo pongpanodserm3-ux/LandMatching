@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -998,10 +998,17 @@
       
       <!-- แผง Dropdown เลื่อนซ้ายขวาได้ -->
       <div class="filter-scroll-row" id="decor-filter-row">
-        <!-- ปุ่ม Dropdown เรียกเมนูหลายชั้น -->
-        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'furnitureFlyout')">เฟอร์นิเจอร์และของแต่งบ้าน ▾</button>
-        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'lampFlyout')">โคมไฟและอุปกรณ์ ▾</button>
-        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'doorFlyout')">ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน ▾</button>
+        <!-- ปุ่ม Dropdown เรียกเมนูหลายชั้น ครบ 10 หมวด -->
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat1Flyout')">1. เฟอร์นิเจอร์ แต่งบ้าน ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat2Flyout')">2. โคมไฟ และระบบแสงสว่าง ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat3Flyout')">3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat4Flyout')">4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat5Flyout')">5. ยานพาหนะ และอะไหล่ ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat6Flyout')">6. เครื่องใช้ไฟฟ้าภายในบ้าน ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat7Flyout')">7. แฟชั่น เครื่องแต่งกาย ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat8Flyout')">8. แม่และเด็ก / สัตว์เลี้ยง ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat9Flyout')">9. กีฬา และของสะสม ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat10Flyout')">10. สินค้าอุตสาหกรรม และร้านค้า ▾</button>
       </div>
 
       <!-- ปุ่มกด 3 ปุ่ม คล้ายในแท็บอสังหา -->
@@ -1150,76 +1157,364 @@
   <!-- ================= โซน Multi-level Flyout Menus (ดรอปดาวน์หลายชั้น) ================= -->
   <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
 
-  <!-- คำสั่ง 1. ดรอปดาวน์ เฟอร์นิเจอร์และของแต่งบ้าน -->
-  <div class="flyout-menu" id="furnitureFlyout">
+  <!-- หมวดที่ 1. เฟอร์นิเจอร์ แต่งบ้าน -->
+  <div class="flyout-menu" id="cat1Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>เฟอร์นิเจอร์ห้องรับแขก</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เก้าอี้และโซฟา</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟา / เก้าอี้พักผ่อน')">โซฟา / เก้าอี้พักผ่อน</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะกลาง / ชั้นทีวี')">โต๊ะกลาง / ชั้นทีวี</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟาเบด')">โซฟาเบด</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โซฟาเข้ามุม')">โซฟาเข้ามุม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เก้าอี้ทำงาน')">เก้าอี้ทำงาน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เก้าอี้ทานข้าว')">เก้าอี้ทานข้าว</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เก้าอี้พับ/เก้าอี้สนาม')">เก้าอี้พับ/เก้าอี้สนาม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เก้าอี้ปรับนอน')">เก้าอี้ปรับนอน</div>
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>เฟอร์นิเจอร์ห้องนอน</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โต๊ะและตู้</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('เตียงนอน / ฟูก')">เตียงนอน / ฟูก</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เสื้อผ้า / โต๊ะเครื่องแป้ง')">ตู้เสื้อผ้า / โต๊ะเครื่องแป้ง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะทำงาน')">โต๊ะทำงาน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะทานอาหาร')">โต๊ะทานอาหาร</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะกลาง/โต๊ะข้าง')">โต๊ะกลาง/โต๊ะข้าง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เสื้อผ้า')">ตู้เสื้อผ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เก็บของ/ชั้นวางของ')">ตู้เก็บของ/ชั้นวางของ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้รองเท้า')">ตู้รองเท้า</div>
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="selectFlyoutValue('ของตกแต่งบ้านทั่วไป')">
-        <span>ของตกแต่งบ้านทั่วไป</span>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เตียงและห้องนอน</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เตียงนอน')">เตียงนอน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ฟูก/ที่นอน')">ฟูก/ที่นอน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หมอน/ผ้าปูที่นอน')">หมอน/ผ้าปูที่นอน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะเครื่องแป้ง')">โต๊ะเครื่องแป้ง</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เฟอร์นิเจอร์ภายนอก</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ชุดโต๊ะสนาม')">ชุดโต๊ะสนาม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ชิงช้า')">ชิงช้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ร่มสนาม')">ร่มสนาม</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ของแต่งบ้าน</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ผ้าม่าน')">ผ้าม่าน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พรม')">พรม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระจกแต่งบ้าน')">กระจกแต่งบ้าน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ภาพแขวน')">ภาพแขวน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แจกัน/ต้นไม้ปลอม')">แจกัน/ต้นไม้ปลอม</div>
       </div>
     </div>
   </div>
 
-  <!-- คำสั่ง 2. ดรอปดาวน์ โคมไฟและอุปกรณ์ -->
-  <div class="flyout-menu" id="lampFlyout">
+  <!-- หมวดที่ 2. โคมไฟ และระบบแสงสว่าง -->
+  <div class="flyout-menu" id="cat2Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>โคมไฟภายในบ้าน</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โคมไฟตกแต่ง</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟเพดาน / แชนเดอเลียร์')">โคมไฟเพดาน / แชนเดอเลียร์</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟตั้งโต๊ะ / ตั้งพื้น')">โคมไฟตั้งโต๊ะ / ตั้งพื้น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟเพดาน/ช่อ (Chandelier)')">โคมไฟเพดาน/ช่อ (Chandelier)</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟตั้งโต๊ะ')">โคมไฟตั้งโต๊ะ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟตั้งพื้น')">โคมไฟตั้งพื้น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟติดผนัง')">โคมไฟติดผนัง</div>
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>หลอดไฟและอุปกรณ์</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>โคมไฟใช้งาน</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ LED / สมาร์ทโฮม')">หลอดไฟ LED / สมาร์ทโฮม</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('สวิตช์ / ปลั๊กไฟ / สายไฟ')">สวิตช์ / ปลั๊กไฟ / สายไฟ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟดาวน์ไลท์')">โคมไฟดาวน์ไลท์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟอ่านหนังสือ')">โคมไฟอ่านหนังสือ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟสปอตไลท์')">โคมไฟสปอตไลท์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โคมไฟโซล่าเซลล์ (Solar Cell)')">โคมไฟโซล่าเซลล์ (Solar Cell)</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>หลอดไฟและอุปกรณ์</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ LED')">หลอดไฟ LED</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หลอดไฟ Smart Wi-Fi')">หลอดไฟ Smart Wi-Fi</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รางไฟ')">รางไฟ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สวิตช์/ปลั๊กไฟ')">สวิตช์/ปลั๊กไฟ</div>
       </div>
     </div>
   </div>
 
-  <!-- คำสั่ง 3. ดรอปดาวน์ ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน -->
-  <div class="flyout-menu" id="doorFlyout">
+  <!-- หมวดที่ 3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน -->
+  <div class="flyout-menu" id="cat3Flyout">
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>ประตูและหน้าต่าง</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>หน้าต่าง</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูไม้ / ประตู PVC')">ประตูไม้ / ประตู PVC</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานเลื่อน / กระจก')">หน้าต่างบานเลื่อน / กระจก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานสไลด์')">หน้าต่างบานสไลด์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างบานกระทุ้ง')">หน้าต่างบานกระทุ้ง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หน้าต่างกระจกติดตาย')">หน้าต่างกระจกติดตาย</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('มุ้งลวด')">มุ้งลวด</div>
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item" onclick="toggleSubFlyout(this)">
-        <span>อุปกรณ์ซ่อมบ้าน</span><span class="arrow">▸</span>
-      </div>
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ประตู</span><span class="arrow">▸</span></div>
       <div class="flyout-submenu">
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('กลอน / ลูกบิดประตู / บานพับ')">กลอน / ลูกบิดประตู / บานพับ</div>
-        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องมือช่าง / ซ่อมแซม')">เครื่องมือช่าง / ซ่อมแซม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูไม้')">ประตูไม้</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตู UPVC/PVC')">ประตู UPVC/PVC</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูบานเลื่อน')">ประตูบานเลื่อน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ประตูกระจก')">ประตูกระจก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ลูกบิด/ดิจิทัลดอร์ล็อก')">ลูกบิด/ดิจิทัลดอร์ล็อก</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สุขภัณฑ์และห้องน้ำ</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ฝักบัว')">ฝักบัว</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ชักโครก')">ชักโครก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('อ่างล้างหน้า')">อ่างล้างหน้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ก็อกน้ำ')">ก็อกน้ำ</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>วัสดุและเครื่องมือช่าง</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สว่าน/เครื่องมือไฟฟ้า')">สว่าน/เครื่องมือไฟฟ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สีทาบ้าน')">สีทาบ้าน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เคมีภัณฑ์กันซึม')">เคมีภัณฑ์กันซึม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ปั๊มน้ำ/ถังเก็บน้ำ')">ปั๊มน้ำ/ถังเก็บน้ำ</div>
       </div>
     </div>
   </div>
+
+  <!-- หมวดที่ 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ -->
+  <div class="flyout-menu" id="cat4Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>คอมพิวเตอร์และโน้ตบุ๊ก</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โน้ตบุ๊กทำงาน')">โน้ตบุ๊กทำงาน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โน้ตบุ๊กเกมมิ่ง')">โน้ตบุ๊กเกมมิ่ง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('คอมพิวเตอร์ตั้งโต๊ะ (PC)')">คอมพิวเตอร์ตั้งโต๊ะ (PC)</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('คอมพิวเตอร์ All-in-One')">คอมพิวเตอร์ All-in-One</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์เสริมคอมพิวเตอร์</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('จอมอนิเตอร์')">จอมอนิเตอร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('คีย์บอร์ด/เมาส์')">คีย์บอร์ด/เมาส์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('การ์ดจอ (GPU)')">การ์ดจอ (GPU)</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('RAM/SSD')">RAM/SSD</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ปริ้นเตอร์/สแกนเนอร์')">ปริ้นเตอร์/สแกนเนอร์</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สมาร์ทโฟนและแท็บเล็ต</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('iPhone')">iPhone</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('Android')">Android</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('iPad/แท็บเล็ต')">iPad/แท็บเล็ต</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สมาร์ทวอทช์')">สมาร์ทวอทช์</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>กล้องและอุปกรณ์บันทึก</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กล้อง Mirrorless/DSLR')">กล้อง Mirrorless/DSLR</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กล้องวงจรปิด (CCTV)')">กล้องวงจรปิด (CCTV)</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โดรน')">โดรน</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องเสียงและแกดเจ็ต</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หูฟังบลูทูธ')">หูฟังบลูทูธ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ลำโพงไร้สาย')">ลำโพงไร้สาย</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ไมโครโฟน')">ไมโครโฟน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องเล่นเกม (PS5, Switch)')">เครื่องเล่นเกม (PS5, Switch)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 5. ยานพาหนะ และอะไหล่ -->
+  <div class="flyout-menu" id="cat5Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รถยนต์</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถเก๋ง')">รถเก๋ง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถ SUV')">รถ SUV</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถกระบะ')">รถกระบะ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถตู้')">รถตู้</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถไฟฟ้า (EV)')">รถไฟฟ้า (EV)</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รถจักรยานยนต์</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('มอเตอร์ไซค์ทั่วไป')">มอเตอร์ไซค์ทั่วไป</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('บิ๊กไบค์ (Bigbike)')">บิ๊กไบค์ (Bigbike)</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('มอเตอร์ไซค์ไฟฟ้า')">มอเตอร์ไซค์ไฟฟ้า</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>จักรยานและสกู๊ตเตอร์</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('จักรยานเสือหมอบ/เสือภูเขา')">จักรยานเสือหมอบ/เสือภูเขา</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('จักรยานพับ')">จักรยานพับ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สกู๊ตเตอร์ไฟฟ้า')">สกู๊ตเตอร์ไฟฟ้า</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อะไหล่และอุปกรณ์ตกแต่ง</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ยางรถยนต์')">ยางรถยนต์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ล้อแม็ก')">ล้อแม็ก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แบตเตอรี่')">แบตเตอรี่</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กล้องติดรถยนต์')">กล้องติดรถยนต์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หมวกกันน็อก')">หมวกกันน็อก</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 6. เครื่องใช้ไฟฟ้าภายในบ้าน -->
+  <div class="flyout-menu" id="cat6Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าใหญ่</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้เย็น/ตู้แช่')">ตู้เย็น/ตู้แช่</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องซักผ้า/เครื่องอบผ้า')">เครื่องซักผ้า/เครื่องอบผ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องปรับอากาศ/พัดลมไอเย็น')">เครื่องปรับอากาศ/พัดลมไอเย็น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องทำน้ำอุ่น')">เครื่องทำน้ำอุ่น</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าในครัว</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ไมโครเวฟ/เตาอบ')">ไมโครเวฟ/เตาอบ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หม้อทอดไร้น้ำมัน')">หม้อทอดไร้น้ำมัน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หม้อหุงข้าว')">หม้อหุงข้าว</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เตาไฟฟ้า/เตาแก๊ส')">เตาไฟฟ้า/เตาแก๊ส</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องปั่น/เครื่องชงกาแฟ')">เครื่องปั่น/เครื่องชงกาแฟ</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องใช้ไฟฟ้าทำความสะอาด</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หุ่นยนต์ดูดฝุ่น')">หุ่นยนต์ดูดฝุ่น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องดูดฝุ่น')">เครื่องดูดฝุ่น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องกรองอากาศ')">เครื่องกรองอากาศ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องกรองน้ำ')">เครื่องกรองน้ำ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 7. แฟชั่น เครื่องแต่งกาย -->
+  <div class="flyout-menu" id="cat7Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เสื้อผ้า</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เสื้อผ้าผู้ชาย')">เสื้อผ้าผู้ชาย</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เสื้อผ้าผู้หญิง')">เสื้อผ้าผู้หญิง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ชุดทำงาน')">ชุดทำงาน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ชุดออกกำลังกาย')">ชุดออกกำลังกาย</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>รองเท้าและกระเป๋า</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รองเท้าผ้าใบ')">รองเท้าผ้าใบ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รองเท้าหนัง')">รองเท้าหนัง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระเป๋าถือ')">กระเป๋าถือ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระเป๋าเดินทาง')">กระเป๋าเดินทาง</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องประดับและนาฬิกา</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('นาฬิกาข้อมือ')">นาฬิกาข้อมือ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แว่นตา')">แว่นตา</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แหวน/สร้อย/เครื่องประดับ')">แหวน/สร้อย/เครื่องประดับ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 8. แม่และเด็ก / สัตว์เลี้ยง -->
+  <div class="flyout-menu" id="cat8Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>แม่และเด็ก</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถดันเด็ก')">รถดันเด็ก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('คาร์ซีท')">คาร์ซีท</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เตียงเด็ก')">เตียงเด็ก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ของเล่นเด็ก')">ของเล่นเด็ก</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>สัตว์เลี้ยง</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('อาหารสัตว์')">อาหารสัตว์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กรง/คอนโดแมว')">กรง/คอนโดแมว</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('อุปกรณ์ขับถ่าย')">อุปกรณ์ขับถ่าย</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สายรัดอก/รถดันสัตว์เลี้ยง')">สายรัดอก/รถดันสัตว์เลี้ยง</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 9. กีฬา และของสะสม -->
+  <div class="flyout-menu" id="cat9Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์กีฬาและฟิตเนส</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ลู่วิ่งไฟฟ้า')">ลู่วิ่งไฟฟ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ดัมเบล')">ดัมเบล</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('อุปกรณ์กอล์ฟ')">อุปกรณ์กอล์ฟ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เซิร์ฟบอร์ด')">เซิร์ฟบอร์ด</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>การแคมป์ปิ้ง</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เต็นท์')">เต็นท์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ถุงนอน')">ถุงนอน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โต๊ะ/เก้าอี้สนาม')">โต๊ะ/เก้าอี้สนาม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ไฟฉายแคมป์ปิ้ง')">ไฟฉายแคมป์ปิ้ง</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องดนตรี</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กีตาร์')">กีตาร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เปียโน/คีย์บอร์ด')">เปียโน/คีย์บอร์ด</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กลอง')">กลอง</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>ของสะสม</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พระเครื่อง/วัตถุมงคล')">พระเครื่อง/วัตถุมงคล</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('โมเดล/ฟิกเกอร์')">โมเดล/ฟิกเกอร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แผ่นเสียง/การ์ดสะสม')">แผ่นเสียง/การ์ดสะสม</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- หมวดที่ 10. สินค้าอุตสาหกรรม และร้านค้า -->
+  <div class="flyout-menu" id="cat10Flyout">
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>อุปกรณ์ร้านค้า</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เคาน์เตอร์คิดเงิน')">เคาน์เตอร์คิดเงิน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ตู้แช่เครื่องดื่ม')">ตู้แช่เครื่องดื่ม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หุ่นโชว์เสื้อผ้า')">หุ่นโชว์เสื้อผ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถดันสินค้า')">รถดันสินค้า</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="toggleSubFlyout(this)"><span>เครื่องจักรและเกษตรกรรม</span><span class="arrow">▸</span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องตัดหญ้า')">เครื่องตัดหญ้า</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('รถไถ')">รถไถ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องปั่นไฟ')">เครื่องปั่นไฟ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องจักรโรงงาน')">เครื่องจักรโรงงาน</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= จบโซน Multi-level Flyout Menus ================= -->
   <!-- Floating User Chat Button -->
   <div class="user-chat-float-btn" onclick="openUserChatModal()">
