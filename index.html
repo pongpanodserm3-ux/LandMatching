@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -933,21 +933,6 @@
     .flyout-sub-item:last-child { border-bottom: none; }
     .flyout-sub-item:active { background: #d0e0f0; color: var(--btn-blue); font-weight: bold; }
     /* --- จบ: สไตล์สำหรับ Multi-level Flyout Dropdown --- */
-
-    /* ขยายพื้นที่การกดให้ลูกศรสำหรับ Dropdown หัวข้อใหญ่ */
-    .flyout-item .arrow {
-      padding: 10px 15px;      /* เพิ่มพื้นที่รอบๆ ลูกศร */
-      margin-right: -10px;     /* ดึงลูกศรชิดขอบ */
-      font-size: 18px;         /* ขยายขนาดลูกศรเล็กน้อย */
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    /* เพิ่มเอฟเฟกต์เมื่อเอาเมาส์ชี้ลูกศรให้ชัดเจนขึ้นว่ากดกางได้ */
-    .flyout-item .arrow:hover {
-      color: var(--btn-blue);
-      transform: scale(1.2);
-    }
     
   </style> 
     
@@ -3771,28 +3756,9 @@
 
     // 3. ฟังก์ชันกางเมนูย่อย (Accordion)
     function toggleSubFlyout(element) {
-      // ดึง event การคลิกเพื่อดูว่าผู้ใช้คลิกตรงไหน
-      const e = window.event; 
-      
-      // ตรวจสอบว่าจุดที่คลิกคือลูกศร (▸) หรือไม่
-      const isArrowClicked = e && e.target.classList.contains('arrow');
-    
-      if (isArrowClicked) {
-        // 1. ถ้ากดโดน "ลูกศร" ให้ทำการ กาง/หุบ เมนูย่อย
-        element.classList.toggle('expanded');
-      } else {
-        // 2. ถ้ากดโดน "ตัวหนังสือ" หรือพื้นที่อื่นๆ ให้เลือกหัวข้อใหญ่นั้นเลย
-        // ดึงข้อความจาก span ตัวแรก (หัวข้อหลัก) มาใช้งาน
-        const topicSpan = element.querySelector('span:first-child');
-        if (topicSpan) {
-          const mainTopic = topicSpan.innerText.trim();
-          
-          // เรียกฟังก์ชันเลือกค่าเข้าสู่ระบบ (สมมติว่าฟังก์ชันเดิมชื่อ selectFlyoutValue)
-          if (typeof selectFlyoutValue === 'function') {
-            selectFlyoutValue(mainTopic);
-          }
-        }
-      }
+      const group = element.parentElement;
+      group.classList.toggle('active');
+      element.classList.toggle('expanded');
     }
 
     // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย
