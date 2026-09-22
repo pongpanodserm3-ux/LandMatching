@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.2meta
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9.4meta
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -3788,9 +3788,8 @@
       console.log('toggle submenu:', group, !isActive);
     }
 
-    // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย - รองรับเลือกได้ทุกชั้น
+    // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย - รองรับเลือกได้ทุกชั้น + รีเซ็ตแถวเดียวกัน
     function selectFlyoutValue(e, value) {
-      // รองรับเรียกแบบเก่า selectFlyoutValue('xxx') ด้วย
       if (typeof e === 'string' && value === undefined) {
         value = e;
         e = null;
@@ -3799,7 +3798,9 @@
       console.log('selected:', value);
       if(currentFlyoutBtn) {
         currentFlyoutBtn.innerText = value + ' ▾';
-        currentFlyoutBtn.dataset.selectedValue = value; // เก็บค่าจริงไว้ใช้ค้นหา
+        currentFlyoutBtn.dataset.selectedValue = value;
+        // === เพิ่มใหม่: รีเซ็ต dropdown อื่นในบรรทัดเดียวกัน ===
+        resetOtherDropdownsInSameRow(currentFlyoutBtn);
       }
       closeMultiFlyout();
       if (typeof testShowList === 'function') {
@@ -3807,18 +3808,74 @@
       }
     }
 
+    // สำหรับแท็บอสังหา - ถ้ามีการเลือกจาก modal เดิม ให้รีเซ็ตแถวเดียวกันด้วย
+    // เก็บปุ่มปัจจุบันที่เปิด modal ไว้ใน currentFlyoutBtn เหมือนกัน เพื่อให้ logic เดียวกันทำงาน
+    const originalOpenDropdownModal = window.openDropdownModal;
+    if (typeof originalOpenDropdownModal === 'function') {
+      window.openDropdownModal = function(type) {
+        // หาปุ่มที่กดจาก event
+        if (window.event && window.event.currentTarget) {
+          currentFlyoutBtn = window.event.currentTarget;
+        }
+        return originalOpenDropdownModal.apply(this, arguments);
+      }
+    }
+    // ฟังก์ชันกลางสำหรับ modal อสังหาเรียกเมื่อเลือกค่าเสร็จ
+    function onFilterSelectedInSameRow(selectedBtn, newValue) {
+      if (selectedBtn) {
+        selectedBtn.innerText = newValue + ' ▾';
+        selectedBtn.dataset.selectedValue = newValue;
+        resetOtherDropdownsInSameRow(selectedBtn);
+      }
+    }
+    
+
+    // เก็บค่า default ของ dropdown ทั้งหมดตอนโหลด
+    function initDefaultValues() {
+      document.querySelectorAll('.filter-btn, .decor-btn').forEach(btn => {
+        if (!btn.dataset.default) {
+          btn.dataset.default = btn.innerText.trim();
+        }
+      });
+    }
+    // เรียกเมื่อโหลดเสร็จ
+    document.addEventListener('DOMContentLoaded', initDefaultValues);
+    // กันพลาดถ้า script อยู่ท้ายไฟล์แล้ว
+    if (document.readyState !== 'loading') initDefaultValues();
+
+    // ฟังก์ชันรีเซ็ตเฉพาะแถวเดียวกันเท่านั้น!
+    function resetOtherDropdownsInSameRow(currentBtn) {
+      if (!currentBtn) return;
+      const parentRow = currentBtn.closest('.filter-scroll-row');
+      if (!parentRow) return; // ถ้าไม่เจอแถว ไม่ทำอะไร
+      
+      const otherBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
+      otherBtns.forEach(btn => {
+        if (btn === currentBtn) return; // ข้ามปุ่มที่เพิ่งเลือก
+        // รีเซ็ตเป็นค่า default ที่จำไว้
+        if (btn.dataset.default) {
+          btn.innerText = btn.dataset.default;
+        }
+        // ล้างค่าที่เลือกไว้ (ถ้ามี)
+        if (btn.dataset.selectedValue) {
+          delete btn.dataset.selectedValue;
+        }
+      });
+      console.log('reset same row:', parentRow, 'except', currentBtn.innerText);
+    }
+
     // 5. ฟังก์ชันสำหรับปุ่ม "ล้างค่า" ในหน้าสินค้าทั่วไป
     function resetAllFiltersDecor() {
       const editBox = document.getElementById('customEditBoxDecor');
       if (editBox) editBox.value = '';
       
-      // คืนค่าปุ่มให้กลับมาเป็นชื่อหมวดหมู่เหมือนเดิม
-      const btns = document.querySelectorAll('.decor-btn');
+      // คืนค่าปุ่มให้กลับมาเป็นชื่อหมวดหมู่เหมือนเดิม - ใช้ data-default ที่จำไว้
+      const btns = document.querySelectorAll('#decor-filter-row .decor-btn');
       btns.forEach(btn => {
-        const onClickAttr = btn.getAttribute('onclick') || '';
-        if (onClickAttr.includes('furnitureFlyout')) btn.innerText = 'เฟอร์นิเจอร์และของแต่งบ้าน ▾';
-        if (onClickAttr.includes('lampFlyout')) btn.innerText = 'โคมไฟและอุปกรณ์ ▾';
-        if (onClickAttr.includes('doorFlyout')) btn.innerText = 'ประตูหน้าต่างและอุปกรณ์ซ่อมบ้าน ▾';
+        if (btn.dataset.default) {
+          btn.innerText = btn.dataset.default;
+        }
+        if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
       });
     }
   </script>
