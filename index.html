@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1034,19 +1034,19 @@
       </div>
       
       <div class="filter-scroll-row">
-        <button class="filter-btn" onclick="openDropdownModal('ขาย/เช่า')">ขาย/เช่า ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('คอนโด/บ้าน')">คอนโด/บ้าน ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('ราคาขาย')">ราคาขาย ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('ราคาเช่า')">ราคาเช่า ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('จังหวัด')">จังหวัด ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('เขต/อำเภอ')">เขต/อำเภอ ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('ถนน')">ถนน ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('โครงการ')">โครงการ ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('ซอย')">ซอย ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('เนื้อที่')">เนื้อที่ ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('อื่นๆ')">อื่นๆ ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('สถานที่ใกล้เคียง')">สถานที่ใกล้เคียง ▾</button>
-        <button class="filter-btn" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
+        <button class="filter-btn" id="re_saleBtn" data-default="ขาย/เช่า ▾" onclick="openMultiFlyout(event, 're_saleFlyout')">ขาย/เช่า ▾</button>
+        <button class="filter-btn" id="re_typeBtn" data-default="คอนโด/บ้าน ▾" onclick="openMultiFlyout(event, 're_typeFlyout')">คอนโด/บ้าน ▾</button>
+        <button class="filter-btn" id="re_salePriceBtn" data-default="ราคาขาย ▾" onclick="openMultiFlyout(event, 're_salePriceFlyout')">ราคาขาย ▾</button>
+        <button class="filter-btn" id="re_rentPriceBtn" data-default="ราคาเช่า ▾" onclick="openMultiFlyout(event, 're_rentPriceFlyout')">ราคาเช่า ▾</button>
+        <button class="filter-btn" id="re_provinceBtn" data-default="จังหวัด ▾" onclick="openMultiFlyout(event, 're_provinceFlyout')">จังหวัด ▾</button>
+        <button class="filter-btn" id="re_districtBtn" data-default="เขต/อำเภอ ▾" onclick="openMultiFlyout(event, 're_districtFlyout')">เขต/อำเภอ ▾</button>
+        <button class="filter-btn" id="re_roadBtn" data-default="ถนน ▾" onclick="openMultiFlyout(event, 're_roadFlyout')">ถนน ▾</button>
+        <button class="filter-btn" id="re_projectBtn" data-default="โครงการ ▾" onclick="openMultiFlyout(event, 're_projectFlyout')">โครงการ ▾</button>
+        <button class="filter-btn" id="re_soiBtn" data-default="ซอย ▾" onclick="openMultiFlyout(event, 're_soiFlyout')">ซอย ▾</button>
+        <button class="filter-btn" id="re_areaBtn" data-default="เนื้อที่ ▾" onclick="openMultiFlyout(event, 're_areaFlyout')">เนื้อที่ ▾</button>
+        <button class="filter-btn" id="re_otherBtn" data-default="อื่นๆ ▾" onclick="openMultiFlyout(event, 're_otherFlyout')">อื่นๆ ▾</button>
+        <button class="filter-btn" id="re_nearbyBtn" data-default="สถานที่ใกล้เคียง ▾" onclick="openMultiFlyout(event, 're_nearbyFlyout')">สถานที่ใกล้เคียง ▾</button>
+        <button class="filter-btn" id="re_facilityBtn" data-default="สาธารณูปโภคพิเศษ ▾" onclick="openMultiFlyout(event, 're_facilityFlyout')">สาธารณูปโภคพิเศษ ▾</button>
       </div>
 
       <div style="display: flex; gap: 6px; margin-top: 4px;">
@@ -1225,6 +1225,122 @@
   </div>
   <!-- ================= โซน Multi-level Flyout Menus (ดรอปดาวน์หลายชั้น) ================= -->
   <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
+
+  
+  <!-- ===== Real Estate Flyout Menus (แบบหล่นลงใต้ปุ่มเหมือนแท็บสินค้าทั่วไป) ===== -->
+  <div class="flyout-menu" id="re_saleFlyout">
+    <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา ขาย/เช่า..." oninput="filterFlyoutOptions(this, 're_saleFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="ขาย" onclick="selectFlyoutValue(event, 'ขาย')">ขาย</div>
+    <div class="flyout-sub-item" data-value="เช่า" onclick="selectFlyoutValue(event, 'เช่า')">เช่า</div>
+    <div class="flyout-sub-item" data-value="ขาย-เช่า" onclick="selectFlyoutValue(event, 'ขาย-เช่า')">ขาย-เช่า</div>
+    <div class="flyout-sub-item" data-value="เช่า-ซื้อ" onclick="selectFlyoutValue(event, 'เช่า-ซื้อ')">เช่า-ซื้อ</div>
+    <div class="flyout-sub-item" data-value="เซ้ง" onclick="selectFlyoutValue(event, 'เซ้ง')">เซ้ง</div>
+    <div class="flyout-sub-item" data-value="หาซื้อ" onclick="selectFlyoutValue(event, 'หาซื้อ')">หาซื้อ</div>
+    <div class="flyout-sub-item" data-value="หาเช่า" onclick="selectFlyoutValue(event, 'หาเช่า')">หาเช่า</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_saleBtn', 'ขาย/เช่า ▾')">❌ ล้างค่า ขาย/เช่า</div>
+  </div>
+  <div class="flyout-menu" id="re_typeFlyout">
+    <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา คอนโด/บ้าน..." oninput="filterFlyoutOptions(this, 're_typeFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="บ้าน" onclick="selectFlyoutValue(event, 'บ้าน')">บ้าน</div>
+    <div class="flyout-sub-item" data-value="คอนโด" onclick="selectFlyoutValue(event, 'คอนโด')">คอนโด</div>
+    <div class="flyout-sub-item" data-value="ทาวน์เฮาส์" onclick="selectFlyoutValue(event, 'ทาวน์เฮาส์')">ทาวน์เฮาส์</div>
+    <div class="flyout-sub-item" data-value="ทาวน์โฮม" onclick="selectFlyoutValue(event, 'ทาวน์โฮม')">ทาวน์โฮม</div>
+    <div class="flyout-sub-item" data-value="ตึกแถว" onclick="selectFlyoutValue(event, 'ตึกแถว')">ตึกแถว</div>
+    <div class="flyout-sub-item" data-value="อาคารพาณิชย์" onclick="selectFlyoutValue(event, 'อาคารพาณิชย์')">อาคารพาณิชย์</div>
+    <div class="flyout-sub-item" data-value="ร้านค้า" onclick="selectFlyoutValue(event, 'ร้านค้า')">ร้านค้า</div>
+    <div class="flyout-sub-item" data-value="ตลาด" onclick="selectFlyoutValue(event, 'ตลาด')">ตลาด</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_typeBtn', 'คอนโด/บ้าน ▾')">❌ ล้างค่า คอนโด/บ้าน</div>
+  </div>
+  <div class="flyout-menu" id="re_salePriceFlyout">
+    <div class="flyout-sub-item" data-value="ไม่เกิน 2 ล้าน" onclick="selectFlyoutValue(event, 'ไม่เกิน 2 ล้าน')">ไม่เกิน 2 ล้าน</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 5 ล้าน" onclick="selectFlyoutValue(event, 'ไม่เกิน 5 ล้าน')">ไม่เกิน 5 ล้าน</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 10 ล้าน" onclick="selectFlyoutValue(event, 'ไม่เกิน 10 ล้าน')">ไม่เกิน 10 ล้าน</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 20 ล้าน" onclick="selectFlyoutValue(event, 'ไม่เกิน 20 ล้าน')">ไม่เกิน 20 ล้าน</div>
+    <div class="flyout-sub-item" data-value="ตั้งแต่ 20 ล้านเป็นต้นไป" onclick="selectFlyoutValue(event, 'ตั้งแต่ 20 ล้านเป็นต้นไป')">ตั้งแต่ 20 ล้านเป็นต้นไป</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_salePriceBtn', 'ราคาขาย ▾')">❌ ล้างค่า ราคาขาย</div>
+  </div>
+  <div class="flyout-menu" id="re_rentPriceFlyout">
+    <div class="flyout-sub-item" data-value="ไม่เกิน 5,000" onclick="selectFlyoutValue(event, 'ไม่เกิน 5,000')">ไม่เกิน 5,000</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 10,000" onclick="selectFlyoutValue(event, 'ไม่เกิน 10,000')">ไม่เกิน 10,000</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 15,000" onclick="selectFlyoutValue(event, 'ไม่เกิน 15,000')">ไม่เกิน 15,000</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 20,000" onclick="selectFlyoutValue(event, 'ไม่เกิน 20,000')">ไม่เกิน 20,000</div>
+    <div class="flyout-sub-item" data-value="ตั้งแต่ 20,000 เป็นต้นไป" onclick="selectFlyoutValue(event, 'ตั้งแต่ 20,000 เป็นต้นไป')">ตั้งแต่ 20,000 เป็นต้นไป</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_rentPriceBtn', 'ราคาเช่า ▾')">❌ ล้างค่า ราคาเช่า</div>
+  </div>
+  <div class="flyout-menu" id="re_provinceFlyout">
+    <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา จังหวัด..." oninput="filterFlyoutOptions(this, 're_provinceFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="กทม." onclick="selectFlyoutValue(event, 'กทม.')">กทม.</div>
+    <div class="flyout-sub-item" data-value="นนทบุรี" onclick="selectFlyoutValue(event, 'นนทบุรี')">นนทบุรี</div>
+    <div class="flyout-sub-item" data-value="ปทุมธานี" onclick="selectFlyoutValue(event, 'ปทุมธานี')">ปทุมธานี</div>
+    <div class="flyout-sub-item" data-value="สมุทรปราการ" onclick="selectFlyoutValue(event, 'สมุทรปราการ')">สมุทรปราการ</div>
+    <div class="flyout-sub-item" data-value="สมุทรสงคราม" onclick="selectFlyoutValue(event, 'สมุทรสงคราม')">สมุทรสงคราม</div>
+    <div class="flyout-sub-item" data-value="เชียงใหม่" onclick="selectFlyoutValue(event, 'เชียงใหม่')">เชียงใหม่</div>
+    <div class="flyout-sub-item" data-value="ภูเก็ต" onclick="selectFlyoutValue(event, 'ภูเก็ต')">ภูเก็ต</div>
+    <div class="flyout-sub-item" data-value="สงขลา" onclick="selectFlyoutValue(event, 'สงขลา')">สงขลา</div>
+    <div class="flyout-sub-item" data-value="ชลบุรี" onclick="selectFlyoutValue(event, 'ชลบุรี')">ชลบุรี</div>
+    <div class="flyout-sub-item" data-value="ระยอง" onclick="selectFlyoutValue(event, 'ระยอง')">ระยอง</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_provinceBtn', 'จังหวัด ▾')">❌ ล้างค่า จังหวัด</div>
+  </div>
+  <div class="flyout-menu" id="re_districtFlyout">
+    <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา เขต/อำเภอ..." oninput="filterFlyoutOptions(this, 're_districtFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="บางกะปิ" onclick="selectFlyoutValue(event, 'บางกะปิ')">บางกะปิ</div>
+    <div class="flyout-sub-item" data-value="บึงกุ่ม" onclick="selectFlyoutValue(event, 'บึงกุ่ม')">บึงกุ่ม</div>
+    <div class="flyout-sub-item" data-value="คลองสามวา" onclick="selectFlyoutValue(event, 'คลองสามวา')">คลองสามวา</div>
+    <div class="flyout-sub-item" data-value="ลาดพร้าว" onclick="selectFlyoutValue(event, 'ลาดพร้าว')">ลาดพร้าว</div>
+    <div class="flyout-sub-item" data-value="มีนบุรี" onclick="selectFlyoutValue(event, 'มีนบุรี')">มีนบุรี</div>
+    <div class="flyout-sub-item" data-value="บางนา" onclick="selectFlyoutValue(event, 'บางนา')">บางนา</div>
+    <div class="flyout-sub-item" data-value="ห้วยขวาง" onclick="selectFlyoutValue(event, 'ห้วยขวาง')">ห้วยขวาง</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_districtBtn', 'เขต/อำเภอ ▾')">❌ ล้างค่า เขต/อำเภอ</div>
+  </div>
+  <div class="flyout-menu" id="re_roadFlyout">
+    <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา ถนน..." oninput="filterFlyoutOptions(this, 're_roadFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="ถนนศรีนครินทร์" onclick="selectFlyoutValue(event, 'ถนนศรีนครินทร์')">ถนนศรีนครินทร์</div>
+    <div class="flyout-sub-item" data-value="ถนนลาดพร้าว" onclick="selectFlyoutValue(event, 'ถนนลาดพร้าว')">ถนนลาดพร้าว</div>
+    <div class="flyout-sub-item" data-value="ถนนรามอินทรา" onclick="selectFlyoutValue(event, 'ถนนรามอินทรา')">ถนนรามอินทรา</div>
+    <div class="flyout-sub-item" data-value="ถนนสุขุมวิท" onclick="selectFlyoutValue(event, 'ถนนสุขุมวิท')">ถนนสุขุมวิท</div>
+    <div class="flyout-sub-item" data-value="ถนนพหลโยธิน" onclick="selectFlyoutValue(event, 'ถนนพหลโยธิน')">ถนนพหลโยธิน</div>
+    <div class="flyout-sub-item" data-value="ถนนรัชดาภิเษก" onclick="selectFlyoutValue(event, 'ถนนรัชดาภิเษก')">ถนนรัชดาภิเษก</div>
+    <div class="flyout-sub-item" data-value="ถนนเพชรบุรี" onclick="selectFlyoutValue(event, 'ถนนเพชรบุรี')">ถนนเพชรบุรี</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_roadBtn', 'ถนน ▾')">❌ ล้างค่า ถนน</div>
+  </div>
+  <div class="flyout-menu" id="re_projectFlyout">
+    <div class="flyout-sub-item" data-value="โครงการ 1" onclick="selectFlyoutValue(event, 'โครงการ 1')">โครงการ 1</div>
+    <div class="flyout-sub-item" data-value="โครงการ 2" onclick="selectFlyoutValue(event, 'โครงการ 2')">โครงการ 2</div>
+    <div class="flyout-sub-item" data-value="โครงการ 3" onclick="selectFlyoutValue(event, 'โครงการ 3')">โครงการ 3</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_projectBtn', 'โครงการ ▾')">❌ ล้างค่า โครงการ</div>
+  </div>
+  <div class="flyout-menu" id="re_soiFlyout">
+    <div class="flyout-sub-item" data-value="ซอย 1" onclick="selectFlyoutValue(event, 'ซอย 1')">ซอย 1</div>
+    <div class="flyout-sub-item" data-value="ซอย 2" onclick="selectFlyoutValue(event, 'ซอย 2')">ซอย 2</div>
+    <div class="flyout-sub-item" data-value="ซอย 3" onclick="selectFlyoutValue(event, 'ซอย 3')">ซอย 3</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_soiBtn', 'ซอย ▾')">❌ ล้างค่า ซอย</div>
+  </div>
+  <div class="flyout-menu" id="re_areaFlyout">
+    <div class="flyout-sub-item" data-value="ไม่เกิน 100 ตารางวา" onclick="selectFlyoutValue(event, 'ไม่เกิน 100 ตารางวา')">ไม่เกิน 100 ตารางวา</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 400 ตารางวา" onclick="selectFlyoutValue(event, 'ไม่เกิน 400 ตารางวา')">ไม่เกิน 400 ตารางวา</div>
+    <div class="flyout-sub-item" data-value="ไม่เกิน 10 ไร่" onclick="selectFlyoutValue(event, 'ไม่เกิน 10 ไร่')">ไม่เกิน 10 ไร่</div>
+    <div class="flyout-sub-item" data-value="มากกว่า 10 ไร่ เป็นต้นไป" onclick="selectFlyoutValue(event, 'มากกว่า 10 ไร่ เป็นต้นไป')">มากกว่า 10 ไร่ เป็นต้นไป</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_areaBtn', 'เนื้อที่ ▾')">❌ ล้างค่า เนื้อที่</div>
+  </div>
+  <div class="flyout-menu" id="re_otherFlyout">
+    <div class="flyout-sub-item" data-value="อื่นๆ 1" onclick="selectFlyoutValue(event, 'อื่นๆ 1')">อื่นๆ 1</div>
+    <div class="flyout-sub-item" data-value="อื่นๆ 2" onclick="selectFlyoutValue(event, 'อื่นๆ 2')">อื่นๆ 2</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_otherBtn', 'อื่นๆ ▾')">❌ ล้างค่า อื่นๆ</div>
+  </div>
+  <div class="flyout-menu" id="re_nearbyFlyout">
+    <div class="flyout-sub-item" data-value="ใกล้ BTS" onclick="selectFlyoutValue(event, 'ใกล้ BTS')">ใกล้ BTS</div>
+    <div class="flyout-sub-item" data-value="ใกล้ MRT" onclick="selectFlyoutValue(event, 'ใกล้ MRT')">ใกล้ MRT</div>
+    <div class="flyout-sub-item" data-value="ใกล้โรงเรียน" onclick="selectFlyoutValue(event, 'ใกล้โรงเรียน')">ใกล้โรงเรียน</div>
+    <div class="flyout-sub-item" data-value="ใกล้ห้าง" onclick="selectFlyoutValue(event, 'ใกล้ห้าง')">ใกล้ห้าง</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_nearbyBtn', 'สถานที่ใกล้เคียง ▾')">❌ ล้างค่า สถานที่ใกล้เคียง</div>
+  </div>
+  <div class="flyout-menu" id="re_facilityFlyout">
+    <div class="flyout-sub-item" data-value="สระว่ายน้ำ" onclick="selectFlyoutValue(event, 'สระว่ายน้ำ')">สระว่ายน้ำ</div>
+    <div class="flyout-sub-item" data-value="ฟิตเนส" onclick="selectFlyoutValue(event, 'ฟิตเนส')">ฟิตเนส</div>
+    <div class="flyout-sub-item" data-value="สวน" onclick="selectFlyoutValue(event, 'สวน')">สวน</div>
+    <div class="flyout-sub-item" data-value="ที่จอดรถ" onclick="selectFlyoutValue(event, 'ที่จอดรถ')">ที่จอดรถ</div>
+    <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_facilityBtn', 'สาธารณูปโภคพิเศษ ▾')">❌ ล้างค่า สาธารณูปโภคพิเศษ</div>
+  </div>
 
   <!-- ปุ่มพิเศษ ขาย/เช่า - แถวบน ไม่เกี่ยวกับแถวล่าง -->
   <div class="flyout-menu sale-flyout" id="saleTypeFlyout" style="width: 320px; max-width: 90vw;">
@@ -3984,6 +4100,53 @@
         }
       });
       console.log('reset same row:', parentRow, 'except', currentBtn.innerText);
+    }
+
+
+    // === Helper สำหรับ Real Estate Flyout ===
+    function filterFlyoutOptions(inputEl, menuId) {
+      const term = inputEl.value.toLowerCase();
+      const menu = document.getElementById(menuId);
+      if(!menu) return;
+      menu.querySelectorAll('.flyout-sub-item').forEach(item => {
+        const text = item.innerText.toLowerCase();
+        if(item.innerText.includes('ล้างค่า')) return; // always show clear
+        item.style.display = text.includes(term) ? 'block' : 'none';
+      });
+    }
+    function clearSingleFilter(e, btnId, defaultText) {
+      if(e){ e.stopPropagation(); e.preventDefault(); }
+      const btn = document.getElementById(btnId);
+      if(btn){
+        btn.innerText = defaultText;
+        delete btn.dataset.selectedValue;
+      }
+      closeMultiFlyout();
+      if (typeof testShowList === 'function') testShowList();
+    }
+    // ปิด modal เก่าของอสังหา ถ้ายังมีเรียกใช้อยู่ ให้เปลี่ยนไปใช้ flyout แทน
+    function openDropdownModal(topic) {
+      console.warn('openDropdownModal is deprecated, use flyout instead. Topic:', topic);
+      // map topic to flyout id
+      const map = {
+        'ขาย/เช่า': 're_saleFlyout',
+        'คอนโด/บ้าน': 're_typeFlyout',
+        'ราคาขาย': 're_salePriceFlyout',
+        'ราคาเช่า': 're_rentPriceFlyout',
+        'จังหวัด': 're_provinceFlyout',
+        'เขต/อำเภอ': 're_districtFlyout',
+        'ถนน': 're_roadFlyout',
+        'โครงการ': 're_projectFlyout',
+        'ซอย': 're_soiFlyout',
+        'เนื้อที่': 're_areaFlyout',
+        'อื่นๆ': 're_otherFlyout',
+        'สถานที่ใกล้เคียง': 're_nearbyFlyout',
+        'สาธารณูปโภคพิเศษ': 're_facilityFlyout'
+      };
+      const flyoutId = map[topic];
+      if(flyoutId && window.event){
+        openMultiFlyout(window.event, flyoutId);
+      }
     }
 
     // === ระบบ ขาย/เช่า แถวบน (แยกอิสระจากแถวล่าง) ===
