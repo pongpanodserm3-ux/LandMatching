@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1011,9 +1011,9 @@
     <div class="ai-controls-row">
       <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <div class="header-center-logos">
+        <div id="statusTextTop" style="font-size: 11px; color: #5c3a6b; font-weight: bold; margin-right: 8px; background: rgba(255,255,255,0.7); padding: 4px 8px; border-radius: 12px; white-space:nowrap;">พร้อมใช้งาน</div>
         <div class="ai-avatar" id="avatarCircle">🤖</div>
         <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
-
       </div>
       <div style="width: 80px;"></div>
     </div>
@@ -1062,7 +1062,8 @@
         <input type="text" class="custom-edit" id="customEditBoxDecor" placeholder="ค้นหาของแต่งบ้าน อุปกรณ์ซ่อมบ้าน..." style="flex:1;">
         <!-- ปุ่ม ขาย/เช่า แบบเล็ก แยกอิสระ ไม่โดนรีเซ็ตจากแถวล่าง -->
         <button class="filter-btn small-sale-btn" id="saleTypeBtn" onclick="openMultiFlyout(event, 'saleTypeFlyout')" data-default="ขาย/เช่า ▾" style="flex:0 0 auto; min-width:80px; padding:6px 10px; font-size:12px; background:#fff; border-color:var(--btn-blue);">ขาย/เช่า ▾</button>
-        <div style="font-size: 11px; color: #555; font-weight: bold; flex: 0 0 auto; text-align: right; line-height: 1.2; white-space:nowrap;">พร้อมใช้งาน</div>
+        <!-- ปุ่ม พิกัด ใหม่ ต่อท้าย ขาย/เช่า -->
+        <button class="filter-btn small-sale-btn" id="coordFilterBtn" onclick="openMultiFlyout(event, 'coordFlyout')" data-default="พิกัด ▾" style="flex:0 0 auto; min-width:70px; padding:6px 10px; font-size:12px; background:#fff; border-color:#0e6b38; color:#0e6b38;">พิกัด ▾</button>
       </div>
       
       <!-- แผง Dropdown เลื่อนซ้ายขวาได้ -->
@@ -1227,6 +1228,43 @@
   <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
 
   
+
+  <!-- ปุ่ม พิกัด ใหม่ - แถวบน decor -->
+  <div class="flyout-menu" id="coordFlyout" style="width: 280px;">
+    <div class="flyout-group" id="provinceGroup">
+      <div class="flyout-item">
+        <span class="flyout-label" onclick="selectCoordMain(event, 'จังหวัด')">จังหวัด</span>
+        <span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span>
+      </div>
+      <div class="flyout-submenu" id="provinceSubmenu">
+        <!-- จะถูกเติมด้วย JS -->
+      </div>
+    </div>
+    <div class="flyout-group" id="districtGroup">
+      <div class="flyout-item">
+        <span class="flyout-label" onclick="selectCoordMain(event, 'เขต')">เขต</span>
+        <span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span>
+      </div>
+      <div class="flyout-submenu" id="districtSubmenu">
+        <div style="padding:10px 16px; font-size:12px; color:#888; text-align:center;">กรุณาเลือกจังหวัดก่อน</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item" onclick="openCoordMapFromFlyout(event)">
+        <span class="flyout-label" style="flex:1;">📍 พิกัด (ปักหมุด)</span>
+        <span style="font-size:11px; color:#0e6b38; font-weight:bold; padding-right:8px;">เปิดแผนที่ ›</span>
+      </div>
+    </div>
+    <div style="padding:8px 12px; background:#f9fafb; border-top:1px solid #eee; font-size:11px; color:#666;">
+      <div id="coordSummary">ยังไม่ได้เลือกพิกัด</div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button onclick="clearCoordFilter()" style="flex:1; padding:6px; font-size:11px; border:1px solid #e5e7eb; background:#fff; border-radius:6px; cursor:pointer;">ล้างค่า</button>
+        <button onclick="confirmCoordFilter()" style="flex:1; padding:6px; font-size:11px; background:#0e6b38; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ===== Real Estate Flyout Menus (แบบหล่นลงใต้ปุ่มเหมือนแท็บสินค้าทั่วไป) ===== -->
   <div class="flyout-menu" id="re_saleFlyout">
     <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา ขาย/เช่า..." oninput="filterFlyoutOptions(this, 're_saleFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
@@ -4148,6 +4186,193 @@
         openMultiFlyout(window.event, flyoutId);
       }
     }
+
+
+    // === ระบบ พิกัด ใหม่ - ต่อท้าย ขาย/เช่า ===
+    let selectedProvince = null;
+    let selectedDistrict = null;
+    let selectedLatLng = null;
+
+    const provinceList = [
+      "กทม.", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
+      "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด",
+      "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์",
+      "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์",
+      "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก",
+      "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน",
+      "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง",
+      "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ",
+      "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย",
+      "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง",
+      "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+    ];
+
+    const districtMap = {
+      "กทม.": ["เขตพระนคร", "เขตดุสิต", "เขตหนองจอก", "เขตบางรัก", "เขตบางเขน", "เขตบางกะปิ", "เขตปทุมวัน", "เขตป้อมปราบศัตรูพ่าย", "เขตพระโขนง", "เขตมีนบุรี", "เขตลาดกระบัง", "เขตยานนาวา", "เขตสัมพันธวงศ์", "เขตพญาไท", "เขตธนบุรี", "เขตบางกอกใหญ่", "เขตห้วยขวาง", "เขตคลองสาน", "เขตตลิ่งชัน", "เขตบางกอกน้อย", "เขตบางขุนเทียน", "เขตภาษีเจริญ", "เขตหนองแขม", "เขตราษฎร์บูรณะ", "เขตบางพลัด", "เขตดินแดง", "เขตบึงกุ่ม", "เขตสาทร", "เขตบางซื่อ", "เขตจตุจักร", "เขตบางคอแหลม", "เขตประเวศ", "เขตคลองเตย", "เขตสวนหลวง", "เขตจอมทอง", "เขตดอนเมือง", "เขตราชเทวี", "เขตลาดพร้าว", "เขตวัฒนา", "เขตบางแค", "เขตหลักสี่", "เขตสายไหม", "เขตคันนายาว", "เขตสะพานสูง", "เขตวังทองหลาง", "เขตคลองสามวา", "เขตบางนา", "เขตทวีวัฒนา", "เขตทุ่งครุ", "เขตบางบอน"],
+      "นนทบุรี": ["เมืองนนทบุรี", "บางกรวย", "บางใหญ่", "บางบัวทอง", "ไทรน้อย", "ปากเกร็ด"],
+      "ปทุมธานี": ["เมืองปทุมธานี", "คลองหลวง", "ธัญบุรี", "หนองเสือ", "ลาดหลุมแก้ว", "ลำลูกกา", "สามโคก"],
+      "สมุทรปราการ": ["เมืองสมุทรปราการ", "บางบ่อ", "บางพลี", "พระประแดง", "พระสมุทรเจดีย์", "บางเสาธง"],
+      "ชลบุรี": ["เมืองชลบุรี", "บางละมุง", "สัตหีบ", "ศรีราชา", "พานทอง", "พนัสนิคม"],
+      "เชียงใหม่": ["เมืองเชียงใหม่", "จอมทอง", "แม่แจ่ม", "เชียงดาว", "ดอยสะเก็ด", "แม่ริม", "สันกำแพง", "สันทราย", "หางดง"],
+      "ภูเก็ต": ["เมืองภูเก็ต", "กะทู้", "ถลาง"],
+      "ขอนแก่น": ["เมืองขอนแก่น", "บ้านฝาง", "พระยืน", "หนองเรือ", "ชุมแพ"],
+      "default": ["เมือง", "อำเภอ 1", "อำเภอ 2", "อำเภอ 3"]
+    };
+
+    function initCoordFlyout() {
+      const submenu = document.getElementById('provinceSubmenu');
+      if(!submenu) return;
+      submenu.innerHTML = '';
+      provinceList.forEach(prov => {
+        const div = document.createElement('div');
+        div.className = 'flyout-sub-item';
+        div.innerText = prov;
+        div.onclick = (e) => selectProvince(e, prov);
+        submenu.appendChild(div);
+      });
+    }
+
+    function selectProvince(e, prov) {
+      if(e){ e.stopPropagation(); e.preventDefault(); }
+      selectedProvince = prov;
+      // ไฮไลท์
+      document.querySelectorAll('#provinceSubmenu .flyout-sub-item').forEach(el=>{
+        el.style.background = el.innerText===prov ? '#eff6ff' : '';
+        el.style.fontWeight = el.innerText===prov ? 'bold' : '';
+        el.style.color = el.innerText===prov ? '#4a83cc' : '';
+      });
+      // โหลดเขตตามจังหวัด
+      loadDistrictsForProvince(prov);
+      updateCoordSummary();
+      // เปิดกลุ่มเขตอัตโนมัติ
+      const districtGroup = document.getElementById('districtGroup');
+      if(districtGroup && !districtGroup.classList.contains('active')){
+        districtGroup.classList.add('active');
+        districtGroup.querySelector('.flyout-item')?.classList.add('expanded');
+      }
+    }
+
+    function loadDistrictsForProvince(prov) {
+      const submenu = document.getElementById('districtSubmenu');
+      if(!submenu) return;
+      submenu.innerHTML = '';
+      const districts = districtMap[prov] || districtMap['default'];
+      districts.forEach(dist => {
+        const div = document.createElement('div');
+        div.className = 'flyout-sub-item';
+        div.innerText = dist;
+        div.onclick = (e) => selectDistrict(e, dist);
+        submenu.appendChild(div);
+      });
+    }
+
+    function selectDistrict(e, dist) {
+      if(e){ e.stopPropagation(); e.preventDefault(); }
+      selectedDistrict = dist;
+      document.querySelectorAll('#districtSubmenu .flyout-sub-item').forEach(el=>{
+        el.style.background = el.innerText===dist ? '#eff6ff' : '';
+        el.style.fontWeight = el.innerText===dist ? 'bold' : '';
+        el.style.color = el.innerText===dist ? '#4a83cc' : '';
+      });
+      updateCoordSummary();
+    }
+
+    function selectCoordMain(e, type) {
+      if(e){ e.stopPropagation(); e.preventDefault(); }
+      // ถ้ากดที่คำว่า จังหวัด/เขต ให้ toggle อย่างเดียว
+      const group = e.target.closest('.flyout-group');
+      if(group){
+        group.classList.toggle('active');
+        group.querySelector('.flyout-item')?.classList.toggle('expanded');
+      }
+    }
+
+    function openCoordMapFromFlyout(e) {
+      if(e){ e.stopPropagation(); e.preventDefault(); }
+      closeMultiFlyout();
+      // เด้งเข้าหน้าพิกัดเดิม
+      if(typeof openLocationModal === 'function'){
+        openLocationModal();
+      }
+    }
+
+    // รับค่าจาก modal พิกัดเดิมมา
+    function setCoordFromMap(lat, lng) {
+      selectedLatLng = {lat, lng};
+      updateCoordSummary();
+      const btn = document.getElementById('coordFilterBtn');
+      if(btn){
+        btn.innerText = `พิกัด ${lat.toFixed(4)},${lng.toFixed(4)} ▾`;
+        btn.classList.add('active-sale');
+        btn.style.borderColor = '#0e6b38';
+        btn.style.color = '#0e6b38';
+      }
+    }
+
+    function updateCoordSummary() {
+      const el = document.getElementById('coordSummary');
+      if(!el) return;
+      let parts = [];
+      if(selectedProvince) parts.push(selectedProvince);
+      if(selectedDistrict) parts.push(selectedDistrict);
+      if(selectedLatLng) parts.push(`${selectedLatLng.lat.toFixed(4)}, ${selectedLatLng.lng.toFixed(4)}`);
+      el.innerText = parts.length ? parts.join(' > ') : 'ยังไม่ได้เลือกพิกัด';
+      // อัพเดทปุ่ม
+      const btn = document.getElementById('coordFilterBtn');
+      if(btn && parts.length){
+        btn.innerText = parts.join(' ') + ' ▾';
+        btn.classList.add('active-sale');
+      }
+    }
+
+    function confirmCoordFilter() {
+      window.coordFilterData = {
+        province: selectedProvince,
+        district: selectedDistrict,
+        latlng: selectedLatLng
+      };
+      updateCoordSummary();
+      closeMultiFlyout();
+      if (typeof testShowList === 'function') testShowList();
+    }
+
+    function clearCoordFilter() {
+      selectedProvince = null;
+      selectedDistrict = null;
+      selectedLatLng = null;
+      document.querySelectorAll('#provinceSubmenu .flyout-sub-item, #districtSubmenu .flyout-sub-item').forEach(el=>{
+        el.style.background=''; el.style.fontWeight=''; el.style.color='';
+      });
+      document.getElementById('districtSubmenu').innerHTML = '<div style="padding:10px 16px; font-size:12px; color:#888; text-align:center;">กรุณาเลือกจังหวัดก่อน</div>';
+      const btn = document.getElementById('coordFilterBtn');
+      if(btn){
+        btn.innerText = btn.dataset.default || 'พิกัด ▾';
+        btn.classList.remove('active-sale');
+        delete btn.dataset.selectedValue;
+      }
+      document.getElementById('coordSummary').innerText = 'ยังไม่ได้เลือกพิกัด';
+      window.coordFilterData = null;
+      closeMultiFlyout();
+      if (typeof testShowList === 'function') testShowList();
+    }
+
+    // init เมื่อโหลด
+    document.addEventListener('DOMContentLoaded', initCoordFlyout);
+    if(document.readyState !== 'loading') initCoordFlyout();
+
+    // Hook ตอน confirmLocation เดิม ให้ส่งค่ามาที่ coord filter ด้วย
+    const origConfirmLocation = window.confirmLocation;
+    if(typeof origConfirmLocation === 'function'){
+      window.confirmLocation = function(){
+        const lat = parseFloat(document.getElementById('latInput')?.value);
+        const lng = parseFloat(document.getElementById('lngInput')?.value);
+        if(!isNaN(lat) && !isNaN(lng)){
+          setCoordFromMap(lat, lng);
+        }
+        return origConfirmLocation.apply(this, arguments);
+      }
+    }
+
 
     // === ระบบ ขาย/เช่า แถวบน (แยกอิสระจากแถวล่าง) ===
     let activeSaleType = null;
