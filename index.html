@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -3755,12 +3755,12 @@
     // ==========================================
     function getSelectedCriteria() {
       let criteria = {};
-      // อ่านค่าจากช่อง Edit Box มาอัปเดตเข้าปุ่ม Dropdown ก่อนประมวลผลค้นหาเสมอ
       const editBox = document.getElementById('customEditBox');
       if (editBox && editBox.value.trim()) {
         applyEditToDropdowns(editBox.value.trim());
       }
-      const filterBtns = document.querySelectorAll('.filter-btn');
+      // รองรับทั้งปุ่มเก่า (onclick มีคำไทย) และปุ่มใหม่ (id แบบ re_xxxBtn)
+      const filterBtns = document.querySelectorAll('#tab-content-realestate .filter-btn, #tab-content-decor .filter-btn');
       const defaultLabels = [
         "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
         "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
@@ -3769,28 +3769,53 @@
       
       filterBtns.forEach(btn => {
         const text = btn.innerText;
-        if (!text.includes('▾') || text.includes('เคลียร์ค่า')) return;
+        if (!text.includes('▾')) return;
+        if (text.includes('เคลียร์ค่า') || text.includes('ล้างค่า')) return;
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
-        if (defaultLabels.includes(val) || val.startsWith("พิกัด") || val.includes("กม.")) return;
-        const onclick = btn.getAttribute('onclick') || '';
+        if (defaultLabels.includes(val)) return;
+        if (val.startsWith("พิกัด") || val.includes("กม.") || val.startsWith("ขาย/เช่า")) return;
+        // ข้ามปุ่มพิเศษของ decor ที่ไม่ใช่ของอสังหา
+        if (btn.id === 'saleTypeBtn' || btn.id === 'coordFilterBtn') return;
         
-        if (onclick.includes('ขาย/เช่า')) criteria.priceType = val;
-        else if (onclick.includes('คอนโด/บ้าน')) criteria.propertyType = val;
-        else if (onclick.includes('ราคาขาย')) criteria.priceSale = val;
-        else if (onclick.includes('ราคาเช่า')) criteria.priceRent = val;
-        else if (onclick.includes('จังหวัด')) criteria.province = val;
-        else if (onclick.includes('เขต/อำเภอ')) criteria.district = val;
-        else if (onclick.includes('ถนน')) criteria.road = val;
-        else if (onclick.includes('โครงการ')) criteria.project = val;
-        else if (onclick.includes('ซอย')) criteria.soi = val;
-        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด')) criteria.areaMax = val;
+        const onclick = btn.getAttribute('onclick') || '';
+        const id = btn.id || '';
+
+        // รองรับทั้งระบบเก่า (ดูจาก onclick) และระบบใหม่ (ดูจาก id)
+        if (onclick.includes('ขาย/เช่า') || id.includes('re_saleBtn')) criteria.priceType = val;
+        else if (onclick.includes('คอนโด/บ้าน') || id.includes('re_typeBtn')) criteria.propertyType = val;
+        else if (onclick.includes('ราคาขาย') || id.includes('re_salePriceBtn')) criteria.priceSale = val;
+        else if (onclick.includes('ราคาเช่า') || id.includes('re_rentPriceBtn')) criteria.priceRent = val;
+        else if (onclick.includes('จังหวัด') || id.includes('re_provinceBtn')) criteria.province = val;
+        else if (onclick.includes('เขต/อำเภอ') || id.includes('re_districtBtn')) criteria.district = val;
+        else if (onclick.includes('ถนน') || id.includes('re_roadBtn')) criteria.road = val;
+        else if (onclick.includes('โครงการ') || id.includes('re_projectBtn')) criteria.project = val;
+        else if (onclick.includes('ซอย') || id.includes('re_soiBtn')) criteria.soi = val;
+        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด') || id.includes('re_areaBtn')) criteria.areaMax = val;
+        else if (id.includes('re_otherBtn')) criteria.other = val;
+        else if (id.includes('re_nearbyBtn')) criteria.nearby = val;
+        else if (id.includes('re_facilityBtn')) criteria.facility = val;
       });
+
+      // ดึงค่าพิกัดจากระบบใหม่ด้วย
+      if (window.coordFilterData) {
+        if (window.coordFilterData.province) criteria.province = window.coordFilterData.province;
+        if (window.coordFilterData.district) criteria.district = window.coordFilterData.district;
+        if (window.coordFilterData.latlng) {
+          criteria.lat = window.coordFilterData.latlng.lat;
+          criteria.lng = window.coordFilterData.latlng.lng;
+          criteria.radius = selectedRadius || 5;
+        }
+      }
+      if (window.saleFilterData) {
+        criteria.decorSaleType = window.saleFilterData.type;
+      }
 
       if (selectedLat && selectedLng) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
+      console.log('getSelectedCriteria:', criteria);
       return criteria;
     }
 
@@ -4166,7 +4191,7 @@
       if(!menu) return;
       menu.querySelectorAll('.flyout-sub-item').forEach(item => {
         const text = item.innerText.toLowerCase();
-        if(item.innerText.includes('ล้างค่า')) return; // always show clear
+        if(item.innerText.includes('ล้างค่า')) return;
         item.style.display = text.includes(term) ? 'block' : 'none';
       });
     }
@@ -4179,30 +4204,6 @@
       }
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
-    }
-    // ปิด modal เก่าของอสังหา ถ้ายังมีเรียกใช้อยู่ ให้เปลี่ยนไปใช้ flyout แทน
-    function openDropdownModal(topic) {
-      console.warn('openDropdownModal is deprecated, use flyout instead. Topic:', topic);
-      // map topic to flyout id
-      const map = {
-        'ขาย/เช่า': 're_saleFlyout',
-        'คอนโด/บ้าน': 're_typeFlyout',
-        'ราคาขาย': 're_salePriceFlyout',
-        'ราคาเช่า': 're_rentPriceFlyout',
-        'จังหวัด': 're_provinceFlyout',
-        'เขต/อำเภอ': 're_districtFlyout',
-        'ถนน': 're_roadFlyout',
-        'โครงการ': 're_projectFlyout',
-        'ซอย': 're_soiFlyout',
-        'เนื้อที่': 're_areaFlyout',
-        'อื่นๆ': 're_otherFlyout',
-        'สถานที่ใกล้เคียง': 're_nearbyFlyout',
-        'สาธารณูปโภคพิเศษ': 're_facilityFlyout'
-      };
-      const flyoutId = map[topic];
-      if(flyoutId && window.event){
-        openMultiFlyout(window.event, flyoutId);
-      }
     }
 
 
