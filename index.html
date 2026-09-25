@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -97,6 +97,24 @@
       width: 100%;
       margin-bottom: 12px;
       position: relative;
+    }
+
+    
+    .ai-status-compact {
+      font-size: 11px;
+      color: #5c3a6b;
+      font-weight: bold;
+      margin-right: 6px;
+      background: rgba(255,255,255,0.85);
+      padding: 3px 7px;
+      border-radius: 10px;
+      white-space: nowrap;
+      line-height: 1.2;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid rgba(92,58,107,0.15);
+      backdrop-filter: blur(4px);
     }
 
     .header-center-logos {
@@ -1011,7 +1029,8 @@
     <div class="ai-controls-row">
       <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
       <div class="header-center-logos">
-        <div id="statusTextTop" style="font-size: 11px; color: #5c3a6b; font-weight: bold; margin-right: 8px; background: rgba(255,255,255,0.7); padding: 4px 8px; border-radius: 12px; white-space:nowrap;">พร้อมใช้งาน</div>
+        <!-- ย้ายสถานะ AI voice มาซ้ายหุ่นยนต์ แบบสั้น -->
+        <div id="statusText" class="ai-status-compact">💤 รอ</div>
         <div class="ai-avatar" id="avatarCircle">🤖</div>
         <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
       </div>
@@ -1029,8 +1048,7 @@
     <!-- เนื้อหาแท็บ 1: อสังหาริมทรัพย์ -->
     <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
-        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม.">
-        <div id="statusText">กดปุ่ม คุยกับAI เพื่อเริ่มใช้งาน</div>
+        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." style="flex:1;">
       </div>
       
       <div class="filter-scroll-row">
@@ -3393,7 +3411,7 @@
         AppState.data.isFetching = false;
         
         if (statusText) {
-          statusText.innerText = "กำลังเชื่อมต่อกับ AI...";
+          statusText.innerText = "⏳ ต่อ...";
           statusText.classList.add('loading-pulse'); 
         }
 
@@ -3603,7 +3621,7 @@
               AppState.voice.isSetupReady = true;
               if (statusText) {
                 statusText.classList.remove('loading-pulse');
-                statusText.innerText = "🟢 พร้อมฟัง... บอกสเปกบ้านมาได้เลยครับ";
+                statusText.innerText = "🟢 ฟัง...";
               }
               await initMicrophone(); 
               if (!AppState.voice.hasGreeted) {
@@ -3634,7 +3652,7 @@
       } catch (err) {
         if (statusText) {
           statusText.classList.remove('loading-pulse');
-          statusText.innerText = "❌ เข้าถึงไมโครโฟนไม่ได้ โปรดอนุญาตสิทธิ์ในเบราว์เซอร์";
+          statusText.innerText = "❌ ไมค์";
         }
       }
     }
@@ -3728,7 +3746,7 @@
       if (avatar) avatar.classList.remove('pulse-animation');
       if (statusText) {
         statusText.classList.remove('loading-pulse');
-        statusText.innerText = "ปิดการใช้งานเสียงเรียบร้อย";
+        statusText.innerText = "💤 ปิด";
       }
     }
 
