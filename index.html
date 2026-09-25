@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-9 v9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2644,21 +2644,94 @@
     }
 
     function resetAllFilters() {
+      console.log('🔄 ล้างค่าทั้งหมด - อสังหา');
+      // ล้าง edit ทั้งหมด
       const editBox = document.getElementById('customEditBox');
       if (editBox) editBox.value = '';
-      
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(btn => {
-        const onClickAttr = btn.getAttribute('onclick') || '';
-        if (onClickAttr.includes('openDropdownModal')) {
+      const editBoxDecor = document.getElementById('customEditBoxDecor');
+      if (editBoxDecor) editBoxDecor.value = '';
+
+      // ล้าง dropdown ทั้งหมดในแท็บอสังหา - ใช้ data-default ถ้ามี ไม่งั้นใช้ค่าเดิม
+      const realEstateBtns = document.querySelectorAll('#tab-content-realestate .filter-btn');
+      realEstateBtns.forEach(btn => {
+        if (btn.dataset.default) {
+          btn.innerText = btn.dataset.default;
+        } else {
+          // fallback แบบเก่า
+          const onClickAttr = btn.getAttribute('onclick') || '';
           const topicMatch = onClickAttr.match(/openDropdownModal\('([^']+)'\)/);
           if (topicMatch && topicMatch[1]) {
             btn.innerText = `${topicMatch[1]} ▾`;
+          } else if (btn.id && btn.id.startsWith('re_')) {
+            // ใช้ id mapping
+            const labelMap = {
+              're_saleBtn': 'ขาย/เช่า ▾',
+              're_typeBtn': 'คอนโด/บ้าน ▾',
+              're_salePriceBtn': 'ราคาขาย ▾',
+              're_rentPriceBtn': 'ราคาเช่า ▾',
+              're_provinceBtn': 'จังหวัด ▾',
+              're_districtBtn': 'เขต/อำเภอ ▾',
+              're_roadBtn': 'ถนน ▾',
+              're_projectBtn': 'โครงการ ▾',
+              're_soiBtn': 'ซอย ▾',
+              're_areaBtn': 'เนื้อที่ ▾',
+              're_otherBtn': 'อื่นๆ ▾',
+              're_nearbyBtn': 'สถานที่ใกล้เคียง ▾',
+              're_facilityBtn': 'สาธารณูปโภคพิเศษ ▾'
+            };
+            if (labelMap[btn.id]) btn.innerText = labelMap[btn.id];
           }
         }
+        if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
+        btn.classList.remove('active-sale');
       });
-      
+
+      // ล้างปุ่มพิเศษ ขาย/เช่า และ พิกัด (รวมทั้งปุ่มพิกัดด้วยตามคำสั่ง)
+      const saleBtn = document.getElementById('saleTypeBtn');
+      if (saleBtn) {
+        saleBtn.innerText = saleBtn.dataset.default || 'ขาย/เช่า ▾';
+        saleBtn.classList.remove('active-sale');
+        delete saleBtn.dataset.selectedValue;
+      }
+      const coordBtn = document.getElementById('coordFilterBtn');
+      if (coordBtn) {
+        coordBtn.innerText = coordBtn.dataset.default || 'พิกัด ▾';
+        coordBtn.classList.remove('active-sale');
+        delete coordBtn.dataset.selectedValue;
+      }
+      // ล้างปุ่มพิกัดบน header ด้วย
+      const locBtn = document.getElementById('locationFilterBtn');
+      if (locBtn && locBtn.dataset.default) {
+        // ไม่ต้อง เพราะปุ่มนี้เป็นพิกัดหลัก
+      }
+
+      // ล้าง state ทั้งหมด
+      if (window.coordFilterData) window.coordFilterData = null;
+      if (window.saleFilterData) window.saleFilterData = null;
+      if (typeof selectedProvince !== 'undefined') { selectedProvince = null; }
+      if (typeof selectedDistrict !== 'undefined') { selectedDistrict = null; }
+      if (typeof selectedLatLng !== 'undefined') { selectedLatLng = null; }
+      // ล้าง input ของ saleTypeFlyout และ coordFlyout
+      document.querySelectorAll('#saleTypeFlyout .sale-input, #coordFlyout .flyout-sub-item').forEach(el=>{
+        if(el.tagName === 'INPUT') el.value = '';
+      });
+      const coordSummary = document.getElementById('coordSummary');
+      if (coordSummary) coordSummary.innerText = 'ยังไม่ได้เลือกพิกัด';
+      const districtSubmenu = document.getElementById('districtSubmenu');
+      if (districtSubmenu) districtSubmenu.innerHTML = '<div style="padding:10px 16px; font-size:12px; color:#888; text-align:center;">กรุณาเลือกจังหวัดก่อน</div>';
+      document.querySelectorAll('#provinceSubmenu .flyout-sub-item, #districtSubmenu .flyout-sub-item').forEach(el=>{
+        el.style.background=''; el.style.fontWeight=''; el.style.color='';
+      });
+
       clearLocationFilter();
+      // ล้าง edit ของ decor ด้วยเพื่อให้ตรงคำสั่ง ทุก edit
+      if (typeof clearSaleType === 'function') {
+        // ไม่เรียก closeMultiFlyout เพื่อไม่ให้กระพริบ
+        activeSaleType = null;
+        document.querySelectorAll('#saleTypeFlyout .sale-input').forEach(i=>i.value='');
+        document.querySelectorAll('#saleTypeFlyout .sale-item-group').forEach(g=>g.classList.remove('active'));
+      }
+      testShowList();
     }
 
     function getDropdownOptionsForTopic(topic) {
@@ -4165,17 +4238,20 @@
     // ฟังก์ชันรีเซ็ตเฉพาะแถวเดียวกันเท่านั้น!
     function resetOtherDropdownsInSameRow(currentBtn) {
       if (!currentBtn) return;
+      // === แก้ใหม่: ถ้าอยู่ในแท็บอสังหา จะไม่รีเซ็ตปุ่มอื่นเลย ===
+      if (currentBtn.closest('#tab-content-realestate')) {
+        console.log('realestate tab: skip reset other dropdowns, keep others as is');
+        return;
+      }
       const parentRow = currentBtn.closest('.filter-scroll-row');
-      if (!parentRow) return; // ถ้าไม่เจอแถว ไม่ทำอะไร
+      if (!parentRow) return;
       
       const otherBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
       otherBtns.forEach(btn => {
-        if (btn === currentBtn) return; // ข้ามปุ่มที่เพิ่งเลือก
-        // รีเซ็ตเป็นค่า default ที่จำไว้
+        if (btn === currentBtn) return;
         if (btn.dataset.default) {
           btn.innerText = btn.dataset.default;
         }
-        // ล้างค่าที่เลือกไว้ (ถ้ามี)
         if (btn.dataset.selectedValue) {
           delete btn.dataset.selectedValue;
         }
@@ -4496,10 +4572,13 @@
     // กันไม่ให้ saleTypeBtn โดน resetOtherDropdownsInSameRow เพราะอยู่คนละ row อยู่แล้ว แต่ย้ำอีกชั้น
     // 5. ฟังก์ชันสำหรับปุ่ม "ล้างค่า" ในหน้าสินค้าทั่วไป
     function resetAllFiltersDecor() {
+      console.log('🔄 ล้างค่าทั้งหมด - สินค้าทั่วไป');
       const editBox = document.getElementById('customEditBoxDecor');
       if (editBox) editBox.value = '';
+      const editBoxRE = document.getElementById('customEditBox');
+      if (editBoxRE) editBoxRE.value = '';
       
-      // คืนค่าปุ่มให้กลับมาเป็นชื่อหมวดหมู่เหมือนเดิม - ใช้ data-default ที่จำไว้
+      // ล้างปุ่ม decor ทั้งหมด
       const btns = document.querySelectorAll('#decor-filter-row .decor-btn');
       btns.forEach(btn => {
         if (btn.dataset.default) {
@@ -4507,6 +4586,40 @@
         }
         if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
       });
+      // ล้างปุ่มพิเศษทั้งหมดรวมพิกัด
+      const saleBtn = document.getElementById('saleTypeBtn');
+      if (saleBtn) {
+        saleBtn.innerText = saleBtn.dataset.default || 'ขาย/เช่า ▾';
+        saleBtn.classList.remove('active-sale');
+        delete saleBtn.dataset.selectedValue;
+      }
+      const coordBtn = document.getElementById('coordFilterBtn');
+      if (coordBtn) {
+        coordBtn.innerText = coordBtn.dataset.default || 'พิกัด ▾';
+        coordBtn.classList.remove('active-sale');
+        delete coordBtn.dataset.selectedValue;
+      }
+      // ล้าง state
+      if (window.coordFilterData) window.coordFilterData = null;
+      if (window.saleFilterData) window.saleFilterData = null;
+      if (typeof selectedProvince !== 'undefined') { selectedProvince = null; }
+      if (typeof selectedDistrict !== 'undefined') { selectedDistrict = null; }
+      if (typeof selectedLatLng !== 'undefined') { selectedLatLng = null; }
+      document.querySelectorAll('#saleTypeFlyout .sale-input').forEach(i=>i.value='');
+      const coordSummary = document.getElementById('coordSummary');
+      if (coordSummary) coordSummary.innerText = 'ยังไม่ได้เลือกพิกัด';
+      const districtSubmenu = document.getElementById('districtSubmenu');
+      if (districtSubmenu) districtSubmenu.innerHTML = '<div style="padding:10px 16px; font-size:12px; color:#888; text-align:center;">กรุณาเลือกจังหวัดก่อน</div>';
+
+      // ล้างอสังหาด้วยตามคำสั่ง ทุก dropdown
+      const reBtns = document.querySelectorAll('#tab-content-realestate .filter-btn');
+      reBtns.forEach(btn => {
+        if (btn.dataset.default) btn.innerText = btn.dataset.default;
+        if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
+        btn.classList.remove('active-sale');
+      });
+      clearLocationFilter();
+      if (typeof testShowList === 'function') testShowList();
     }
   </script>
 </body>
