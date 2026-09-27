@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1123,9 +1123,10 @@
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
       <!-- Top Emergency Banner แบบ Non-Intrusive -->
-      <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); white-space: nowrap; overflow:hidden;">
-          <div style="font-weight: 800; font-size: 13px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">🚨 ศูนย์ประสานงานวิกฤตน้ำท่วม กทม. • ประกาศฉุกเฉิน • อัปเดต 15:30 น. 27 ก.ย. 68 • พื้นที่เสี่ยง 12 จุด</div>
-          <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 8px; padding: 4px 10px; font-size: 11px; cursor:pointer; margin-left:8px; flex-shrink:0;">📍 ใกล้ฉัน</button>
+      <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 10px 12px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3);">
+        <div>
+          <div style="font-weight: 800; font-size: 14px;">🚨 ศูนย์ประสานงานวิกฤตน้ำท่วม กทม.</div>
+          <div style="font-size: 11px; opacity: 0.9;">ประกาศเหตุฉุกเฉิน • อัปเดต 15:30 น. 27 ก.ย. 2568 • พื้นที่เสี่ยง 12 จุด</div>
         </div>
         <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor:pointer;">📍 ใกล้ฉัน</button>
       </div>
@@ -1250,7 +1251,6 @@
 
   <!-- ส่วนแสดงรายการอสังหาฯ -->
   <div id="list-section" style="margin-top:10px;">
-    <!-- คำสั่งที่ 2: ฟิลเตอร์อยู่ในโซนลิสต์ หัวบนสุด -->
     <div id="sosFilterInListContainer" style="display:none;">
       <div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:10px; background:#ffffff; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')" style="flex-shrink:0; background:#4a83cc; color:white; border-color:#4a83cc;">📍 ทั้งหมด <span id="count-all">0</span></button>
@@ -1263,15 +1263,9 @@
     </div>
     <div id="resultsContainer"></div>
     <div id="list-container"></div>
-    <div class="infinite-loader" id="infiniteLoader" style="display:none;">⏳ กำลังโหลดข้อมูล...</div>
-    <div class="fallback-retry-card" id="fallbackRetryCard" style="display:none;">
-      <div>❌ ไม่สามารถโหลดข้อมูลได้</div>
-      <button class="retry-btn" onclick="retryNextPage()">🔄 ลองใหม่อีกครั้ง</button>
-    </div>
     <div id="no-results" style="display:none; text-align:center; padding:20px; color:#888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>
   </div>
 
-  
   <!-- SOS Emergency Modal - ฟอร์มขอความช่วยเหลือฉุกเฉิน (Non-Intrusive Modal) -->
   <style>
     .sos-tag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
@@ -5076,13 +5070,11 @@
       if (!container) return;
       isSOSMapExpanded = !isSOSMapExpanded;
       if (isSOSMapExpanded) {
-        container.style.height = '70vh';
-        container.style.maxHeight = '650px';
+        container.style.height = '70vh'; container.style.maxHeight = '650px';
         if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
         setTimeout(() => { container.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
       } else {
-        container.style.height = '320px';
-        container.style.maxHeight = '320px';
+        container.style.height = '320px'; container.style.maxHeight = '320px';
         if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
       }
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 400);
@@ -5113,7 +5105,6 @@
     function renderSOSList(list) {
       const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
-      
       const sosCardsHtml = list.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
         const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
@@ -5147,18 +5138,11 @@
 
       if (isSOSActive) {
         if (filterContainer) filterContainer.style.display = 'block';
-        // ใส่ทั้ง 2 container เพื่อความชัวร์ (เพราะบางเวอร์ชันใช้ list-container บางเวอร์ชันใช้ resultsContainer)
-        if (listContainer) {
-          listContainer.innerHTML = list.length === 0 ? '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1; margin-top:6px;">📭 ยังไม่มีเคสขอความช่วยเหลือ</div>' : sosCardsHtml;
-        }
-        if (resultsContainer) {
-          resultsContainer.innerHTML = list.length === 0 ? '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1; margin-top:6px;">📭 ยังไม่มีเคสขอความช่วยเหลือ</div>' : sosCardsHtml;
-        }
-        Object.keys(counts).forEach(k => {
-          document.querySelectorAll('#count-'+k).forEach(el => { if (el) el.textContent = counts[k]; });
-        });
+        if (listContainer) listContainer.innerHTML = list.length === 0 ? '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ</div>' : sosCardsHtml;
+        if (resultsContainer) resultsContainer.innerHTML = list.length === 0 ? '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ</div>' : sosCardsHtml;
+        Object.keys(counts).forEach(k => { document.querySelectorAll('#count-'+k).forEach(el => { if (el) el.textContent = counts[k]; }); });
         setTimeout(() => {
-          document.querySelectorAll('#sosFilterInList .sos-chip').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('#sosFilterInList .sos-chip').forEach(b => { b.classList.remove('active'); b.style.background=''; b.style.color=''; });
           const btn = document.querySelector(`#sosFilterInList .sos-chip[data-need="${window.currentSOSFilter}"]`);
           if (btn) { btn.classList.add('active'); btn.style.background='#4a83cc'; btn.style.color='white'; }
         }, 30);
@@ -5179,10 +5163,8 @@
     function switchToHelperMode() {
       const mapContainer = document.getElementById('sosMapContainer');
       if (mapContainer) {
-        mapContainer.style.height = '500px';
-        isSOSMapExpanded = true;
-        const btn = document.getElementById('sosMapToggleBtn');
-        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
+        mapContainer.style.height = '500px'; isSOSMapExpanded = true;
+        const btn = document.getElementById('sosMapToggleBtn'); if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
         setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
         mapContainer.scrollIntoView({behavior:'smooth', block:'start'});
       }
@@ -5202,10 +5184,8 @@
       const activeContent = document.getElementById('tab-content-' + tabId);
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
-      
       const listSection = document.getElementById('list-section');
       const filterContainer = document.getElementById('sosFilterInListContainer');
-      
       if (tabId === 'sos') {
         if (listSection) listSection.style.display = 'block';
         if (filterContainer) filterContainer.style.display = 'block';
