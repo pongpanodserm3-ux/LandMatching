@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5051,33 +5051,39 @@
     }
     
     
+    
     let isSOSMapExpanded = false;
+    let sosMap = null;
+    let sosMarkersLayer = null;
+
     function toggleSOSMapSize() {
-      const mapPreview = document.getElementById('sosMapPreview');
       const container = document.getElementById('sosMapContainer');
       const btn = document.getElementById('sosMapToggleBtn');
-      if (!mapPreview || !container) return;
+      if (!container) return;
       
       isSOSMapExpanded = !isSOSMapExpanded;
+      
       if (isSOSMapExpanded) {
-        mapPreview.style.height = '600px';
-        container.style.height = '600px';
-        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้นบน ⬆️';
+        container.style.height = '70vh'; // ขยายลงล่าง 70% ของจอ ไม่ใช่ขึ้นบน
+        container.style.maxHeight = '650px';
+        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
+        // เลื่อนลงให้เห็นแผนที่เต็ม ไม่ให้บังปุ่มบน
+        setTimeout(() => {
+          container.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 100);
       } else {
-        mapPreview.style.height = '320px';
         container.style.height = '320px';
+        container.style.maxHeight = '320px';
         if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
       }
       
-      // สำคัญ: สั่งให้ Leaflet วาดใหม่หลังขยาย
       setTimeout(() => {
         if (window.sosMap) {
           window.sosMap.invalidateSize();
         }
-      }, 350);
+      }, 400);
     }
 
-    // กันไม่ให้คลิกบนแผนที่แล้วไปเปิด Modal บ้าน
     function initSOSMap() {
       const mapDiv = document.getElementById('sosMapPreview');
       if (!mapDiv) return;
@@ -5085,13 +5091,11 @@
         window.sosMap.invalidateSize();
         return;
       }
-      const container = document.getElementById('sosMapContainer');
-      if (container) container.style.height = '320px';
-      
       sosMap = L.map('sosMapPreview', {
         center: [13.7563, 100.5018],
         zoom: 11,
-        zoomControl: true
+        zoomControl: true,
+        scrollWheelZoom: false  // ป้องกันซูมแล้วขยายบัง
       });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
@@ -5099,21 +5103,17 @@
       sosMarkersLayer = L.layerGroup().addTo(sosMap);
       window.sosMap = sosMap;
       
+      // คลิกบนแผนที่แล้วไม่ขยายทับ
+      sosMap.on('click', function(e) {
+        // ไม่ทำอะไร
+      });
+      
       if (typeof sosRequestsCache !== 'undefined' && sosRequestsCache.length > 0) {
         updateSOSMapMarkers(sosRequestsCache);
       }
-      
-      // ป้องกันการคลิกแผนที่แล้วโดนบัง
-      sosMap.on('click', function(e) {
-        // ไม่ทำอะไร ให้ผู้ใช้แพนแผนที่ได้ปกติ
-      });
     }
 
-    // ===================== SOS MAP REAL IMPLEMENTATION - คำสั่งที่ 1 =====================
-    let sosMap = null;
-    let sosMarkersLayer = null;
-
-function updateSOSMapMarkers(list) {
+    function updateSOSMapMarkers(list) {
       if (!sosMap || !sosMarkersLayer) {
         initSOSMap();
         if (!sosMap) return;
@@ -5125,41 +5125,24 @@ function updateSOSMapMarkers(list) {
         let color = '#ff3b30';
         if (item.status === 'going') color = '#22c55e';
         if (item.status === 'closed' || item.status === 'rescued') color = '#3b82f6';
-        
         const icon = L.divIcon({
-          html: `<div style="background:${color}; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">!</div>`,
+          html: `<div style="background:${color}; width:32px; height:32px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">!</div>`,
           className: '',
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
-        
         const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon})
-          .bindPopup(`
-            <div style="font-family:sans-serif; min-width:180px;">
-              <div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div>
-              <div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div>
-              <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div>
-              <div style="margin-top:6px;"><button onclick="alert('ติดต่อ: ${item.contact_phone||'-'}')" style="background:#4a83cc; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:11px;">ติดต่อช่วยเหลือ</button></div>
-            </div>
-          `);
+          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div><div style="margin-top:6px;"><button onclick="alert('ติดต่อ: ${item.contact_phone||'-'}')" style="background:#4a83cc; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:11px;">ติดต่อช่วยเหลือ</button></div></div>`);
         sosMarkersLayer.addLayer(marker);
         bounds.push([parseFloat(item.lat), parseFloat(item.lng)]);
       });
-      if (bounds.length > 0) {
-        try { sosMap.fitBounds(bounds, {padding: [30, 30], maxZoom: 14}); } catch(e){}
-      }
     }
 
-    // Override renderSOSList เดิมให้แสดงในโซนเดียวกับบ้าน ตามคำสั่งที่ 3
-    const originalRenderSOSList = typeof renderSOSList !== 'undefined' ? renderSOSList : null;
-    
     function renderSOSList(list) {
-      // อัปเดตนับจำนวน
       const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
       Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
 
-      // สร้าง HTML การ์ด SOS (แทนการ์ดบ้าน)
       const sosCardsHtml = list.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
         const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
@@ -5171,27 +5154,25 @@ function updateSOSMapMarkers(list) {
         return `
         <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;">
           <div style="flex:1;">
-            <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
               <span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
-            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'} ${item.people_detail ? `• 👴👶 ${item.people_detail.elder||0} ผู้สูงอายุ ${item.people_detail.child||0} เด็ก` : ''}</div>
+            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
-            <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(sosMap){sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); window.scrollTo({top:0, behavior:'smooth'});} alert('📍 ${item.location_text||''}')">📍 ดูบนแผนที่</button>
-            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="window.open('tel:${item.contact_phone||''}');">💬 ติดต่อช่วยเหลือ</button>
+            <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
+            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="window.open('tel:${item.contact_phone||''}');">💬 ติดต่อ</button>
           </div>
         </div>`;
       }).join('');
 
-      // 1. ใส่ใน sosResults (ซ่อนไว้)
       const sosResultsDiv = document.getElementById('sosResults');
       if (sosResultsDiv) sosResultsDiv.innerHTML = sosCardsHtml;
 
-      // 2. ใส่ใน list-container (โซนเดียวกับบ้าน) ตามคำสั่งที่ 3
       const listContainer = document.getElementById('list-container');
       const activeTab = document.querySelector('.tab-btn.active');
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
@@ -5206,10 +5187,30 @@ function updateSOSMapMarkers(list) {
         if (noResults) noResults.style.display = 'none';
       }
 
-      // 3. อัปเดตแผนที่จริง
       if (typeof updateSOSMapMarkers === 'function') {
         updateSOSMapMarkers(list);
       }
+    }
+
+    function filterSOS(type) {
+      document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
+      if (btn) btn.classList.add('active');
+      if (type === 'all') renderSOSList(sosRequestsCache);
+      else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
+    }
+
+    function switchToHelperMode() {
+      const mapContainer = document.getElementById('sosMapContainer');
+      if (mapContainer) {
+        mapContainer.style.height = '500px';
+        isSOSMapExpanded = true;
+        const btn = document.getElementById('sosMapToggleBtn');
+        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
+        setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
+        mapContainer.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+      filterSOS('all');
     }
 
     // ===================== END SOS FINAL =====================
