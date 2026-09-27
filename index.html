@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5016,6 +5016,19 @@
       }
     }
 
+    function getSOSFilterChipsHtml() {
+      return `
+      <div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:8px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch;">
+        <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')" style="flex-shrink:0;">📍 ทั้งหมด <span id="count-all">0</span></button>
+        <button class="filter-btn sos-chip" data-need="evacuate" onclick="filterSOS('evacuate')" style="flex-shrink:0;">🚗 ต้องการยานพาหนะ/อพยพ <span id="count-evacuate">0</span></button>
+        <button class="filter-btn sos-chip" data-need="food" onclick="filterSOS('food')" style="flex-shrink:0;">🍞 อาหาร/น้ำดื่ม <span id="count-food">0</span></button>
+        <button class="filter-btn sos-chip" data-need="medicine" onclick="filterSOS('medicine')" style="flex-shrink:0;">💊 ยา/เวชภัณฑ์ <span id="count-medicine">0</span></button>
+        <button class="filter-btn sos-chip" data-need="clothes" onclick="filterSOS('clothes')" style="flex-shrink:0;">👕 เสื้อผ้า/ของใช้ <span id="count-clothes">0</span></button>
+        <button class="filter-btn sos-chip" data-need="power" onclick="filterSOS('power')" style="flex-shrink:0;">⚡ พลังงาน/ช่าง <span id="count-power">0</span></button>
+      </div>`;
+    }
+
+    window.currentSOSFilter = 'all';
     function renderSOSList(list) {
       const container = document.getElementById('sosResults');
       if (!container) return;
@@ -5037,9 +5050,10 @@
     }
 
     function filterSOS(type) {
+      window.currentSOSFilter = type;
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
-      const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
-      if (btn) btn.classList.add('active');
+      const btns = document.querySelectorAll(`.sos-chip[data-need="${type}"]`);
+      btns.forEach(b => b.classList.add('active'));
       if (type === 'all') renderSOSList(sosRequestsCache);
       else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
     }
@@ -5138,6 +5152,19 @@
       });
     }
 
+    function getSOSFilterChipsHtml() {
+      return `
+      <div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:8px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch;">
+        <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')" style="flex-shrink:0;">📍 ทั้งหมด <span id="count-all">0</span></button>
+        <button class="filter-btn sos-chip" data-need="evacuate" onclick="filterSOS('evacuate')" style="flex-shrink:0;">🚗 ต้องการยานพาหนะ/อพยพ <span id="count-evacuate">0</span></button>
+        <button class="filter-btn sos-chip" data-need="food" onclick="filterSOS('food')" style="flex-shrink:0;">🍞 อาหาร/น้ำดื่ม <span id="count-food">0</span></button>
+        <button class="filter-btn sos-chip" data-need="medicine" onclick="filterSOS('medicine')" style="flex-shrink:0;">💊 ยา/เวชภัณฑ์ <span id="count-medicine">0</span></button>
+        <button class="filter-btn sos-chip" data-need="clothes" onclick="filterSOS('clothes')" style="flex-shrink:0;">👕 เสื้อผ้า/ของใช้ <span id="count-clothes">0</span></button>
+        <button class="filter-btn sos-chip" data-need="power" onclick="filterSOS('power')" style="flex-shrink:0;">⚡ พลังงาน/ช่าง <span id="count-power">0</span></button>
+      </div>`;
+    }
+
+    window.currentSOSFilter = 'all';
     function renderSOSList(list) {
       const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
@@ -5178,11 +5205,23 @@
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
       
       if (isSOSActive && listContainer) {
+        const filterHtml = getSOSFilterChipsHtml();
         if (list.length === 0) {
-          listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
+          listContainer.innerHTML = filterHtml + '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1; margin-top:6px;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
         } else {
-          listContainer.innerHTML = sosCardsHtml;
+          listContainer.innerHTML = filterHtml + '<div style="margin-top:6px;">' + sosCardsHtml + '</div>';
         }
+        // อัปเดตตัวเลข count หลังใส่ HTML ใหม่
+        const counts2 = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
+        list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts2[t] !== undefined) counts2[t]++; }); });
+        Object.keys(counts2).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts2[k]; });
+        // คง active state ของชิปที่กด
+        const currentActive = window.currentSOSFilter || 'all';
+        setTimeout(() => {
+          document.querySelectorAll('#sosFilterInList .sos-chip').forEach(b => b.classList.remove('active'));
+          const btn = document.querySelector(`#sosFilterInList .sos-chip[data-need="${currentActive}"]`);
+          if (btn) btn.classList.add('active');
+        }, 50);
         const noResults = document.getElementById('no-results');
         if (noResults) noResults.style.display = 'none';
       }
@@ -5193,9 +5232,10 @@
     }
 
     function filterSOS(type) {
+      window.currentSOSFilter = type;
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
-      const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
-      if (btn) btn.classList.add('active');
+      const btns = document.querySelectorAll(`.sos-chip[data-need="${type}"]`);
+      btns.forEach(b => b.classList.add('active'));
       if (type === 'all') renderSOSList(sosRequestsCache);
       else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
     }
