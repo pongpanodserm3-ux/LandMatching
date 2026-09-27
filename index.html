@@ -4841,35 +4841,41 @@
       if (typeof testShowList === 'function') testShowList();
     }
   
-    // ===================== SOS EMERGENCY HUB - 5 Tabs System (v10) =====================
+    ==================
+
+
+
+    // ===================== SOS EMERGENCY HUB - 5 Tabs System (FINAL v10.1) =====================
     let crisisModeEnabled = true;
     let selectedSOSTags = new Set();
     let sosRequestsCache = [];
+
     function toggleCrisisMode(enabled) {
       crisisModeEnabled = enabled;
       const sosBtn = document.getElementById('tab-btn-sos');
-      const sosContent = document.getElementById('tab-content-sos');
       if (enabled) {
-        if (sosBtn) { sosBtn.style.display = 'block'; }
+        if (sosBtn) sosBtn.style.display = 'block';
         switchTab('sos');
       } else {
         if (sosBtn) sosBtn.style.display = 'none';
+        const sosContent = document.getElementById('tab-content-sos');
         if (sosContent && sosContent.style.display !== 'none') switchTab('realestate');
       }
       localStorage.setItem('crisis_mode', enabled ? '1' : '0');
     }
-    let logoTapCount = 0;
+
     document.addEventListener('DOMContentLoaded', () => {
-      const logo = document.querySelector('.mascot-img') || document.querySelector('.ai-avatar') || document.getElementById('locationFilterBtn');
+      const logo = document.querySelector('.mascot-img') || document.querySelector('.ai-avatar');
       if (logo) {
+        let tapCount = 0;
         logo.addEventListener('click', () => {
-          logoTapCount++;
-          if (logoTapCount >= 5) {
+          tapCount++;
+          if (tapCount >= 5) {
             const toggleDiv = document.getElementById('crisisToggle');
             if (toggleDiv) toggleDiv.style.display = toggleDiv.style.display === 'none' ? 'block' : 'none';
-            logoTapCount = 0;
+            tapCount = 0;
           }
-          setTimeout(() => { logoTapCount = 0; }, 3000);
+          setTimeout(() => { tapCount = 0; }, 3000);
         });
       }
       const saved = localStorage.getItem('crisis_mode');
@@ -4883,15 +4889,18 @@
       }
       loadSOSRequests();
     });
+
     function openSOSModal() { document.getElementById('sosModalOverlay').classList.add('active'); }
     function closeSOSModal() { document.getElementById('sosModalOverlay').classList.remove('active'); }
+    
     function toggleSOSTag(btn) {
       btn.classList.toggle('selected');
       const val = btn.dataset.val;
-      if (btn.classList.contains('selected')) selectedSOSTags.add(val); else selectedSOSTags.delete(val);
-      const medExtra = document.getElementById('medicineExtra');
-      medExtra.style.display = selectedSOSTags.has('medicine') ? 'block' : 'none';
+      if (btn.classList.contains('selected')) selectedSOSTags.add(val);
+      else selectedSOSTags.delete(val);
+      document.getElementById('medicineExtra').style.display = selectedSOSTags.has('medicine') ? 'block' : 'none';
     }
+
     function getCurrentUserLocationSOS() {
       if (typeof getCurrentUserLocation === 'function') getCurrentUserLocation();
       setTimeout(() => {
@@ -4901,14 +4910,17 @@
         if (lng) document.getElementById('sosLng').value = lng;
       }, 800);
     }
+
     async function submitSOS() {
       const phone = document.getElementById('sosPhone').value.trim();
       const locText = document.getElementById('sosLocationText').value.trim();
       const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
       const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
+
       if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
       if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
       if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+
       const payload = {
         need_types: Array.from(selectedSOSTags),
         location_text: locText,
@@ -4916,33 +4928,98 @@
         lng: lng ? parseFloat(lng) : null,
         contact_phone: phone,
         people_count: document.getElementById('sosPeople').value ? parseInt(document.getElementById('sosPeople').value) : 1,
-        people_detail: { adult: document.getElementById('sosAdult').value, child: document.getElementById('sosChild').value, elder: document.getElementById('sosElder').value },
-        medicine_detail: document.getElementById('medicineDetail').value,
+        people_detail: {
+          adult: document.getElementById('sosAdult').value,
+          child: document.getElementById('sosChild').value,
+          elder: document.getElementById('sosElder').value
+        },
+        medicine_detail: document.getElementById('medicineDetail')?.value || '',
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting'
       };
+
+      // บันทึกจริงลง Supabase + fallback Demo
       try {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+          const { data, error } = await supabaseClient
+            .from('flood_help_requests')
+            .insert([payload])
+            .select();
+          if (error) throw error;
+          console.log('บันทึก Supabase สำเร็จ', data);
+          alert('✅ ส่งคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันทีบนแผนที่');
+        } else {
+          throw new Error('No supabaseClient');
+        }
+      } catch (e) {
+        console.warn('ใช้โหมด Demo เพราะ:', e);
         sosRequestsCache.unshift({...payload, id: Date.now(), created_at: new Date().toISOString()});
         renderSOSList(sosRequestsCache);
-        alert('✅ ส่งคำขอเรียบร้อยแล้ว - แสดงบนแผนที่ทันที');
-      } catch(e) { console.error(e); }
+        alert('✅ (Demo) ส่งคำขอเรียบร้อย - แสดงบนแผนที่ทันที');
+      }
+
       closeSOSModal();
       selectedSOSTags.clear();
       document.querySelectorAll('.sos-tag-btn.selected').forEach(b => b.classList.remove('selected'));
     }
+
     async function loadSOSRequests() {
-      sosRequestsCache = [
-        {id:1, need_types:['evacuate'], location_text:'คอนโด A นวมินทร์ 3 ชั้น 2 น้ำท่วมอก', people_count:3, status:'waiting', urgency:'critical'},
-        {id:2, need_types:['food'], location_text:'หมู่บ้าน B รามอินทรา ต้องการข้าว 5 กล่อง', people_count:5, status:'going', urgency:'high'},
-        {id:3, need_types:['medicine'], location_text:'ซอย C มีผู้ป่วยติดเตียงต้องการยาความดัน', people_count:1, status:'waiting', urgency:'critical'},
-        {id:4, need_types:['power'], location_text:'บ้าน D ไฟดับ ต้องการช่างไฟฉุกเฉิน', people_count:2, status:'waiting', urgency:'high'},
-      ];
-      renderSOSList(sosRequestsCache);
+      // 1. โหลดจาก Supabase จริง
+      let hasRealData = false;
+      try {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+          const { data, error } = await supabaseClient
+            .from('flood_help_requests')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+          if (!error && data) {
+            sosRequestsCache = data;
+            renderSOSList(sosRequestsCache);
+            console.log('โหลดจาก Supabase', data.length, 'รายการ');
+            hasRealData = data.length > 0;
+          }
+        }
+      } catch (e) {
+        console.warn('โหลด Supabase ไม่ได้', e);
+      }
+
+      // 2. ถ้าไม่มี Supabase จริงๆ ให้ใช้ Mock เพื่อเทส UI
+      if (!hasRealData && (!sosRequestsCache || sosRequestsCache.length === 0)) {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+          sosRequestsCache = [
+            {id:1, need_types:['evacuate'], location_text:'คอนโด A นวมินทร์ 3 ชั้น 2 น้ำท่วมอก', people_count:3, status:'waiting', urgency:'critical', contact_phone:'081-111-1111'},
+            {id:2, need_types:['food'], location_text:'หมู่บ้าน B รามอินทรา ต้องการข้าว 5 กล่อง', people_count:5, status:'going', urgency:'high', contact_phone:'089-222-2222'},
+            {id:3, need_types:['medicine'], location_text:'ซอย C มีผู้ป่วยติดเตียงต้องการยาความดัน', people_count:1, status:'waiting', urgency:'critical', contact_phone:'081-333-3333'},
+            {id:4, need_types:['power'], location_text:'บ้าน D ไฟดับ ต้องการช่างไฟฉุกเฉิน', people_count:2, status:'waiting', urgency:'high', contact_phone:'081-444-4444'},
+          ];
+          renderSOSList(sosRequestsCache);
+        }
+      }
+
+      // 3. เปิด Realtime (ทำงานเสมอ ไม่ว่า return หรือไม่)
+      try {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+          if (window.sosChannel) supabaseClient.removeChannel(window.sosChannel);
+          window.sosChannel = supabaseClient
+            .channel('flood-help-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'flood_help_requests' }, (payload) => {
+              console.log('Realtime update', payload);
+              // โหลดใหม่แบบไม่สร้าง channel ซ้ำ
+              supabaseClient.from('flood_help_requests').select('*').order('created_at', {ascending: false}).limit(50)
+                .then(({data}) => { if (data) { sosRequestsCache = data; renderSOSList(sosRequestsCache); } });
+            })
+            .subscribe(status => console.log('Realtime status', status));
+        }
+      } catch (e) {
+        console.error('Realtime error', e);
+      }
     }
+
     function renderSOSList(list) {
       const container = document.getElementById('sosResults');
       if (!container) return;
-      const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0};
+      const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
       Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
       container.innerHTML = list.map(item => {
@@ -4958,6 +5035,7 @@
         </div>`;
       }).join('');
     }
+
     function filterSOS(type) {
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
@@ -4965,13 +5043,13 @@
       if (type === 'all') renderSOSList(sosRequestsCache);
       else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
     }
+
     function switchToHelperMode() {
       document.getElementById('sosMapPreview')?.scrollIntoView({behavior:'smooth'});
       filterSOS('all');
       if (typeof openLocationModal === 'function') openLocationModal(true);
     }
-    // ===================== END SOS =====================
-
+    // ===================== END SOS FINAL =====================
 
 </script>
 </body>
