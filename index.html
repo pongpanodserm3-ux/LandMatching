@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1147,13 +1147,15 @@
         <button class="action-show-list-btn" style="flex: 1; background: #ffffff; color: #4a83cc; border: 2px solid #4a83cc; padding: 14px 6px; font-size: 14px; font-weight:bold;" onclick="switchToHelperMode()">🤝 ฉันจะไปช่วย</button>
       </div>
 
-      <!-- Legend + Map - แผนที่จริง Leaflet ตามคำสั่งที่ 1 -->
-      <div style="display: flex; gap: 6px; margin: 8px 0; font-size: 11px; font-weight: bold;">
+      <!-- Legend + Map - แก้บั๊กขยายทับ ตามคำสั่งใหม่ -->
+      <div style="display: flex; gap: 6px; margin: 8px 0; font-size: 11px; font-weight: bold; align-items:center;">
         <span>🔴 ด่วน</span><span>🟢 กำลังช่วย</span><span>🔵 จุดแจก/พักพิง</span>
-        <span style="margin-left:auto; color: #4a83cc; cursor:pointer;" onclick="if(window.sosMap) window.sosMap.invalidateSize(); if(typeof openLocationModal==='function') openLocationModal(true)">🗺️ เปิดแผนที่เต็มจอ</span>
+        <span id="sosMapToggleBtn" style="margin-left:auto; color: #4a83cc; cursor:pointer; background:#eef6ff; border:1px solid #cbd5e1; padding:4px 10px; border-radius:20px;" onclick="toggleSOSMapSize()">🗺️ ขยายแผนที่ลงล่าง ⬇️</span>
       </div>
-      <div id="sosMapPreview" style="width: 100%; height: 320px; border-radius: 14px; border: 1px solid #cbd5e1; margin-bottom: 10px; position: relative; z-index: 1; background: #e5e7eb;">
-        <!-- Leaflet จะมา render ที่นี่ -->
+      <div id="sosMapContainer" style="width: 100%; border-radius: 14px; border: 1px solid #cbd5e1; margin-bottom: 10px; overflow:hidden; position: relative; background: #e5e7eb; transition: height 0.3s ease;">
+        <div id="sosMapPreview" style="width: 100%; height: 320px; position: relative; z-index: 1;">
+          <!-- Leaflet จะมา render ที่นี่ -->
+        </div>
       </div>
 
       <!-- SOS Results - ซ่อนไว้เพื่อซิงค์ไป list-section ตามคำสั่งที่ 3 -->
@@ -5048,18 +5050,44 @@
       if (typeof openLocationModal === 'function') openLocationModal(true);
     }
     
-    // ===================== SOS MAP REAL IMPLEMENTATION - คำสั่งที่ 1 =====================
-    let sosMap = null;
-    let sosMarkersLayer = null;
+    
+    let isSOSMapExpanded = false;
+    function toggleSOSMapSize() {
+      const mapPreview = document.getElementById('sosMapPreview');
+      const container = document.getElementById('sosMapContainer');
+      const btn = document.getElementById('sosMapToggleBtn');
+      if (!mapPreview || !container) return;
+      
+      isSOSMapExpanded = !isSOSMapExpanded;
+      if (isSOSMapExpanded) {
+        mapPreview.style.height = '600px';
+        container.style.height = '600px';
+        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้นบน ⬆️';
+      } else {
+        mapPreview.style.height = '320px';
+        container.style.height = '320px';
+        if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
+      }
+      
+      // สำคัญ: สั่งให้ Leaflet วาดใหม่หลังขยาย
+      setTimeout(() => {
+        if (window.sosMap) {
+          window.sosMap.invalidateSize();
+        }
+      }, 350);
+    }
 
+    // กันไม่ให้คลิกบนแผนที่แล้วไปเปิด Modal บ้าน
     function initSOSMap() {
       const mapDiv = document.getElementById('sosMapPreview');
       if (!mapDiv) return;
-      if (sosMap) {
-        sosMap.invalidateSize();
+      if (window.sosMap) {
+        window.sosMap.invalidateSize();
         return;
       }
-      // สร้างแผนที่ Leaflet จริง
+      const container = document.getElementById('sosMapContainer');
+      if (container) container.style.height = '320px';
+      
       sosMap = L.map('sosMapPreview', {
         center: [13.7563, 100.5018],
         zoom: 11,
@@ -5071,13 +5099,21 @@
       sosMarkersLayer = L.layerGroup().addTo(sosMap);
       window.sosMap = sosMap;
       
-      // ถ้ามีข้อมูลแล้ว ให้วาดหมุดเลย
       if (typeof sosRequestsCache !== 'undefined' && sosRequestsCache.length > 0) {
         updateSOSMapMarkers(sosRequestsCache);
       }
+      
+      // ป้องกันการคลิกแผนที่แล้วโดนบัง
+      sosMap.on('click', function(e) {
+        // ไม่ทำอะไร ให้ผู้ใช้แพนแผนที่ได้ปกติ
+      });
     }
 
-    function updateSOSMapMarkers(list) {
+    // ===================== SOS MAP REAL IMPLEMENTATION - คำสั่งที่ 1 =====================
+    let sosMap = null;
+    let sosMarkersLayer = null;
+
+function updateSOSMapMarkers(list) {
       if (!sosMap || !sosMarkersLayer) {
         initSOSMap();
         if (!sosMap) return;
