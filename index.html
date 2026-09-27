@@ -1123,25 +1123,15 @@
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
       <!-- Top Emergency Banner แบบ Non-Intrusive -->
-      <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 10px 12px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3);">
-        <div>
-          <div style="font-weight: 800; font-size: 14px;">🚨 ศูนย์ประสานงานวิกฤตน้ำท่วม กทม.</div>
-          <div style="font-size: 11px; opacity: 0.9;">ประกาศเหตุฉุกเฉิน • อัปเดต 15:30 น. 27 ก.ย. 2568 • พื้นที่เสี่ยง 12 จุด</div>
+      <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 8px 12px; border-radius: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); white-space: nowrap; overflow:hidden;">
+          <div style="font-weight: 800; font-size: 13px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;">🚨 ศูนย์ประสานงานวิกฤตน้ำท่วม กทม. • ประกาศฉุกเฉิน • อัปเดต 15:30 น. 27 ก.ย. 68 • พื้นที่เสี่ยง 12 จุด</div>
+          <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 8px; padding: 4px 10px; font-size: 11px; cursor:pointer; margin-left:8px; flex-shrink:0;">📍 ใกล้ฉัน</button>
         </div>
         <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 8px; padding: 4px 8px; font-size: 11px; cursor:pointer;">📍 ใกล้ฉัน</button>
       </div>
 
       <!-- SOS Filter Chips เลื่อนซ้ายขวาได้ -->
-      <div class="filter-scroll-row" id="sos-filter-row" style="margin-bottom:8px;">
-        <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')">📍 ทั้งหมด <span id="count-all">0</span></button>
-        <button class="filter-btn sos-chip" data-need="evacuate" onclick="filterSOS('evacuate')">🚗 ต้องการยานพาหนะ/อพยพ <span id="count-evacuate">0</span></button>
-        <button class="filter-btn sos-chip" data-need="food" onclick="filterSOS('food')">🍞 อาหาร/น้ำดื่ม <span id="count-food">0</span></button>
-        <button class="filter-btn sos-chip" data-need="medicine" onclick="filterSOS('medicine')">💊 ยา/เวชภัณฑ์ <span id="count-medicine">0</span></button>
-        <button class="filter-btn sos-chip" data-need="clothes" onclick="filterSOS('clothes')">👕 เสื้อผ้า/ของใช้ <span id="count-clothes">0</span></button>
-        <button class="filter-btn sos-chip" data-need="power" onclick="filterSOS('power')">⚡ พลังงาน/ช่าง <span id="count-power">0</span></button>
-      </div>
-
-      <!-- Main Action Buttons - ย้ายขึ้นมาเหนือแผนที่ ตามคำสั่งที่ 2 -->
+            <!-- Main Action Buttons - ย้ายขึ้นมาเหนือแผนที่ ตามคำสั่งที่ 2 -->
       <div style="display: flex; gap: 8px; margin-bottom: 10px;">
         <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 14px 6px; font-size: 14px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
         <button class="action-show-list-btn" style="flex: 1; background: #ffffff; color: #4a83cc; border: 2px solid #4a83cc; padding: 14px 6px; font-size: 14px; font-weight:bold;" onclick="switchToHelperMode()">🤝 ฉันจะไปช่วย</button>
@@ -5016,19 +5006,6 @@
       }
     }
 
-    function getSOSFilterChipsHtml() {
-      return `
-      <div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:8px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch;">
-        <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')" style="flex-shrink:0;">📍 ทั้งหมด <span id="count-all">0</span></button>
-        <button class="filter-btn sos-chip" data-need="evacuate" onclick="filterSOS('evacuate')" style="flex-shrink:0;">🚗 ต้องการยานพาหนะ/อพยพ <span id="count-evacuate">0</span></button>
-        <button class="filter-btn sos-chip" data-need="food" onclick="filterSOS('food')" style="flex-shrink:0;">🍞 อาหาร/น้ำดื่ม <span id="count-food">0</span></button>
-        <button class="filter-btn sos-chip" data-need="medicine" onclick="filterSOS('medicine')" style="flex-shrink:0;">💊 ยา/เวชภัณฑ์ <span id="count-medicine">0</span></button>
-        <button class="filter-btn sos-chip" data-need="clothes" onclick="filterSOS('clothes')" style="flex-shrink:0;">👕 เสื้อผ้า/ของใช้ <span id="count-clothes">0</span></button>
-        <button class="filter-btn sos-chip" data-need="power" onclick="filterSOS('power')" style="flex-shrink:0;">⚡ พลังงาน/ช่าง <span id="count-power">0</span></button>
-      </div>`;
-    }
-
-    window.currentSOSFilter = 'all';
     function renderSOSList(list) {
       const container = document.getElementById('sosResults');
       if (!container) return;
@@ -5050,10 +5027,9 @@
     }
 
     function filterSOS(type) {
-      window.currentSOSFilter = type;
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
-      const btns = document.querySelectorAll(`.sos-chip[data-need="${type}"]`);
-      btns.forEach(b => b.classList.add('active'));
+      const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
+      if (btn) btn.classList.add('active');
       if (type === 'all') renderSOSList(sosRequestsCache);
       else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
     }
@@ -5066,95 +5042,54 @@
     
     
     
+    
     let isSOSMapExpanded = false;
     let sosMap = null;
     let sosMarkersLayer = null;
+    window.currentSOSFilter = 'all';
 
     function toggleSOSMapSize() {
       const container = document.getElementById('sosMapContainer');
       const btn = document.getElementById('sosMapToggleBtn');
       if (!container) return;
-      
       isSOSMapExpanded = !isSOSMapExpanded;
-      
       if (isSOSMapExpanded) {
-        container.style.height = '70vh'; // ขยายลงล่าง 70% ของจอ ไม่ใช่ขึ้นบน
+        container.style.height = '70vh';
         container.style.maxHeight = '650px';
         if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
-        // เลื่อนลงให้เห็นแผนที่เต็ม ไม่ให้บังปุ่มบน
-        setTimeout(() => {
-          container.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }, 100);
+        setTimeout(() => { container.scrollIntoView({behavior:'smooth', block:'start'}); }, 100);
       } else {
         container.style.height = '320px';
         container.style.maxHeight = '320px';
         if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
       }
-      
-      setTimeout(() => {
-        if (window.sosMap) {
-          window.sosMap.invalidateSize();
-        }
-      }, 400);
+      setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 400);
     }
 
     function initSOSMap() {
       const mapDiv = document.getElementById('sosMapPreview');
       if (!mapDiv) return;
-      if (window.sosMap) {
-        window.sosMap.invalidateSize();
-        return;
-      }
-      sosMap = L.map('sosMapPreview', {
-        center: [13.7563, 100.5018],
-        zoom: 11,
-        zoomControl: true,
-        scrollWheelZoom: false  // ป้องกันซูมแล้วขยายบัง
-      });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(sosMap);
+      if (window.sosMap) { window.sosMap.invalidateSize(); return; }
+      sosMap = L.map('sosMapPreview', { center: [13.7563, 100.5018], zoom: 11, zoomControl: true, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(sosMap);
       sosMarkersLayer = L.layerGroup().addTo(sosMap);
       window.sosMap = sosMap;
-      
-      // คลิกบนแผนที่แล้วไม่ขยายทับ
-      sosMap.on('click', function(e) {
-        // ไม่ทำอะไร
-      });
-      
-      if (typeof sosRequestsCache !== 'undefined' && sosRequestsCache.length > 0) {
-        updateSOSMapMarkers(sosRequestsCache);
-      }
+      if (typeof sosRequestsCache !== 'undefined' && sosRequestsCache.length > 0) updateSOSMapMarkers(sosRequestsCache);
     }
 
     function updateSOSMapMarkers(list) {
-      if (!sosMap || !sosMarkersLayer) {
-        initSOSMap();
-        if (!sosMap) return;
-      }
+      if (!sosMap || !sosMarkersLayer) { initSOSMap(); if (!sosMap) return; }
       sosMarkersLayer.clearLayers();
-      const bounds = [];
       list.forEach(item => {
         if (!item.lat || !item.lng) return;
-        let color = '#ff3b30';
-        if (item.status === 'going') color = '#22c55e';
-        if (item.status === 'closed' || item.status === 'rescued') color = '#3b82f6';
-        const icon = L.divIcon({
-          html: `<div style="background:${color}; width:32px; height:32px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">!</div>`,
-          className: '',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        });
-        const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon})
-          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div><div style="margin-top:6px;"><button onclick="alert('ติดต่อ: ${item.contact_phone||'-'}')" style="background:#4a83cc; color:white; border:none; border-radius:6px; padding:4px 8px; font-size:11px;">ติดต่อช่วยเหลือ</button></div></div>`);
-        sosMarkersLayer.addLayer(marker);
-        bounds.push([parseFloat(item.lat), parseFloat(item.lng)]);
+        let color = '#ff3b30'; if (item.status === 'going') color = '#22c55e'; if (item.status === 'closed') color = '#3b82f6';
+        const icon = L.divIcon({ html: `<div style="background:${color}; width:32px; height:32px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">!</div>`, className: '', iconSize: [32,32], iconAnchor: [16,16] });
+        L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon}).bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div></div>`).addTo(sosMarkersLayer);
       });
     }
 
     function getSOSFilterChipsHtml() {
-      return `
-      <div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:8px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch;">
+      return `<div id="sosFilterInList" style="display:flex; gap:6px; overflow-x:auto; white-space:nowrap; padding:8px 4px; margin-bottom:8px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; position:sticky; top:0; z-index:5; -webkit-overflow-scrolling: touch;">
         <button class="filter-btn sos-chip active" data-need="all" onclick="filterSOS('all')" style="flex-shrink:0;">📍 ทั้งหมด <span id="count-all">0</span></button>
         <button class="filter-btn sos-chip" data-need="evacuate" onclick="filterSOS('evacuate')" style="flex-shrink:0;">🚗 ต้องการยานพาหนะ/อพยพ <span id="count-evacuate">0</span></button>
         <button class="filter-btn sos-chip" data-need="food" onclick="filterSOS('food')" style="flex-shrink:0;">🍞 อาหาร/น้ำดื่ม <span id="count-food">0</span></button>
@@ -5164,7 +5099,6 @@
       </div>`;
     }
 
-    window.currentSOSFilter = 'all';
     function renderSOSList(list) {
       const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
@@ -5175,11 +5109,9 @@
         const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : '#eff6ff';
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : '#bfdbfe';
-        const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
+        const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก'}[t]||t)).join(', ');
         const timeAgo = item.created_at ? new Date(item.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
-        
-        return `
-        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;">
+        return `<div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;">
           <div style="flex:1;">
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
@@ -5191,8 +5123,8 @@
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
-            <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
-            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="window.open('tel:${item.contact_phone||''}');">💬 ติดต่อ</button>
+            <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 14); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูแผนที่</button>
+            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="window.open('tel:${item.contact_phone||''}');">💬 ติดต่อ</button>
           </div>
         </div>`;
       }).join('');
@@ -5203,39 +5135,30 @@
       const listContainer = document.getElementById('list-container');
       const activeTab = document.querySelector('.tab-btn.active');
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
-      
       if (isSOSActive && listContainer) {
         const filterHtml = getSOSFilterChipsHtml();
         if (list.length === 0) {
-          listContainer.innerHTML = filterHtml + '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1; margin-top:6px;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
+          listContainer.innerHTML = filterHtml + '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1; margin-top:6px;">📭 ยังไม่มีเคสขอความช่วยเหลือ</div>';
         } else {
           listContainer.innerHTML = filterHtml + '<div style="margin-top:6px;">' + sosCardsHtml + '</div>';
         }
-        // อัปเดตตัวเลข count หลังใส่ HTML ใหม่
-        const counts2 = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
-        list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts2[t] !== undefined) counts2[t]++; }); });
-        Object.keys(counts2).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts2[k]; });
-        // คง active state ของชิปที่กด
-        const currentActive = window.currentSOSFilter || 'all';
+        // update counts after injection
+        Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
         setTimeout(() => {
           document.querySelectorAll('#sosFilterInList .sos-chip').forEach(b => b.classList.remove('active'));
-          const btn = document.querySelector(`#sosFilterInList .sos-chip[data-need="${currentActive}"]`);
+          const btn = document.querySelector(`#sosFilterInList .sos-chip[data-need="${window.currentSOSFilter}"]`);
           if (btn) btn.classList.add('active');
         }, 50);
         const noResults = document.getElementById('no-results');
         if (noResults) noResults.style.display = 'none';
       }
-
-      if (typeof updateSOSMapMarkers === 'function') {
-        updateSOSMapMarkers(list);
-      }
+      updateSOSMapMarkers(list);
     }
 
     function filterSOS(type) {
       window.currentSOSFilter = type;
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
-      const btns = document.querySelectorAll(`.sos-chip[data-need="${type}"]`);
-      btns.forEach(b => b.classList.add('active'));
+      document.querySelectorAll(`.sos-chip[data-need="${type}"]`).forEach(b => b.classList.add('active'));
       if (type === 'all') renderSOSList(sosRequestsCache);
       else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
     }
@@ -5251,6 +5174,33 @@
         mapContainer.scrollIntoView({behavior:'smooth', block:'start'});
       }
       filterSOS('all');
+    }
+
+    function switchTab(tabId) {
+      if (typeof stopAIVoiceSpeech === 'function') stopAIVoiceSpeech();
+      const aiSection = document.getElementById('ai-section');
+      if (aiSection && aiSection.classList.contains('collapsed')) aiSection.classList.remove('collapsed');
+      const tabs = ['sos', 'realestate', 'decor', 'lifestyle', 'others'];
+      tabs.forEach(id => {
+        const btn = document.getElementById('tab-btn-' + id);
+        const content = document.getElementById('tab-content-' + id);
+        if (btn) btn.classList.remove('active');
+        if (content) content.style.display = 'none';
+      });
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      const activeContent = document.getElementById('tab-content-' + tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+      if (activeContent) activeContent.style.display = 'block';
+      const listSection = document.getElementById('list-section');
+      if (tabId === 'sos') {
+        if (listSection) listSection.style.display = 'block';
+        if (typeof renderSOSList === 'function') renderSOSList(sosRequestsCache);
+        setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); else initSOSMap(); }, 300);
+      } else {
+        if (listSection) listSection.style.display = 'block';
+        if (typeof testShowList === 'function') testShowList();
+      }
+      if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
 
     // ===================== END SOS FINAL =====================
