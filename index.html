@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2202,7 +2202,6 @@
     async function saveUserLineIdToSupabase(lineIdOrProfile) {
       try {
         let lineId, profileData = {};
-        let safeLineId = '';
         if (typeof lineIdOrProfile === 'object' && lineIdOrProfile !== null) {
           // รับมาเป็น profile object
           lineId = lineIdOrProfile.userId || lineIdOrProfile.lineId;
@@ -2224,7 +2223,6 @@
         }
 
         if (!lineId) return null;
-        safeLineId = String(lineId).trim();
 
         // 1. เช็คว่ามี line_id นี้ใน table users แล้วหรือยัง
         const { data: existingUser, error: findErr } = await supabaseClient
