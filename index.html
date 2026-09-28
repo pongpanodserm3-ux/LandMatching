@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5457,14 +5457,21 @@ function tryLIFFLoginAgain(){
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
     }
 
-    let sosMap = null;
-    let sosMarkersLayer = null;
+    var sosMap = null;
+    var sosMarkersLayer = null;
+    window.sosMap = window.sosMap || null;
+    window.sosMarkersLayer = window.sosMarkersLayer || null;
     function initSOSMap() {
       const mapEl = document.getElementById('sosMapPreview');
-      if (!mapEl || window.sosMap) return;
-      window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
-      sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+      if (!mapEl) return;
+      if (window.sosMap) return;
+      try {
+        window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
+        sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+        window.sosMarkersLayer = sosMarkersLayer;
+        sosMap = window.sosMap;
+      } catch(e){ console.warn('initSOSMap failed', e); }
       setTimeout(() => window.sosMap.invalidateSize(), 500);
     }
     
@@ -5472,7 +5479,8 @@ function tryLIFFLoginAgain(){
       if (!window.sosMap) initSOSMap();
       if (!window.sosMap) return;
       if (!sosMarkersLayer) {
-        sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+        sosMarkersLayer = window.sosMarkersLayer || L.layerGroup().addTo(window.sosMap);
+        window.sosMarkersLayer = sosMarkersLayer;
       }
       sosMarkersLayer.clearLayers();
       list.forEach(item => {
@@ -5496,6 +5504,8 @@ function tryLIFFLoginAgain(){
 
 
         function renderSOSList(list) {
+      if(!list) list = [];
+      list = Array.isArray(list) ? list : [];
       // FIX v4.13 - นับจากฐานทั้งหมดเท่านั้น ตัวเลขไม่เปลี่ยนตามการกดฟิลเตอร์
       const fullList = (window.sosRequestsCache && window.sosRequestsCache.length > 0) ? window.sosRequestsCache : list;
       if (window.sosRequestsCache) fullList.length >=0; // keep reference
