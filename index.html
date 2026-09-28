@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v4.9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.0
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2690,16 +2690,50 @@
       if (activeBtn) activeBtn.classList.add('active');
       if (activeContent) activeContent.style.display = 'block';
 
-      // อัปเดตสถานะแท็บปัจจุบันใน AppState
       AppState.voice.currentTab = tabId;
 
-      // ส่ง Prompt แจ้งบทบาทใหม่ให้ AI รับรู้การเปลี่ยนสลับแท็บทันที  และแสดง Log ตรวจสอบ
+      // ===== FIX v4.10: แยกโหมด SOS ออกจากโหมดปกติ =====
+      const resultsContainer = document.getElementById('resultsContainer');
+      const listContainer = document.getElementById('list-container');
+      const noResults = document.getElementById('no-results');
+      
+      if (tabId === 'sos') {
+        // ซ่อนรายการอสังหา/ทั่วไป ทั้งหมด
+        if (resultsContainer) {
+          resultsContainer.innerHTML = '';
+          resultsContainer.style.display = 'none';
+        }
+        if (noResults) noResults.style.display = 'none';
+        // โชว์เฉพาะ SOS
+        if (listContainer) listContainer.style.display = 'block';
+        if (typeof loadSOSRequests === 'function') {
+          loadSOSRequests();
+        } else if (window.sosRequestsCache) {
+          renderSOSList(window.sosRequestsCache);
+        }
+      } else {
+        // โหมดปกติ: ซ่อน SOS, โชว์ resultsContainer
+        if (resultsContainer) {
+          resultsContainer.style.display = 'block';
+          resultsContainer.innerHTML = '';
+        }
+        if (listContainer) {
+          listContainer.innerHTML = '';
+          listContainer.style.display = 'none';
+        }
+        // ล้าง SOS results
+        const sosResultsDiv = document.getElementById('sosResults');
+        if (sosResultsDiv) sosResultsDiv.innerHTML = '';
+        // reset pagination และโหลดใหม่
+        if (AppState && AppState.pagination) {
+          AppState.pagination.offset = 0;
+          AppState.pagination.renderedKeys = new Set();
+        }
+      }
+
       if (TAB_PROMPTS[tabId] && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
         console.log(`[AI Tab Switch] เปลี่ยนเป็นแท็บ: ${tabId}`);
-        console.log(`[AI Prompt Sent]: ${TAB_PROMPTS[tabId]}`);
         sendTextToAI(TAB_PROMPTS[tabId]);
-      } else {
-        console.warn(`[AI Tab Switch] ไม่สามารถส่ง Prompt ได้ (WebSocket ยังไม่เชื่อมต่อ หรือไม่มี Prompt)`);
       }
     }
 
@@ -4116,6 +4150,12 @@
     }
 
     function renderProperties(properties) {
+      // FIX v4.10: ถ้าอยู่แท็บ SOS ห้าม render อสังหา/ทั่วไป เด็ดขาด
+      const activeTabBtn = document.querySelector('.tab-btn.active');
+      if (activeTabBtn && activeTabBtn.id === 'tab-btn-sos') {
+        console.log('[BLOCKED] renderProperties blocked in SOS tab');
+        return;
+      }
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
         if (AppState.pagination.offset === 0) {
@@ -5158,11 +5198,20 @@
       const activeTab = document.querySelector('.tab-btn.active');
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
       
-      if (isSOSActive && listContainer) {
-        if (list.length === 0) {
-          listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
-        } else {
-          listContainer.innerHTML = sosCardsHtml;
+      // FIX v4.10: SOS ต้องแสดงเฉพาะขอความช่วยเหลือเท่านั้น - บังคับล้าง resultsContainer
+      const resultsContainer = document.getElementById('resultsContainer');
+      if (isSOSActive) {
+        if (resultsContainer) {
+          resultsContainer.innerHTML = '';
+          resultsContainer.style.display = 'none';
+        }
+        if (listContainer) {
+          listContainer.style.display = 'block';
+          if (list.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
+          } else {
+            listContainer.innerHTML = sosCardsHtml;
+          }
         }
         const noResults = document.getElementById('no-results');
         if (noResults) noResults.style.display = 'none';
