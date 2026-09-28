@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1090,7 +1090,31 @@
     /* --- จบ ปุ่ม ขาย/เช่า --- */
     /* --- จบ: สไตล์สำหรับ Multi-level Flyout Dropdown --- */
     
-  </style> 
+  
+    /* v9.1 - SOS Mutual Consent */
+    .sos-consent-bar{
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border:1px solid #fdba74;
+      border-radius:12px;
+      padding:10px 12px;
+      margin:10px;
+      font-size:12px;
+      line-height:1.5;
+    }
+    .sos-consent-btn{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:8px;
+    }
+    .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
+    .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
+    .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
+
+</style> 
     
 </head>
 <body>
@@ -1253,7 +1277,31 @@
     #sosDropdownModal { scrollbar-width: thin; }
     #sosDropdownModal::-webkit-scrollbar { width: 6px; }
     #sosDropdownModal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-  </style>
+  
+    /* v9.1 - SOS Mutual Consent */
+    .sos-consent-bar{
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border:1px solid #fdba74;
+      border-radius:12px;
+      padding:10px 12px;
+      margin:10px;
+      font-size:12px;
+      line-height:1.5;
+    }
+    .sos-consent-btn{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:8px;
+    }
+    .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
+    .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
+    .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
+
+</style>
   <div class="modal-overlay" id="sosModalOverlay" style="z-index: 9000; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="sosDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
       <span class="close-modal" onclick="closeSOSModal()">&times;</span>
@@ -2071,6 +2119,18 @@
           <div class="chat-room-header">
             <div class="chat-room-title">กล่องข้อความ</div>
           </div>
+          
+          <div id="sosConsentBar" class="sos-consent-bar" style="display:none;">
+            <div style="font-weight:800; color:#9a3412;">🤝 ยืนยันการช่วยเหลือ</div>
+            <div id="sosConsentText">ต้องกดยอมรับทั้ง 2 ฝ่ายก่อนจึงจะเห็นเบอร์โทร</div>
+            <div id="sosConsentChecks" class="sos-consent-status"></div>
+            <button id="sosAcceptBtn" class="sos-consent-btn accept" onclick="acceptSOSHelp()">✅ กดยอมรับการช่วยเหลือครั้งนี้</button>
+            <div id="sosCallArea" style="display:none;">
+              <a id="sosCallLink" href="#" style="text-decoration:none;"><button class="sos-consent-btn call">📞 โทร <span id="sosFullPhone"></span></button></a>
+              <div style="font-size:10px; color:#666; margin-top:4px; text-align:center;">เบอร์จะเห็นเฉพาะคู่ที่ยอมรับแล้วเท่านั้น</div>
+            </div>
+          </div>
+
           <div class="chat-messages-container" id="chatMessagesContainer"></div>
           <div class="chat-input-row">
             <input type="text" class="chat-input-field" id="chatMessageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendChatMessage()">
@@ -2521,6 +2581,15 @@ function tryLIFFLoginAgain(){
     // ==========================================
     // ตรรกะระบบแชทเมื่อกดปุ่ม "(chat)" (เช็กตาราง chat_rooms)
     // ==========================================
+    
+    // === v9.0 SOS Chat Patch - Utility ===
+    function maskPhone(p){
+      if(!p) return '-';
+      const s = String(p).trim();
+      if(s.length <= 7) return s.slice(0,2)+'***';
+      return s.slice(0,3)+'xxxx'+s.slice(-3);
+    }
+
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
@@ -2674,6 +2743,171 @@ function tryLIFFLoginAgain(){
     // ---------------------------------------------------------
     // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เวอร์ชันแก้ไข Error 400)
     // ---------------------------------------------------------
+    
+    
+    // === v9.1 Mutual Consent Logic ===
+    let CURRENT_SOS_DATA = null;
+
+    async function loadSOSConsentState(roomId){
+      const bar = document.getElementById('sosConsentBar');
+      if(!bar) return;
+      try{
+        const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', roomId).maybeSingle();
+        if(!room || !room.sos_request_id){ bar.style.display='none'; return; }
+        bar.style.display='block';
+
+        const { data: sos } = await supabaseClient.from('flood_help_requests').select('*').eq('id', room.sos_request_id).maybeSingle();
+        CURRENT_SOS_DATA = sos;
+
+        const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
+        const buyerAccepted = !!room.buyer_accepted;
+        const sellerAccepted = !!room.seller_accepted;
+        const bothAccepted = buyerAccepted && sellerAccepted;
+
+        const checksEl = document.getElementById('sosConsentChecks');
+        const acceptBtn = document.getElementById('sosAcceptBtn');
+        const callArea = document.getElementById('sosCallArea');
+        const textEl = document.getElementById('sosConsentText');
+        const fullPhoneEl = document.getElementById('sosFullPhone');
+        const callLink = document.getElementById('sosCallLink');
+
+        checksEl.innerHTML = `
+          ${buyerAccepted ? '✅' : '⏳'} ผู้เข้าไปช่วย: ${buyerAccepted ? 'ยอมรับแล้ว' : 'รอการกดยอมรับ'}<br>
+          ${sellerAccepted ? '✅' : '⏳'} ผู้ขอความช่วยเหลือ: ${sellerAccepted ? 'ยอมรับแล้ว' : 'รอการกดยอมรับ'}
+        `;
+
+        // ซ่อนปุ่มยอมรับถ้าฝั่งตัวเองกดแล้ว
+        if( (isBuyer && buyerAccepted) || (!isBuyer && sellerAccepted) ){
+          acceptBtn.style.display='none';
+          textEl.innerText = bothAccepted ? '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว - สามารถโทรหากันได้เลย' : 'รออีกฝ่ายกดยอมรับ...';
+        }else{
+          acceptBtn.style.display='block';
+          textEl.innerText = 'กดยอมรับเพื่อยืนยันว่าคุณตกลงช่วยเหลือ/รับการช่วยเหลือครั้งนี้';
+        }
+
+        if(bothAccepted){
+          callArea.style.display='block';
+          if(sos && sos.contact_phone){
+            fullPhoneEl.innerText = sos.contact_phone;
+            callLink.href = 'tel:' + sos.contact_phone;
+          }
+          // อัปเดตสถานะหลัก
+          try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', room.sos_request_id); }catch(e){}
+        }else{
+          callArea.style.display='none';
+        }
+
+      }catch(e){
+        console.error('loadSOSConsentState error', e);
+      }
+    }
+
+    async function acceptSOSHelp(){
+      if(!CURRENT_ROOM_ID) return;
+      try{
+        const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
+        if(!room) return;
+        const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
+        const updateField = isBuyer ? {buyer_accepted:true} : {seller_accepted:true};
+        await supabaseClient.from('chat_rooms').update(updateField).eq('room_id', CURRENT_ROOM_ID);
+
+        // ส่งข้อความระบบเข้าแชท
+        await supabaseClient.from('chat_messages').insert([{
+          room_id: CURRENT_ROOM_ID,
+          sender_id: 0,
+          message_text: `${isBuyer ? 'ผู้เข้าไปช่วย' : 'ผู้ขอความช่วยเหลือ'} กดยอมรับการช่วยเหลือแล้ว ${!isBuyer ? '(รอผู้ช่วยกดยอมรับอีก 1 คน)' : ''}`
+        }]);
+
+        await loadSOSConsentState(CURRENT_ROOM_ID);
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        if(typeof loadUserChatRooms==='function') await loadUserChatRooms();
+      }catch(e){
+        console.error('acceptSOSHelp error', e);
+        alert('กดยอมรับไม่สำเร็จ ลองใหม่ครับ');
+      }
+    }
+
+    // Hook เข้ากับ joinChatRoom และ loadChatHistory เดิม
+    const _origJoinChatRoom = typeof joinChatRoom !== 'undefined' ? joinChatRoom : null;
+    const _origLoadChatHistory = typeof loadChatHistoryForRoom !== 'undefined' ? loadChatHistoryForRoom : null;
+
+    // === v9.0 SOS Chat Patch - Reuse chat_rooms for flood_help_requests ===
+    async function openSOSChat(sosItem, event){
+      if(event) event.stopPropagation();
+      if(typeof stopAIVoiceSpeech === 'function') stopAIVoiceSpeech();
+      try{
+        let buyerId = await getCurrentUserId();
+        buyerId = await ensureUserExists(buyerId);
+        let sellerId = sosItem.user_id || sosItem.line_id || 1;
+        sellerId = await ensureUserExists(sellerId);
+
+        const sosId = sosItem.id;
+        let targetRoomId = null;
+
+        // หาห้องเดิมที่เคยคุยเรื่องเคสนี้
+        const { data: existingRooms } = await supabaseClient
+          .from('chat_rooms')
+          .select('*')
+          .eq('sos_request_id', sosId)
+          .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+          .limit(1);
+
+        if(existingRooms && existingRooms.length>0){
+          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
+        }else{
+          const { data: maxRoomData } = await supabaseClient.from('chat_rooms').select('room_id').order('room_id',{ascending:false}).limit(1);
+          let nextRoomId = 101;
+          if(maxRoomData && maxRoomData.length>0 && maxRoomData[0].room_id){
+            const parsed = parseInt(maxRoomData[0].room_id,10);
+            if(!isNaN(parsed)) nextRoomId = parsed+1;
+          }
+          const { data: insertedRoom, error: insertErr } = await supabaseClient.from('chat_rooms').insert([{
+            room_id: nextRoomId,
+            buyer_id: buyerId,
+            seller_id: sellerId,
+            sos_request_id: sosId,
+            request_type: 'sos',
+            property_id: sosId
+          }]).select();
+          if(insertErr){
+            console.error('Insert SOS Chat Room Error', insertErr);
+            targetRoomId = nextRoomId;
+          }else{
+            targetRoomId = insertedRoom && insertedRoom[0] ? (insertedRoom[0].room_id || insertedRoom[0].id) : nextRoomId;
+          }
+          // อัปเดตสถานะว่าเคสนี้มีคนรับแล้ว
+          try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', sosId); }catch(e){}
+        }
+
+        CURRENT_ROOM_ID = targetRoomId;
+        CURRENT_USER_ID = buyerId;
+        const needLabel = (sosItem.need_types||[]).join(',') || 'ขอความช่วยเหลือ';
+        const titleEl = document.getElementById('chatActiveTitle');
+        if(titleEl) titleEl.innerText = `💬 ${needLabel} - ${sosItem.location_text||''}`;
+        const floatBtn = document.querySelector('.user-chat-float-btn');
+        if(floatBtn) floatBtn.classList.remove('has-new-msg');
+        document.getElementById('userChatModalOverlay').classList.add('active');
+        if(typeof expandChatZone==='function') expandChatZone('room');
+        await loadUserChatRooms();
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        await loadSOSConsentState(CURRENT_ROOM_ID);
+        if(typeof initRealtimeForRoom==='function') initRealtimeForRoom(CURRENT_ROOM_ID);
+
+        // ส่งข้อความอัตโนมัติครั้งแรกเพื่อให้รู้ว่ามาจากเคสไหน
+        const autoMsg = `สวัสดีครับ ผมเห็นเคส ${needLabel} ที่ ${sosItem.location_text||''} อยากเข้าไปช่วยเหลือครับ`;
+        // ถ้าไม่มีข้อความเลย ให้ส่ง autoMsg
+        const { data: msgs } = await supabaseClient.from('chat_messages').select('message_id').eq('room_id', targetRoomId).limit(1);
+        if(!msgs || msgs.length===0){
+          await supabaseClient.from('chat_messages').insert([{ room_id: targetRoomId, sender_id: buyerId, message_text: autoMsg }]);
+          await loadChatHistoryForRoom(targetRoomId);
+        }
+
+      }catch(err){
+        console.error('openSOSChat error', err);
+        alert('เปิดแชทไม่สำเร็จ ลองใหม่นะครับ');
+      }
+    }
+
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
@@ -2715,16 +2949,24 @@ function tryLIFFLoginAgain(){
           }
           
           let propData = null;
-          if (room.property_id) {
+          let projectName = 'ทั่วไป';
+          if(room.request_type === 'sos' || room.sos_request_id){
+            const { data: sosData } = await supabaseClient.from('flood_help_requests').select('location_text, need_types').eq('id', room.sos_request_id||room.property_id).maybeSingle();
+            if(sosData){
+              const needTxt = (sosData.need_types||[]).join(',');
+              projectName = `🆘 ${needTxt} @ ${sosData.location_text||''}`;
+            }else{
+              projectName = `🆘 เคสช่วยเหลือ #${room.sos_request_id||room.property_id}`;
+            }
+          }else if (room.property_id) {
             const { data } = await supabaseClient
               .from('properties')
               .select('project')
               .eq('property_id', room.property_id)
               .maybeSingle();
             propData = data;
+            projectName = propData?.project || `โครงการ: ${room.property_id}`;
           }
-    
-          const projectName = propData?.project || (room.property_id ? `โครงการ: ${room.property_id}` : 'ทั่วไป');
           const username = otherUserData?.username || `ผู้ใช้งาน ${otherPartyId || ''}`;
           const roomTitle = `${username} (${projectName})`;
     
@@ -2843,6 +3085,9 @@ function tryLIFFLoginAgain(){
       expandChatZone('room');
       await markMessagesAsRead(roomId);
       await loadChatHistoryForRoom(roomId);
+      CURRENT_ROOM_ID = roomId;
+      await loadSOSConsentState(roomId);
+
       initRealtimeForRoom(roomId);
     }
 
@@ -5562,13 +5807,13 @@ function tryLIFFLoginAgain(){
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
-            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div>
+            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${maskPhone(item.contact_phone)}</span> ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}</div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
-            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="window.open('tel:${item.contact_phone||''}');">💬 ติดต่อ</button>
+            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="openSOSChat(item, event)">💬 ติดต่อ</button>
           </div>
         </div>`;
       }).join('');
@@ -6034,6 +6279,30 @@ function tryLIFFLoginAgain(){
   margin-bottom: 8px;
 }
 .line-modal-link { font-size: 11px; color: #888; margin-top: 10px; word-break: break-all; }
+
+    /* v9.1 - SOS Mutual Consent */
+    .sos-consent-bar{
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border:1px solid #fdba74;
+      border-radius:12px;
+      padding:10px 12px;
+      margin:10px;
+      font-size:12px;
+      line-height:1.5;
+    }
+    .sos-consent-btn{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:8px;
+    }
+    .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
+    .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
+    .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
+
 </style>
 <div id="lineRequiredModalOverlay" onclick="if(event.target===this) closeLineRequiredModal()">
   <div id="lineRequiredModal">
