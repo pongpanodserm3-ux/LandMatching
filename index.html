@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5318,7 +5318,12 @@ function tryLIFFLoginAgain(){
       const val = btn.dataset.val;
       if (btn.classList.contains('selected')) selectedSOSTags.add(val);
       else selectedSOSTags.delete(val);
-      document.getElementById('medicineExtra').style.display = selectedSOSTags.has('medicine') ? 'block' : 'none';
+      const medEl = document.getElementById('medicineExtra');
+      if(medEl) medEl.style.display = selectedSOSTags.has('medicine') ? 'block' : 'none';
+      const evacEl = document.getElementById('evacDestinationGroup');
+      const evacHint = document.getElementById('evacHintBox');
+      if(evacEl) evacEl.style.display = selectedSOSTags.has('evacuate') ? 'block' : 'none';
+      if(evacHint) evacHint.style.display = selectedSOSTags.has('evacuate') ? 'block' : 'none';
     }
 
     function getCurrentUserLocationSOS() {
@@ -5740,6 +5745,10 @@ function tryLIFFLoginAgain(){
           else btn.classList.remove('selected');
         });
         if(post.need_types.includes('medicine')) document.getElementById('medicineExtra').style.display='block';
+        if(post.need_types.includes('evacuate')){
+          const eg=document.getElementById('evacDestinationGroup'); if(eg) eg.style.display='block';
+          const eh=document.getElementById('evacHintBox'); if(eh) eh.style.display='block';
+        }
       }
       window.sosExistingImageUrls = post.images && Array.isArray(post.images) ? post.images : (post.image_urls || []);
       window.sosUploadedFiles=[];
