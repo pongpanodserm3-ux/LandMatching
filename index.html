@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5512,9 +5512,8 @@ function tryLIFFLoginAgain(){
       list = Array.isArray(list) ? list : [];
       // FIX v4.13 - นับจากฐานทั้งหมดเท่านั้น ตัวเลขไม่เปลี่ยนตามการกดฟิลเตอร์
       const fullList = (window.sosRequestsCache && window.sosRequestsCache.length > 0) ? window.sosRequestsCache : list;
-      if (window.sosRequestsCache) fullList.length >=0; // keep reference
+      if (window.sosRequestsCache) fullList.length >=0;
       window.sosRequestsCache = window.sosRequestsCache || fullList;
-      // Ensure global cache reference exists
       if (fullList && fullList.length > 0 && (!window.sosRequestsCache || window.sosRequestsCache.length === 0)) {
         window.sosRequestsCache = fullList;
       }
@@ -5524,6 +5523,9 @@ function tryLIFFLoginAgain(){
       baseForCount.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
       Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
 
+      // map vehicle code to readable
+      const vehicleMap = {boat:'🛶 เรือ (ท้องแบน/พาย)', high_truck:'🚚 รถยกสูง/รถทหาร', pickup:'🛻 รถกระบะ', car:'🚗 รถเก๋ง', any:'อะไรก็ได้ ขอออกก่อน'};
+
       const sosCardsHtml = list.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
         const statusText = item.status === 'waiting' ? '' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
@@ -5531,6 +5533,25 @@ function tryLIFFLoginAgain(){
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : '#bfdbfe';
         const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
         const timeAgo = item.created_at ? new Date(item.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
+        const isEvac = (item.need_types||[]).includes('evacuate');
+
+        // --- v8.6 FIX: เตรียมข้อมูลอพยพ 3 ฟิลด์ ---
+        const origin = item.origin_text || item.location_text || '-';
+        const destination = item.evac_destination_text || item.evac_destination || '';
+        const vehicleRaw = item.evac_vehicle_type || '';
+        const vehicleLabel = vehicleMap[vehicleRaw] || vehicleRaw || 'ไม่ระบุ';
+
+        let evacDetailHtml = '';
+        if(isEvac){
+          evacDetailHtml = `
+            <div style="margin-top:6px; background:#fff7ed; border:1px solid #fdba74; border-radius:10px; padding:8px 10px; font-size:12px; line-height:1.5;">
+              <div style="font-weight:800; color:#9a3412; margin-bottom:4px; font-size:11px;">🚨 รายละเอียดอพยพ / ยานพาหนะ</div>
+              <div>📍 <b>ไปรับจาก:</b> ${origin}</div>
+              <div>🏁 <b>ไปส่งที่:</b> ${destination ? destination : '<span style="color:#dc2626;">ยังไม่ระบุ (กรุณาโทรสอบถาม)</span>'}</div>
+              <div>🚗 <b>พาหนะที่ต้องการ:</b> ${vehicleLabel}</div>
+              ${(item.evac_lat && item.evac_lng) ? `<div style="font-size:10px; color:#666; margin-top:2px;">📌 พิกัดปลายทาง: ${parseFloat(item.evac_lat).toFixed(5)}, ${parseFloat(item.evac_lng).toFixed(5)}</div>` : ''}
+            </div>`;
+        }
         
         return `
         <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;">
@@ -5543,6 +5564,7 @@ function tryLIFFLoginAgain(){
             <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
             <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 ${item.contact_phone||'-'}</div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
+            ${evacDetailHtml}
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
@@ -5569,6 +5591,7 @@ function tryLIFFLoginAgain(){
       }
 
       if (typeof updateSOSMapMarkers === 'function') {
+        updateSOSMapMarkers(list);
         updateSOSMapMarkers(list);
       }
     }
