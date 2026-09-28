@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2178,6 +2178,14 @@
             const dbId = await saveUserLineIdToSupabase(profile); // v6.8 ส่ง profile ทั้งก้อนเพื่อให้บันทึก username, picture ลง users
             CURRENT_USER_ID = dbId;
             console.log("✅ ยืนยันตัวตน LINE สำเร็จ:", profile.displayName, "user_id =", dbId);
+            // v6.10 บันทึกว่า login แล้ว
+            try{
+              localStorage.setItem('line_user_id', profile.userId);
+              localStorage.setItem('app_user_id', String(dbId));
+              localStorage.setItem('line_display_name', profile.displayName || '');
+            }catch(e){}
+            // ปิด modal ถ้าเปิดอยู่
+            if(typeof closeLineRequiredModal === 'function') closeLineRequiredModal();
           }
         } else {
           console.warn("LIFF SDK ไม่พร้อม");
@@ -2262,10 +2270,16 @@
             if (retryUser) return retryUser.user_id;
           }
           console.error("Error insert users:", insErr);
+          // v6.10 DEBUG: แจ้งเตือนถ้า RLS บล็อก
+          if(insErr && (insErr.code === '42501' || insErr.message && insErr.message.includes('RLS') || insErr.message && insErr.message.includes('policy'))){
+            alert('⚠️ บันทึกเข้า table users ไม่ได้\nสาเหตุ: Supabase RLS บล็อก\n\nวิธีแก้:\n1. ไปที่ Supabase Dashboard > Table Editor > users\n2. ปิด RLS หรือเพิ่ม Policy: Allow anon INSERT, SELECT, UPDATE\n\nError: ' + insErr.message);
+          }
           return null;
         }
 
         console.log("✅ สร้าง user ใหม่ใน table users:", newUser.user_id, "line_id:", lineId);
+        // บันทึกสำเร็จ -> เก็บลง localStorage ด้วย
+        try{ localStorage.setItem('app_user_id', String(newUser.user_id)); }catch(e){}
         return newUser ? newUser.user_id : null;
 
       } catch (e) {
@@ -2296,22 +2310,56 @@ function closeLineRequiredModal(){
 }
 
 function openInLINEApp(){
-  const liffUrl = getLINE_LIFF_URL();
   const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : '2011006139-Wn6PhY6D';
-  
-  // วิธีที่ 1: พยายามเปิดด้วย line:// scheme (จะเด้งเข้าแอป LINE ถ้าติดตั้ง)
-  // วิธีที่ 2: เปิด LIFF URL ตรงๆ (ถ้าเปิดในมือถือที่มี LINE จะเด้งเข้า LINE)
-  
-  // สำหรับ Android/iOS ที่ติดตั้ง LINE
-  const lineAppUrl = 'https://line.me/R/app/' + liffId;
-  
-  // ลองเปิดแอป LINE ก่อน
-  window.location.href = liffUrl;
-  
-  // Fallback: ถ้า 1.5 วิ ยังไม่ไป ให้เปิดแท็บใหม่
-  setTimeout(() => {
+  const liffUrl = getLINE_LIFF_URL(); // https://liff.line.me/2011006139-Wn6PhY6D
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const btn = document.querySelector('.line-modal-btn-primary');
+  if(btn){ btn.innerText = '⏳ กำลังเปิด LINE...'; btn.disabled = true; }
+
+  console.log('Opening LINE:', liffUrl, 'isMobile:', isMobile);
+
+  try {
+    if(isMobile){
+      // มือถือ: ลองยิงเข้าแอป LINE ก่อนด้วย scheme
+      const schemes = [
+        'line://app/' + liffId,
+        liffUrl
+      ];
+      // ยิง scheme แรก
+      window.location.href = schemes[0];
+      // ถ้า 1 วิยังไม่ออก ให้ยิง LIFF URL
+      setTimeout(() => {
+        window.location.href = schemes[1];
+      }, 1000);
+      // เผื่อ browser บล็อก href ให้เปิดแท็บใหม่ด้วย
+      setTimeout(() => {
+        window.open(liffUrl, '_blank');
+      }, 1500);
+    } else {
+      // Desktop: ไม่สามารถเด้งเข้าแอปได้ ต้องเปิดแท็บใหม่ + แสดง QR/คำแนะนำ
+      // เปิด LIFF ในแท็บใหม่เลย (จะขึ้นหน้า Login LINE)
+      const newWin = window.open(liffUrl, '_blank');
+      if(!newWin){
+        // ถ้าโดน popup blocker ให้เปลี่ยนหน้าปัจจุบัน
+        window.location.href = liffUrl;
+      }
+      // แสดงคำแนะนำเพิ่ม
+      const desc = document.querySelector('.line-modal-desc');
+      if(desc){
+        desc.innerHTML = 'เปิดหน้า Login LINE ในแท็บใหม่แล้ว<br><br>1. สแกน QR หรือ Login ด้วย LINE<br>2. ระบบจะสร้าง user_id ใน table users ให้อัตโนมัติ<br><br><span style="color:#06c755; font-weight:bold;">หากไม่เด้ง ให้คัดลอกลิงก์ด้านล่างไปวางใน LINE</span>';
+      }
+    }
+  } catch(e){
+    console.error('open LINE failed', e);
+    // fallback สุดท้าย
     window.open(liffUrl, '_blank');
-  }, 1500);
+    prompt('คัดลอกลิงก์นี้ไปเปิดใน LINE:', liffUrl);
+  }
+
+  // ปลดล็อคปุ่มคืนหลัง 3 วิ
+  setTimeout(() => {
+    if(btn){ btn.innerText = '📲 เปิดใน LINE ทันที'; btn.disabled = false; }
+  }, 3000);
 }
 
 function copyLINEUrl(){
