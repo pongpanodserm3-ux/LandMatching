@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5005,7 +5005,62 @@
       }
     }
 
-    function renderSOSList(list) {
+
+    let isSOSMapExpanded = false;
+    function toggleSOSMapSize() {
+      const mapContainer = document.getElementById('sosMapContainer');
+      const btn = document.getElementById('sosMapToggleBtn');
+      if (!mapContainer) return;
+      isSOSMapExpanded = !isSOSMapExpanded;
+      if (isSOSMapExpanded) {
+        mapContainer.style.height = '600px';
+        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ ⬆️';
+      } else {
+        mapContainer.style.height = '320px';
+        if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
+      }
+      setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
+    }
+
+    let sosMap = null;
+    let sosMarkersLayer = null;
+    function initSOSMap() {
+      const mapEl = document.getElementById('sosMapPreview');
+      if (!mapEl || window.sosMap) return;
+      window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
+      sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+      setTimeout(() => window.sosMap.invalidateSize(), 500);
+    }
+    
+    function updateSOSMapMarkers(list) {
+      if (!window.sosMap) initSOSMap();
+      if (!window.sosMap) return;
+      if (!sosMarkersLayer) {
+        sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+      }
+      sosMarkersLayer.clearLayers();
+      list.forEach(item => {
+        if (!item.lat || !item.lng) return;
+        let color = '#ff3b30';
+        if (item.status === 'going') color = '#22c55e';
+        if (item.status === 'closed' || item.status === 'rescued') color = '#3b82f6';
+        const icon = L.divIcon({
+          html: `<div style="background:${color}; width:32px; height:32px; border-radius:50%; border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">!</div>`,
+          className: '',
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+        const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon})
+          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div></div>`);
+        sosMarkersLayer.addLayer(marker);
+      });
+      // init map after load
+      setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 300);
+    }
+
+
+        function renderSOSList(list) {
       // FIX v4.13 - นับจากฐานทั้งหมดเท่านั้น ตัวเลขไม่เปลี่ยนตามการกดฟิลเตอร์
       const fullList = (window.sosRequestsCache && window.sosRequestsCache.length > 0) ? window.sosRequestsCache : list;
       if (window.sosRequestsCache) fullList.length >=0; // keep reference
