@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -3615,11 +3615,7 @@
         const sosLngEl = document.getElementById('sosLng');
         if (sosLatEl) sosLatEl.value = selectedLat.toFixed(6);
         if (sosLngEl) sosLngEl.value = selectedLng.toFixed(6);
-        // อัปเดตช่องรายละเอียดสถานที่ใน SOS ถ้ายังว่าง ให้ใส่พิกัดเป็น text
-        const sosLocText = document.getElementById('sosLocationText');
-        if (sosLocText && !sosLocText.value.trim()) {
-          sosLocText.value = `${selectedLat.toFixed(6)}, ${selectedLng.toFixed(6)}`;
-        }
+        // FIX: ไม่ใส่ lat/lng ลงช่องรายละเอียดเพิ่ม เพื่อไม่ให้ซ้ำกัน 2 จุด (ตามคำสั่งล่าสุด)
       } else {
         selectedLat = null;
         selectedLng = null;
