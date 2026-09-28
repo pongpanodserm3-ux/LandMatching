@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1248,9 +1248,14 @@
     .sos-tag-btn.selected { background: #ff3b30; color: white; border-color: #d70000; }
     .sos-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; box-sizing: border-box; margin-bottom: 8px; }
     .sos-chip.active { background: #4a83cc !important; color: white !important; border-color: #2b5893 !important; }
+    /* คำสั่งที่2: ทำให้เลื่อนได้ลื่น */
+    #sosModalOverlay { overscroll-behavior: contain; }
+    #sosDropdownModal { scrollbar-width: thin; }
+    #sosDropdownModal::-webkit-scrollbar { width: 6px; }
+    #sosDropdownModal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   </style>
-  <div class="modal-overlay" id="sosModalOverlay" style="z-index: 9000; align-items: center;">
-    <div class="dropdown-modal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 90vh; overflow-y: auto;">
+  <div class="modal-overlay" id="sosModalOverlay" style="z-index: 9000; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
+    <div class="dropdown-modal" id="sosDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
       <span class="close-modal" onclick="closeSOSModal()">&times;</span>
       <h3 style="margin-top:0; color: #d70000; font-size: 18px; text-align: center;">🚨 แจ้งขอความช่วยเหลือฉุกเฉิน</h3>
       
@@ -1272,11 +1277,12 @@
         <button class="filter-btn" style="flex:1;" onclick="if(typeof openLocationModal==='function') openLocationModal(true)">📍 ปักหมุดพิกัด</button>
         <button class="filter-btn" style="flex:1;" onclick="getCurrentUserLocationSOS()">📌 ใช้ตำแหน่งปัจจุบัน</button>
       </div>
-      <input type="text" class="sos-input" id="sosLocationText" placeholder="รายละเอียดเพิ่ม เช่น ติดชั้น2 คอนโด... น้ำระดับอก ซอย...">
+      <!-- คำสั่งที่1: สลับตำแหน่ง lat/lng ขึ้นบน รายละเอียดเพิ่มลงล่าง -->
       <div style="display:flex; gap:6px;">
         <input type="text" class="sos-input" id="sosLat" placeholder="Lat" style="flex:1;">
         <input type="text" class="sos-input" id="sosLng" placeholder="Lng" style="flex:1;">
       </div>
+      <input type="text" class="sos-input" id="sosLocationText" placeholder="รายละเอียดเพิ่ม เช่น ติดชั้น2 คอนโด... น้ำระดับอก ซอย...">
 
       <label style="font-size:12px; font-weight:bold;">3. ช่องทางติดต่อ & จำนวนสมาชิก</label>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
@@ -1287,6 +1293,18 @@
         <input type="number" class="sos-input" id="sosAdult" placeholder="ผู้ใหญ่">
         <input type="number" class="sos-input" id="sosChild" placeholder="เด็ก">
         <input type="number" class="sos-input" id="sosElder" placeholder="ผู้สูงอายุ/ผู้ป่วย">
+      </div>
+
+      <!-- คำสั่งที่3: ฟังก์ชันใส่รูป 8 รูป หลักการเดียวกับ property-images -->
+      <div id="sosImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
+        <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span id="sosUploadStatusText" style="font-size:12px; font-weight:bold; color:#5c3a6b;">อัปโหลดรูปภาพ (0/8)</span>
+          <span style="font-size:10px; color:#888;">หลักการ: userid-postid-001.jpg</span>
+        </div>
+        <input type="file" id="sosFileInput" accept="image/*" multiple style="display:none;" onchange="handleSOSFilesSelected(event)">
+        <button class="upload-main-btn" style="width:100%; padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; cursor:pointer; font-weight:bold;" onclick="document.getElementById('sosFileInput').click()">📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)</button>
+        <div class="upload-grid" id="sosUploadGrid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:8px;"></div>
+        <div id="sosExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
 
       <button style="margin-top:12px; width:100%; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:15px; cursor:pointer;" onclick="submitSOS()">🚨 ส่งขอความช่วยเหลือทันที</button>
@@ -5315,6 +5333,309 @@
     setInterval(updateFloodCenterTime, 60000);
     // ===================== END FIX คำสั่งที่ 1 =====================
 
+
+
+    // ===================== SOS ENHANCED v6.6 - คำสั่ง 1,2,3 =====================
+    // หลักการตั้งชื่อรูปเดิม: property-images ใช้ ${userId}-${newPropertyId}-${001}.${ext}
+    // สำหรับ SOS ใช้ bucket 'flood-photos' โครงสร้างเดียวกัน: userid-postid-imagenumber
+    // 1 คน = 1 โพสต์ เช็คจาก user_id
+
+    window.sosUploadedFiles = window.sosUploadedFiles || [];
+    window.sosExistingImageUrls = window.sosExistingImageUrls || []; // url ที่เคยอัปโหลดแล้ว
+    window.currentSOSPostId = window.currentSOSPostId || null;
+    window.currentSOSUserId = window.currentSOSUserId || null;
+
+    function handleSOSFilesSelected(event){
+      const fileInput = document.getElementById('sosFileInput');
+      const files = fileInput && fileInput.files ? Array.from(fileInput.files) : (event.target.files ? Array.from(event.target.files) : []);
+      if(files.length===0) return;
+      if(!window.sosUploadedFiles) window.sosUploadedFiles=[];
+      let totalCount = (window.sosExistingImageUrls?.length||0) + window.sosUploadedFiles.length;
+      for(let file of files){
+        if(totalCount < 8){
+          window.sosUploadedFiles.push(file);
+          totalCount++;
+        }else{
+          alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ หากเกินต้องลบรูปเดิมออกก่อน");
+          break;
+        }
+      }
+      if(fileInput) fileInput.value='';
+      renderSOSUploadGrid();
+    }
+
+    function renderSOSUploadGrid(){
+      const grid = document.getElementById('sosUploadGrid');
+      const statusText = document.getElementById('sosUploadStatusText');
+      if(!grid) return;
+      if(!window.sosUploadedFiles) window.sosUploadedFiles=[];
+      if(!window.sosExistingImageUrls) window.sosExistingImageUrls=[];
+
+      const total = window.sosExistingImageUrls.length + window.sosUploadedFiles.length;
+      if(statusText) statusText.innerText = `อัปโหลดรูปภาพ (${total}/8)`;
+
+      grid.innerHTML='';
+
+      // แสดงรูปเก่าที่มีอยู่แล้ว (จากโพสต์เดิม)
+      window.sosExistingImageUrls.forEach((url, idx)=>{
+        const box = document.createElement('div');
+        box.className='upload-box has-image';
+        box.style.cssText='position:relative; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; aspect-ratio:1;';
+        box.innerHTML=`
+          <img src="${url}" style="width:100%; height:100%; object-fit:cover;">
+          <span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:white; font-size:9px; text-align:center; padding:2px;">เก่า ${idx+1}</span>
+          <button style="position:absolute; top:2px; right:2px; background:#ff3b30; color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;" onclick="deleteSOSExistingImage(${idx}); event.stopPropagation();">×</button>
+        `;
+        grid.appendChild(box);
+      });
+
+      // แสดงรูปใหม่ที่เพิ่งเลือก
+      window.sosUploadedFiles.forEach((file, index)=>{
+        const box = document.createElement('div');
+        box.className=`upload-box has-image`;
+        box.style.cssText='position:relative; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; aspect-ratio:1;';
+        const imgUrl = URL.createObjectURL(file);
+        box.innerHTML=`
+          <img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;">
+          ${window.sosExistingImageUrls.length===0 && index===0 ? '<span style="position:absolute; bottom:0; left:0; right:0; background:#4a83cc; color:white; font-size:9px; text-align:center; padding:2px;">ภาพปก</span>' : ''}
+          <button style="position:absolute; top:2px; right:2px; background:#ff3b30; color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:12px; cursor:pointer;" onclick="deleteSOSImage(${index}); event.stopPropagation();">×</button>
+        `;
+        grid.appendChild(box);
+      });
+
+      const remaining = 8 - total;
+      for(let i=0;i<remaining;i++){
+        const emptyBox=document.createElement('div');
+        emptyBox.style.cssText='border:1.5px dashed #cbd5e1; border-radius:8px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; cursor:pointer; background:#f8fafc;';
+        emptyBox.onclick=()=>{ const fi=document.getElementById('sosFileInput'); if(fi) fi.click(); };
+        emptyBox.innerHTML='<span style="font-size:20px; color:#94a3b8;">+</span>';
+        grid.appendChild(emptyBox);
+      }
+    }
+
+    function deleteSOSImage(index){
+      window.sosUploadedFiles.splice(index,1);
+      renderSOSUploadGrid();
+    }
+    function deleteSOSExistingImage(idx){
+      if(!confirm('ลบรูปเก่านี้ออก?')) return;
+      window.sosExistingImageUrls.splice(idx,1);
+      renderSOSUploadGrid();
+    }
+
+    async function checkAndLoadExistingSOS(){
+      try{
+        const userId = await getCurrentUserId();
+        if(!userId) return null;
+        window.currentSOSUserId = userId;
+        if(typeof supabaseClient==='undefined' || !supabaseClient) return null;
+        const {data, error} = await supabaseClient.from('flood_help_requests').select('*').eq('user_id', userId).order('created_at',{ascending:false}).limit(1);
+        if(error){ console.warn('check SOS error',error); return null; }
+        if(data && data.length>0){
+          return data[0];
+        }
+        return null;
+      }catch(e){ console.warn(e); return null; }
+    }
+
+    function fillSOSFormWithExisting(post){
+      if(!post) return;
+      window.currentSOSPostId = post.id || post.post_id;
+      const setVal=(id,val)=>{ const el=document.getElementById(id); if(el && val!==null && val!==undefined) el.value=val; };
+      setVal('sosLocationText', post.location_text||'');
+      setVal('sosLat', post.lat||'');
+      setVal('sosLng', post.lng||'');
+      setVal('sosPhone', post.contact_phone||'');
+      setVal('sosPeople', post.people_count||'');
+      setVal('medicineDetail', post.medicine_detail||'');
+      if(post.people_detail){
+        setVal('sosAdult', post.people_detail.adult||'');
+        setVal('sosChild', post.people_detail.child||'');
+        setVal('sosElder', post.people_detail.elder||'');
+      }
+      if(post.need_types && Array.isArray(post.need_types)){
+        selectedSOSTags = new Set(post.need_types);
+        document.querySelectorAll('.sos-tag-btn').forEach(btn=>{
+          if(post.need_types.includes(btn.dataset.val)) btn.classList.add('selected');
+          else btn.classList.remove('selected');
+        });
+        if(post.need_types.includes('medicine')) document.getElementById('medicineExtra').style.display='block';
+      }
+      window.sosExistingImageUrls = post.images && Array.isArray(post.images) ? post.images : (post.image_urls || []);
+      window.sosUploadedFiles=[];
+      renderSOSUploadGrid();
+      // เปลี่ยนปุ่มเป็นแก้ไข
+      const btn = document.querySelector('#sosDropdownModal button[onclick="submitSOS()"]');
+      if(btn) btn.innerText = '✏️ แก้ไขขอความช่วยเหลือ';
+    }
+
+    // Override openSOSModal to include check existing + scroll reset + clear
+    const _origOpenSOSModal = window.openSOSModal;
+    window.openSOSModal = async function(){
+      const overlay = document.getElementById('sosModalOverlay');
+      const modal = document.getElementById('sosDropdownModal') || document.querySelector('#sosModalOverlay .dropdown-modal');
+      if(overlay) overlay.classList.add('active');
+      if(modal){
+        modal.scrollTop=0;
+        // คำสั่งที่2: ทำให้เลื่อนได้
+        modal.style.overflowY='auto';
+      }
+      // ตรวจสอบว่าเคยลงโพสต์ SOS แล้วหรือไม่
+      try{
+        const existing = await checkAndLoadExistingSOS();
+        if(existing){
+          if(confirm('พบว่าคุณเคยแจ้งขอความช่วยเหลือแล้ว\nต้องการโหลดข้อมูลเดิมมาแก้ไขหรือไม่?\n\nกด OK = แก้ไขของเดิม\nCancel = สร้างใหม่ (จะทับของเดิม)')){
+            fillSOSFormWithExisting(existing);
+          }else{
+            window.currentSOSPostId = existing.id;
+            window.sosExistingImageUrls = existing.images || [];
+            window.sosUploadedFiles=[];
+            renderSOSUploadGrid();
+          }
+        }else{
+          window.currentSOSPostId=null;
+          window.sosExistingImageUrls=[];
+          window.sosUploadedFiles=[];
+          renderSOSUploadGrid();
+        }
+      }catch(e){
+        window.sosUploadedFiles=[];
+        window.sosExistingImageUrls=[];
+        renderSOSUploadGrid();
+      }
+    };
+
+    window.closeSOSModal = function(){
+      document.getElementById('sosModalOverlay').classList.remove('active');
+      // ไม่เคลียร์ค่าเพื่อให้กลับมาแก้ไขได้ แต่รีเซ็ตปุ่ม
+      const btn = document.querySelector('#sosDropdownModal button[onclick="submitSOS()"]');
+      if(btn) btn.innerText = '🚨 ส่งขอความช่วยเหลือทันที';
+    };
+
+    // Override submitSOS - รวม logic รูปภาพ 8 รูป + 1 คน 1 โพสต์
+    window.submitSOS = async function(){
+      const phone = document.getElementById('sosPhone').value.trim();
+      const locText = document.getElementById('sosLocationText').value.trim();
+      const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
+      const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
+
+      if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
+      if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
+      if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+
+      let userId = null;
+      try{ userId = await getCurrentUserId(); if(!userId) userId = 1; }catch(e){ userId = 1; }
+
+      const payload = {
+        need_types: Array.from(selectedSOSTags),
+        location_text: locText,
+        lat: lat ? parseFloat(lat) : null,
+        lng: lng ? parseFloat(lng) : null,
+        contact_phone: phone,
+        people_count: document.getElementById('sosPeople').value ? parseInt(document.getElementById('sosPeople').value) : 1,
+        people_detail: {
+          adult: document.getElementById('sosAdult').value,
+          child: document.getElementById('sosChild').value,
+          elder: document.getElementById('sosElder').value
+        },
+        medicine_detail: document.getElementById('medicineDetail')?.value || '',
+        urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
+        status: 'waiting',
+        user_id: userId
+      };
+
+      try{
+        if(typeof supabaseClient==='undefined' || !supabaseClient) throw new Error('No supabaseClient');
+
+        // คำสั่งที่3: ตรวจสอบว่า user เคยลงแล้วหรือไม่ (1 คน 1 โพสต์)
+        let existingPost = null;
+        if(!window.currentSOSPostId){
+          const {data: chk} = await supabaseClient.from('flood_help_requests').select('id').eq('user_id', userId).limit(1);
+          if(chk && chk.length>0){
+            existingPost = chk[0];
+            window.currentSOSPostId = existingPost.id;
+          }
+        }
+
+        let postIdToUse = window.currentSOSPostId;
+        let isUpdate = !!postIdToUse;
+
+        if(isUpdate){
+          // อัปเดตข้อมูลหลักก่อน (ยังไม่รวมรูปใหม่)
+          const {error: updErr} = await supabaseClient.from('flood_help_requests').update(payload).eq('id', postIdToUse);
+          if(updErr) throw updErr;
+        }else{
+          // สร้างใหม่เพื่อรับ ID - ตามหลักการเดียวกับ property-images
+          const {data: newRow, error: insErr} = await supabaseClient.from('flood_help_requests').insert([payload]).select('id').single();
+          if(insErr) throw insErr;
+          postIdToUse = newRow.id;
+          window.currentSOSPostId = postIdToUse;
+        }
+
+        // อัปโหลดรูปภาพ 8 รูป ไปยัง bucket 'flood-photos'
+        // หลักการตั้งชื่อเดิม: user_id-property_id-001.ext  -> สำหรับ SOS: userId-postId-001.ext
+        let finalImageUrls = [...(window.sosExistingImageUrls||[])];
+        const newFiles = window.sosUploadedFiles||[];
+
+        // คำนวณเลขลำดับต่อจากรูปเก่า
+        let startIndex = finalImageUrls.length;
+
+        for(let i=0;i<newFiles.length;i++){
+          const file = newFiles[i];
+          const fileExt = file.name.split('.').pop();
+          const imageIndexStr = String(startIndex + i + 1).padStart(3,'0');
+          const fileName = `${userId}-${postIdToUse}-${imageIndexStr}.${fileExt}`;
+
+          const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+          if(uploadError){
+            console.error(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message);
+          }else{
+            const {data: publicUrlData} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
+            finalImageUrls.push(publicUrlData.publicUrl);
+          }
+        }
+
+        // จำกัด 8 รูป
+        if(finalImageUrls.length>8) finalImageUrls = finalImageUrls.slice(0,8);
+
+        // อัปเดตคอลัมน์ images
+        if(finalImageUrls.length>0){
+          const {error: imgUpdErr} = await supabaseClient.from('flood_help_requests').update({images: finalImageUrls}).eq('id', postIdToUse);
+          if(imgUpdErr) console.warn('อัปเดต images ไม่สำเร็จ', imgUpdErr);
+        }
+
+        alert(isUpdate ? '✅ แก้ไขคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันที' : '✅ ส่งคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันทีบนแผนที่');
+        window.sosUploadedFiles=[];
+        window.sosExistingImageUrls=[];
+        window.currentSOSPostId=null;
+        closeSOSModal();
+        selectedSOSTags.clear();
+        document.querySelectorAll('.sos-tag-btn.selected').forEach(b=>b.classList.remove('selected'));
+        if(typeof loadSOSRequests==='function') loadSOSRequests();
+
+      }catch(e){
+        console.warn('ใช้โหมด Demo เพราะ:', e);
+        // Demo fallback
+        const demoPayload = {...payload, id: window.currentSOSPostId || Date.now(), created_at: new Date().toISOString(), images: []};
+        if(window.currentSOSPostId){
+          const idx = (window.sosRequestsCache||[]).findIndex(r=>r.id===window.currentSOSPostId);
+          if(idx>=0) window.sosRequestsCache[idx]=demoPayload;
+        }else{
+          if(!window.sosRequestsCache) window.sosRequestsCache=[];
+          window.sosRequestsCache.unshift(demoPayload);
+        }
+        renderSOSList(window.sosRequestsCache||[demoPayload]);
+        alert('✅ (Demo) ส่งคำขอเรียบร้อย - แสดงบนแผนที่ทันที');
+        closeSOSModal();
+        selectedSOSTags.clear();
+        document.querySelectorAll('.sos-tag-btn.selected').forEach(b=>b.classList.remove('selected'));
+      }
+    };
+    // ===================== END SOS ENHANCED v6.6 =====================
 
 </script>
 </body>
