@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2127,6 +2127,7 @@
             <button id="sosAcceptBtn" class="sos-consent-btn accept" onclick="acceptSOSHelp()">✅ กดยอมรับการช่วยเหลือครั้งนี้</button>
             <div id="sosCallArea" style="display:none;">
               <a id="sosCallLink" href="#" style="text-decoration:none;"><button class="sos-consent-btn call">📞 โทร <span id="sosFullPhone"></span></button></a>
+              <div id="sosCallArea2"></div>
               <div style="font-size:10px; color:#666; margin-top:4px; text-align:center;">เบอร์จะเห็นเฉพาะคู่ที่ยอมรับแล้วเท่านั้น</div>
             </div>
           </div>
@@ -2746,6 +2747,128 @@ function tryLIFFLoginAgain(){
     
     
         
+
+    // ===== v9.4 - Mission Complete 2-way =====
+    async function loadSOSCompleteState(roomId){
+      const bar = document.getElementById('sosConsentBar');
+      if(!bar) return;
+      try{
+        const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', roomId).maybeSingle();
+        if(!room || (!room.sos_request_id && room.request_type!=='sos')) return;
+        const completeAreaId = 'sosCompleteArea';
+        let completeArea = document.getElementById(completeAreaId);
+        if(!completeArea){
+          completeArea = document.createElement('div');
+          completeArea.id = completeAreaId;
+          completeArea.style.marginTop = '10px';
+          completeArea.style.paddingTop = '10px';
+          completeArea.style.borderTop = '1px dashed #fdba74';
+          document.getElementById('sosConsentBar').appendChild(completeArea);
+        }
+
+        const buyerComp = !!room.buyer_completed;
+        const sellerComp = !!room.seller_completed;
+        const bothComp = buyerComp && sellerComp;
+        const bothAccepted = !!room.buyer_accepted && !!room.seller_accepted;
+
+        if(!bothAccepted){
+          completeArea.style.display='none';
+          return;
+        }
+
+        if(bothComp){
+          completeArea.innerHTML = `
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px; text-align:center;">
+              <div style="font-size:20px;">🏁</div>
+              <div style="font-weight:800; color:#166534;">ภารกิจสำเร็จแล้ว!</div>
+              <div style="font-size:11px; color:#555;">ขอบคุณทั้ง 2 ฝ่ายที่ช่วยเหลือกัน</div>
+              <div style="font-size:10px; margin-top:4px;">✅ ผู้ช่วย: ${buyerComp?'ยืนยันแล้ว':'-'} | ✅ ผู้ขอ: ${sellerComp?'ยืนยันแล้ว':''}</div>
+            </div>
+          `;
+          completeArea.style.display='block';
+          return;
+        }
+
+        const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
+        const iHaveCompleted = isBuyer ? buyerComp : sellerComp;
+
+        completeArea.style.display='block';
+        completeArea.innerHTML = `
+          <div style="font-weight:700; font-size:12px; color:#9a3412; margin-bottom:4px;">🏁 เสร็จภารกิจหรือยัง?</div>
+          <div style="font-size:11px; color:#666; margin-bottom:6px;">
+            ${buyerComp?'✅':'⏳'} ผู้ช่วย: ${buyerComp?'ยืนยันเสร็จแล้ว':'ยังไม่ยืนยัน'}<br>
+            ${sellerComp?'✅':'⏳'} ผู้ขอ: ${sellerComp?'ยืนยันเสร็จแล้ว':'ยังไม่ยืนยัน'}
+          </div>
+          ${!iHaveCompleted ? `<button class="sos-consent-btn" style="background:linear-gradient(135deg, #0f172a 0%, #334155 100%); color:white;" onclick="completeSOSMission()">🏁 กดยืนยันว่าช่วยเหลือสำเร็จแล้ว</button>` : `<div style="font-size:11px; background:white; padding:6px; border-radius:6px; text-align:center;">คุณยืนยันแล้ว รออีกฝ่ายยืนยัน...</div>`}
+        `;
+      }catch(e){ console.error('loadSOSCompleteState', e); }
+    }
+
+    async function completeSOSMission(){
+      if(!CURRENT_ROOM_ID) return;
+      if(!confirm('ยืนยันว่าภารกิจนี้ช่วยเหลือเสร็จสิ้นแล้วใช่ไหม?\n\nเมื่อทั้ง 2 ฝ่ายกดยืนยัน หมุดจะเปลี่ยนเป็นสีเทาและเคสจะปิด')) return;
+      try{
+        const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
+        if(!room) return;
+        const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
+        const upd = isBuyer ? {buyer_completed:true} : {seller_completed:true};
+        await supabaseClient.from('chat_rooms').update(upd).eq('room_id', CURRENT_ROOM_ID);
+
+        const { data: updatedRoom } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
+        const bothDone = updatedRoom && updatedRoom.buyer_completed && updatedRoom.seller_completed;
+
+        await supabaseClient.from('chat_messages').insert([{
+          room_id: CURRENT_ROOM_ID,
+          sender_id: CURRENT_USER_ID,
+          content: `${isBuyer?'ผู้เข้าไปช่วย':'ผู้ขอความช่วยเหลือ'} ยืนยันว่าภารกิจสำเร็จแล้ว 🏁 ${bothDone ? '(ครบ 2 ฝ่าย ปิดเคส)' : '(รออีกฝ่ายยืนยัน)'}`
+        }]);
+
+        if(bothDone){
+          const sosId = room.sos_request_id || room.property_id;
+          try{
+            await supabaseClient.from('flood_help_requests').update({status:'completed'}).eq('id', sosId);
+          }catch(e){}
+        }
+
+        await loadSOSCompleteState(CURRENT_ROOM_ID);
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        await loadUserChatRooms();
+        if(typeof loadSOSRequests==='function') loadSOSRequests();
+        if(typeof updateSOSMapMarkers==='function'){
+          const cache = window.sosRequestsCache || [];
+          updateSOSMapMarkers(cache);
+        }
+
+        if(bothDone){
+          alert('🎉 ภารกิจสำเร็จครบ 2 ฝ่าย! ขอบคุณมากครับ เคสนี้จะถูกปิด');
+        }
+
+      }catch(e){ console.error(e); alert('ยืนยันไม่สำเร็จ: '+e.message); }
+    }
+
+    // ปุ่มใน List - เรียกจากนอกห้องแชท
+    async function completeSOSFromList(sosId, event){
+      if(event){ event.stopPropagation(); }
+      if(!confirm('ยืนยันว่าช่วยเคสนี้เสร็จแล้วใช่ไหม? (ต้องให้อีกฝ่ายกดยืนยันด้วยในแชท)')) return;
+      try{
+        let myId = await getCurrentUserId();
+        myId = await ensureUserExists(myId);
+        const { data: rooms } = await supabaseClient.from('chat_rooms').select('*').or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`).or(`buyer_id.eq.${myId},seller_id.eq.${myId}`).limit(5);
+        let target = null;
+        if(rooms && rooms.length>0){
+          target = rooms.find(r => String(r.sos_request_id)===String(sosId) || String(r.property_id)===String(sosId)) || rooms[0];
+        }
+        if(!target){
+          alert('ยังไม่มีห้องแชทสำหรับเคสนี้ กรุณากด ติดต่อ ก่อนแล้วค่อยกดเสร็จสิ้นในห้องแชท');
+          return;
+        }
+        CURRENT_ROOM_ID = target.room_id;
+        CURRENT_USER_ID = myId;
+        await completeSOSMission();
+      }catch(e){ console.error(e); alert('ทำไม่สำเร็จ'); }
+    }
+    // ===== END v9.4 =====
+
     // ===== v9.2 SOS CHAT SYSTEM - FIX item is not defined + Mutual Consent =====
     let CURRENT_SOS_DATA = null;
 
@@ -2830,6 +2953,7 @@ function tryLIFFLoginAgain(){
         await loadUserChatRooms();
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         await loadSOSConsentState(CURRENT_ROOM_ID);
+        await loadSOSCompleteState(CURRENT_ROOM_ID);
         if(typeof initRealtimeForRoom==='function') initRealtimeForRoom(CURRENT_ROOM_ID);
 
         // ส่งข้อความอัตโนมัติถ้าห้องว่าง
@@ -2879,12 +3003,51 @@ function tryLIFFLoginAgain(){
 
         if(both){
           callArea.style.display='block';
-          const phone = sos?.contact_phone || '';
-          document.getElementById('sosFullPhone').innerText = phone;
-          document.getElementById('sosCallLink').href = 'tel:'+phone;
+          const requesterPhone = sos?.contact_phone || '';
+          let helperPhone = sos?.helper_phone || '';
+          // ถ้า helper_phone ยังไม่มี ลองดึงจาก users
+          if(!helperPhone){
+            try{
+              const helperId = room.buyer_id;
+              const { data: helperUser } = await supabaseClient.from('users').select('phone_number, username').eq('user_id', helperId).maybeSingle();
+              helperPhone = helperUser?.phone_number || '';
+              // cache ไว้
+              CURRENT_SOS_DATA.helperUser = helperUser;
+            }catch(e){}
+          }
+
+          const fullPhoneEl = document.getElementById('sosFullPhone');
+          const callLink = document.getElementById('sosCallLink');
+          const extraAreaId = 'sosCallArea2';
+          let extraArea = document.getElementById(extraAreaId);
+          if(!extraArea){
+            extraArea = document.createElement('div');
+            extraArea.id = extraAreaId;
+            extraArea.style.marginTop = '8px';
+            callArea.parentNode.insertBefore(extraArea, callArea.nextSibling);
+          }
+
+          if(isBuyer){
+            // ผมคือคนช่วย -> โชว์เบอร์คนขอ
+            document.getElementById('sosConsentText').innerHTML = '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว<br>คุณคือ <b>ผู้เข้าไปช่วย</b>';
+            fullPhoneEl.innerText = requesterPhone + ' (ผู้ขอ)';
+            callLink.href = 'tel:'+requesterPhone;
+            callLink.innerHTML = `<button class="sos-consent-btn call">📞 โทรหาผู้ขอความช่วยเหลือ<br><span style="font-size:13px">${requesterPhone}</span></button>`;
+            extraArea.innerHTML = `<div style="font-size:10px; color:#666; text-align:center; padding:4px; background:white; border-radius:6px;">เบอร์ของคุณ (${helperPhone}) จะถูกแชร์ให้ผู้ขอเห็นแล้ว</div>`;
+          }else{
+            // ผมคือคนขอ -> โชว์เบอร์คนช่วย
+            document.getElementById('sosConsentText').innerHTML = '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว<br>คุณคือ <b>ผู้ขอความช่วยเหลือ</b>';
+            fullPhoneEl.innerText = helperPhone + ' (ผู้ช่วย)';
+            callLink.href = 'tel:'+helperPhone;
+            callLink.innerHTML = `<button class="sos-consent-btn call" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%)">📞 โทรหาผู้ช่วยเหลือ<br><span style="font-size:13px">${helperPhone||'กำลังโหลด...'}</span></button>`;
+            extraArea.innerHTML = `<div style="margin-top:6px;"><a href="tel:${requesterPhone}" style="text-decoration:none;"><button class="sos-consent-btn call" style="background:#f3f4f6; color:#333; border:1px solid #ddd;">📋 เบอร์ของคุณ (ที่ให้ไว้): ${requesterPhone}</button></a></div>`;
+          }
+
           try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', sosId); }catch(e){}
         }else{
           callArea.style.display='none';
+          const extraArea = document.getElementById('sosCallArea2');
+          if(extraArea) extraArea.innerHTML='';
         }
       }catch(e){ console.error(e); }
     }
@@ -2895,10 +3058,34 @@ function tryLIFFLoginAgain(){
         const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
         if(!room) return;
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
+        const sosId = room.sos_request_id || room.property_id;
+
+        // === 2-WAY: ถ้าเป็นคนช่วย ให้ขอเบอร์ก่อน ===
+        if(isBuyer){
+          let helperPhone = null;
+          try{
+            const { data: me } = await supabaseClient.from('users').select('phone_number').eq('user_id', CURRENT_USER_ID).maybeSingle();
+            helperPhone = me?.phone_number;
+          }catch(e){}
+          if(!helperPhone || helperPhone.length < 9){
+            helperPhone = prompt('📱 กรุณาใส่เบอร์โทรของคุณ\nเพื่อให้ผู้ขอความช่วยเหลือโทรหาคุณได้ (จำเป็นสำหรับการช่วยเหลือ 2-way)');
+            if(!helperPhone){ alert('ต้องใส่เบอร์โทรเพื่อยืนยันการช่วยเหลือครับ'); return; }
+            helperPhone = helperPhone.replace(/[^0-9]/g,'');
+            try{
+              await supabaseClient.from('users').update({phone_number: helperPhone}).eq('user_id', CURRENT_USER_ID);
+            }catch(e){ console.warn('update users phone failed', e); }
+          }
+          // บันทึกเบอร์ผู้ช่วยลงในเคส
+          try{
+            await supabaseClient.from('flood_help_requests').update({helper_phone: helperPhone, helper_id: CURRENT_USER_ID}).eq('id', sosId);
+          }catch(e){ console.warn('update helper_phone failed', e); }
+        }
+
         const upd = isBuyer ? {buyer_accepted:true} : {seller_accepted:true};
         await supabaseClient.from('chat_rooms').update(upd).eq('room_id', CURRENT_ROOM_ID);
         await supabaseClient.from('chat_messages').insert([{ room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: `${isBuyer?'ผู้เข้าไปช่วย':'ผู้ขอความช่วยเหลือ'} กดยอมรับการช่วยเหลือแล้ว ✅` }]);
         await loadSOSConsentState(CURRENT_ROOM_ID);
+        await loadSOSCompleteState(CURRENT_ROOM_ID);
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         await loadUserChatRooms();
       }catch(e){ alert('ยอมรับไม่สำเร็จ'); console.error(e); }
@@ -3083,7 +3270,7 @@ function tryLIFFLoginAgain(){
       await markMessagesAsRead(roomId);
       await loadChatHistoryForRoom(roomId);
       CURRENT_ROOM_ID = roomId;
-      try{ await loadSOSConsentState(roomId); }catch(e){}
+      try{ await loadSOSConsentState(roomId); await loadSOSCompleteState(roomId); }catch(e){}
 
       CURRENT_ROOM_ID = roomId;
       await loadSOSConsentState(roomId);
@@ -5814,6 +6001,8 @@ function tryLIFFLoginAgain(){
           <div style="display:flex; flex-direction:column; gap:6px;">
             <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
             <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="openSOSChatById('${item.id}', event)">💬 ติดต่อ</button>
+            ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:10px; padding:6px 10px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="completeSOSFromList('${item.id}', event)">🏁 เสร็จแล้ว</button>` : ''}
+            ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:4px 8px; border-radius:8px; font-size:10px; text-align:center;">✅ เสร็จสิ้นแล้ว</span>` : ''}
           </div>
         </div>`;
       }).join('');
