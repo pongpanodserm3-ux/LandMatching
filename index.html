@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.7.
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2745,61 +2745,148 @@ function tryLIFFLoginAgain(){
     // ---------------------------------------------------------
     
     
-    // === v9.1 Mutual Consent Logic ===
+        
+    // ===== v9.2 SOS CHAT SYSTEM - FIX item is not defined + Mutual Consent =====
     let CURRENT_SOS_DATA = null;
+
+    async function openSOSChatById(sosId, event){
+      if(event){ event.stopPropagation(); event.preventDefault(); }
+      const cache = window.sosRequestsCache || [];
+      let sosItem = cache.find(x => String(x.id) === String(sosId));
+      if(!sosItem){
+        try{
+          const { data } = await supabaseClient.from('flood_help_requests').select('*').eq('id', sosId).maybeSingle();
+          if(data) sosItem = data;
+        }catch(e){}
+      }
+      if(!sosItem){ alert('ไม่พบข้อมูลเคสนี้ (id:'+sosId+')'); return; }
+      return openSOSChat(sosItem, event);
+    }
+
+    async function openSOSChat(sosItem, event){
+      if(event){ event.stopPropagation(); }
+      if(typeof stopAIVoiceSpeech==='function') stopAIVoiceSpeech();
+      try{
+        let buyerId = await getCurrentUserId();
+        buyerId = await ensureUserExists(buyerId);
+        let rawSeller = sosItem.user_id || sosItem.helper_id || 1;
+        let sellerId = await ensureUserExists(rawSeller);
+
+        if(String(buyerId)===String(sellerId)){
+          alert('นี่คือเคสของคุณเอง ไม่สามารถแชทกับตัวเองได้');
+          return;
+        }
+
+        const sosId = sosItem.id;
+        let targetRoomId = null;
+
+        // ค้นหาห้องเดิม - sos_request_id ใน DB คุณเป็น bigint แต่ flood_help_requests.id เป็น uuid
+        // เลยต้องค้นหาด้วย property_id ด้วยเพื่อรองรับ uuid (เก็บเป็น text ในบางเคส)
+        const { data: existingRooms } = await supabaseClient
+          .from('chat_rooms')
+          .select('*')
+          .or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`)
+          .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
+          .limit(1);
+
+        // ถ้าไม่เจอด้วย query ซับซ้อน ลองหาแบบง่าย
+        let roomFound = null;
+        if(existingRooms && existingRooms.length>0){
+          roomFound = existingRooms[0];
+        } else {
+          const { data: allRooms } = await supabaseClient.from('chat_rooms').select('*').or(`buyer_id.eq.${buyerId},seller_id.eq.${buyerId}`).limit(50);
+          if(allRooms){
+            roomFound = allRooms.find(r => String(r.sos_request_id)===String(sosId) || String(r.property_id)===String(sosId));
+          }
+        }
+
+        if(roomFound){
+          targetRoomId = roomFound.room_id;
+        }else{
+          const { data: maxRoom } = await supabaseClient.from('chat_rooms').select('room_id').order('room_id',{ascending:false}).limit(1);
+          let nextId = (maxRoom && maxRoom[0] && maxRoom[0].room_id) ? parseInt(maxRoom[0].room_id)+1 : 101;
+          const { data: inserted, error } = await supabaseClient.from('chat_rooms').insert([{
+            room_id: nextId,
+            buyer_id: buyerId,
+            seller_id: sellerId,
+            sos_request_id: sosId,
+            property_id: typeof sosId==='string' && sosId.length>20 ? null : sosId,
+            request_type: 'sos',
+            buyer_accepted: false,
+            seller_accepted: false
+          }]).select();
+          if(error){ console.error(error); targetRoomId = nextId; }
+          else{ targetRoomId = inserted[0].room_id; }
+        }
+
+        CURRENT_ROOM_ID = targetRoomId;
+        CURRENT_USER_ID = buyerId;
+        const needLabel = (sosItem.need_types||[]).map(t=>({evacuate:'🚗 อพยพ', food:'🍞 อาหาร', medicine:'💊 ยา', clothes:'👕 ของใช้', power:'⚡ ช่าง', shelter:'🏠 ที่พัก'}[t]||t)).join(', ');
+        const titleEl = document.getElementById('chatActiveTitle');
+        if(titleEl) titleEl.innerText = `💬 ${needLabel} - ${sosItem.location_text||''}`;
+
+        document.getElementById('userChatModalOverlay').classList.add('active');
+        if(typeof expandChatZone==='function') expandChatZone('room');
+        await loadUserChatRooms();
+        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
+        await loadSOSConsentState(CURRENT_ROOM_ID);
+        if(typeof initRealtimeForRoom==='function') initRealtimeForRoom(CURRENT_ROOM_ID);
+
+        // ส่งข้อความอัตโนมัติถ้าห้องว่าง
+        const { data: msgs } = await supabaseClient.from('chat_messages').select('message_id').eq('room_id', targetRoomId).limit(1);
+        if(!msgs || msgs.length===0){
+          await supabaseClient.from('chat_messages').insert([{ room_id: targetRoomId, sender_id: buyerId, content: `สวัสดีครับ ผมเห็นเคส ${needLabel} ที่ ${sosItem.location_text||''} ขอเข้าไปช่วยเหลือครับ` }]);
+          await loadChatHistoryForRoom(targetRoomId);
+        }
+
+      }catch(err){
+        console.error('openSOSChat error', err);
+        alert('เปิดแชทไม่สำเร็จ: '+err.message);
+      }
+    }
 
     async function loadSOSConsentState(roomId){
       const bar = document.getElementById('sosConsentBar');
       if(!bar) return;
       try{
         const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', roomId).maybeSingle();
-        if(!room || !room.sos_request_id){ bar.style.display='none'; return; }
+        if(!room || (!room.sos_request_id && room.request_type!=='sos')){ bar.style.display='none'; return; }
         bar.style.display='block';
-
-        const { data: sos } = await supabaseClient.from('flood_help_requests').select('*').eq('id', room.sos_request_id).maybeSingle();
+        const sosId = room.sos_request_id || room.property_id;
+        const { data: sos } = await supabaseClient.from('flood_help_requests').select('*').eq('id', sosId).maybeSingle();
         CURRENT_SOS_DATA = sos;
 
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
-        const buyerAccepted = !!room.buyer_accepted;
-        const sellerAccepted = !!room.seller_accepted;
-        const bothAccepted = buyerAccepted && sellerAccepted;
+        const buyerAcc = !!room.buyer_accepted;
+        const sellerAcc = !!room.seller_accepted;
+        const both = buyerAcc && sellerAcc;
 
-        const checksEl = document.getElementById('sosConsentChecks');
-        const acceptBtn = document.getElementById('sosAcceptBtn');
-        const callArea = document.getElementById('sosCallArea');
-        const textEl = document.getElementById('sosConsentText');
-        const fullPhoneEl = document.getElementById('sosFullPhone');
-        const callLink = document.getElementById('sosCallLink');
-
-        checksEl.innerHTML = `
-          ${buyerAccepted ? '✅' : '⏳'} ผู้เข้าไปช่วย: ${buyerAccepted ? 'ยอมรับแล้ว' : 'รอการกดยอมรับ'}<br>
-          ${sellerAccepted ? '✅' : '⏳'} ผู้ขอความช่วยเหลือ: ${sellerAccepted ? 'ยอมรับแล้ว' : 'รอการกดยอมรับ'}
+        document.getElementById('sosConsentChecks').innerHTML = `
+          ${buyerAcc?'✅':'⏳'} ผู้เข้าไปช่วย: ${buyerAcc?'ยอมรับแล้ว':'รอรับ'}<br>
+          ${sellerAcc?'✅':'⏳'} ผู้ขอความช่วยเหลือ: ${sellerAcc?'ยอมรับแล้ว':'รอรับ'}
         `;
+        const btn = document.getElementById('sosAcceptBtn');
+        const callArea = document.getElementById('sosCallArea');
+        const txt = document.getElementById('sosConsentText');
 
-        // ซ่อนปุ่มยอมรับถ้าฝั่งตัวเองกดแล้ว
-        if( (isBuyer && buyerAccepted) || (!isBuyer && sellerAccepted) ){
-          acceptBtn.style.display='none';
-          textEl.innerText = bothAccepted ? '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว - สามารถโทรหากันได้เลย' : 'รออีกฝ่ายกดยอมรับ...';
+        if( (isBuyer && buyerAcc) || (!isBuyer && sellerAcc) ){
+          btn.style.display='none';
+          txt.innerText = both ? '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว - โทรหากันได้เลย' : 'คุณยอมรับแล้ว รออีกฝ่ายกดยอมรับ';
         }else{
-          acceptBtn.style.display='block';
-          textEl.innerText = 'กดยอมรับเพื่อยืนยันว่าคุณตกลงช่วยเหลือ/รับการช่วยเหลือครั้งนี้';
+          btn.style.display='block';
+          txt.innerText = 'กดยอมรับเพื่อยืนยันการช่วยเหลือครั้งนี้';
         }
 
-        if(bothAccepted){
+        if(both){
           callArea.style.display='block';
-          if(sos && sos.contact_phone){
-            fullPhoneEl.innerText = sos.contact_phone;
-            callLink.href = 'tel:' + sos.contact_phone;
-          }
-          // อัปเดตสถานะหลัก
-          try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', room.sos_request_id); }catch(e){}
+          const phone = sos?.contact_phone || '';
+          document.getElementById('sosFullPhone').innerText = phone;
+          document.getElementById('sosCallLink').href = 'tel:'+phone;
+          try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', sosId); }catch(e){}
         }else{
           callArea.style.display='none';
         }
-
-      }catch(e){
-        console.error('loadSOSConsentState error', e);
-      }
+      }catch(e){ console.error(e); }
     }
 
     async function acceptSOSHelp(){
@@ -2808,105 +2895,15 @@ function tryLIFFLoginAgain(){
         const { data: room } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
         if(!room) return;
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
-        const updateField = isBuyer ? {buyer_accepted:true} : {seller_accepted:true};
-        await supabaseClient.from('chat_rooms').update(updateField).eq('room_id', CURRENT_ROOM_ID);
-
-        // ส่งข้อความระบบเข้าแชท
-        await supabaseClient.from('chat_messages').insert([{
-          room_id: CURRENT_ROOM_ID,
-          sender_id: 0,
-          message_text: `${isBuyer ? 'ผู้เข้าไปช่วย' : 'ผู้ขอความช่วยเหลือ'} กดยอมรับการช่วยเหลือแล้ว ${!isBuyer ? '(รอผู้ช่วยกดยอมรับอีก 1 คน)' : ''}`
-        }]);
-
+        const upd = isBuyer ? {buyer_accepted:true} : {seller_accepted:true};
+        await supabaseClient.from('chat_rooms').update(upd).eq('room_id', CURRENT_ROOM_ID);
+        await supabaseClient.from('chat_messages').insert([{ room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: `${isBuyer?'ผู้เข้าไปช่วย':'ผู้ขอความช่วยเหลือ'} กดยอมรับการช่วยเหลือแล้ว ✅` }]);
         await loadSOSConsentState(CURRENT_ROOM_ID);
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        if(typeof loadUserChatRooms==='function') await loadUserChatRooms();
-      }catch(e){
-        console.error('acceptSOSHelp error', e);
-        alert('กดยอมรับไม่สำเร็จ ลองใหม่ครับ');
-      }
-    }
-
-    // Hook เข้ากับ joinChatRoom และ loadChatHistory เดิม
-    const _origJoinChatRoom = typeof joinChatRoom !== 'undefined' ? joinChatRoom : null;
-    const _origLoadChatHistory = typeof loadChatHistoryForRoom !== 'undefined' ? loadChatHistoryForRoom : null;
-
-    // === v9.0 SOS Chat Patch - Reuse chat_rooms for flood_help_requests ===
-    async function openSOSChat(sosItem, event){
-      if(event) event.stopPropagation();
-      if(typeof stopAIVoiceSpeech === 'function') stopAIVoiceSpeech();
-      try{
-        let buyerId = await getCurrentUserId();
-        buyerId = await ensureUserExists(buyerId);
-        let sellerId = sosItem.user_id || sosItem.line_id || 1;
-        sellerId = await ensureUserExists(sellerId);
-
-        const sosId = sosItem.id;
-        let targetRoomId = null;
-
-        // หาห้องเดิมที่เคยคุยเรื่องเคสนี้
-        const { data: existingRooms } = await supabaseClient
-          .from('chat_rooms')
-          .select('*')
-          .eq('sos_request_id', sosId)
-          .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
-          .limit(1);
-
-        if(existingRooms && existingRooms.length>0){
-          targetRoomId = existingRooms[0].room_id || existingRooms[0].id;
-        }else{
-          const { data: maxRoomData } = await supabaseClient.from('chat_rooms').select('room_id').order('room_id',{ascending:false}).limit(1);
-          let nextRoomId = 101;
-          if(maxRoomData && maxRoomData.length>0 && maxRoomData[0].room_id){
-            const parsed = parseInt(maxRoomData[0].room_id,10);
-            if(!isNaN(parsed)) nextRoomId = parsed+1;
-          }
-          const { data: insertedRoom, error: insertErr } = await supabaseClient.from('chat_rooms').insert([{
-            room_id: nextRoomId,
-            buyer_id: buyerId,
-            seller_id: sellerId,
-            sos_request_id: sosId,
-            request_type: 'sos',
-            property_id: sosId
-          }]).select();
-          if(insertErr){
-            console.error('Insert SOS Chat Room Error', insertErr);
-            targetRoomId = nextRoomId;
-          }else{
-            targetRoomId = insertedRoom && insertedRoom[0] ? (insertedRoom[0].room_id || insertedRoom[0].id) : nextRoomId;
-          }
-          // อัปเดตสถานะว่าเคสนี้มีคนรับแล้ว
-          try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', sosId); }catch(e){}
-        }
-
-        CURRENT_ROOM_ID = targetRoomId;
-        CURRENT_USER_ID = buyerId;
-        const needLabel = (sosItem.need_types||[]).join(',') || 'ขอความช่วยเหลือ';
-        const titleEl = document.getElementById('chatActiveTitle');
-        if(titleEl) titleEl.innerText = `💬 ${needLabel} - ${sosItem.location_text||''}`;
-        const floatBtn = document.querySelector('.user-chat-float-btn');
-        if(floatBtn) floatBtn.classList.remove('has-new-msg');
-        document.getElementById('userChatModalOverlay').classList.add('active');
-        if(typeof expandChatZone==='function') expandChatZone('room');
         await loadUserChatRooms();
-        await loadChatHistoryForRoom(CURRENT_ROOM_ID);
-        await loadSOSConsentState(CURRENT_ROOM_ID);
-        if(typeof initRealtimeForRoom==='function') initRealtimeForRoom(CURRENT_ROOM_ID);
-
-        // ส่งข้อความอัตโนมัติครั้งแรกเพื่อให้รู้ว่ามาจากเคสไหน
-        const autoMsg = `สวัสดีครับ ผมเห็นเคส ${needLabel} ที่ ${sosItem.location_text||''} อยากเข้าไปช่วยเหลือครับ`;
-        // ถ้าไม่มีข้อความเลย ให้ส่ง autoMsg
-        const { data: msgs } = await supabaseClient.from('chat_messages').select('message_id').eq('room_id', targetRoomId).limit(1);
-        if(!msgs || msgs.length===0){
-          await supabaseClient.from('chat_messages').insert([{ room_id: targetRoomId, sender_id: buyerId, message_text: autoMsg }]);
-          await loadChatHistoryForRoom(targetRoomId);
-        }
-
-      }catch(err){
-        console.error('openSOSChat error', err);
-        alert('เปิดแชทไม่สำเร็จ ลองใหม่นะครับ');
-      }
+      }catch(e){ alert('ยอมรับไม่สำเร็จ'); console.error(e); }
     }
+    // ===== END v9.2 =====
 
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
@@ -3085,6 +3082,9 @@ function tryLIFFLoginAgain(){
       expandChatZone('room');
       await markMessagesAsRead(roomId);
       await loadChatHistoryForRoom(roomId);
+      CURRENT_ROOM_ID = roomId;
+      try{ await loadSOSConsentState(roomId); }catch(e){}
+
       CURRENT_ROOM_ID = roomId;
       await loadSOSConsentState(roomId);
 
@@ -5807,13 +5807,13 @@ function tryLIFFLoginAgain(){
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
-            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${maskPhone(item.contact_phone)}</span> ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}</div>
+            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span> ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}</div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
           </div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
-            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="openSOSChat(item, event)">💬 ติดต่อ</button>
+            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="openSOSChatById('${item.id}', event)">💬 ติดต่อ</button>
           </div>
         </div>`;
       }).join('');
