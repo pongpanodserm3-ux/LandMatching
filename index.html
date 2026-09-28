@@ -1124,7 +1124,7 @@
     <div class="tab-content" id="tab-content-sos">
       <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
         <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 0 10px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); height: 32px; overflow:hidden; white-space: nowrap;">
-          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานวิกฤตน้ำท่วม กทม. • ประกาศฉุกเฉิน • อัปเดต 15:30 น. 27 ก.ย. 68 • พื้นที่เสี่ยง 12 จุด</div>
+          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานน้ำท่วม อัปเดต 15:30 น. 27 ก.ย. 68  </div>
           <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor:pointer; margin-left:6px; flex-shrink:0; white-space:nowrap; height:20px; line-height:1;">📍 ใกล้ฉัน</button>
         </div>
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -3625,7 +3625,7 @@
         if (recentCases.length<5) recentCases.push(`${loc} [${(r.need_types||[]).join(',')}] ${r.people_count||1}คน`);
       });
       const topAreas = Object.entries(areaMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}เคส)`).join(', ');
-      return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส , วิกฤต ${counts.critical}. แยกประเภท: อพยพ ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power} }`;
+      return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส , อพยพ เคลื่อนย้าย ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power} }`;
     }
 
     function generateFloodAnalysisAndAdvice(focusArea='all', adviseType='all') {
@@ -3762,7 +3762,7 @@
                             * หากผู้ใช้ต้องการหา ของแต่งบ้าน, อุปกรณ์ซ่อมบ้าน, หรือสินค้าทั่วไปอื่นๆ ➔ เลือก 'decor'
                             * หากผู้ใช้ต้องการหา ร้านอาหาร, ของกิน, คาเฟ่, ตลาด, ห้าง, 7-11, แหล่งชุมชน, แหล่งท่องเที่ยว, หรือโรงพยาบาล ➔ เลือก 'lifestyle'
                             * หากผู้ใช้ต้องการหา ช่างซ่อม, งานบริการต่างๆ ➔ เลือก 'others'
-                            * หากผู้ใช้พูดถึง น้ำท่วม, วิกฤตน้ำท่วม, SOS, ขอความช่วยเหลือน้ำท่วม, อพยพ, น้ำท่วมขัง, ระดับน้ำ, เรือ, ที่พักพิงน้ำท่วม, พื้นที่เสี่ยง ➔ เลือก 'sos' ทันที (แท็บวิกฤตน้ำท่วมสำคัญที่สุด)
+                            * หากผู้ใช้พูดถึง ฝนตก,เขื่อน, น้ำท่วม, วิกฤตน้ำท่วม, SOS, ขอความช่วยเหลือน้ำท่วม, อพยพ, น้ำท่วมขัง, ระดับน้ำ, เรือ, ที่พักพิงน้ำท่วม, พื้นที่เสี่ยง ➔ เลือก 'sos' ทันที (แท็บวิกฤตน้ำท่วมสำคัญที่สุด)
                         - **สำหรับแท็บ SOS วิกฤตน้ำท่วม (สำคัญเร่งด่วน):**
                             * เมื่อสลับมาแท็บ sos ให้เรียก 'get_flood_summary' เพื่อดึงสรุปสถานการณ์ปัจจุบันทันที
                             * หลังจากได้ข้อมูล ให้วิเคราะห์ด้วย 'analyze_flood_and_advise' เพื่อสรุป วิเคราะห์ ทำนาย และแนะนำประชาชน
@@ -3818,7 +3818,7 @@
                       },
                       {
                         name: "get_flood_summary",
-                        description: "ดึงสรุปสถานการณ์น้ำท่วมปัจจุบันจากฐานข้อมูล SOS ทั้งหมด จำนวนเคส ประเภทความต้องการ พื้นที่เสี่ยง เพื่อให้ AI สรุปให้ประชาชนฟัง",
+                        description: "ดึงสรุปสถานการณ์น้ำท่วมปัจจุบันจากฐานข้อมูล SOS ทั้งหมด จำนวนเคส ประเภทความต้องการ พื้นที่เสี่ยง เพื่อให้ AI สรุปให้ฟัง",
                         parameters: { type: "OBJECT", properties: {} }
                       },
                       {
@@ -3835,7 +3835,7 @@
                       },
                       {
                         name: "analyze_flood_and_advise",
-                        description: "วิเคราะห์สถานการณ์น้ำท่วมทั้งหมด สรุปปัญหา วิเคราะห์สาเหตุ ทำนายอนาคต 24-72 ชม. และแนะนำประชาชนว่าควรทำอย่างไร ควรอพยพหรือไม่ เตรียมอะไร ที่ไหนปลอดภัย - ฟังก์ชันหลักสำหรับ AI Voice ในแท็บน้ำท่วม",
+                        description: "วิเคราะห์สถานการณ์น้ำท่วม สรุปและทำนายอนาคต 24ชม. แนะนำสิ่งที่ควรทำ - ฟังก์ชันหลักสำหรับ AI Voice ในแท็บน้ำท่วม",
                         parameters: {
                           type: "OBJECT",
                           properties: {
