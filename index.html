@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.0
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2039,8 +2039,9 @@
       GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
       LIFF_ID: "2011006139-Wn6PhY6D"
     };
-    // กำหนดชุดคำสั่ง Prompt ประจำแต่ละแท็บทั้ง 4 หมวด
+    // กำหนดชุดคำสั่ง Prompt ประจำแต่ละแท็บ 5 หมวด (รวม SOS น้ำท่วม)
     const TAB_PROMPTS = {
+      sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI ผู้บัญชาการศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม หน้าที่: 1) สรุปสถานการณ์ปัจจุบันจากข้อมูล SOS ที่มี 2) วิเคราะห์พื้นที่เสี่ยงและความต้องการเร่งด่วน 3) ทำนายแนวโน้ม 24-72 ชม.ข้างหน้า 4) แนะนำประชาชนว่าควรทำอย่างไร อพยพที่ไหน เตรียมอะไร พูดด้วยน้ำเสียงกระชับ จริงจัง แต่ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ",
       decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านสินค้าทั่วไป ของแต่งบ้าน และอุปกรณ์ซ่อมแซมบ้าน ให้คำแนะนำและค้นหาสินค้าอย่างคุ้มค่า",
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
@@ -2704,7 +2705,12 @@
         if (AppState && AppState.pagination) { AppState.pagination.offset = 0; AppState.pagination.renderedKeys = new Set(); }
       }
       if (TAB_PROMPTS[tabId] && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
-        sendTextToAI(TAB_PROMPTS[tabId]);
+        if (tabId === 'sos') {
+          const floodCtx = buildFloodContextForAI();
+          sendTextToAI(`${TAB_PROMPTS[tabId]}. ข้อมูลปัจจุบัน: ${floodCtx}. ให้สรุปสถานการณ์และแนะนำประชาชนทันที`);
+        } else {
+          sendTextToAI(TAB_PROMPTS[tabId]);
+        }
       }
     }
 
@@ -3351,7 +3357,14 @@
     }
 
     function triggerInitialAIGreeting() {
-      const prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "9-4-13-AI landmatching ผู้ช่วยค้นหา บ้าน ซ่อมบ้าน หาช่าง ร้านอาหาร บอกได้เลย"`;
+      const curTab = AppState.voice.currentTab || 'sos';
+      let prompt = "";
+      if (curTab === 'sos') {
+        const floodCtx = (typeof buildFloodContextForAI === 'function') ? buildFloodContextForAI() : "กำลังโหลดข้อมูลน้ำท่วม";
+        prompt = `ตอนนี้อยู่ที่แท็บวิกฤตน้ำท่วม ให้พูดทักทายว่า "สวัสดีครับ ผม AI ศูนย์ช่วยเหลือน้ำท่วม ${floodCtx} มีอะไรให้ช่วยวิเคราะห์หรือต้องการขอความช่วยเหลือไหมครับ" แล้วรอฟัง`;
+      } else {
+        prompt = `เมื่อผู้ใช้เปิดหน้าปักหมุดพิกัดแล้ว ให้พูดสั้นๆทันทีว่า: "9-4-13-AI landmatching ผู้ช่วยค้นหา บ้าน ซ่อมบ้าน หาช่าง ร้านอาหาร บอกได้เลย"`;
+      }
       sendTextToAI(prompt);
     }
 
@@ -3594,6 +3607,58 @@
       testShowList();
     }
 
+
+    // ===================== SOS AI VOICE HELPER FUNCTIONS - v6 FLOOD EDITION =====================
+    function buildFloodContextForAI() {
+      const cache = window.sosRequestsCache || sosRequestsCache || [];
+      if (cache.length === 0) return "ขณะนี้ยังไม่มีข้อมูล SOS ในระบบ หรือกำลังโหลดข้อมูล";
+      const counts = {all:cache.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0, critical:0, waiting:0, going:0};
+      const areaMap = {};
+      const recentCases = [];
+      cache.forEach(r => {
+        (r.need_types||[]).forEach(t => { if (counts[t]!==undefined) counts[t]++; });
+        if (r.urgency==='critical') counts.critical++;
+        if (r.status==='waiting') counts.waiting++;
+        if (r.status==='going') counts.going++;
+        const loc = (r.location_text||'ไม่ระบุ').substring(0,30);
+        areaMap[loc] = (areaMap[loc]||0)+1;
+        if (recentCases.length<5) recentCases.push(`${loc} [${(r.need_types||[]).join(',')}] ${r.people_count||1}คน`);
+      });
+      const topAreas = Object.entries(areaMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}เคส)`).join(', ');
+      return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส, รอช่วยเหลือ ${counts.waiting}, กำลังไปช่วย ${counts.going}, วิกฤต ${counts.critical}. แยกประเภท: อพยพ ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power}, ที่พัก ${counts.shelter}. พื้นที่หนาแน่น: ${topAreas||'-'}. เคสล่าสุด: ${recentCases.join(' | ')}`;
+    }
+
+    function generateFloodAnalysisAndAdvice(focusArea='all', adviseType='all') {
+      const cache = window.sosRequestsCache || sosRequestsCache || [];
+      const context = buildFloodContextForAI();
+      // วิเคราะห์แนวโน้ม
+      const criticalCount = cache.filter(r=>r.urgency==='critical' || (r.need_types||[]).includes('evacuate')).length;
+      const foodMedCount = cache.filter(r=>(r.need_types||[]).some(t=>['food','medicine'].includes(t))).length;
+      let prediction = "";
+      let advice = "";
+      if (criticalCount > 5) {
+        prediction = "แนวโน้ม 24 ชม.ข้างหน้ายังวิกฤต ระดับน้ำมีโอกาสเพิ่ม หากฝนตกต่อเนื่อง พื้นที่ลุ่มต่ำริมคลองเสี่ยงสูง";
+        advice = "แนะนำ: 1) ย้ายผู้สูงอายุ เด็ก ผู้ป่วยขึ้นที่สูงทันที 2) เตรียมกระเป๋าฉุกเฉิน ยา เอกสารสำคัญ 3) ตัดไฟชั้นล่าง 4) ติดตามประกาศ กทม. ทุก 1 ชม. 5) หากน้ำสูงถึงอก ให้กดขอความช่วยเหลือด่วนในระบบ";
+      } else if (cache.length > 3) {
+        prediction = "สถานการณ์ทรงตัว แต่ยังต้องเฝ้าระวัง 24-72 ชม. น้ำอาจลดช้า";
+        advice = "แนะนำ: เตรียมอาหารแห้ง น้ำดื่ม 3 วัน, ชาร์จแบต, ยกของขึ้นที่สูง, เตรียมเส้นทางอพยพไปศูนย์พักพิงใกล้บ้าน";
+      } else {
+        prediction = "สถานการณ์เริ่มคลี่คลาย แต่บางจุดยังมีน้ำขัง";
+        advice = "แนะนำ: ตรวจสอบระบบไฟ ระวังสัตว์มีพิษ ทำความสะอาดบ้านหลังน้ำลด ถ่ายรูปความเสียหายเพื่อเคลม";
+      }
+      if (focusArea && focusArea!=='all') {
+        const filtered = cache.filter(r=>(r.location_text||'').toLowerCase().includes(focusArea.toLowerCase()));
+        if (filtered.length>0) {
+          prediction += ` พื้นที่ ${focusArea} มี ${filtered.length} เคส`;
+          advice += ` สำหรับ ${focusArea} ให้เน้น ${filtered.map(r=>(r.need_types||[]).join(',')).slice(0,3).join(', ')}`;
+        }
+      }
+      return { context, prediction, advice, total: cache.length, critical: criticalCount };
+    }
+
+    // ==========================================
+
+    
     // ==========================================
     // 5. AI VOICE SESSION HANDLERS
     // ==========================================
@@ -3697,6 +3762,13 @@
                             * หากผู้ใช้ต้องการหา ของแต่งบ้าน, อุปกรณ์ซ่อมบ้าน, หรือสินค้าทั่วไปอื่นๆ ➔ เลือก 'decor'
                             * หากผู้ใช้ต้องการหา ร้านอาหาร, ของกิน, คาเฟ่, ตลาด, ห้าง, 7-11, แหล่งชุมชน, แหล่งท่องเที่ยว, หรือโรงพยาบาล ➔ เลือก 'lifestyle'
                             * หากผู้ใช้ต้องการหา ช่างซ่อม, งานบริการต่างๆ ➔ เลือก 'others'
+                            * หากผู้ใช้พูดถึง น้ำท่วม, วิกฤตน้ำท่วม, SOS, ขอความช่วยเหลือน้ำท่วม, อพยพ, น้ำท่วมขัง, ระดับน้ำ, เรือ, ที่พักพิงน้ำท่วม, พื้นที่เสี่ยง ➔ เลือก 'sos' ทันที (แท็บวิกฤตน้ำท่วมสำคัญที่สุด)
+                        - **สำหรับแท็บ SOS วิกฤตน้ำท่วม (สำคัญเร่งด่วน):**
+                            * เมื่อสลับมาแท็บ sos ให้เรียก 'get_flood_summary' เพื่อดึงสรุปสถานการณ์ปัจจุบันทันที
+                            * หลังจากได้ข้อมูล ให้วิเคราะห์ด้วย 'analyze_flood_and_advise' เพื่อสรุป วิเคราะห์ ทำนาย และแนะนำประชาชน
+                            * พูดด้วยน้ำเสียงจริงจัง กระชับ ให้กำลังใจ บอกตัวเลขจริง เช่น 'ตอนนี้มี 12 เคสขอความช่วยเหลือ 5 เคสต้องการอพยพด่วน ที่นวมินทร์...'
+                            * หากผู้ใช้ต้องการขอความช่วยเหลือ ให้เรียก 'open_sos_modal' เพื่อเปิดฟอร์ม
+                            * หากผู้ใช้ถามพื้นที่ไหนท่วม ให้เรียก 'filter_sos_by_need' เพื่อกรองและสรุป
                         - **ขั้นตอนที่ 2 (สำคัญที่สุด):** ทันทีหลังจากเรียกฟังก์ชันเปลี่ยนแท็บสำเร็จ **ให้คุณ (AI) พูดด้วยเสียงถามผู้ใช้ทันทีว่า: "เปลี่ยนแท็บให้แล้วครับ ต้องการ location ไหนดีครับ หรือต้องการให้เปิดหน้าพิกัดไหม?"** เพื่อให้ผู้ใช้ระบุพิกัดต่อ
                     10. หากuserต้องการให้เปิดหน้าพิกัดแผนที่  ไม่ว่าจะอยู่ในแท็บไหน ให้เรียกใช้ฟังก์ชัน 'open_location_modal' ทันที
                     11. ไม่ว่าuserจะอยู่ที่หน้าเพจใด ถ้า AI Voice พบว่าผู้ใช้ต้องการหาพิกัดหรือ location ของสถานที่ใดๆ ก็ตาม  ให้แปลงชื่อสถานที่เป็นพิกัด Latitude และ Longitude แล้วเรียกใช้ฟังก์ชัน 'set_location_coordinates' ทันทีเพื่อเปิดหน้าพิกัดค้นหา ปักหมุดในตำแหน่งที่ผู้ใช้ต้องการ พร้อมเขียนรายละเอียดสถานที่ลงบนช่อง edit ในหน้าพิกัดโดยอัตโนมัติ
@@ -3733,10 +3805,44 @@
                         parameters: {
                           type: "OBJECT",
                           properties: {
-                            tabId: { type: "STRING", description: "ID ของแท็บ: 'realestate', 'decor', 'lifestyle', 'others'" },
+                            tabId: { type: "STRING", description: "ID ของแท็บ: 'sos', 'realestate', 'decor', 'lifestyle', 'others' - sos คือแท็บวิกฤตน้ำท่วมสำคัญที่สุด" },
                             searchText: { type: "STRING", description: "ข้อความที่จะพิมพ์ลงในช่องค้นหา" }
                           },
                           required: ["tabId"]
+                        }
+                      },
+                      {
+                        name: "open_sos_modal",
+                        description: "เปิดฟอร์มขอความช่วยเหลือฉุกเฉินน้ำท่วม (SOS Modal) เมื่อผู้ใช้ต้องการขอความช่วยเหลือ แจ้งพิกัดน้ำท่วม",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "get_flood_summary",
+                        description: "ดึงสรุปสถานการณ์น้ำท่วมปัจจุบันจากฐานข้อมูล SOS ทั้งหมด จำนวนเคส ประเภทความต้องการ พื้นที่เสี่ยง เพื่อให้ AI สรุปให้ประชาชนฟัง",
+                        parameters: { type: "OBJECT", properties: {} }
+                      },
+                      {
+                        name: "filter_sos_by_need",
+                        description: "กรองเคส SOS ตามประเภทความต้องการ เช่น evacuate, food, medicine, clothes, power, shelter, all เพื่อดูพื้นที่นั้นๆ",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            needType: { type: "STRING", description: "ประเภท: evacuate, food, medicine, clothes, power, shelter, all" },
+                            locationKeyword: { type: "STRING", description: "คำค้นพื้นที่ เช่น นวมินทร์, บางเขน, รามอินทรา" }
+                          },
+                          required: ["needType"]
+                        }
+                      },
+                      {
+                        name: "analyze_flood_and_advise",
+                        description: "วิเคราะห์สถานการณ์น้ำท่วมทั้งหมด สรุปปัญหา วิเคราะห์สาเหตุ ทำนายอนาคต 24-72 ชม. และแนะนำประชาชนว่าควรทำอย่างไร ควรอพยพหรือไม่ เตรียมอะไร ที่ไหนปลอดภัย - ฟังก์ชันหลักสำหรับ AI Voice ในแท็บน้ำท่วม",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            focusArea: { type: "STRING", description: "พื้นที่ที่ต้องการวิเคราะห์เจาะจง หรือ 'all' สำหรับทั้งหมด" },
+                            adviseType: { type: "STRING", description: "ประเภทคำแนะนำ: evacuate, prepare, shelter, all" }
+                          },
+                          required: []
                         }
                       },
                       {
@@ -3791,9 +3897,32 @@
                   for (let call of functionCalls) {
                     const { name, args, id } = call;
                     let output = { success: true };
-            
-                    if (name === "open_location_modal") {
+                                if (name === "open_location_modal") {
                       openLocationModal();
+                    } else if (name === "open_sos_modal") {
+                      openSOSModal();
+                      output = { success: true, message: "เปิดฟอร์มขอความช่วยเหลือ SOS เรียบร้อย" };
+                    } else if (name === "get_flood_summary") {
+                      const summaryText = buildFloodContextForAI();
+                      output = { success: true, summary: summaryText };
+                      setTimeout(()=>{ sendTextToAI(`ข้อมูลสรุปน้ำท่วมปัจจุบันคือ: ${summaryText}. ให้คุณสรุปให้ประชาชนฟังด้วยเสียงทันที กระชับ จริงจัง ให้กำลังใจ`); }, 200);
+                    } else if (name === "filter_sos_by_need") {
+                      const need = args.needType || 'all';
+                      const kw = args.locationKeyword || '';
+                      filterSOS(need);
+                      let filtered = window.sosRequestsCache || sosRequestsCache || [];
+                      if (need !== 'all') filtered = filtered.filter(r=>(r.need_types||[]).includes(need));
+                      if (kw) filtered = filtered.filter(r=>(r.location_text||'').toLowerCase().includes(kw.toLowerCase()));
+                      output = { success: true, count: filtered.length, needType: need, location: kw, summary: buildFloodContextForAI() };
+                    } else if (name === "analyze_flood_and_advise") {
+                      const focus = args.focusArea || 'all';
+                      const advType = args.adviseType || 'all';
+                      const analysis = generateFloodAnalysisAndAdvice(focus, advType);
+                      output = analysis;
+                      setTimeout(()=>{
+                        const aiPrompt = `คุณได้วิเคราะห์ข้อมูลแล้ว: ${analysis.context}. ทำนาย: ${analysis.prediction}. คำแนะนำ: ${analysis.advice}. ให้คุณสรุป วิเคราะห์ ทำนาย และแนะนำประชาชนทันทีด้วยเสียง พูดกระชับ แบ่งเป็น 4 ส่วน: 1.สรุปสถานการณ์ 2.วิเคราะห์ปัญหา 3.ทำนาย 24-72ชม. 4.แนะนำประชาชนควรทำอย่างไร. ลงท้ายด้วยกำลังใจครับ`;
+                        sendTextToAI(aiPrompt);
+                      }, 300);
                     } else if (name === "set_location_coordinates") {
                       selectPlaceResult(args.latitude, args.longitude, args.placeName);
                     }
