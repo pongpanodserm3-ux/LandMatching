@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.0
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1283,6 +1283,41 @@
         <input type="text" class="sos-input" id="sosLng" placeholder="Lng" style="flex:1;">
       </div>
       <input type="text" class="sos-input" id="sosLocationText" placeholder="รายละเอียดเพิ่ม เช่น ติดชั้น2 คอนโด... น้ำระดับอก ซอย...">
+
+      <!-- v7.7 NEW: จุดรับ-จุดส่ง สำหรับ ยานพาหนะ/อพยพ -->
+      <div id="evacDestinationGroup" style="display:none; background:#fff7ed; border:1.5px solid #fb923c; border-radius:12px; padding:10px; margin-bottom:8px;">
+        <div style="font-size:12px; font-weight:bold; color:#9a3412; margin-bottom:6px;">🏁 จุดส่ง / ปลายทางอพยพ (เฉพาะหมวด ยานพาหนะ/อพยพ)</div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <button class="filter-btn" style="flex:1; background:#fff;" onclick="openLocationModalForEvac()">📍 ปักหมุดจุดหมาย</button>
+          <button class="filter-btn" style="flex:1; background:#fff;" onclick="useCurrentLocationForEvac()">📌 ใช้ตำแหน่งปลายทางปัจจุบัน</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <input type="text" class="sos-input" id="sosEvacLat" placeholder="ปลายทาง Lat" style="flex:1; margin-bottom:0;">
+          <input type="text" class="sos-input" id="sosEvacLng" placeholder="ปลายทาง Lng" style="flex:1; margin-bottom:0;">
+        </div>
+        <input type="text" class="sos-input" id="sosEvacDestination" placeholder="ปลายทางไปที่ไหน? เช่น ศูนย์อพยพ วัดบางพลี, รพ.รวมใจ, บ้านญาติ ซอย..." style="margin-bottom:6px;">
+        <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
+          <button class="filter-btn" style="font-size:10px; padding:4px 8px;" onclick="setEvacQuick('ศูนย์พักพิงใกล้ฉัน')">🏠 ศูนย์พักพิงใกล้ฉัน</button>
+          <button class="filter-btn" style="font-size:10px; padding:4px 8px;" onclick="setEvacQuick('โรงพยาบาลใกล้ฉัน')">🏥 รพ.ใกล้ฉัน</button>
+          <button class="filter-btn" style="font-size:10px; padding:4px 8px;" onclick="setEvacQuick('บ้านญาติ')">👨‍👩‍👧 บ้านญาติ</button>
+          <button class="filter-btn" style="font-size:10px; padding:4px 8px;" onclick="setEvacQuick('ที่ดอน/ที่สูง')">⛰️ ที่ดอน</button>
+        </div>
+        <select id="sosEvacVehicle" class="sos-input" style="margin-bottom:0;">
+          <option value="">ประเภทพาหนะที่ต้องการ</option>
+          <option value="boat">🛶 เรือ (ท้องแบน/พาย)</option>
+          <option value="high_truck">🚚 รถยกสูง/รถทหาร</option>
+          <option value="pickup">🛻 รถกระบะ</option>
+          <option value="car">🚗 รถเก๋งเข้าได้</option>
+          <option value="any">อะไรก็ได้ ขอออกก่อน</option>
+        </select>
+      </div>
+
+      <div id="evacHintBox" style="display:none; background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:8px; margin-bottom:8px; font-size:11px; color:#991b1b; line-height:1.4;">
+        ⚠️ <b>สำหรับขออพยพ/รถขนย้าย กรุณาระบุ:</b><br>
+        1. <b>ไปไหน:</b> ชื่อศูนย์/วัด/รพ. หรือ "บ้านญาติ ซอย..."<br>
+        2. <b>ทำไมไปไม่ได้เอง:</b> น้ำสูงเท่าไหร่ รถเข้าไม่ได้<br>
+        3. <b>ต้องการรถอะไร:</b> เรือ / รถยกสูง / รถเก๋ง
+      </div>
 
       <label style="font-size:12px; font-weight:bold;">3. ช่องทางติดต่อ & จำนวนสมาชิก</label>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
@@ -5296,7 +5331,57 @@ function tryLIFFLoginAgain(){
       }, 800);
     }
 
-    async function submitSOS() {
+    async 
+    // v7.7 Helpers for evac destination
+    function setEvacQuick(text){
+      const el = document.getElementById('sosEvacDestination');
+      if(el){
+        if(el.value) el.value += ' / ' + text;
+        else el.value = text;
+        el.focus();
+      }
+    }
+    function useCurrentLocationForEvac(){
+      if(!navigator.geolocation){ alert('เบราว์เซอร์ไม่รองรับ GPS'); return; }
+      navigator.geolocation.getCurrentPosition(pos=>{
+        document.getElementById('sosEvacLat').value = pos.coords.latitude.toFixed(6);
+        document.getElementById('sosEvacLng').value = pos.coords.longitude.toFixed(6);
+        alert('📌 ตั้งพิกัดปลายทางเป็นตำแหน่งปัจจุบันแล้ว');
+      }, err=>{
+        alert('ขอตำแหน่งไม่สำเร็จ: '+err.message);
+      });
+    }
+    let evacPinMode = false;
+    function openLocationModalForEvac(){
+      evacPinMode = true;
+      if(typeof openLocationModal==='function'){
+        openLocationModal(true);
+      }else{
+        alert('กรุณาปักหมุดในแผนที่แล้วคัดลอก Lat/Lng มาใส่ช่องปลายทาง');
+      }
+    }
+    // Hook ไปที่ฟังก์ชันเดิมที่ตั้ง lat/lng - ถ้ามีการเลือกพิกัดใน modal ให้ดัก
+    const originalSetLocation = window.setLocationFromMap || null;
+    window.setLocationFromMap = function(lat,lng){
+      if(evacPinMode){
+        document.getElementById('sosEvacLat').value = parseFloat(lat).toFixed(6);
+        document.getElementById('sosEvacLng').value = parseFloat(lng).toFixed(6);
+        evacPinMode = false;
+        alert('🏁 ตั้งพิกัดปลายทางแล้ว');
+        if(typeof closeLocationModal==='function') closeLocationModal();
+      }else{
+        if(originalSetLocation) originalSetLocation(lat,lng);
+        else{
+          const latEl = document.getElementById('sosLat');
+          const lngEl = document.getElementById('sosLng');
+          if(latEl) latEl.value = lat;
+          if(lngEl) lngEl.value = lng;
+        }
+      }
+    };
+
+
+function submitSOS() {
       const phone = document.getElementById('sosPhone').value.trim();
       const locText = document.getElementById('sosLocationText').value.trim();
       const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
@@ -5305,6 +5390,10 @@ function tryLIFFLoginAgain(){
       if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
       if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
       if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+      if (selectedSOSTags.has('evacuate')) {
+        const evacDest = document.getElementById('sosEvacDestination')?.value.trim();
+        if(!evacDest){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
+      }
 
       const payload = {
         need_types: Array.from(selectedSOSTags),
@@ -5319,6 +5408,13 @@ function tryLIFFLoginAgain(){
           elder: document.getElementById('sosElder').value
         },
         medicine_detail: document.getElementById('medicineDetail')?.value || '',
+        // v7.7 evac fields
+        evac_destination_text: document.getElementById('sosEvacDestination')?.value || '',
+        evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
+        evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
+        evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
+        origin_text: document.getElementById('sosLocationText')?.value || '',
+
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting'
       };
@@ -5764,6 +5860,10 @@ function tryLIFFLoginAgain(){
       if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
       if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
       if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+      if (selectedSOSTags.has('evacuate')) {
+        const evacDest = document.getElementById('sosEvacDestination')?.value.trim();
+        if(!evacDest){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
+      }
 
       let userId = null;
       try{ 
@@ -5791,6 +5891,13 @@ function tryLIFFLoginAgain(){
           elder: document.getElementById('sosElder').value
         },
         medicine_detail: document.getElementById('medicineDetail')?.value || '',
+        // v7.7 evac fields
+        evac_destination_text: document.getElementById('sosEvacDestination')?.value || '',
+        evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
+        evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
+        evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
+        origin_text: document.getElementById('sosLocationText')?.value || '',
+
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting',
         user_id: userId
