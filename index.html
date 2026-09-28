@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2202,6 +2202,7 @@
     async function saveUserLineIdToSupabase(lineIdOrProfile) {
       try {
         let lineId, profileData = {};
+        let safeLineId = '';
         if (typeof lineIdOrProfile === 'object' && lineIdOrProfile !== null) {
           // รับมาเป็น profile object
           lineId = lineIdOrProfile.userId || lineIdOrProfile.lineId;
@@ -2223,6 +2224,7 @@
         }
 
         if (!lineId) return null;
+        safeLineId = String(lineId).trim();
 
         // 1. เช็คว่ามี line_id นี้ใน table users แล้วหรือยัง
         const { data: existingUser, error: findErr } = await supabaseClient
@@ -2233,37 +2235,36 @@
 
         if (findErr) console.warn("find user error", findErr);
 
-        if (existingUser && existingUser.user_id) {
-          // มีแล้ว -> อัปเดตข้อมูลล่าสุด (ถ้ามีคอลัมน์) แล้วใช้ user_id เดิม
+                if (existingUser && existingUser.user_id) {
+          // มีแล้ว -> ใช้ user_id เดิมเลย ไม่ต้องอัปเดตเยอะเพื่อไม่ให้ทับ email/password
           try {
             await supabaseClient.from('users').update({
-              // อัปเดตเฉพาะคอลัมน์ที่มีในตารางคุณ ถ้าไม่มีจะข้ามไปเอง
-              ...(profileData.username ? { username: profileData.username } : {}),
+              line_id: safeLineId || String(lineId), // อัปเดต line_id ให้ชัวร์
               updated_at: new Date().toISOString()
             }).eq('user_id', existingUser.user_id);
-          } catch(e) { /* ข้ามถ้าตารางไม่มีคอลัมน์ */ }
-          return existingUser.user_id; // นี่คือ PK Auto ที่คุณต้องการ
+          } catch(e) { /* ข้ามถ้า error */ }
+          return existingUser.user_id;
         }
 
-        // 2. ยังไม่มี -> INSERT ใหม่ ให้ Supabase gen user_id (PK Auto) ให้เอง
-        // v6.11 FIX: ตาราง users มี email NOT NULL -> ต้องใส่ email ปลอมจาก line_id
-        const fakeEmail = `${String(lineId).toLowerCase()}@line.local`;
+        // 2. ยังไม่มี -> INSERT ใหม่ ให้ DB gen user_id (PK) ให้เอง - ห้ามใส่ user_id
+        // v6.12 FIX: จากรูป pgAdmin ตาราง users มี NOT NULL หลายคอลัมน์
+        // ต้องใส่ให้ครบ: email, password_hash, phone_number, role
+        const safeLineId = String(lineId).trim();
+        const fakeEmail = `${safeLineId.toLowerCase()}@line.local`;
+        const displayName = profileData.username || 'LINE User ' + safeLineId.slice(-4);
+        
         const insertPayload = {
-          line_id: String(lineId),
-          email: fakeEmail, // FIX: ใส่ email เพื่อผ่าน NOT NULL constraint
-          username: profileData.username || 'LINE User',
-          display_name: profileData.username || null,
-          // ถ้าตารางคุณมีคอลัมน์อื่นที่เป็น NOT NULL ให้เพิ่ม default ตรงนี้
-          // password: null, // ถ้ามีแต่ไม่ใช้
-          created_at: new Date().toISOString(),
-          // ถ้าตารางมีคอลัมน์ line_display_name, line_picture_url ใส่ด้วย
-          ...(profileData.line_display_name ? { line_display_name: profileData.line_display_name } : {}),
-          ...(profileData.line_picture_url ? { line_picture_url: profileData.line_picture_url } : {}),
-          ...(profileData.line_picture_url ? { picture_url: profileData.line_picture_url } : {}),
-          ...(profileData.line_picture_url ? { avatar_url: profileData.line_picture_url } : {}),
+          // user_id ห้ามใส่! ให้ DB สร้างเองตามที่คุณบอก
+          line_id: safeLineId,
+          username: displayName,
+          email: fakeEmail,
+          password_hash: 'LINE_OAUTH_NO_PASSWORD', // FIX: ใส่ placeholder เพราะคอลัมน์นี้ห้ามว่าง
+          phone_number: '0000000000', // FIX: ใส่ placeholder เพราะคอลัมน์นี้ห้ามว่าง
+          role: 'buyer', // FIX: buyer = คนขอความช่วยเหลือ, seller = คนขายที่
+          // created_at, updated_at ปล่อยให้ DB gen เอง หรือใส่ now()
         };
-        // ลบ key ที่เป็น undefined ออกเพื่อไม่ให้ Supabase งง
-        Object.keys(insertPayload).forEach(k => { if(insertPayload[k]===undefined) delete insertPayload[k]; });
+        // หมายเหตุ: ถ้าตารางคุณมีคอลัมน์ display_name, picture_url จะไม่ใส่ก็ได้เพราะ nullable
+        
 
 
         const { data: newUser, error: insErr } = await supabaseClient
