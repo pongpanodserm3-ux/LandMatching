@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2692,19 +2692,16 @@
 
       AppState.voice.currentTab = tabId;
 
-      // ===== FIX v4.10: แยกโหมด SOS ออกจากโหมดปกติ =====
       const resultsContainer = document.getElementById('resultsContainer');
       const listContainer = document.getElementById('list-container');
       const noResults = document.getElementById('no-results');
       
       if (tabId === 'sos') {
-        // ซ่อนรายการอสังหา/ทั่วไป ทั้งหมด
         if (resultsContainer) {
           resultsContainer.innerHTML = '';
           resultsContainer.style.display = 'none';
         }
         if (noResults) noResults.style.display = 'none';
-        // โชว์เฉพาะ SOS
         if (listContainer) listContainer.style.display = 'block';
         if (typeof loadSOSRequests === 'function') {
           loadSOSRequests();
@@ -2712,7 +2709,6 @@
           renderSOSList(window.sosRequestsCache);
         }
       } else {
-        // โหมดปกติ: ซ่อน SOS, โชว์ resultsContainer
         if (resultsContainer) {
           resultsContainer.style.display = 'block';
           resultsContainer.innerHTML = '';
@@ -2721,10 +2717,8 @@
           listContainer.innerHTML = '';
           listContainer.style.display = 'none';
         }
-        // ล้าง SOS results
         const sosResultsDiv = document.getElementById('sosResults');
         if (sosResultsDiv) sosResultsDiv.innerHTML = '';
-        // reset pagination และโหลดใหม่
         if (AppState && AppState.pagination) {
           AppState.pagination.offset = 0;
           AppState.pagination.renderedKeys = new Set();
@@ -2737,7 +2731,7 @@
       }
     }
 
-    async function checkAndDisplayMemberStatus() {
+    function checkAndDisplayMemberStatus() {
       const urlParams = new URLSearchParams(window.location.search);
       let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
 
@@ -4150,7 +4144,6 @@
     }
 
     function renderProperties(properties) {
-      // FIX v4.10: ถ้าอยู่แท็บ SOS ห้าม render อสังหา/ทั่วไป เด็ดขาด
       const activeTabBtn = document.querySelector('.tab-btn.active');
       if (activeTabBtn && activeTabBtn.id === 'tab-btn-sos') {
         console.log('[BLOCKED] renderProperties blocked in SOS tab');
@@ -4866,10 +4859,13 @@
 
 
 
-    // ===================== SOS EMERGENCY HUB - 5 Tabs System (FINAL v10.1) =====================
+
+    // ===================== SOS EMERGENCY HUB - 5 Tabs System (FINAL v4.12 FIXED COUNTS) =====================
     let crisisModeEnabled = true;
     let selectedSOSTags = new Set();
     let sosRequestsCache = [];
+    window.sosRequestsCache = sosRequestsCache;
+    window._currentSOSFilter = 'all';
 
     function toggleCrisisMode(enabled) {
       crisisModeEnabled = enabled;
@@ -4882,110 +4878,25 @@
         const sosContent = document.getElementById('tab-content-sos');
         if (sosContent && sosContent.style.display !== 'none') switchTab('realestate');
       }
-      localStorage.setItem('crisis_mode', enabled ? '1' : '0');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const logo = document.querySelector('.mascot-img') || document.querySelector('.ai-avatar');
-      if (logo) {
-        let tapCount = 0;
-        logo.addEventListener('click', () => {
-          tapCount++;
-          if (tapCount >= 5) {
-            const toggleDiv = document.getElementById('crisisToggle');
-            if (toggleDiv) toggleDiv.style.display = toggleDiv.style.display === 'none' ? 'block' : 'none';
-            tapCount = 0;
-          }
-          setTimeout(() => { tapCount = 0; }, 3000);
-        });
-      }
-      const saved = localStorage.getItem('crisis_mode');
-      if (saved !== null) {
-        const isEnabled = saved === '1';
-        const cb = document.getElementById('crisisModeCheckbox');
-        if (cb) cb.checked = isEnabled;
-        toggleCrisisMode(isEnabled);
+    let isSOSMapExpanded = false;
+    function toggleSOSMapSize() {
+      const mapContainer = document.getElementById('sosMapContainer');
+      const btn = document.getElementById('sosMapToggleBtn');
+      if (!mapContainer) return;
+      isSOSMapExpanded = !isSOSMapExpanded;
+      if (isSOSMapExpanded) {
+        mapContainer.style.height = '600px';
+        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ ⬆️';
       } else {
-        toggleCrisisMode(true);
+        mapContainer.style.height = '320px';
+        if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
       }
-      loadSOSRequests();
-    });
-
-    function openSOSModal() { document.getElementById('sosModalOverlay').classList.add('active'); }
-    function closeSOSModal() { document.getElementById('sosModalOverlay').classList.remove('active'); }
-    
-    function toggleSOSTag(btn) {
-      btn.classList.toggle('selected');
-      const val = btn.dataset.val;
-      if (btn.classList.contains('selected')) selectedSOSTags.add(val);
-      else selectedSOSTags.delete(val);
-      document.getElementById('medicineExtra').style.display = selectedSOSTags.has('medicine') ? 'block' : 'none';
-    }
-
-    function getCurrentUserLocationSOS() {
-      if (typeof getCurrentUserLocation === 'function') getCurrentUserLocation();
-      setTimeout(() => {
-        const lat = document.getElementById('latInput')?.value;
-        const lng = document.getElementById('lngInput')?.value;
-        if (lat) document.getElementById('sosLat').value = lat;
-        if (lng) document.getElementById('sosLng').value = lng;
-      }, 800);
-    }
-
-    async function submitSOS() {
-      const phone = document.getElementById('sosPhone').value.trim();
-      const locText = document.getElementById('sosLocationText').value.trim();
-      const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
-      const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
-
-      if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
-      if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
-      if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
-
-      const payload = {
-        need_types: Array.from(selectedSOSTags),
-        location_text: locText,
-        lat: lat ? parseFloat(lat) : null,
-        lng: lng ? parseFloat(lng) : null,
-        contact_phone: phone,
-        people_count: document.getElementById('sosPeople').value ? parseInt(document.getElementById('sosPeople').value) : 1,
-        people_detail: {
-          adult: document.getElementById('sosAdult').value,
-          child: document.getElementById('sosChild').value,
-          elder: document.getElementById('sosElder').value
-        },
-        medicine_detail: document.getElementById('medicineDetail')?.value || '',
-        urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
-        status: 'waiting'
-      };
-
-      // บันทึกจริงลง Supabase + fallback Demo
-      try {
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-          const { data, error } = await supabaseClient
-            .from('flood_help_requests')
-            .insert([payload])
-            .select();
-          if (error) throw error;
-          console.log('บันทึก Supabase สำเร็จ', data);
-          alert('✅ ส่งคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันทีบนแผนที่');
-        } else {
-          throw new Error('No supabaseClient');
-        }
-      } catch (e) {
-        console.warn('ใช้โหมด Demo เพราะ:', e);
-        sosRequestsCache.unshift({...payload, id: Date.now(), created_at: new Date().toISOString()});
-        renderSOSList(sosRequestsCache);
-        alert('✅ (Demo) ส่งคำขอเรียบร้อย - แสดงบนแผนที่ทันที');
-      }
-
-      closeSOSModal();
-      selectedSOSTags.clear();
-      document.querySelectorAll('.sos-tag-btn.selected').forEach(b => b.classList.remove('selected'));
+      setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
     }
 
     async function loadSOSRequests() {
-      // 1. โหลดจาก Supabase จริง
       let hasRealData = false;
       try {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -4993,10 +4904,18 @@
             .from('flood_help_requests')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(50);
+            .limit(100);
           if (!error && data) {
             sosRequestsCache = data;
-            renderSOSList(sosRequestsCache);
+            window.sosRequestsCache = data;
+            // เคารพฟิลเตอร์ปัจจุบัน ถ้ามี
+            const current = window._currentSOSFilter || 'all';
+            if (current === 'all') {
+              renderSOSList(sosRequestsCache);
+            } else {
+              const filtered = sosRequestsCache.filter(r => (r.need_types||[]).includes(current));
+              renderSOSList(filtered);
+            }
             console.log('โหลดจาก Supabase', data.length, 'รายการ');
             hasRealData = data.length > 0;
           }
@@ -5005,20 +4924,22 @@
         console.warn('โหลด Supabase ไม่ได้', e);
       }
 
-      // 2. ถ้าไม่มี Supabase จริงๆ ให้ใช้ Mock เพื่อเทส UI
       if (!hasRealData && (!sosRequestsCache || sosRequestsCache.length === 0)) {
         if (typeof supabaseClient === 'undefined' || !supabaseClient) {
           sosRequestsCache = [
-            {id:1, need_types:['evacuate'], location_text:'คอนโด A นวมินทร์ 3 ชั้น 2 น้ำท่วมอก', people_count:3, status:'waiting', urgency:'critical', contact_phone:'081-111-1111'},
-            {id:2, need_types:['food'], location_text:'หมู่บ้าน B รามอินทรา ต้องการข้าว 5 กล่อง', people_count:5, status:'going', urgency:'high', contact_phone:'089-222-2222'},
-            {id:3, need_types:['medicine'], location_text:'ซอย C มีผู้ป่วยติดเตียงต้องการยาความดัน', people_count:1, status:'waiting', urgency:'critical', contact_phone:'081-333-3333'},
-            {id:4, need_types:['power'], location_text:'บ้าน D ไฟดับ ต้องการช่างไฟฉุกเฉิน', people_count:2, status:'waiting', urgency:'high', contact_phone:'081-444-4444'},
+            {id:1, need_types:['evacuate'], location_text:'คอนโด A นวมินทร์ 3 ชั้น 2 น้ำท่วมอก มีคนแก่ 1 คน', people_count:3, status:'waiting', urgency:'critical', contact_phone:'0812345678', lat:13.825, lng:100.644, created_at:new Date().toISOString()},
+            {id:2, need_types:['food'], location_text:'หมู่บ้าน B รามอินทรา ต้องการข้าว 5 กล่อง น้ำดื่ม', people_count:5, status:'waiting', urgency:'high', contact_phone:'0899999999', lat:13.836, lng:100.657, created_at:new Date().toISOString()},
+            {id:3, need_types:['medicine'], location_text:'ซอย C มีผู้ป่วยติดเตียงต้องการยาความดัน', people_count:1, status:'waiting', urgency:'critical', contact_phone:'0999999991', lat:13.812, lng:100.612, created_at:new Date().toISOString()},
+            {id:4, need_types:['evacuate','food'], location_text:'คอนโด A นวมินทร์ 3 ชั้น 2 น้ำท่วมอก มีคนแก่ 1 คน', people_count:3, status:'waiting', urgency:'critical', contact_phone:'0812345678', lat:13.826, lng:100.645, created_at:new Date().toISOString()},
+            {id:5, need_types:['clothes'], location_text:'ซอย D ต้องการเสื้อผ้าเด็ก', people_count:1, status:'waiting', urgency:'high', contact_phone:'0999999992', lat:13.815, lng:100.625, created_at:new Date().toISOString()},
           ];
-          renderSOSList(sosRequestsCache);
+          window.sosRequestsCache = sosRequestsCache;
+          const current = window._currentSOSFilter || 'all';
+          if (current === 'all') renderSOSList(sosRequestsCache);
+          else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(current)));
         }
       }
 
-      // 3. เปิด Realtime (ทำงานเสมอ ไม่ว่า return หรือไม่)
       try {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
           if (window.sosChannel) supabaseClient.removeChannel(window.sosChannel);
@@ -5026,9 +4947,16 @@
             .channel('flood-help-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'flood_help_requests' }, (payload) => {
               console.log('Realtime update', payload);
-              // โหลดใหม่แบบไม่สร้าง channel ซ้ำ
-              supabaseClient.from('flood_help_requests').select('*').order('created_at', {ascending: false}).limit(50)
-                .then(({data}) => { if (data) { sosRequestsCache = data; renderSOSList(sosRequestsCache); } });
+              supabaseClient.from('flood_help_requests').select('*').order('created_at', {ascending: false}).limit(100)
+                .then(({data}) => { 
+                  if (data) { 
+                    sosRequestsCache = data; 
+                    window.sosRequestsCache = data;
+                    const current = window._currentSOSFilter || 'all';
+                    if (current === 'all') renderSOSList(sosRequestsCache);
+                    else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(current)));
+                  } 
+                });
             })
             .subscribe(status => console.log('Realtime status', status));
         }
@@ -5037,116 +4965,20 @@
       }
     }
 
-    function renderSOSList(list) {
-      const container = document.getElementById('sosResults');
-      if (!container) return;
-      const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
-      list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
-      Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
-      container.innerHTML = list.map(item => {
-        const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
-        const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
-        const needLabel = (item.need_types||[]).map(t => ({evacuate:'ยานพาหนะ/อพยพ', food:'อาหาร/น้ำ', medicine:'ยา', clothes:'เสื้อผ้า', power:'พลังงาน/ช่าง', shelter:'ที่พัก'}[t]||t)).join(', ');
-        return `<div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="flex:1;">
-            <div style="font-size:12px; font-weight:bold;">${statusIcon} ${needLabel} • ${statusText}</div>
-            <div style="font-size:11px; color:#555; margin-top:2px;">📍 ${item.location_text||'-'} • 👥 ${item.people_count||1} คน</div>
-          </div>
-          <button style="background:#4a83cc; color:white; border:none; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="alert('ติดต่อ: ${item.contact_phone||'-'}')">💬 ติดต่อช่วยเหลือ</button>
-        </div>`;
-      }).join('');
-    }
-
-    function filterSOS(type) {
-      // FIX v4.11: กดฟิลเตอร์ต้องไม่มีผลกับตัวเลขปุ่มอื่น - ตัวเลขมาจากฐานทั้งหมดเสมอ
-      document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
-      const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
-      if (btn) btn.classList.add('active');
-      
-      // เก็บประเภทที่เลือกไว้เพื่อใช้ตอน render ใหม่
-      window._currentSOSFilter = type;
-      
-      if (type === 'all') {
-        renderSOSList(sosRequestsCache);
-      } else {
-        const filtered = sosRequestsCache.filter(r => (r.need_types||[]).includes(type));
-        renderSOSList(filtered);
-      }
-    }
-
-    function switchToHelperMode() {
-      document.getElementById('sosMapPreview')?.scrollIntoView({behavior:'smooth'});
-      filterSOS('all');
-      if (typeof openLocationModal === 'function') openLocationModal(true);
-    }
-    
-    
-    
-    let isSOSMapExpanded = false;
-    let sosMap = null;
     let sosMarkersLayer = null;
-
-    function toggleSOSMapSize() {
-      const container = document.getElementById('sosMapContainer');
-      const btn = document.getElementById('sosMapToggleBtn');
-      if (!container) return;
-      
-      isSOSMapExpanded = !isSOSMapExpanded;
-      
-      if (isSOSMapExpanded) {
-        container.style.height = '70vh'; // ขยายลงล่าง 70% ของจอ ไม่ใช่ขึ้นบน
-        container.style.maxHeight = '650px';
-        if (btn) btn.innerHTML = '🗺️ ย่อแผนที่ขึ้น ⬆️';
-        // เลื่อนลงให้เห็นแผนที่เต็ม ไม่ให้บังปุ่มบน
-        setTimeout(() => {
-          container.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }, 100);
-      } else {
-        container.style.height = '320px';
-        container.style.maxHeight = '320px';
-        if (btn) btn.innerHTML = '🗺️ ขยายแผนที่ลงล่าง ⬇️';
-      }
-      
-      setTimeout(() => {
-        if (window.sosMap) {
-          window.sosMap.invalidateSize();
-        }
-      }, 400);
-    }
-
     function initSOSMap() {
-      const mapDiv = document.getElementById('sosMapPreview');
-      if (!mapDiv) return;
-      if (window.sosMap) {
-        window.sosMap.invalidateSize();
-        return;
-      }
-      sosMap = L.map('sosMapPreview', {
-        center: [13.7563, 100.5018],
-        zoom: 11,
-        zoomControl: true,
-        scrollWheelZoom: false  // ป้องกันซูมแล้วขยายบัง
-      });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(sosMap);
-      sosMarkersLayer = L.layerGroup().addTo(sosMap);
-      window.sosMap = sosMap;
-      
-      // คลิกบนแผนที่แล้วไม่ขยายทับ
-      sosMap.on('click', function(e) {
-        // ไม่ทำอะไร
-      });
-      
-      if (typeof sosRequestsCache !== 'undefined' && sosRequestsCache.length > 0) {
-        updateSOSMapMarkers(sosRequestsCache);
-      }
+      if (window.sosMap) return;
+      const mapEl = document.getElementById('sosMapPreview');
+      if (!mapEl) return;
+      window.sosMap = L.map(mapEl).setView([13.7563, 100.5018], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(window.sosMap);
+      sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
     }
 
     function updateSOSMapMarkers(list) {
-      if (!sosMap || !sosMarkersLayer) {
-        initSOSMap();
-        if (!sosMap) return;
+      if (!window.sosMap) initSOSMap();
+      if (!sosMarkersLayer) {
+        sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
       }
       sosMarkersLayer.clearLayers();
       const bounds = [];
@@ -5168,14 +5000,27 @@
       });
     }
 
-    function renderSOSList(list) {
-      // FIX v4.11: นับจำนวนจากฐานทั้งหมด (sosRequestsCache) เสมอ ไม่ใช่จาก list ที่กรองแล้ว
-      const sourceForCount = (window.sosRequestsCache && window.sosRequestsCache.length > 0) ? window.sosRequestsCache : list;
-      const counts = {all: sourceForCount.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
-      sourceForCount.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
-      Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
+    function renderSOSList(filteredList) {
+      // filteredList = รายการที่จะโชว์บนหน้าจอ (หลังกรอง)
+      // แต่ตัวเลขบนปุ่มฟิลเตอร์ต้องนับจากฐานทั้งหมดเสมอ
+      const fullList = window.sosRequestsCache || sosRequestsCache || [];
+      
+      // 1. คำนวณตัวเลขจากฐานทั้งหมดเท่านั้น - ไม่มีผลจากการกรอง
+      const counts = {all: fullList.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
+      fullList.forEach(r => { 
+        (r.need_types||[]).forEach(t => { 
+          if (counts[t] !== undefined) counts[t]++; 
+        }); 
+      });
+      Object.keys(counts).forEach(k => { 
+        const el = document.getElementById('count-'+k); 
+        if (el) el.textContent = counts[k]; 
+      });
 
-      const sosCardsHtml = list.map(item => {
+      // 2. ใช้ filteredList สำหรับแสดงการ์ดเท่านั้น
+      const listToShow = filteredList || fullList;
+
+      const sosCardsHtml = listToShow.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
         const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : '#eff6ff';
@@ -5205,12 +5050,12 @@
       const sosResultsDiv = document.getElementById('sosResults');
       if (sosResultsDiv) sosResultsDiv.innerHTML = sosCardsHtml;
 
+      // FIX: บังคับแยกโหมด SOS ออกจากโหมดปกติ
       const listContainer = document.getElementById('list-container');
+      const resultsContainer = document.getElementById('resultsContainer');
       const activeTab = document.querySelector('.tab-btn.active');
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
       
-      // FIX v4.10: SOS ต้องแสดงเฉพาะขอความช่วยเหลือเท่านั้น - บังคับล้าง resultsContainer
-      const resultsContainer = document.getElementById('resultsContainer');
       if (isSOSActive) {
         if (resultsContainer) {
           resultsContainer.innerHTML = '';
@@ -5218,7 +5063,7 @@
         }
         if (listContainer) {
           listContainer.style.display = 'block';
-          if (list.length === 0) {
+          if (listToShow.length === 0) {
             listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเคสขอความช่วยเหลือ<br><span style="font-size:11px;">กดปุ่มแดงด้านบนเพื่อแจ้งพิกัด</span></div>';
           } else {
             listContainer.innerHTML = sosCardsHtml;
@@ -5229,23 +5074,22 @@
       }
 
       if (typeof updateSOSMapMarkers === 'function') {
-        updateSOSMapMarkers(list);
+        updateSOSMapMarkers(listToShow);
       }
     }
 
     function filterSOS(type) {
-      // FIX v4.11: กดฟิลเตอร์ต้องไม่มีผลกับตัวเลขปุ่มอื่น - ตัวเลขมาจากฐานทั้งหมดเสมอ
+      // FIX v4.12: กดฟิลเตอร์แล้วตัวเลขทุกปุ่มต้องไม่เปลี่ยน - นับจากฐานทั้งหมดเสมอ
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
       if (btn) btn.classList.add('active');
-      
-      // เก็บประเภทที่เลือกไว้เพื่อใช้ตอน render ใหม่
       window._currentSOSFilter = type;
       
+      const full = window.sosRequestsCache || sosRequestsCache || [];
       if (type === 'all') {
-        renderSOSList(sosRequestsCache);
+        renderSOSList(full);
       } else {
-        const filtered = sosRequestsCache.filter(r => (r.need_types||[]).includes(type));
+        const filtered = full.filter(r => (r.need_types||[]).includes(type));
         renderSOSList(filtered);
       }
     }
@@ -5264,6 +5108,7 @@
     }
 
     // ===================== END SOS FINAL =====================
+
 
 </script>
 </body>
