@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5838,8 +5838,7 @@ function tryLIFFLoginAgain(){
         evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
         evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
         evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
-        origin_text: document.getElementById('sosLocationText')?.value || ''
-
+        origin_text: document.getElementById('sosLocationText')?.value || '',
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting',
         user_id: userId
