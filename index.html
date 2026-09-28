@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2273,6 +2273,82 @@
         return null;
       }
     }
+
+    
+// v6.9 - ฟังก์ชันเปิดใน LINE
+function getLINE_LIFF_URL(){
+  const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : '2011006139-Wn6PhY6D';
+  // ใช้ LIFF URL ตรง - LINE จะเปิดในแอปอัตโนมัติถ้ามี LINE
+  return 'https://liff.line.me/' + liffId;
+}
+
+function showLineRequiredModal(){
+  const overlay = document.getElementById('lineRequiredModalOverlay');
+  const urlDisplay = document.getElementById('lineUrlDisplay');
+  const liffUrl = getLINE_LIFF_URL();
+  if(urlDisplay) urlDisplay.innerText = liffUrl;
+  if(overlay) overlay.classList.add('active');
+}
+
+function closeLineRequiredModal(){
+  const overlay = document.getElementById('lineRequiredModalOverlay');
+  if(overlay) overlay.classList.remove('active');
+}
+
+function openInLINEApp(){
+  const liffUrl = getLINE_LIFF_URL();
+  const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : '2011006139-Wn6PhY6D';
+  
+  // วิธีที่ 1: พยายามเปิดด้วย line:// scheme (จะเด้งเข้าแอป LINE ถ้าติดตั้ง)
+  // วิธีที่ 2: เปิด LIFF URL ตรงๆ (ถ้าเปิดในมือถือที่มี LINE จะเด้งเข้า LINE)
+  
+  // สำหรับ Android/iOS ที่ติดตั้ง LINE
+  const lineAppUrl = 'https://line.me/R/app/' + liffId;
+  
+  // ลองเปิดแอป LINE ก่อน
+  window.location.href = liffUrl;
+  
+  // Fallback: ถ้า 1.5 วิ ยังไม่ไป ให้เปิดแท็บใหม่
+  setTimeout(() => {
+    window.open(liffUrl, '_blank');
+  }, 1500);
+}
+
+function copyLINEUrl(){
+  const liffUrl = getLINE_LIFF_URL();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(liffUrl).then(()=>{
+      alert('✅ คัดลอกลิงก์แล้ว\n\n' + liffUrl + '\n\nเอาไปวางในแชท LINE แล้วกดเปิดได้เลย');
+    });
+  } else {
+    prompt('คัดลอกลิงก์นี้ไปเปิดใน LINE:', liffUrl);
+  }
+}
+
+function tryLIFFLoginAgain(){
+  closeLineRequiredModal();
+  if(typeof liff !== 'undefined'){
+    try{
+      if(!liff.isLoggedIn()){
+        liff.login();
+      } else {
+        // login แล้ว ให้ init ใหม่
+        initLIFF().then(()=>{
+          if(CURRENT_USER_ID){
+            alert('✅ ยืนยันตัวตนสำเร็จแล้ว กดขอความช่วยเหลือได้เลย');
+            const overlay = document.getElementById('sosModalOverlay');
+            if(overlay) overlay.classList.add('active');
+          }
+        });
+      }
+    }catch(e){
+      liff.login();
+    }
+  } else {
+    // ถ้าไม่มี LIFF (เปิดนอกเบราว์เซอร์ปกติ) ให้พาไป LIFF URL
+    window.location.href = getLINE_LIFF_URL();
+  }
+}
 
     // v6.8 Helper: การันตีว่าได้ user_id ที่ตรงกับ table users (PK Auto)
     async function getOrCreateUserIdFromLINE() {
@@ -5611,10 +5687,7 @@
       if (!currentUserLineProfile || !CURRENT_USER_ID) {
         const freshId = await getCurrentUserId();
         if (!freshId) {
-          alert('⚠️ กรุณาเปิดหน้านี้ผ่าน LINE เท่านั้น\nระบบต้องยืนยันตัวตนด้วย LINE เพื่อป้องกันการแจ้งเหตุปลอม\n\nหากเปิดใน LINE แล้ว กรุณากดตกลงเพื่อ Login ใหม่');
-          if (typeof liff !== 'undefined' && !liff.isLoggedIn()) {
-            liff.login();
-          }
+          showLineRequiredModal();
           return;
         }
       }
@@ -5632,7 +5705,7 @@
       try{ 
         userId = await getCurrentUserId(); 
         if(!userId) {
-          alert('⚠️ ไม่พบตัวตน LINE กรุณาเปิดผ่าน LINE App');
+          showLineRequiredModal();
           return;
         }
       }catch(e){ 
@@ -5753,5 +5826,76 @@
     // ===================== END SOS ENHANCED v6.6 =====================
 
 </script>
+
+<style>
+/* v6.9 - Modal บังคับเปิดผ่าน LINE */
+#lineRequiredModalOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000002;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+#lineRequiredModalOverlay.active { display: flex; }
+#lineRequiredModal {
+  background: white;
+  width: 90%;
+  max-width: 360px;
+  border-radius: 20px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  animation: lineModalPop 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes lineModalPop { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity:1; } }
+.line-modal-icon { font-size: 48px; margin-bottom: 12px; }
+.line-modal-title { font-size: 18px; font-weight: bold; color: #d32f2f; margin-bottom: 8px; }
+.line-modal-desc { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 18px; }
+.line-modal-btn-primary {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, #06c755 0%, #05a847 100%);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(6,199,85,0.3);
+}
+.line-modal-btn-secondary {
+  display: block;
+  width: 100%;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.line-modal-link { font-size: 11px; color: #888; margin-top: 10px; word-break: break-all; }
+</style>
+<div id="lineRequiredModalOverlay" onclick="if(event.target===this) closeLineRequiredModal()">
+  <div id="lineRequiredModal">
+    <div class="line-modal-icon">⚠️</div>
+    <div class="line-modal-title">กรุณาเปิดผ่าน LINE เท่านั้น</div>
+    <div class="line-modal-desc">
+      ระบบต้องยืนยันตัวตนด้วย LINE<br>เพื่อป้องกันการแจ้งเหตุปลอม<br><br>
+      <span style="font-size:12px; color:#888;">การขอความช่วยเหลือฉุกเฉินต้องใช้ตัวตน LINE จริง</span>
+    </div>
+    <button class="line-modal-btn-primary" onclick="openInLINEApp()">📲 เปิดใน LINE ทันที</button>
+    <button class="line-modal-btn-secondary" onclick="copyLINEUrl()">🔗 คัดลอกลิงก์ไปเปิดใน LINE</button>
+    <button class="line-modal-btn-secondary" onclick="tryLIFFLoginAgain()" style="background:white;">🔄 ฉันเปิดใน LINE แล้ว - Login ใหม่</button>
+    <div class="line-modal-link" id="lineUrlDisplay"></div>
+  </div>
+</div>
+
 </body>
 </html>
