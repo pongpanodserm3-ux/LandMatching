@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.0
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2175,7 +2175,7 @@
           const profile = await liff.getProfile();
           currentUserLineProfile = profile;
           if (profile && profile.userId) {
-            const dbId = await saveUserLineIdToSupabase(profile.userId);
+            const dbId = await saveUserLineIdToSupabase(profile); // v6.8 ส่ง profile ทั้งก้อนเพื่อให้บันทึก username, picture ลง users
             CURRENT_USER_ID = dbId;
             console.log("✅ ยืนยันตัวตน LINE สำเร็จ:", profile.displayName, "user_id =", dbId);
           }
@@ -2190,33 +2190,106 @@
       }
     }
 
-    async function saveUserLineIdToSupabase(lineId) {
-      if (!lineId) return null;
+        // v6.8 FIX: บันทึกลง table users ตามภาพ - line_id มาจาก LINE, user_id เป็น PK Auto
+    async function saveUserLineIdToSupabase(lineIdOrProfile) {
       try {
-        const { data: existingUser } = await supabaseClient
+        let lineId, profileData = {};
+        if (typeof lineIdOrProfile === 'object' && lineIdOrProfile !== null) {
+          // รับมาเป็น profile object
+          lineId = lineIdOrProfile.userId || lineIdOrProfile.lineId;
+          profileData = {
+            line_id: String(lineId),
+            username: lineIdOrProfile.displayName || null,
+            line_display_name: lineIdOrProfile.displayName || null,
+            line_picture_url: lineIdOrProfile.pictureUrl || null,
+            // ถ้าตาราง users คุณมีคอลัมน์อื่นเช่น display_name, picture_url ให้เพิ่มตรงนี้
+          };
+        } else {
+          lineId = lineIdOrProfile;
+          profileData = { line_id: String(lineId) };
+          if (currentUserLineProfile) {
+            profileData.username = currentUserLineProfile.displayName || null;
+            profileData.line_display_name = currentUserLineProfile.displayName || null;
+            profileData.line_picture_url = currentUserLineProfile.pictureUrl || null;
+          }
+        }
+
+        if (!lineId) return null;
+
+        // 1. เช็คว่ามี line_id นี้ใน table users แล้วหรือยัง
+        const { data: existingUser, error: findErr } = await supabaseClient
           .from('users')
           .select('user_id, line_id')
           .eq('line_id', String(lineId))
           .maybeSingle();
-    
-        if (existingUser) return existingUser.user_id;
-    
-        const { data: newUser, error } = await supabaseClient
+
+        if (findErr) console.warn("find user error", findErr);
+
+        if (existingUser && existingUser.user_id) {
+          // มีแล้ว -> อัปเดตข้อมูลล่าสุด (ถ้ามีคอลัมน์) แล้วใช้ user_id เดิม
+          try {
+            await supabaseClient.from('users').update({
+              // อัปเดตเฉพาะคอลัมน์ที่มีในตารางคุณ ถ้าไม่มีจะข้ามไปเอง
+              ...(profileData.username ? { username: profileData.username } : {}),
+              updated_at: new Date().toISOString()
+            }).eq('user_id', existingUser.user_id);
+          } catch(e) { /* ข้ามถ้าตารางไม่มีคอลัมน์ */ }
+          return existingUser.user_id; // นี่คือ PK Auto ที่คุณต้องการ
+        }
+
+        // 2. ยังไม่มี -> INSERT ใหม่ ให้ Supabase gen user_id (PK Auto) ให้เอง
+        // ตามภาพ: user_id จะถูก create อัตโนมัติ
+        const insertPayload = {
+          line_id: String(lineId),
+          ...(profileData.username ? { username: profileData.username } : {}),
+          // ถ้าตารางมี created_at ให้ Supabase gen เอง ไม่ต้องใส่
+        };
+
+        const { data: newUser, error: insErr } = await supabaseClient
           .from('users')
-          .insert([{ line_id: String(lineId) }])
+          .insert([insertPayload])
           .select('user_id')
-          .maybeSingle();
-    
-        if (error) {
-          console.error("Error saving line_id to Supabase:", error);
+          .single();
+
+        if (insErr) {
+          // กรณี race condition - มีคน insert ไปแล้ว ให้ลองหาอีกครั้ง
+          if (insErr.code === '23505') { // unique violation
+            const { data: retryUser } = await supabaseClient
+              .from('users')
+              .select('user_id')
+              .eq('line_id', String(lineId))
+              .maybeSingle();
+            if (retryUser) return retryUser.user_id;
+          }
+          console.error("Error insert users:", insErr);
           return null;
         }
+
+        console.log("✅ สร้าง user ใหม่ใน table users:", newUser.user_id, "line_id:", lineId);
         return newUser ? newUser.user_id : null;
+
       } catch (e) {
         console.error("Exception in saveUserLineIdToSupabase:", e);
         return null;
       }
     }
+
+    // v6.8 Helper: การันตีว่าได้ user_id ที่ตรงกับ table users (PK Auto)
+    async function getOrCreateUserIdFromLINE() {
+      if (!currentUserLineProfile || !currentUserLineProfile.userId) {
+        console.warn("ไม่มี LINE profile");
+        return null;
+      }
+      const userIdFromUsersTable = await saveUserLineIdToSupabase(currentUserLineProfile);
+      if (userIdFromUsersTable) {
+        CURRENT_USER_ID = userIdFromUsersTable;
+        localStorage.setItem('line_user_id', currentUserLineProfile.userId);
+        localStorage.setItem('app_user_id', String(userIdFromUsersTable));
+      }
+      return userIdFromUsersTable;
+    }
+
+
     
     async function ensureUserExists(userId) {
       if (!userId) userId = 1;
@@ -2256,7 +2329,7 @@
     async function getCurrentUserId() {
       // v6.7 FIX: ต้องมี LINE profile จริงเท่านั้น
       if (currentUserLineProfile && currentUserLineProfile.userId) {
-        const dbId = await saveUserLineIdToSupabase(currentUserLineProfile.userId);
+        const dbId = await saveUserLineIdToSupabase(currentUserLineProfile); // v6.8 ใช้ profile เต็ม
         if (dbId) {
           CURRENT_USER_ID = dbId;
           return dbId;
