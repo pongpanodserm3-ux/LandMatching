@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v7.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2246,12 +2246,25 @@
         }
 
         // 2. ยังไม่มี -> INSERT ใหม่ ให้ Supabase gen user_id (PK Auto) ให้เอง
-        // ตามภาพ: user_id จะถูก create อัตโนมัติ
+        // v6.11 FIX: ตาราง users มี email NOT NULL -> ต้องใส่ email ปลอมจาก line_id
+        const fakeEmail = `${String(lineId).toLowerCase()}@line.local`;
         const insertPayload = {
           line_id: String(lineId),
-          ...(profileData.username ? { username: profileData.username } : {}),
-          // ถ้าตารางมี created_at ให้ Supabase gen เอง ไม่ต้องใส่
+          email: fakeEmail, // FIX: ใส่ email เพื่อผ่าน NOT NULL constraint
+          username: profileData.username || 'LINE User',
+          display_name: profileData.username || null,
+          // ถ้าตารางคุณมีคอลัมน์อื่นที่เป็น NOT NULL ให้เพิ่ม default ตรงนี้
+          // password: null, // ถ้ามีแต่ไม่ใช้
+          created_at: new Date().toISOString(),
+          // ถ้าตารางมีคอลัมน์ line_display_name, line_picture_url ใส่ด้วย
+          ...(profileData.line_display_name ? { line_display_name: profileData.line_display_name } : {}),
+          ...(profileData.line_picture_url ? { line_picture_url: profileData.line_picture_url } : {}),
+          ...(profileData.line_picture_url ? { picture_url: profileData.line_picture_url } : {}),
+          ...(profileData.line_picture_url ? { avatar_url: profileData.line_picture_url } : {}),
         };
+        // ลบ key ที่เป็น undefined ออกเพื่อไม่ให้ Supabase งง
+        Object.keys(insertPayload).forEach(k => { if(insertPayload[k]===undefined) delete insertPayload[k]; });
+
 
         const { data: newUser, error: insErr } = await supabaseClient
           .from('users')
@@ -2461,6 +2474,10 @@ function tryLIFFLoginAgain(){
       }
       // ถ้า CURRENT_USER_ID มีอยู่แล้ว (login แล้ว) ให้ใช้เลย
       if (CURRENT_USER_ID) {
+        // v6.11: ถ้า CURRENT_USER_ID เป็นตัวเลขแล้ว ใช้เลย ไม่ต้องเช็ค DB ซ้ำ
+        if(typeof CURRENT_USER_ID === 'number' || !isNaN(parseInt(CURRENT_USER_ID))) {
+          return CURRENT_USER_ID;
+        }
         return await ensureUserExists(CURRENT_USER_ID);
       }
       // ไม่มีตัวตนจริง -> return null เพื่อให้ submitSOS บล็อก
