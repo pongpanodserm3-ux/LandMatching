@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v5.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5058,11 +5058,20 @@
     }
 
     function filterSOS(type) {
+      // FIX v4.11: กดฟิลเตอร์ต้องไม่มีผลกับตัวเลขปุ่มอื่น - ตัวเลขมาจากฐานทั้งหมดเสมอ
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
       if (btn) btn.classList.add('active');
-      if (type === 'all') renderSOSList(sosRequestsCache);
-      else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
+      
+      // เก็บประเภทที่เลือกไว้เพื่อใช้ตอน render ใหม่
+      window._currentSOSFilter = type;
+      
+      if (type === 'all') {
+        renderSOSList(sosRequestsCache);
+      } else {
+        const filtered = sosRequestsCache.filter(r => (r.need_types||[]).includes(type));
+        renderSOSList(filtered);
+      }
     }
 
     function switchToHelperMode() {
@@ -5160,8 +5169,10 @@
     }
 
     function renderSOSList(list) {
-      const counts = {all:list.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
-      list.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
+      // FIX v4.11: นับจำนวนจากฐานทั้งหมด (sosRequestsCache) เสมอ ไม่ใช่จาก list ที่กรองแล้ว
+      const sourceForCount = (window.sosRequestsCache && window.sosRequestsCache.length > 0) ? window.sosRequestsCache : list;
+      const counts = {all: sourceForCount.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
+      sourceForCount.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
       Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
 
       const sosCardsHtml = list.map(item => {
@@ -5223,11 +5234,20 @@
     }
 
     function filterSOS(type) {
+      // FIX v4.11: กดฟิลเตอร์ต้องไม่มีผลกับตัวเลขปุ่มอื่น - ตัวเลขมาจากฐานทั้งหมดเสมอ
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
       if (btn) btn.classList.add('active');
-      if (type === 'all') renderSOSList(sosRequestsCache);
-      else renderSOSList(sosRequestsCache.filter(r => (r.need_types||[]).includes(type)));
+      
+      // เก็บประเภทที่เลือกไว้เพื่อใช้ตอน render ใหม่
+      window._currentSOSFilter = type;
+      
+      if (type === 'all') {
+        renderSOSList(sosRequestsCache);
+      } else {
+        const filtered = sosRequestsCache.filter(r => (r.need_types||[]).includes(type));
+        renderSOSList(filtered);
+      }
     }
 
     function switchToHelperMode() {
