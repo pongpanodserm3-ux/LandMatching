@@ -3625,7 +3625,7 @@
         if (recentCases.length<5) recentCases.push(`${loc} [${(r.need_types||[]).join(',')}] ${r.people_count||1}คน`);
       });
       const topAreas = Object.entries(areaMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}เคส)`).join(', ');
-      return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส , วิกฤต ${counts.critical}. แยกประเภท: อพยพ ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power}, ที่พัก ${counts.shelter}. พื้นที่หนาแน่น: ${topAreas||'-'}. เคสล่าสุด: ${recentCases.join(' | ')}`;
+      return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส , วิกฤต ${counts.critical}. แยกประเภท: อพยพ ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power} }`;
     }
 
     function generateFloodAnalysisAndAdvice(focusArea='all', adviseType='all') {
