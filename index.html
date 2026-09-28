@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.0
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v8.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5381,68 +5381,10 @@ function tryLIFFLoginAgain(){
     };
 
 
-function submitSOS() {
-      const phone = document.getElementById('sosPhone').value.trim();
-      const locText = document.getElementById('sosLocationText').value.trim();
-      const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
-      const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
 
-      if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
-      if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
-      if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
-      if (selectedSOSTags.has('evacuate')) {
-        const evacDest = document.getElementById('sosEvacDestination')?.value.trim();
-        if(!evacDest){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
-      }
+    // v7.7 FIX: ลบ submitSOS ตัวแรกที่ซ้ำซ้อน ใช้ window.submitSOS ตัวเดียวด้านล่างแทน เพื่อแก้ SyntaxError await
+    
 
-      const payload = {
-        need_types: Array.from(selectedSOSTags),
-        location_text: locText,
-        lat: lat ? parseFloat(lat) : null,
-        lng: lng ? parseFloat(lng) : null,
-        contact_phone: phone,
-        people_count: document.getElementById('sosPeople').value ? parseInt(document.getElementById('sosPeople').value) : 1,
-        people_detail: {
-          adult: document.getElementById('sosAdult').value,
-          child: document.getElementById('sosChild').value,
-          elder: document.getElementById('sosElder').value
-        },
-        medicine_detail: document.getElementById('medicineDetail')?.value || '',
-        // v7.7 evac fields
-        evac_destination_text: document.getElementById('sosEvacDestination')?.value || '',
-        evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
-        evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
-        evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
-        origin_text: document.getElementById('sosLocationText')?.value || '',
-
-        urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
-        status: 'waiting'
-      };
-
-      // บันทึกจริงลง Supabase + fallback Demo
-      try {
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-          const { data, error } = await supabaseClient
-            .from('flood_help_requests')
-            .insert([payload])
-            .select();
-          if (error) throw error;
-          console.log('บันทึก Supabase สำเร็จ', data);
-          alert('✅ ส่งคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันทีบนแผนที่');
-        } else {
-          throw new Error('No supabaseClient');
-        }
-      } catch (e) {
-        console.warn('ใช้โหมด Demo เพราะ:', e);
-        sosRequestsCache.unshift({...payload, id: Date.now(), created_at: new Date().toISOString()});
-        renderSOSList(sosRequestsCache);
-        alert('✅ (Demo) ส่งคำขอเรียบร้อย - แสดงบนแผนที่ทันที');
-      }
-
-      closeSOSModal();
-      selectedSOSTags.clear();
-      document.querySelectorAll('.sos-tag-btn.selected').forEach(b => b.classList.remove('selected'));
-    }
 
     async function loadSOSRequests() {
       // 1. โหลดจาก Supabase จริง
@@ -5891,12 +5833,12 @@ function submitSOS() {
           elder: document.getElementById('sosElder').value
         },
         medicine_detail: document.getElementById('medicineDetail')?.value || '',
-        // v7.7 evac fields
+        // v7.7 evac fields - จุดรับ/จุดส่ง
         evac_destination_text: document.getElementById('sosEvacDestination')?.value || '',
         evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
         evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
         evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
-        origin_text: document.getElementById('sosLocationText')?.value || '',
+        origin_text: document.getElementById('sosLocationText')?.value || ''
 
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting',
