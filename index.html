@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v6.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1124,7 +1124,7 @@
     <div class="tab-content" id="tab-content-sos">
       <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
         <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 0 10px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); height: 32px; overflow:hidden; white-space: nowrap;">
-          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานน้ำท่วม อัปเดต 15:30 น. 27 ก.ย. 68  </div>
+          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานน้ำท่วม <span id="floodCenterLiveUpdate">อัปเดต --:-- น. --</span></div>
           <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor:pointer; margin-left:6px; flex-shrink:0; white-space:nowrap; height:20px; line-height:1;">📍 ใกล้ฉัน</button>
         </div>
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -2691,6 +2691,11 @@
       const resultsContainer = document.getElementById('resultsContainer');
       const listContainer = document.getElementById('list-container');
       const noResults = document.getElementById('no-results');
+      // FIX v6.2: แผงฟิลเตอร์ ยานพาหนะ อาหาร ยา เสื้อผ้า พลังงาน ใช้เฉพาะแท็บวิกฤตน้ำท่วมเท่านั้น
+      const sosFilterContainer = document.getElementById('sosFilterInListContainer');
+      if (sosFilterContainer) {
+        sosFilterContainer.style.display = (tabId === 'sos') ? 'block' : 'none';
+      }
       if (tabId === 'sos') {
         if (resultsContainer) { resultsContainer.innerHTML = ''; resultsContainer.style.display = 'none'; }
         if (noResults) noResults.style.display = 'none';
@@ -5206,7 +5211,7 @@
 
       const sosCardsHtml = list.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : '🔵';
-        const statusText = item.status === 'waiting' ? 'ต้องการความช่วยเหลือด่วน' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
+        const statusText = item.status === 'waiting' ? '' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : 'จุดแจก/พักพิง';
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : '#eff6ff';
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : '#bfdbfe';
         const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
@@ -5217,7 +5222,7 @@
           <div style="flex:1;">
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
-              <span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>
+              ${statusText ? `<span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>` : ``}
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
@@ -5277,6 +5282,27 @@
     }
 
     // ===================== END SOS FINAL =====================
+
+
+    // ===== FIX คำสั่งที่ 1: อัปเดตวันที่และเวลาเป็นปัจจุบันแบบ Real-time =====
+    function updateFloodCenterTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+      const day = now.getDate();
+      const months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+      const monthStr = months[now.getMonth()];
+      const buddhistYear = now.getFullYear() + 543;
+      const yearShort = String(buddhistYear).slice(-2);
+      const el = document.getElementById('floodCenterLiveUpdate');
+      if (el) {
+        el.textContent = `อัปเดต ${timeStr} น. ${day} ${monthStr} ${yearShort}`;
+      }
+    }
+    // เรียกทันทีและอัปเดตทุก 60 วินาที
+    updateFloodCenterTime();
+    setInterval(updateFloodCenterTime, 60000);
+    // ===================== END FIX คำสั่งที่ 1 =====================
+
 
 </script>
 </body>
