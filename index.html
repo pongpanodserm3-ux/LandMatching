@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 9.0 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.0 FIXED - 4 issues (adding warning flood / completed hide map, no delete, no DB full, auto-expire 3 days)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1113,6 +1113,13 @@
     .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
     .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
+
+
+    /* === HYBRID v11 - Warning System + Flood Mode Toggle === */
+    .hidden { display: none !important; }
+    .filter-btn { padding:8px 12px; border-radius:20px; border:1px solid #ddd; background:white; cursor:pointer; font-size:13px; font-weight:bold; flex:1; }
+    .filter-btn.active { background: linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white; border-color:#2b5893; }
+    .hybrid-sub-tabs { display:flex; gap:6px; margin:8px 10px; }
 
 </style> 
     
@@ -6462,6 +6469,136 @@ function tryLIFFLoginAgain(){
       }
     };
     // ===================== END SOS ENHANCED v6.6 =====================
+
+
+
+// ===================== HYBRID v11 - Flood Warning + Flood Mode Toggle =====================
+var dangerLayer = null;
+let IS_FLOOD_MODE = true;
+
+function initDangerLayer(){
+  if(typeof L !== 'undefined' && typeof map !== 'undefined'){
+    if(!dangerLayer){
+      dangerLayer = L.layerGroup().addTo(map);
+    }
+  }
+}
+
+function switchSOSSubView(mode){
+  document.querySelectorAll('.hybrid-sub-tabs .filter-btn').forEach(b=>b.classList.remove('active'));
+  if(!dangerLayer) initDangerLayer();
+  if(mode==='requests'){
+    document.getElementById('btnViewSOS')?.classList.add('active');
+    if(typeof sosLayer !== 'undefined' && map) { sosLayer.addTo(map); }
+    if(dangerLayer && map) map.removeLayer(dangerLayer);
+    if(typeof renderSOSList === 'function' && window.sosRequestsCache) renderSOSList(window.sosRequestsCache);
+  }
+  if(mode==='warnings'){
+    document.getElementById('btnViewWarning')?.classList.add('active');
+    if(dangerLayer && map) dangerLayer.addTo(map);
+    if(typeof sosLayer !== 'undefined' && map) map.removeLayer(sosLayer);
+    loadFloodWarnings();
+  }
+  if(mode==='all'){
+    document.getElementById('btnViewAll')?.classList.add('active');
+    if(typeof sosLayer !== 'undefined' && map) sosLayer.addTo(map);
+    if(dangerLayer && map) dangerLayer.addTo(map);
+    loadFloodWarnings();
+  }
+}
+
+async function loadFloodWarnings(){
+  initDangerLayer();
+  if(!dangerLayer) return;
+  try{
+    if(typeof supabaseClient === 'undefined') return;
+    const {data, error} = await supabaseClient.from('flood_warnings').select('*').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false});
+    if(error){ console.warn('load warnings error', error); return; }
+    dangerLayer.clearLayers();
+    (data||[]).forEach(w=>{
+      const level = w.risk_level || 'low';
+      let col = '#22c55e'; // safe
+      if(level==='low') col = '#f59e0b';
+      if(level==='medium') col = '#f97316';
+      if(level==='critical') col = '#ef4444';
+      const lat = parseFloat(w.lat || w.latitude);
+      const lng = parseFloat(w.lng || w.longitude);
+      if(isNaN(lat)||isNaN(lng)) return;
+      const circle = L.circle([lat, lng], {
+        radius: w.radius_m || 300,
+        color: col,
+        fillColor: col,
+        fillOpacity: 0.25,
+        weight: 2
+      }).addTo(dangerLayer);
+      const passage = w.passage_status==='blocked'?'🚫 ปิดถนน':w.passage_status==='high_truck_only'?'🚚 รถยกสูงเท่านั้น':'🚗 รถเล็กผ่านได้';
+      circle.bindPopup(`
+        <div style="font-size:12px; line-height:1.4; min-width:180px;">
+          <b style="color:${col};">${level==='critical'?'🔴 อันตรายห้ามเข้า':level==='medium'?'🟠 เสี่ยงสูง':level==='low'?'🟡 ไม่ควรเข้า':'🟢 เฝ้าระวัง'}<br>${w.title||'เตือนภัยน้ำท่วม'}</b><br>
+          🌊 น้ำ ~${w.water_level_cm||0} ซม.<br>
+          ${passage}<br>
+          <span style="color:#555;">${w.description||''}</span><br>
+          <small style="color:#888;">หมดอายุ: ${w.expires_at?new Date(w.expires_at).toLocaleString('th-TH'):''}</small>
+        </div>
+      `);
+    });
+  }catch(e){ console.warn('loadFloodWarnings failed', e); }
+}
+
+async function checkFloodMode(){
+  try{
+    if(typeof supabaseClient === 'undefined'){ IS_FLOOD_MODE = true; return; }
+    const {data} = await supabaseClient.from('app_settings').select('value').eq('key','is_flood_mode').single();
+    IS_FLOOD_MODE = data?.value ?? true;
+    const sosTabBtn = document.querySelector('[data-tab="flood"]') || document.getElementById('tab-btn-sos') || document.querySelector('.tabs-nav button:nth-child(1)');
+    if(!IS_FLOOD_MODE){
+      // ซ่อนแท็บวิกฤตน้ำท่วม
+      const sosTab = document.getElementById('tab-btn-sos');
+      if(sosTab) sosTab.classList.add('hidden');
+      const tabContent = document.getElementById('tab-content-sos');
+      if(tabContent) tabContent.classList.add('hidden');
+      // ลบ layer ออกจากแผนที่
+      if(typeof sosLayer !== 'undefined' && map && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
+      if(dangerLayer && map && map.hasLayer(dangerLayer)) map.removeLayer(dangerLayer);
+      console.log('Flood mode OFF - ซ่อนแท็บน้ำท่วม');
+    } else {
+      document.getElementById('tab-btn-sos')?.classList.remove('hidden');
+      document.getElementById('tab-content-sos')?.classList.remove('hidden');
+      initDangerLayer();
+      if(typeof loadSOSRequests === 'function') loadSOSRequests();
+      loadFloodWarnings();
+      // auto refresh warnings ทุก 1 นาที
+      setInterval(loadFloodWarnings, 60000);
+    }
+  }catch(e){ console.warn('checkFloodMode error', e); IS_FLOOD_MODE = true; }
+}
+
+// Admin: คลิกขวาที่แผนที่เพื่อเพิ่มจุดเตือนภัย (เฉพาะตอนเปิดโหมดน้ำท่วม)
+function enableAdminWarningAdd(){
+  if(typeof map === 'undefined') return;
+  map.on('contextmenu', async (e)=>{
+    if(!IS_FLOOD_MODE) return;
+    if(!confirm('เพิ่มจุดเตือนภัยตรงนี้?\nLat: '+e.latlng.lat.toFixed(5))) return;
+    const title = prompt('หัวข้อเตือนภัย','น้ำล้นตลิ่ง');
+    const level = prompt('ระดับ: safe / low / medium / critical','critical');
+    const cm = prompt('น้ำกี่ซม.?','80');
+    const passage = prompt('สัญจร: car_passable / high_truck_only / blocked','blocked');
+    if(typeof supabaseClient === 'undefined') return;
+    const {error} = await supabaseClient.from('flood_warnings').insert({
+      title: title, lat: e.latlng.lat, lng: e.latlng.lng, risk_level: level,
+      water_level_cm: parseInt(cm)||0, passage_status: passage, radius_m: 300,
+      description: 'เพิ่มโดยแอดมิน', is_active: true
+    });
+    if(error) alert('เพิ่มไม่สำเร็จ: '+error.message);
+    else { alert('✅ เพิ่มเตือนภัยแล้ว'); loadFloodWarnings(); }
+  });
+}
+
+// เรียกตอนโหลดเสร็จ
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(()=>{ initDangerLayer(); checkFloodMode(); enableAdminWarningAdd(); }, 1500);
+});
+// ===================== END HYBRID v11 =====================
 
 </script>
 
