@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.1 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.2 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1154,18 +1154,11 @@
         </div>
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
           <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
-          <button class="action-show-list-btn" style="flex: 1; background: #ffffff; color: #4a83cc; border: 2px solid #4a83cc; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="switchToHelperMode()">🤝 ฉันจะไปช่วย</button>
+          <button class="action-show-list-btn" style="flex: 1; background: #ffffff; color: #d97706; border: 2px solid #f59e0b; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="switchSOSSubView('warnings')">🌊 เตือนภัย / ระดับน้ำ</button>
         </div>
         <div style="display: flex; gap: 6px; font-size: 11px; font-weight: bold; align-items:center; padding: 0 2px; margin-bottom:6px;">
           <span>🔴 ด่วน</span><span>🟢 กำลังช่วย</span><span>🔵 จุดแจก/พักพิง</span>
           <span id="sosMapToggleBtn" style="margin-left:auto; color: #4a83cc; cursor:pointer; background:#eef6ff; border:1px solid #cbd5e1; padding:4px 10px; border-radius:20px;" onclick="toggleSOSMapSize()">🗺️ 
-<!-- HYBRID v11.1 FIX -->
-<div id="hybridSubTabs" style="display:flex; gap:6px; margin:10px; position:relative; z-index:999;">
-  <button id="btnViewSOS" onclick="switchSOSSubView('requests')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #4a83cc; background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white; font-weight:bold; cursor:pointer;">🚨 ขอความช่วยเหลือ</button>
-  <button id="btnViewWarning" onclick="switchSOSSubView('warnings')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #f59e0b; background:white; color:#d97706; font-weight:bold; cursor:pointer;">🌊 เตือนภัย / ระดับน้ำ</button>
-  <button id="btnViewAll" onclick="switchSOSSubView('all')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #22c55e; background:white; color:#16a34a; font-weight:bold; cursor:pointer;">📍 ดูทั้งหมด</button>
-</div>
-
 ขยายแผนที่ลงล่าง ⬇️</span>
         </div>
       </div>
@@ -6477,10 +6470,10 @@ var dangerLayer=null; let IS_FLOOD_MODE=true;
 function initDangerLayer(){ if(typeof L!=='undefined' && typeof map!=='undefined' && !dangerLayer){ dangerLayer=L.layerGroup().addTo(map); } }
 function switchSOSSubView(mode){
   initDangerLayer();
-  document.querySelectorAll('#hybridSubTabs button').forEach(b=>{ b.style.background='white'; b.style.color='#333'; });
-  if(mode==='requests'){ document.getElementById('btnViewSOS').style.background='linear-gradient(135deg, #4a83cc 0%, #2b5893 100%)'; document.getElementById('btnViewSOS').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map.hasLayer(dangerLayer))map.removeLayer(dangerLayer); }
-  if(mode==='warnings'){ document.getElementById('btnViewWarning').style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; document.getElementById('btnViewWarning').style.color='white'; if(dangerLayer&&map)map.addLayer(dangerLayer); if(typeof sosLayer!=='undefined'&&map.hasLayer(sosLayer))map.removeLayer(sosLayer); loadFloodWarnings(); }
-  if(mode==='all'){ document.getElementById('btnViewAll').style.background='linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'; document.getElementById('btnViewAll').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map)map.addLayer(dangerLayer); loadFloodWarnings(); }
+  try{ document.querySelectorAll('#hybridSubTabs button').forEach(b=>{ b.style.background='white'; b.style.color='#333'; }); }catch(e){}
+  if(mode==='requests'){ const _e=document.getElementById('btnViewSOS'); if(_e) _e.style.background='linear-gradient(135deg, #4a83cc 0%, #2b5893 100%)'; if(document.getElementById('btnViewSOS')) document.getElementById('btnViewSOS').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map.hasLayer(dangerLayer))map.removeLayer(dangerLayer); }
+  if(mode==='warnings'){ const _e2=document.getElementById('btnViewWarning'); if(_e2) _e2.style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; if(document.getElementById('btnViewWarning')) document.getElementById('btnViewWarning').style.color='white'; if(dangerLayer&&map)map.addLayer(dangerLayer); if(typeof sosLayer!=='undefined'&&map.hasLayer(sosLayer))map.removeLayer(sosLayer); loadFloodWarnings(); }
+  if(mode==='all'){ const _e3=document.getElementById('btnViewAll'); if(_e3) _e3.style.background='linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'; if(document.getElementById('btnViewAll')) document.getElementById('btnViewAll').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map)map.addLayer(dangerLayer); loadFloodWarnings(); }
 }
 async function loadFloodWarnings(){ initDangerLayer(); if(!dangerLayer||typeof supabaseClient==='undefined')return; const {data}=await supabaseClient.from('flood_warnings').select('*').eq('is_active',true).gt('expires_at', new Date().toISOString()); dangerLayer.clearLayers(); (data||[]).forEach(w=>{ let col=w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':'#f59e0b'; let lat=parseFloat(w.lat||w.latitude); let lng=parseFloat(w.lng||w.longitude); L.circle([lat,lng],{radius:w.radius_m||300,color:col,fillColor:col,fillOpacity:0.3,weight:3}).addTo(dangerLayer).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`); }); }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ initDangerLayer(); loadFloodWarnings(); },2000); });
