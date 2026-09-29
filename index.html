@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.4 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.5 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1122,51 +1122,7 @@
   <button class="voice-btn" id="toggleBtn" onclick="toggleVoiceSession()">🎙️คุยกับAI</button>
 
   <div id="ai-section">
-    <div class="ai-controls-row">
-      <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-      <div class="header-center-logos">
-        <!-- ย้ายสถานะ AI voice มาซ้ายหุ่นยนต์ แบบสั้น -->
-        <div id="statusText" class="ai-status-compact">💤 รอ</div>
-        <div class="ai-avatar" id="avatarCircle">🤖</div>
-        <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
-      </div>
-      <div style="width: 80px;"></div>
-    </div>
-
-    <!-- แถบระบบนำทาง 5 แท็บ - SOS เป็นแท็บแรกสุด (เลื่อนซ้ายขวาได้) -->
-    <div class="tabs-nav" id="mainTabsNav">
-      <button class="tab-btn emergency-tab active" id="tab-btn-sos" onclick="switchTab('sos')">🚨 วิกฤตน้ำท่วม</button>
-      <button class="tab-btn" id="tab-btn-realestate" onclick="switchTab('realestate')">🏡 อสังหาฯ</button>
-      <button class="tab-btn" id="tab-btn-decor" onclick="switchTab('decor')">🛋️ สินค้าทั่วไป</button>
-      <button class="tab-btn" id="tab-btn-lifestyle" onclick="switchTab('lifestyle')">☕ ไลฟ์สไตล์&เที่ยว</button>
-      <button class="tab-btn" id="tab-btn-others" onclick="switchTab('others')">🛠️ ช่าง-บริการ</button>
-    </div>
-    <div id="crisisToggle" style="display:none; text-align:center; margin-bottom:8px;">
-      <label style="font-size:12px; background: #fff3f3; padding: 4px 10px; border-radius: 12px; border: 1px solid #ff3b30;"><input type="checkbox" id="crisisModeCheckbox" checked onchange="toggleCrisisMode(this.checked)"> เปิดโหมด SOS (แตะโลโก้ 5 ครั้งเพื่อเปิด/ปิด)</label>
-    </div>
-
-    <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
-    <div class="tab-content" id="tab-content-sos">
-      <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
-        <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 0 10px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); height: 32px; overflow:hidden; white-space: nowrap;">
-          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานน้ำท่วม <span id="floodCenterLiveUpdate">อัปเดต --:-- น. --</span></div>
-          <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor:pointer; margin-left:6px; flex-shrink:0; white-space:nowrap; height:20px; line-height:1;">📍 ใกล้ฉัน</button>
-        </div>
-        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-          <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
-          <button id="btnWarningTop" onclick="toggleWarningView()" style="flex:1; background:#fff; border:2px solid #f59e0b; color:#d97706; padding:14px; border-radius:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-      🌊 เตือนภัย/ระดับน้ำ
-    </button>
-        </div>
-        <div style="display: flex; gap: 6px; font-size: 11px; font-weight: bold; align-items:center; padding: 0 2px; margin-bottom:6px;">
-          <span>🔴 ด่วน</span><span>🟢 กำลังช่วย</span><span>🔵 จุดแจก/พักพิง</span>
-          <span id="sosMapToggleBtn" style="margin-left:auto; color: #4a83cc; cursor:pointer; background:#eef6ff; border:1px solid #cbd5e1; padding:4px 10px; border-radius:20px;" onclick="toggleSOSMapSize()">🗺️ 
-
-<div id="hybridSubTabs" style="display:flex; gap:6px; margin:10px; position:relative; z-index:999;">
-  <button id="btnViewSOS" onclick="switchSOSSubView('requests')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #4a83cc; background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white; font-weight:bold; cursor:pointer;">🚨 ขอความช่วยเหลือ</button>
-  <button id="btnViewWarning" onclick="switchSOSSubView('warnings')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #f59e0b; background:white; color:#d97706; font-weight:bold; cursor:pointer;">🌊 เตือนภัย / ระดับน้ำ</button>
-  <button id="btnViewAll" onclick="switchSOSSubView('all')" style="flex:1; padding:12px; border-radius:12px; border:2px solid #22c55e; background:white; color:#16a34a; font-weight:bold; cursor:pointer;">📍 ดูทั้งหมด</button>
-</div>
+    
 
 ขยายแผนที่ลงล่าง ⬇️</span>
         </div>
@@ -6487,78 +6443,6 @@ function switchSOSSubView(mode){
 async function loadFloodWarnings(){ initDangerLayer(); if(!dangerLayer||typeof supabaseClient==='undefined')return; const {data}=await supabaseClient.from('flood_warnings').select('*').eq('is_active',true).gt('expires_at', new Date().toISOString()); dangerLayer.clearLayers(); (data||[]).forEach(w=>{ let col=w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':'#f59e0b'; let lat=parseFloat(w.lat||w.latitude); let lng=parseFloat(w.lng||w.longitude); L.circle([lat,lng],{radius:w.radius_m||300,color:col,fillColor:col,fillOpacity:0.3,weight:3}).addTo(dangerLayer).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`); }); }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ initDangerLayer(); loadFloodWarnings(); },2000); });
 
-
-
-// ===================== v11.4 CLEAN - ปุ่มเตือนภัยแทนที่ ฉันจะไปช่วย - NO DUPLICATE =====================
-(function(){
-  if(window.__hybridWarningInstalled) return;
-  window.__hybridWarningInstalled = true;
-  window.dangerLayer = window.dangerLayer || null;
-  window.currentViewMode = window.currentViewMode || 'requests';
-
-  window.initDangerLayer = function(){
-    if(typeof L !== 'undefined' && typeof map !== 'undefined' && !window.dangerLayer){
-      window.dangerLayer = L.layerGroup().addTo(map);
-    }
-  };
-
-  window.toggleWarningView = function(){
-    window.initDangerLayer();
-    var btn = document.getElementById('btnWarningTop');
-    if(window.currentViewMode === 'requests'){
-      window.currentViewMode = 'warnings';
-      if(btn){ btn.innerHTML = '📍 กลับไปดูขอความช่วยเหลือ'; btn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; btn.style.color = 'white'; btn.style.borderColor = '#f59e0b'; }
-      if(window.dangerLayer && typeof map !== 'undefined') map.addLayer(window.dangerLayer);
-      if(typeof sosLayer !== 'undefined' && typeof map !== 'undefined' && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
-      window.loadFloodWarnings();
-    } else {
-      window.currentViewMode = 'requests';
-      if(btn){ btn.innerHTML = '🌊 เตือนภัย/ระดับน้ำ'; btn.style.background = 'white'; btn.style.color = '#d97706'; btn.style.borderColor = '#f59e0b'; }
-      if(typeof sosLayer !== 'undefined' && typeof map !== 'undefined') map.addLayer(sosLayer);
-      if(window.dangerLayer && typeof map !== 'undefined' && map.hasLayer(window.dangerLayer)) map.removeLayer(window.dangerLayer);
-      var wl = document.getElementById('warningListContainer'); if(wl) wl.style.display = 'none';
-      // show SOS chips
-      document.querySelectorAll('div').forEach(function(d){ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) d.style.display = 'flex'; });
-      if(typeof loadSOSRequests === 'function') loadSOSRequests();
-    }
-  };
-
-  window.loadFloodWarnings = async function(){
-    window.initDangerLayer();
-    if(!window.dangerLayer || typeof supabaseClient === 'undefined') return;
-    try{
-      var res = await supabaseClient.from('flood_warnings').select('*').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false});
-      var data = res.data;
-      window.dangerLayer.clearLayers();
-      var html = '';
-      (data||[]).forEach(function(w){
-        var col = w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':w.risk_level==='low'?'#f59e0b':'#22c55e';
-        var label = w.risk_level==='critical'?'🔴 อันตรายห้ามเข้า':w.risk_level==='medium'?'🟠 เสี่ยงสูง':w.risk_level==='low'?'🟡 ไม่ควรเข้า':'🟢 เฝ้าระวัง';
-        var lat = parseFloat(w.lat || w.latitude); var lng = parseFloat(w.lng || w.longitude);
-        if(!isNaN(lat) && !isNaN(lng)){
-          L.circle([lat,lng],{radius:w.radius_m||300, color:col, fillColor:col, fillOpacity:0.3, weight:3}).addTo(window.dangerLayer)
-            .bindPopup('<div style="font-size:13px;"><b style="color:'+col+';">'+label+'<br>'+(w.title||'')+'</b><br>🌊 '+(w.water_level_cm||0)+' ซม.<br>🚗 '+w.passage_status+'<br><small>'+(w.description||'')+'</small></div>');
-        }
-        html += '<div style="background:white; border-left:4px solid '+col+'; border-radius:12px; padding:10px 12px; margin:8px 10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);"><b>'+label+' '+(w.title||'')+'</b><br><span style="font-size:12px;">🌊 '+(w.water_level_cm||0)+' ซม. | '+w.passage_status+' | '+ (w.radius_m||300)+'ม.</span><br><span style="font-size:11px; color:#888;">'+(w.description||'')+'</span></div>';
-      });
-      var wl = document.getElementById('warningListContainer');
-      if(!wl){
-        var mapEl = document.getElementById('map');
-        if(mapEl){ wl = document.createElement('div'); wl.id='warningListContainer'; wl.style.maxHeight='50vh'; wl.style.overflowY='auto'; wl.style.display='none'; mapEl.parentNode.insertBefore(wl, mapEl.nextSibling); }
-      }
-      if(wl){ wl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#888;">ไม่มีเตือนภัยในขณะนี้</div>'; if(window.currentViewMode==='warnings') wl.style.display='block'; }
-      // hide SOS chips when in warning
-      if(window.currentViewMode==='warnings'){
-        document.querySelectorAll('div').forEach(function(d){ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) d.style.display='none'; });
-      }
-    }catch(e){ console.warn('loadFloodWarnings', e); }
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(function(){ window.initDangerLayer(); window.loadFloodWarnings(); }, 1500);
-  });
-})();
-
 </script>
 
 <style>
@@ -6654,6 +6538,48 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ initDangerL
     <div class="line-modal-link" id="lineUrlDisplay"></div>
   </div>
 </div>
+
+
+<script>
+window.dangerLayer = window.dangerLayer || null;
+window.currentViewMode = window.currentViewMode || 'requests';
+window.initDangerLayer = function(){ if(typeof L!=='undefined' && typeof map!=='undefined' && !window.dangerLayer){ window.dangerLayer = L.layerGroup().addTo(map); } };
+window.toggleWarningView = function(){
+  window.initDangerLayer();
+  var btn=document.getElementById('btnWarningTop');
+  if(window.currentViewMode==='requests'){
+    window.currentViewMode='warnings';
+    if(btn){ btn.innerHTML='📍 กลับไปดูขอความช่วยเหลือ'; btn.style.background='linear-gradient(135deg,#f59e0b 0%,#d97706 100%)'; btn.style.color='white'; }
+    if(window.dangerLayer) map.addLayer(window.dangerLayer);
+    if(typeof sosLayer!=='undefined' && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
+    window.loadFloodWarnings();
+  }else{
+    window.currentViewMode='requests';
+    if(btn){ btn.innerHTML='🌊 เตือนภัย/ระดับน้ำ'; btn.style.background='white'; btn.style.color='#d97706'; }
+    if(typeof sosLayer!=='undefined') map.addLayer(sosLayer);
+    if(window.dangerLayer && map.hasLayer(window.dangerLayer)) map.removeLayer(window.dangerLayer);
+    var wl=document.getElementById('warningListContainer'); if(wl) wl.style.display='none';
+    var chips=document.querySelectorAll('div'); chips.forEach(function(d){ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) d.style.display='flex'; });
+  }
+};
+window.loadFloodWarnings = async function(){
+  window.initDangerLayer();
+  if(!window.dangerLayer || typeof supabaseClient==='undefined') return;
+  var res=await supabaseClient.from('flood_warnings').select('*').eq('is_active',true).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+  var data=res.data; window.dangerLayer.clearLayers(); var html='';
+  (data||[]).forEach(function(w){
+    var col=w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':'#f59e0b';
+    var lat=parseFloat(w.lat||w.latitude); var lng=parseFloat(w.lng||w.longitude);
+    if(!isNaN(lat)&&!isNaN(lng)){ L.circle([lat,lng],{radius:w.radius_m||300,color:col,fillColor:col,fillOpacity:0.3,weight:3}).addTo(window.dangerLayer).bindPopup(w.title+'<br>🌊 '+(w.water_level_cm||0)+' ซม.'); }
+    html+='<div style="background:white; border-left:4px solid '+col+'; border-radius:12px; padding:10px; margin:8px 10px;"><b>'+w.title+'</b><br>🌊 '+(w.water_level_cm||0)+' ซม. | '+w.passage_status+'</div>';
+  });
+  var wl=document.getElementById('warningListContainer');
+  if(!wl){ var mapEl=document.getElementById('map'); if(mapEl){ wl=document.createElement('div'); wl.id='warningListContainer'; wl.style.maxHeight='50vh'; wl.style.overflowY='auto'; wl.style.display='none'; mapEl.parentNode.insertBefore(wl, mapEl.nextSibling); } }
+  if(wl){ wl.innerHTML=html||'<div style="text-align:center; padding:20px; color:#888;">ไม่มีเตือนภัย</div>'; if(window.currentViewMode==='warnings') wl.style.display='block'; }
+  if(window.currentViewMode==='warnings'){ document.querySelectorAll('div').forEach(function(d){ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) d.style.display='none'; }); }
+};
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ window.initDangerLayer(); window.loadFloodWarnings(); },1500); });
+</script>
 
 </body>
 </html>
