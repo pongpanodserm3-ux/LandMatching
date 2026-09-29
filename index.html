@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.6 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.7 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -5910,7 +5910,7 @@ function tryLIFFLoginAgain(){
       try {
         window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
-        sosMarkersLayer = L.layerGroup().addTo(window.sosMap);
+        sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
         window.sosMarkersLayer = sosMarkersLayer;
         sosMap = window.sosMap;
       } catch(e){ console.warn('initSOSMap failed', e); }
@@ -5921,7 +5921,7 @@ function tryLIFFLoginAgain(){
       if (!window.sosMap) initSOSMap();
       if (!window.sosMap) return;
       if (!sosMarkersLayer) {
-        sosMarkersLayer = window.sosMarkersLayer || L.layerGroup().addTo(window.sosMap);
+        sosMarkersLayer = window.sosMarkersLayer || L.featureGroup().addTo(window.sosMap);
         window.sosMarkersLayer = sosMarkersLayer;
       }
       sosMarkersLayer.clearLayers();
@@ -6478,7 +6478,7 @@ window.initDangerLayer = function(){
       return window.dangerLayer;
     }
     if(!window.dangerLayer){
-      window.dangerLayer = L.layerGroup();
+      window.dangerLayer = L.featureGroup();
       console.log('[WARNING] สร้าง dangerLayer (เปล่า) แล้ว');
     }
     if(typeof map!=='undefined' && map && window.dangerLayer){
@@ -6497,7 +6497,7 @@ window.toggleWarningView = function(){
   let layer = window.initDangerLayer();
   if(!layer && typeof L!=='undefined'){
     console.log('layer ยัง null, force สร้างใหม่');
-    window.dangerLayer = L.layerGroup();
+    window.dangerLayer = L.featureGroup();
     layer = window.dangerLayer;
     dangerLayer = layer;
   }
@@ -6528,7 +6528,7 @@ window.initDangerLayer = function(){
     if(typeof L==='undefined') return window.dangerLayer;
     let targetMap = window.sosMap || (typeof sosMap!=='undefined' ? sosMap : null) || (typeof map!=='undefined' ? map : null);
     if(!window.dangerLayer){
-      window.dangerLayer = L.layerGroup();
+      window.dangerLayer = L.featureGroup();
       console.log('[WARNING] สร้าง dangerLayer เปล่าแล้ว');
     }
     if(targetMap && window.dangerLayer && !targetMap.hasLayer(window.dangerLayer)){
@@ -6544,7 +6544,7 @@ window.toggleWarningView = function(){
   console.log('--- กดปุ่ม เตือนภัย/ระดับน้ำ --- mode:', window.currentViewMode);
   let layer = window.initDangerLayer();
   if(!layer && typeof L!=='undefined'){
-    window.dangerLayer = L.layerGroup();
+    window.dangerLayer = L.featureGroup();
     layer = window.dangerLayer;
     dangerLayer = layer;
   }
@@ -6579,7 +6579,7 @@ window.loadFloodWarnings = async function(){
   console.log('[WARNING] loadFloodWarnings() เริ่ม - ควรได้ 1 รายการ (จรัญ 69)');
   let layer = window.initDangerLayer();
   if(!layer){
-    if(typeof L!=='undefined'){ window.dangerLayer = L.layerGroup(); layer = window.dangerLayer; dangerLayer = layer; }
+    if(typeof L!=='undefined'){ window.dangerLayer = L.featureGroup(); layer = window.dangerLayer; dangerLayer = layer; }
   }
   let targetMap = window.sosMap || (typeof sosMap!=='undefined' ? sosMap : null) || (typeof map!=='undefined' ? map : null);
   if(targetMap && layer && !targetMap.hasLayer(layer)) targetMap.addLayer(layer);
@@ -6601,11 +6601,11 @@ window.loadFloodWarnings = async function(){
       L.marker([lat,lng]).addTo(layer).bindPopup(w.title);
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
-    if(layer.getLayers().length>0 && targetMap){
+    if(layer.getLayers && layer.getLayers().length>0 && targetMap){
       try{
-        const bounds = layer.getBounds();
+        let bounds; try{ bounds = layer.getBounds(); }catch(e){ console.warn("getBounds fail, use first point", e); const first=data[0]; bounds = L.latLngBounds([[parseFloat(first.lat||first.latitude), parseFloat(first.lng||first.longitude)]]); }
         console.log('fitBounds to', bounds);
-        targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:16});
+        if(bounds && bounds.isValid && bounds.isValid()){ targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:16}); } else { targetMap.setView([parseFloat(data[0].lat||data[0].latitude), parseFloat(data[0].lng||data[0].longitude)], 15); }
         setTimeout(()=>{
           const first = data[0];
           targetMap.setView([parseFloat(first.lat||first.latitude), parseFloat(first.lng||first.longitude)], 15);
