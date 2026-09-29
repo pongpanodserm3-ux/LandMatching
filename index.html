@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.2 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.3 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1154,7 +1154,7 @@
         </div>
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
           <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
-          <button id="btnWarningTop" onclick="switchToWarningView()" style="flex:1; background:white; border:2px solid #f59e0b; color:#d97706; padding:14px; border-radius:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+          <button id="btnWarningTop" onclick="toggleWarningView()" style="flex:1; background:white; border:2px solid #f59e0b; color:#d97706; padding:14px; border-radius:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
       🌊 เตือนภัย/ระดับน้ำ
     </button>
         </div>
@@ -6468,164 +6468,79 @@ function tryLIFFLoginAgain(){
     // ===================== END SOS ENHANCED v6.6 =====================
 
 
-var dangerLayer=null; let IS_FLOOD_MODE=true;
-function initDangerLayer(){ if(typeof L!=='undefined' && typeof map!=='undefined' && !dangerLayer){ dangerLayer=L.layerGroup().addTo(map); } }
-function switchSOSSubView(mode){
-  initDangerLayer();
-  document.querySelectorAll('#hybridSubTabs button').forEach(b=>{ b.style.background='white'; b.style.color='#333'; });
-  if(mode==='requests'){ document.getElementById('btnViewSOS').style.background='linear-gradient(135deg, #4a83cc 0%, #2b5893 100%)'; document.getElementById('btnViewSOS').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map.hasLayer(dangerLayer))map.removeLayer(dangerLayer); }
-  if(mode==='warnings'){ document.getElementById('btnViewWarning').style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; document.getElementById('btnViewWarning').style.color='white'; if(dangerLayer&&map)map.addLayer(dangerLayer); if(typeof sosLayer!=='undefined'&&map.hasLayer(sosLayer))map.removeLayer(sosLayer); loadFloodWarnings(); }
-  if(mode==='all'){ document.getElementById('btnViewAll').style.background='linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'; document.getElementById('btnViewAll').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(dangerLayer&&map)map.addLayer(dangerLayer); loadFloodWarnings(); }
-}
-async function loadFloodWarnings(){ initDangerLayer(); if(!dangerLayer||typeof supabaseClient==='undefined')return; const {data}=await supabaseClient.from('flood_warnings').select('*').eq('is_active',true).gt('expires_at', new Date().toISOString()); dangerLayer.clearLayers(); (data||[]).forEach(w=>{ let col=w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':'#f59e0b'; let lat=parseFloat(w.lat||w.latitude); let lng=parseFloat(w.lng||w.longitude); L.circle([lat,lng],{radius:w.radius_m||300,color:col,fillColor:col,fillOpacity:0.3,weight:3}).addTo(dangerLayer).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`); }); }
+var   if(mode==='all'){ document.getElementById('btnViewAll').style.background='linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'; document.getElementById('btnViewAll').style.color='white'; if(typeof sosLayer!=='undefined'&&map)map.addLayer(sosLayer); if(}
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ initDangerLayer(); loadFloodWarnings(); },2000); });
 
 
 
+// ===================== HYBRID v11.3 CLEAN - FIX IS_FLOOD_MODE DUPLICATE =====================
+if(typeof window.dangerLayer === 'undefined'){ window.dangerLayer = null; }
+if(typeof window.currentViewMode === 'undefined'){ window.currentViewMode = 'requests'; }
+if(typeof window.IS_FLOOD_MODE === 'undefined'){ window.IS_FLOOD_MODE = true; }
 
-
-
-
-// ===================== HYBRID v11.2 CLEAN - ปุ่มเตือนภัยแทนที่ ฉันจะไปช่วย =====================
-var dangerLayer=null;
-let currentViewMode='requests'; // requests | warnings
-let IS_FLOOD_MODE=true;
-
-function initDangerLayer(){
-  if(typeof L!=='undefined' && typeof map!=='undefined' && !dangerLayer){
-    dangerLayer = L.layerGroup().addTo(map);
+window.initDangerLayer = function(){
+  if(typeof L !== 'undefined' && typeof map !== 'undefined' && !window.dangerLayer){
+    window.dangerLayer = L.layerGroup().addTo(map);
   }
 }
 
-function switchToRequestsView(){
-  currentViewMode='requests';
-  const btn1 = document.querySelector('button'); // red button stays
-  const btnWarn = document.getElementById('btnWarningTop');
-  if(btnWarn){ btnWarn.style.background='white'; btnWarn.style.color='#d97706'; btnWarn.style.borderColor='#f59e0b'; btnWarn.innerHTML='🌊 เตือนภัย/ระดับน้ำ'; }
-  initDangerLayer();
-  if(typeof sosLayer!=='undefined' && map){ map.addLayer(sosLayer); }
-  if(dangerLayer && map && map.hasLayer(dangerLayer)){ map.removeLayer(dangerLayer); }
-  // show SOS list
-  const listContainer = document.getElementById('sos-list-container');
-  if(listContainer) listContainer.style.display='block';
-  if(typeof loadSOSRequests==='function') loadSOSRequests();
+window.toggleWarningView = function(){
+  window.initDangerLayer();
+  const btn = document.getElementById('btnWarningTop');
+  if(window.currentViewMode === 'requests'){
+    window.currentViewMode = 'warnings';
+    if(btn){ btn.innerHTML='📍 กลับไปดูขอความช่วยเหลือ'; btn.style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; btn.style.color='white'; }
+    if(window.dangerLayer && typeof map !== 'undefined') map.addLayer(window.dangerLayer);
+    if(typeof sosLayer !== 'undefined' && typeof map !== 'undefined' && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
+    window.loadFloodWarnings();
+    // hide SOS filters
+    let chipContainer = null;
+    document.querySelectorAll('div').forEach(d=>{ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) chipContainer = d; });
+    if(chipContainer) chipContainer.style.display='none';
+  }else{
+    window.currentViewMode = 'requests';
+    if(btn){ btn.innerHTML='🌊 เตือนภัย/ระดับน้ำ'; btn.style.background='white'; btn.style.color='#d97706'; btn.style.borderColor='#f59e0b'; }
+    if(typeof sosLayer !== 'undefined' && typeof map !== 'undefined') map.addLayer(sosLayer);
+    if(window.dangerLayer && typeof map !== 'undefined' && map.hasLayer(window.dangerLayer)) map.removeLayer(window.dangerLayer);
+    const wl = document.getElementById('warningListContainer'); if(wl) wl.style.display='none';
+    let chipContainer = null;
+    document.querySelectorAll('div').forEach(d=>{ if(d.textContent.includes('ทั้งหมด') && d.textContent.includes('ยานพาหนะ')) chipContainer = d; });
+    if(chipContainer) chipContainer.style.display='flex';
+    if(typeof loadSOSRequests === 'function') loadSOSRequests();
+  }
 }
 
-function switchToWarningView(){
-  currentViewMode='warnings';
-  const btnWarn = document.getElementById('btnWarningTop');
-  if(btnWarn){ btnWarn.style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; btnWarn.style.color='white'; btnWarn.style.borderColor='#f59e0b'; btnWarn.innerHTML='📍 กลับไปดูขอความช่วยเหลือ'; btnWarn.setAttribute('onclick','switchToRequestsView()'); setTimeout(()=>btnWarn.setAttribute('onclick','switchToWarningView()'), 0); 
-    // Toggle logic: if already in warning, go back
-    if(btnWarn.innerText.includes('กลับ')){
-      // this is actually toggle, handle in next click
-    }
-  }
-  // If already in warnings, toggle back
-  if(currentViewMode==='warnings' && document.getElementById('btnWarningTop').innerText.includes('กลับ')==false){
-    // first click to warnings
-  }
-  initDangerLayer();
-  if(dangerLayer && map){ map.addLayer(dangerLayer); }
-  if(typeof sosLayer!=='undefined' && map && map.hasLayer(sosLayer)){ map.removeLayer(sosLayer); }
-  loadFloodWarnings();
-}
-
-// Actually implement proper toggle with two functions
-function switchToWarningView(){
-  if(currentViewMode==='warnings'){
-    switchToRequestsView();
-    document.getElementById('btnWarningTop').innerHTML='🌊 เตือนภัย/ระดับน้ำ';
-    document.getElementById('btnWarningTop').setAttribute('onclick','switchToWarningView()');
-    return;
-  }
-  currentViewMode='warnings';
-  const btnWarn = document.getElementById('btnWarningTop');
-  if(btnWarn){ btnWarn.style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; btnWarn.style.color='white'; btnWarn.innerHTML='📍 กลับไปดูขอความช่วยเหลือ'; }
-  initDangerLayer();
-  if(dangerLayer && map) map.addLayer(dangerLayer);
-  if(typeof sosLayer!=='undefined' && map && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
-  loadFloodWarnings();
-  // Hide SOS list, show warning list
-  const listContainer = document.getElementById('sos-list-container');
-  // We will render warnings in same list area or just map
-}
-
-async function loadFloodWarnings(){
-  initDangerLayer();
-  if(!dangerLayer || typeof supabaseClient==='undefined') return;
+window.loadFloodWarnings = async function(){
+  window.initDangerLayer();
+  if(!window.dangerLayer || typeof supabaseClient === 'undefined') return;
   try{
     const {data, error} = await supabaseClient.from('flood_warnings').select('*').eq('is_active',true).gt('expires_at', new Date().toISOString()).order('created_at',{ascending:false});
     if(error){ console.warn(error); return; }
-    dangerLayer.clearLayers();
-    // Also render list below map if in warning mode
-    let warningListHTML = '';
+    window.dangerLayer.clearLayers();
+    let html = '';
     (data||[]).forEach(w=>{
       let col = w.risk_level==='critical'?'#ef4444':w.risk_level==='medium'?'#f97316':w.risk_level==='low'?'#f59e0b':'#22c55e';
       let label = w.risk_level==='critical'?'🔴 อันตรายห้ามเข้า':w.risk_level==='medium'?'🟠 เสี่ยงสูง':w.risk_level==='low'?'🟡 ไม่ควรเข้า':'🟢 เฝ้าระวัง';
       let lat = parseFloat(w.lat || w.latitude); let lng = parseFloat(w.lng || w.longitude);
       if(!isNaN(lat) && !isNaN(lng)){
-        L.circle([lat,lng],{radius:w.radius_m||300, color:col, fillColor:col, fillOpacity:0.28, weight:3}).addTo(dangerLayer)
-          .bindPopup(`<div style="font-size:13px; min-width:180px;"><b style="color:${col};">${label}<br>${w.title||''}</b><br>🌊 ${w.water_level_cm||0} ซม.<br>🚗 ${w.passage_status==='blocked'?'ปิดถนน':w.passage_status==='high_truck_only'?'รถยกสูงเท่านั้น':'รถเล็กผ่านได้'}<br><small>${w.description||''}</small></div>`);
+        L.circle([lat,lng],{radius:w.radius_m||300, color:col, fillColor:col, fillOpacity:0.3, weight:3}).addTo(window.dangerLayer)
+          .bindPopup(`<div style="font-size:13px;"><b style="color:${col};">${label}<br>${w.title||''}</b><br>🌊 ${w.water_level_cm||0} ซม.<br>🚗 ${w.passage_status}</div>`);
       }
-      warningListHTML += `<div style="background:white; border-left:4px solid ${col}; border-radius:12px; padding:10px 12px; margin:8px 10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);"><b>${label} ${w.title||''}</b><br><span style="font-size:12px; color:#555;">🌊 ${w.water_level_cm||0} ซม. | ${w.passage_status} | รัศมี ${w.radius_m||300}ม.</span><br><span style="font-size:11px; color:#888;">${w.description||''}</span></div>`;
+      html += `<div style="background:white; border-left:4px solid ${col}; border-radius:12px; padding:10px 12px; margin:8px 10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);"><b>${label} ${w.title||''}</b><br><span style="font-size:12px;">🌊 ${w.water_level_cm||0} ซม. | ${w.passage_status} | ${w.radius_m||300}ม.</span><br><span style="font-size:11px; color:#888;">${w.description||''}</span></div>`;
     });
-    if(currentViewMode==='warnings'){
-      // Replace SOS list with warning list
-      const sosList = document.querySelectorAll('[id*="sos"]');
-      // Find container with filters ทั้งหมด 8 etc.
-      const filterChips = document.querySelector('div:has(> button)') ; // fallback
-      // Simple: inject warning list after map
-      let existing = document.getElementById('warningListContainer');
-      if(!existing){
-        const mapEl = document.getElementById('map') || document.querySelector('.leaflet-container');
-        if(mapEl){
-          const div = document.createElement('div');
-          div.id='warningListContainer';
-          div.style.maxHeight='50vh'; div.style.overflowY='auto';
-          mapEl.parentNode.insertBefore(div, mapEl.nextSibling);
-          existing = div;
-        }
-      }
-      if(existing){ existing.innerHTML = warningListHTML || '<div style="text-align:center; padding:20px; color:#888;">ไม่มีเตือนภัยในขณะนี้</div>'; existing.style.display='block'; }
-      // Hide SOS filter chips and list
-      document.querySelectorAll('button').forEach(b=>{ if(b.textContent.includes('ทั้งหมด 8')||b.textContent.includes('ยานพาหนะ')){ b.parentElement.style.display='none'; } });
-    } else {
-      const wl = document.getElementById('warningListContainer');
-      if(wl) wl.style.display='none';
-      document.querySelectorAll('button').forEach(b=>{ if(b.textContent.includes('ทั้งหมด 8')){ b.parentElement.style.display='flex'; } });
+    let wl = document.getElementById('warningListContainer');
+    if(!wl){
+      const mapEl = document.getElementById('map');
+      if(mapEl){ wl = document.createElement('div'); wl.id='warningListContainer'; wl.style.maxHeight='50vh'; wl.style.overflowY='auto'; wl.style.display='none'; mapEl.parentNode.insertBefore(wl, mapEl.nextSibling); }
     }
-  }catch(e){ console.warn('loadFloodWarnings', e); }
-}
-
-// Fix double toggle
-const _origSwitchWarning = switchToWarningView;
-switchToWarningView = function(){
-  if(currentViewMode==='warnings'){
-    currentViewMode='requests';
-    const btn = document.getElementById('btnWarningTop');
-    if(btn){ btn.innerHTML='🌊 เตือนภัย/ระดับน้ำ'; btn.style.background='white'; btn.style.color='#d97706'; btn.style.borderColor='#f59e0b'; }
-    initDangerLayer();
-    if(typeof sosLayer!=='undefined' && map) map.addLayer(sosLayer);
-    if(dangerLayer && map.hasLayer(dangerLayer)) map.removeLayer(dangerLayer);
-    const wl = document.getElementById('warningListContainer'); if(wl) wl.style.display='none';
-    // show SOS filters
-    document.querySelectorAll('div').forEach(d=>{ if(d.textContent.includes('ทั้งหมด 8') && d.textContent.includes('ยานพาหนะ')){ d.style.display='flex'; } });
-    if(typeof loadSOSRequests==='function') loadSOSRequests();
-    return;
-  }
-  currentViewMode='warnings';
-  const btn = document.getElementById('btnWarningTop');
-  if(btn){ btn.innerHTML='📍 กลับไปดูขอความช่วยเหลือ'; btn.style.background='linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'; btn.style.color='white'; }
-  initDangerLayer();
-  if(dangerLayer && map) map.addLayer(dangerLayer);
-  if(typeof sosLayer!=='undefined' && map && map.hasLayer(sosLayer)) map.removeLayer(sosLayer);
-  loadFloodWarnings();
+    if(wl){ wl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#888;">ไม่มีเตือนภัยในขณะนี้</div>'; if(window.currentViewMode==='warnings') wl.style.display='block'; }
+  }catch(e){ console.warn(e); }
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(()=>{ initDangerLayer(); loadFloodWarnings(); console.log('Hybrid v11.2 Clean Ready - ปุ่มเตือนภัยแทนที่ ฉันจะไปช่วย'); }, 1500);
+  setTimeout(()=>{ window.initDangerLayer(); window.loadFloodWarnings(); }, 1500);
 });
-// ===================== END HYBRID v11.2 =====================
+// ===================== END HYBRID v11.3 =====================
 
 </script>
 
