@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6879,107 +6879,89 @@ try{ updateSOSDateTime(); }catch(e){}
 </script>
 
 <script>
-// === PATCH v11.5 - แยกโหมด เตือนท่วม vs จุดขอให้ช่วย ===
-// วางทับใน <script> ท้ายไฟล์ แทนที่ function เดิม
 
-// --- State ใหม่สำหรับโหมดเตือนท่วม ---
+// === PATCH v11.6 - FIX ปักหมุดตำแหน่ง user เมื่อกดเตือนท่วม ===
 window.floodWarningsCache = window.floodWarningsCache || [];
 window._currentWarningFilter = window._currentWarningFilter || 'latest';
-window._originalSOSStatusHTML = window._originalSOSStatusHTML || null;
-window._originalSOSFilterHTML = window._originalSOSFilterHTML || null;
+window.userLocationLayer = window.userLocationLayer || null;
 
-// เก็บ HTML เดิมไว้ restore
-function saveOriginalSOSUI(){
-  const statusEl = document.getElementById('sosStatusAboveFilter');
-  const filterEl = document.getElementById('sosFilterInList');
-  if(statusEl && !window._originalSOSStatusHTML) window._originalSOSStatusHTML = statusEl.innerHTML;
-  if(filterEl && !window._originalSOSFilterHTML) window._originalSOSFilterHTML = filterEl.innerHTML;
-}
-
-// 1. อัปเดตแถบสถานะ + ฟิลเตอร์ ตามโหมด
-function updateSOSUIForMode(mode){
-  saveOriginalSOSUI();
-  const statusEl = document.getElementById('sosStatusAboveFilter');
-  const filterEl = document.getElementById('sosFilterInList');
-  const dateTimeSpan = document.getElementById('sosCurrentDateTime');
-  const dateTimeHTML = dateTimeSpan ? dateTimeSpan.outerHTML : `<span id="sosCurrentDateTime" style="margin-left:auto; font-weight:normal; color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:10px; border:1px solid #e2e8f0;"></span>`;
-  
-  if(mode === 'warnings'){
-    // 1) Status Legend Bar -> อันตราย / เฝ้าระวัง
-    if(statusEl){
-      statusEl.innerHTML = `<span>🔴 อันตราย</span><span>🟡 เฝ้าระวัง</span>` + dateTimeHTML;
-      statusEl.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fef9c3 100%)';
-      statusEl.style.borderRadius = '10px';
-      statusEl.style.border = '1px solid #fecaca';
-    }
-    // 2) Filter SOS -> ปุ่มเตือนท่วม
-    if(filterEl){
-      filterEl.innerHTML = `
-        <button class="filter-btn sos-chip warning-chip active" data-warn="latest" onclick="filterFloodWarnings('latest')" style="flex-shrink:0; background:#ea580c; color:white; border-color:#c2410c;">🕒 เตือนล่าสุด <span id="count-warn-latest">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="all" onclick="filterFloodWarnings('all')" style="flex-shrink:0;">🌊 เตือนทั้งหมด <span id="count-warn-all">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="critical" onclick="filterFloodWarnings('critical')" style="flex-shrink:0;">🔴 เตือนอันตราย <span id="count-warn-critical">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="watch" onclick="filterFloodWarnings('watch')" style="flex-shrink:0;">🟡 เฝ้าระวัง <span id="count-warn-watch">0</span></button>
-      `;
-    }
-    updateSOSDateTime();
-  } else {
-    // กลับไปโหมด ขอความช่วยเหลือ - restore
-    if(statusEl && window._originalSOSStatusHTML){
-      statusEl.innerHTML = window._originalSOSStatusHTML;
-      statusEl.style.background = '';
-      statusEl.style.border = '';
-      statusEl.style.borderRadius = '';
-    }
-    if(filterEl && window._originalSOSFilterHTML){
-      filterEl.innerHTML = window._originalSOSFilterHTML;
-    }
-    updateSOSDateTime();
+function ensureSOSMapReady(){
+  // พยายาม init แผนที่ให้พร้อมที่สุด
+  if(!window.sosMap || typeof window.sosMap.setView !== 'function'){
+    try{ if(typeof initSOSMap === 'function') initSOSMap(); }catch(e){}
+    try{ if(typeof window.initSOSMap === 'function') window.initSOSMap(); }catch(e){}
   }
+  let m = window.sosMap || (typeof sosMap!=='undefined'?sosMap:null) || window.map || (typeof map!=='undefined'?map:null);
+  if(m){
+    try{ m.invalidateSize(); }catch(e){}
+  }
+  return m;
 }
 
-// 2. Render รายการเตือนท่วมในโซนฟีดล่าง (แทนที่ list-container / resultsContainer เดิม)
-function renderFloodWarningsList(list){
-  list = list || [];
-  const full = window.floodWarningsCache && window.floodWarningsCache.length>0 ? window.floodWarningsCache : list;
-  window.floodWarningsCache = full.length? full : list;
+function ensureUserLocationLayer(mapObj){
+  if(!mapObj) return null;
+  if(!window.userLocationLayer){
+    window.userLocationLayer = L.featureGroup().addTo(mapObj);
+  } else {
+    if(!mapObj.hasLayer(window.userLocationLayer)) mapObj.addLayer(window.userLocationLayer);
+  }
+  return window.userLocationLayer;
+}
 
-  // นับจำนวน
-  const counts = {all: full.length, latest: Math.min(5, full.length), critical:0, watch:0};
+function ensureDangerLayer(){
+  let m = ensureSOSMapReady();
+  let layer = null;
+  try{
+    if(typeof window.initDangerLayer === 'function') layer = window.initDangerLayer();
+  }catch(e){}
+  if(!layer) layer = window.dangerLayer;
+  if(!layer && typeof L!=='undefined'){
+    window.dangerLayer = L.featureGroup();
+    layer = window.dangerLayer;
+  }
+  if(layer && m && !m.hasLayer(layer)){
+    try{ layer.addTo(m); }catch(e){}
+  }
+  return layer;
+}
+
+// 2. Render รายการเตือนท่วมในโซนฟีดล่าง
+function renderFloodWarningsList(list){
+  const container = document.getElementById('sosResults') || document.getElementById('list-container');
+  const countLatest = document.getElementById('count-warn-latest');
+  const countAll = document.getElementById('count-warn-all');
+  const countCritical = document.getElementById('count-warn-critical');
+  const countWatch = document.getElementById('count-warn-watch');
+  
+  const full = (window.floodWarningsCache && window.floodWarningsCache.length>0) ? window.floodWarningsCache : list;
+  if(full.length>0) window.floodWarningsCache = full;
+
+  const counts = {all: full.length, latest: Math.min(5, full.length), critical: 0, watch: 0};
   full.forEach(w=>{
-    const lvl = (w.risk_level||w.level||'').toLowerCase();
-    if(lvl==='critical' || lvl==='danger' || lvl==='อันตราย') counts.critical++;
+    if(w.risk_level==='critical' || w.level==='danger' || w.risk_level==='อันตราย') counts.critical++;
     else counts.watch++;
   });
-  // อัปเดต badge
-  const setCount = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-  setCount('count-warn-all', counts.all);
-  setCount('count-warn-latest', counts.latest);
-  setCount('count-warn-critical', counts.critical);
-  setCount('count-warn-watch', counts.watch);
-  setCount('segCountWarnings', counts.all);
+  if(countLatest) countLatest.textContent = counts.latest;
+  if(countAll) countAll.textContent = counts.all;
+  if(countCritical) countCritical.textContent = counts.critical;
+  if(countWatch) countWatch.textContent = counts.watch;
+  try{ var b=document.getElementById('segCountWarnings'); if(b){ b.textContent=full.length; b.style.display=full.length>0?'inline-block':'none'; } }catch(e){}
 
-  // เลือก container เดิมที่ใช้แสดง SOS - เราใช้ #list-container เดิมเลย
-  const container = document.getElementById('list-container');
   if(!container) return;
-  
-  if(list.length===0){
-    container.innerHTML = `<div style="text-align:center; padding:20px; color:#888;">ยังไม่มีประกาศเตือนภัยในพื้นที่</div>`;
+  if(!list || list.length===0){
+    container.innerHTML = '<div style="text-align:center; padding:30px; color:#888; background:white; border-radius:14px; border:1px dashed #cbd5e1;">📭 ยังไม่มีเตือนภัยในพื้นที่<br><span style="font-size:11px;">ระบบจะปักหมุดตำแหน่งคุณเป็นจุดเริ่มต้น</span></div>';
     return;
   }
-
   container.innerHTML = list.map(w=>{
     const lat = w.lat||w.latitude; const lng = w.lng||w.longitude;
-    const isCritical = (w.risk_level==='critical' || w.level==='danger');
-    const icon = isCritical? '🔴':'🟡';
-    const bg = isCritical? '#fef2f2':'#fefce8';
-    const border = isCritical? '#fecaca':'#fde68a';
-    const statusText = isCritical? 'อันตราย':'เฝ้าระวัง';
-    const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
-    const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
+    const isCritical = (w.risk_level==='critical' || w.level==='danger' || w.risk_level==='อันตราย');
+    const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level ? `${w.water_level} ซม.` : 'ไม่ระบุ');
+    const statusText = isCritical ? 'อันตราย' : 'เฝ้าระวัง';
+    const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH') : '';
     return `
-      <div onclick="focusWarningOnMap(${lat},${lng})" style="background:${bg}; border:1.5px solid ${border}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; transition:transform 0.15s;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:bold; font-size:13px;">${icon} ${w.title||'เตือนภัยน้ำท่วม'}</span>
+      <div class="property-card" onclick="focusWarningOnMap(${lat},${lng})" style="cursor:pointer; background:${isCritical?'#fef2f2':'#fefce8'}; border:1.5px solid ${isCritical?'#fecaca':'#fde68a'}; border-radius:16px; padding:14px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:13px; font-weight:800;">${w.title||'เตือนภัยน้ำท่วม'}</span>
           <span style="font-size:10px; background:${isCritical?'#ef4444':'#eab308'}; color:white; padding:2px 8px; border-radius:10px;">${statusText}</span>
         </div>
         <div style="font-size:12px; color:#475569; line-height:1.4;">
@@ -6992,15 +6974,13 @@ function renderFloodWarningsList(list){
   }).join('');
 }
 
-// ฟังก์ชันโฟกัสแผนที่เมื่อกดการ์ดเตือน
 function focusWarningOnMap(lat,lng){
-  let targetMap = window.sosMap || window.map;
+  let targetMap = ensureSOSMapReady();
   if(targetMap && lat && lng){
     targetMap.setView([parseFloat(lat), parseFloat(lng)], 16, {animate:true});
   }
 }
 
-// 3. ฟิลเตอร์เตือนท่วม - มีผลทั้งการ์ดและแผนที่
 function filterFloodWarnings(type){
   document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
   const btn = document.querySelector(`.warning-chip[data-warn="${type}"]`);
@@ -7015,113 +6995,142 @@ function filterFloodWarnings(type){
     filtered = base.filter(w=> (w.risk_level==='critical' || w.level==='danger' || w.risk_level==='อันตราย'));
   } else if(type==='watch'){
     filtered = base.filter(w=> !(w.risk_level==='critical' || w.level==='danger'));
-  } // all = ทั้งหมด
+  }
 
   renderFloodWarningsList(filtered);
-  // อัปเดตแผนที่ตามฟิลเตอร์
   updateWarningMapMarkers(filtered);
 }
 
 function updateWarningMapMarkers(list){
-  let layer = window.dangerLayer || window.initDangerLayer();
-  if(!layer) return;
-  let targetMap = window.sosMap || window.map;
-  if(!targetMap) return;
-  // ล้างแล้ววาดใหม่ตาม filtered
-  layer.clearLayers();
+  let layer = ensureDangerLayer();
+  let targetMap = ensureSOSMapReady();
+  if(!layer || !targetMap) return;
+  layer.clearLayers(); // ล้างเฉพาะชั้นเตือนภัย ไม่รวมชั้น user
   list.forEach((w)=>{
     const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
     if(isNaN(lat)||isNaN(lng)) return;
-    const col = (w.risk_level==='critical')?'#ef4444':'#eab308';
-    L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm||''}ซม.`).addTo(layer);
-    L.marker([lat,lng]).addTo(layer).bindPopup(w.title);
+    const col = (w.risk_level==='critical' || w.level==='danger' || w.risk_level==='อันตราย')?'#ef4444':'#eab308';
+    L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title||'เตือนภัย'}</b><br>🌊 ${w.water_level_cm||''}ซม.`).addTo(layer);
+    L.marker([lat,lng]).addTo(layer).bindPopup(w.title||'เตือนภัย');
   });
 }
 
-// 4. Override loadFloodWarnings เดิมให้เก็บ cache + เรียก render ใหม่
-const originalLoadFloodWarnings = window.loadFloodWarnings;
+// Override หลัก - ปักหมุด user เป็นเริ่มต้น
 window.loadFloodWarnings = async function(){
-  console.log('[WARNING v11.5] โหลดเตือนภัย + ปักหมุดตำแหน่งปัจจุบัน');
-  let layer = window.initDangerLayer();
-  let targetMap = window.sosMap || (typeof sosMap!=='undefined'?sosMap:null);
-  if(targetMap && layer && !targetMap.hasLayer(layer)) targetMap.addLayer(layer);
+  console.log('[WARNING v11.6] โหลดเตือนภัย + ปักหมุดตำแหน่งปัจจุบันเป็นเริ่มต้น');
+  let targetMap = ensureSOSMapReady();
+  let layer = ensureDangerLayer();
   if(!layer){ console.error('สร้าง dangerLayer ไม่ได้'); return; }
   if(typeof supabaseClient==='undefined'){ console.error('supabaseClient ไม่พร้อม'); return; }
+
   try{
     const res = await supabaseClient.from('flood_warnings').select('*').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at', {ascending:false});
     if(res.error){ alert('DB Error: '+res.error.message); return; }
     const data = res.data||[];
     window.floodWarningsCache = data;
     console.log(`[WARNING] ได้ ${data.length} รายการ`);
-    layer.clearLayers();
+    
     if(data.length===0){ 
       renderFloodWarningsList([]);
-      return; 
+      // ถึงไม่มีเตือนภัย ก็ต้องปักหมุด user อยู่ดี
+    } else {
+      filterFloodWarnings(window._currentWarningFilter||'latest');
     }
-    // วาดทั้งหมดก่อน แล้วให้ filter จัดการ
-    filterFloodWarnings(window._currentWarningFilter||'latest');
-    
-    // 5. ปักหมุดไปยังตำแหน่งปัจจุบันของผู้ใช้ (ข้อ 3)
+  
+    // ปักหมุดไปยังตำแหน่งปัจจุบันของผู้ใช้ - ทำทันที ไม่รอเตือนภัย
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition((pos)=>{
-        const {latitude, longitude} = pos.coords;
-        console.log('📍 ตำแหน่งปัจจุบัน:', latitude, longitude);
-        if(targetMap){
-          targetMap.setView([latitude, longitude], 14, {animate:true});
-          // ปักหมุดสีฟ้า ตำแหน่งฉัน
-          L.marker([latitude, longitude], {
-            icon: L.divIcon({html:'<div style="background:#3b82f6; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(59,130,246,0.8);"></div>', iconSize:[16,16]})
-          }).addTo(layer).bindPopup('📍 ตำแหน่งของคุณ').openPopup();
-        }
+        const {latitude, longitude, accuracy} = pos.coords;
+        console.log('📍 ตำแหน่งปัจจุบัน:', latitude, longitude, 'accuracy', accuracy);
+        targetMap = ensureSOSMapReady();
+        if(!targetMap) { console.warn('targetMap ยังไม่พร้อมหลังได้ตำแหน่ง'); return; }
+        let uLayer = ensureUserLocationLayer(targetMap);
+        uLayer.clearLayers();
+        targetMap.setView([latitude, longitude], 14, {animate:true});
+        L.marker([latitude, longitude], {
+          icon: L.divIcon({
+            html:'<div style="background:#3b82f6; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(59,130,246,0.9); animation: userPulse 2s infinite;"></div><style>@keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,0.7)}70%{box-shadow:0 0 0 12px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}</style>', 
+            iconSize:[18,18], iconAnchor:[9,9]
+          })
+        }).addTo(uLayer).bindPopup('📍 ตำแหน่งของคุณ<br><span style="font-size:10px;">ความแม่นยำ ~'+Math.round(accuracy)+'ม.</span>').openPopup();
+        L.circle([latitude, longitude], {radius: Math.min(accuracy||300, 300), color:'#3b82f6', fillColor:'#3b82f6', fillOpacity:0.12, weight:1, dashArray:'6,6'}).addTo(uLayer);
       }, (err)=>{
-        console.warn('ขอตำแหน่งไม่สำเร็จ', err);
-        // fallback: fitBounds ตามเตือนภัย
+        console.warn('ขอตำแหน่งไม่สำเร็จ', err.code, err.message);
+        targetMap = ensureSOSMapReady();
+        if(!targetMap) return;
+        // fallback: ถ้าขอตำแหน่งไม่ได้ ให้ fitBounds ไปที่เตือนภัยแทน
         try{
-          const bounds = layer.getBounds();
-          if(bounds.isValid()) targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:15});
+          if(layer.getLayers().length>0){
+            const bounds = layer.getBounds();
+            if(bounds.isValid()) targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:15});
+          } else {
+            targetMap.setView([13.7563, 100.5018], 11);
+          }
         }catch(e){}
-      }, {enableHighAccuracy:true, timeout:8000});
+      }, {enableHighAccuracy:true, timeout:12000, maximumAge: 0});
+    } else {
+      console.warn('เบราว์เซอร์ไม่รองรับ geolocation');
     }
 
     updateSegmentedUI('warnings');
   }catch(e){ console.error(e); }
 }
 
-// 6. Override switchSOSSubView ให้สลับ UI ด้วย
-const originalSwitch = window.switchSOSSubView || function(){};
+function updateSegmentedUI(mode){
+  const btnReq = document.getElementById('seg-requests');
+  const btnWarn = document.getElementById('seg-warnings');
+  if(!btnReq || !btnWarn) return;
+  if(mode==='warnings'){
+    btnReq.classList.remove('active'); btnReq.setAttribute('aria-selected','false');
+    btnWarn.classList.add('active'); btnWarn.setAttribute('aria-selected','true');
+  } else {
+    btnWarn.classList.remove('active'); btnWarn.setAttribute('aria-selected','false');
+    btnReq.classList.add('active'); btnReq.setAttribute('aria-selected','true');
+  }
+}
+
+function updateSOSUIForMode(mode){
+  const feedLabel = document.getElementById('sosFeedLabel');
+  if(mode==='warnings'){
+    if(feedLabel) feedLabel.textContent = '🌊 รายการเตือนภัย';
+  } else {
+    if(feedLabel) feedLabel.textContent = '🆘 รายการขอความช่วยเหลือ';
+  }
+}
+
 window.switchSOSSubView = function(mode){
   if(window.currentViewMode === mode) return;
-  let layer = window.initDangerLayer();
-  if(!layer && typeof L!=='undefined'){ window.dangerLayer = L.featureGroup(); layer = window.dangerLayer; }
-  let targetMap = window.sosMap || (typeof sosMap!=='undefined' ? sosMap : null) || (typeof map!=='undefined' ? map : null);
+  let targetMap = ensureSOSMapReady();
+  let layer = ensureDangerLayer();
   let sosLayerRef = window.sosMarkersLayer || window.sosLayer || (typeof sosMarkersLayer!=='undefined' ? sosMarkersLayer : null) || (typeof sosLayer!=='undefined' ? sosLayer : null);
 
   if(mode==='warnings'){
     window.currentViewMode = 'warnings';
-    console.log('-> v11.5 SEGMENTED: ไปโหมด WARNINGS');
-    // ซ่อน SOS, โชว์ WARNING
+    console.log('-> v11.6 SEGMENTED: ไปโหมด WARNINGS - user เป็นศูนย์กลาง');
     if(sosLayerRef && targetMap){ try{ if(targetMap.hasLayer(sosLayerRef)) targetMap.removeLayer(sosLayerRef); }catch(e){} }
-    if(layer && targetMap && !targetMap.hasLayer(layer)) targetMap.addLayer(layer);
+    if(layer && targetMap && !targetMap.hasLayer(layer)) try{ targetMap.addLayer(layer); }catch(e){}
+    if(window.userLocationLayer && targetMap && !targetMap.hasLayer(window.userLocationLayer)) try{ targetMap.addLayer(window.userLocationLayer); }catch(e){}
     updateSOSUIForMode('warnings');
+    updateSegmentedUI('warnings');
     window.loadFloodWarnings();
   } else {
     window.currentViewMode = 'requests';
-    console.log('-> v11.5 SEGMENTED: กลับไปโหมด REQUESTS');
+    console.log('-> v11.6 SEGMENTED: กลับไปโหมด REQUESTS');
     if(layer && targetMap && targetMap.hasLayer(layer)){ try{ targetMap.removeLayer(layer); }catch(e){} }
+    // คง user layer ไว้ก็ได้ ให้เห็นตำแหน่งตัวเองในโหมดขอความช่วยเหลือด้วย
     if(sosLayerRef && targetMap && !targetMap.hasLayer(sosLayerRef)){ try{ targetMap.addLayer(sosLayerRef); }catch(e){} }
     updateSOSUIForMode('requests');
+    updateSegmentedUI('requests');
     if(typeof loadSOSRequests==='function') loadSOSRequests();
   }
-  updateSegmentedUI(mode);
 }
 
-// backward compat
 window.toggleWarningView = function(){ 
   if(window.currentViewMode==='requests') window.switchSOSSubView('warnings'); 
   else window.switchSOSSubView('requests'); 
 };
 
-console.log('✅ Patch v11.5 โหลดแล้ว - แยกโหมดเตือนท่วมสมบูรณ์');
+console.log('✅ Patch v11.6 โหลดแล้ว - แยกโหมดเตือนท่วม + ปักหมุด user เริ่มต้น + แยก userLocationLayer');
 
 </script>
 </body>
