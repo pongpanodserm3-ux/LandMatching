@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -189,69 +189,98 @@
 
     /* --- แถบระบบนำทาง 5 แท็บ (รวม SOS เป็นแท็บแรก) - v10 SOS Edition --- */
 
-    /* --- v11.2 Segmented Control for SOS - แถบสวิตช์แคปซูล 2 ฝั่ง --- */
-    .sos-segmented-wrapper {
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      margin-bottom: 12px;
+    /* --- v11.3 Compact Single-Line SOS Controls - ย่อสุด บรรทัดเดียว --- */
+    .sos-top-single-row{
+      display:flex;
+      flex-direction:row;
+      align-items:center;
+      gap:6px;
+      width:100%;
+      margin-bottom:8px;
+      flex-wrap:nowrap;
     }
-    .sos-segmented-control {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      max-width: 420px;
-      background: rgba(255,255,255,0.85);
+    .sos-segmented-control.compact{
+      display:flex;
+      flex:1 1 auto;
+      min-width:0;
+      background: rgba(255,255,255,0.9);
       border-radius: 999px;
-      padding: 4px;
-      border: 1.5px solid rgba(0,0,0,0.08);
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.06);
-      backdrop-filter: blur(12px);
-      position: relative;
+      padding: 2px;
+      border:1px solid rgba(0,0,0,0.08);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.06);
+      backdrop-filter: blur(10px);
     }
-    .seg-btn {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 10px 12px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
-      color: #64748b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
-      position: relative;
-      z-index: 1;
+    .sos-segmented-control.compact .seg-btn{
+      flex:1 1 0;
+      min-width:0;
+      border:none;
+      background:transparent;
+      padding:4px 6px; /* เตี้ยที่สุด */
+      height:26px; /* ล็อกความสูง */
+      line-height:1;
+      border-radius:999px;
+      font-size:13px; /* คงขนาดข้อความเท่าเดิม */
+      font-weight:700;
+      cursor:pointer;
+      transition: all 0.2s ease;
+      color:#64748b;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    .seg-btn.active {
-      background: #ffffff;
-      color: #1e293b;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+    .sos-segmented-control.compact .seg-btn.active{
+      box-shadow: 0 1px 6px rgba(0,0,0,0.15);
     }
-    .seg-btn#seg-requests.active {
+    .sos-segmented-control.compact #seg-requests.active{
       background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%);
-      color: white;
+      color:white;
     }
-    .seg-btn#seg-warnings.active {
+    .sos-segmented-control.compact #seg-warnings.active{
       background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-      color: white;
+      color:white;
     }
-    .seg-btn:active { transform: scale(0.97); }
-    .seg-badge {
-      background: rgba(0,0,0,0.12);
-      color: inherit;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-weight: 800;
+    .seg-badge{
+      background: rgba(0,0,0,0.15);
+      color:inherit;
+      font-size:10px;
+      padding:0 4px;
+      min-width:16px;
+      height:16px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      line-height:1;
     }
-    .seg-btn.active .seg-badge {
-      background: rgba(255,255,255,0.25);
+    .seg-btn.active .seg-badge{ background: rgba(255,255,255,0.3); }
+    .btn-notify-compact{
+      flex:0 0 auto;
+      height:26px; /* เท่ากับ seg */
+      padding:4px 10px;
+      border-radius:999px;
+      border:1.5px solid #a80000;
+      background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%);
+      color:white;
+      font-size:13px; /* คงขนาดข้อความ */
+      font-weight:700;
+      cursor:pointer;
+      white-space:nowrap;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 1px 4px rgba(215,0,0,0.25);
+      transition: transform 0.15s ease;
+    }
+    .btn-notify-compact:active{ transform: scale(0.96); }
+    /* ถ้าจอแคบมาก ให้ย่อข้อความอีก */
+    @media (max-width: 360px){
+      .sos-segmented-control.compact .seg-btn{ font-size:12px; padding:4px 5px; }
+      .btn-notify-compact{ font-size:12px; padding:4px 8px; }
     }
 
     .tabs-nav {
@@ -1215,19 +1244,16 @@
     <div class="tab-content" id="tab-content-sos">
       <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
         
-        <div class="sos-segmented-wrapper">
-          <div class="sos-segmented-control" role="tablist" aria-label="สลับมุมมองวิกฤต">
+        <div class="sos-top-single-row">
+          <div class="sos-segmented-control compact" role="tablist" aria-label="สลับมุมมองวิกฤต">
             <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">
-              🆘 ขอความช่วยเหลือ <span id="segCountRequests" class="seg-badge" style="display:none;">0</span>
+              🆘 ขอช่วย
             </button>
             <button role="tab" id="seg-warnings" class="seg-btn" onclick="switchSOSSubView('warnings')" aria-selected="false">
-              🌊 เตือนภัย / ระดับน้ำ <span id="segCountWarnings" class="seg-badge" style="display:none;">0</span>
+              🌊 เตือนภัย <span id="segCountWarnings" class="seg-badge">1</span>
             </button>
           </div>
-        </div>
-        <!-- ปุ่มขอความช่วยเหลือหลัก ยังคงอยู่ แยกออกมาให้ชัดเจน -->
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button class="action-show-list-btn" style="flex:1; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color:white; border-color:#a80000; padding:10px; font-size:13px; font-weight:bold; border-radius:12px;" onclick="openSOSModal()">📢 แจ้งพิกัดขอความช่วยเหลือ</button>
+          <button class="btn-notify-compact" onclick="openSOSModal()">📍 แจ้งพิกัด</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
         <button id="btnWarningTop" style="display:none;" onclick="toggleWarningView()"></button>
