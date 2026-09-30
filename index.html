@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1246,14 +1246,14 @@
         
         <div class="sos-top-single-row">
           <div class="sos-segmented-control compact" role="tablist" aria-label="สลับมุมมองวิกฤต">
-            <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">
-              🆘 ขอช่วย
-            </button>
             <button role="tab" id="seg-warnings" class="seg-btn" onclick="switchSOSSubView('warnings')" aria-selected="false">
-              🌊 เตือนภัย <span id="segCountWarnings" class="seg-badge">1</span>
+              🌊 เตือนท่วม <span id="segCountWarnings" class="seg-badge">1</span>
+            </button>
+            <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">
+              🆘 จุดขอให้ช่วย
             </button>
           </div>
-          <button class="btn-notify-compact" onclick="openSOSModal()">📍 แจ้งพิกัด</button>
+          <button class="btn-notify-compact" onclick="openSOSModal()">📍 แจ้งขอให้ช่วย</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
         <button id="btnWarningTop" style="display:none;" onclick="toggleWarningView()"></button>
