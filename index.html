@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6989,7 +6989,7 @@ function updateSOSUIForMode(mode){
   const dateTimeHTML = dateTimeSpan ? dateTimeSpan.outerHTML : `<span id="sosCurrentDateTime" style="margin-left:auto; font-weight:normal; color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:10px; border:1px solid #e2e8f0;"></span>`;
   if(mode === 'warnings'){
     if(statusEl){
-      statusEl.innerHTML = `<span>🔴 อันตราย</span><span>🟡 เฝ้าระวัง</span>` + dateTimeHTML;
+      statusEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; background:#ef4444; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #ef4444; display:inline-block;"></span> อันตราย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#d97706; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #d97706; display:inline-block;"></span> เตือนภัย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#fef9c3; border-radius:50%; border:2px solid #eab308; box-shadow:0 0 0 1px #fde68a; display:inline-block;"></span> เฝ้าระวัง</span>` + dateTimeHTML;
       statusEl.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fef9c3 100%)';
       statusEl.style.borderRadius = '10px';
       statusEl.style.border = '1px solid #fecaca';
@@ -6998,8 +6998,9 @@ function updateSOSUIForMode(mode){
       filterEl.innerHTML = `
         <button class="filter-btn sos-chip warning-chip active" data-warn="latest" onclick="filterFloodWarnings('latest')" style="flex-shrink:0; background:#ea580c; color:white; border-color:#c2410c;">🕒 เตือนล่าสุด <span id="count-warn-latest">0</span></button>
         <button class="filter-btn sos-chip warning-chip" data-warn="all" onclick="filterFloodWarnings('all')" style="flex-shrink:0;">🌊 เตือนทั้งหมด <span id="count-warn-all">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="critical" onclick="filterFloodWarnings('critical')" style="flex-shrink:0;">🔴 เตือนอันตราย <span id="count-warn-critical">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="watch" onclick="filterFloodWarnings('watch')" style="flex-shrink:0;">🟡 เฝ้าระวัง <span id="count-warn-watch">0</span></button>
+        <button class="filter-btn sos-chip warning-chip" data-warn="critical" onclick="filterFloodWarnings('critical')" style="flex-shrink:0; background:#fef2f2; border-color:#ef4444; color:#b91c1c;"><span style="width:10px; height:10px; background:#ef4444; border-radius:50%; display:inline-block; margin-right:4px;"></span>อันตราย <span id="count-warn-critical">0</span></button>
+        <button class="filter-btn sos-chip warning-chip" data-warn="warning" onclick="filterFloodWarnings('warning')" style="flex-shrink:0; background:#fff7ed; border-color:#d97706; color:#9a3412;"><span style="width:10px; height:10px; background:#d97706; border-radius:50%; display:inline-block; margin-right:4px;"></span>เตือนภัย <span id="count-warn-warning">0</span></button>
+        <button class="filter-btn sos-chip warning-chip" data-warn="watch" onclick="filterFloodWarnings('watch')" style="flex-shrink:0; background:#fefce8; border-color:#fde68a; color:#854d0e;"><span style="width:10px; height:10px; background:#fef9c3; border:1px solid #eab308; border-radius:50%; display:inline-block; margin-right:4px;"></span>เฝ้าระวัง <span id="count-warn-watch">0</span></button>
       `;
     }
     updateSOSDateTime();
@@ -7020,16 +7021,18 @@ function renderFloodWarningsList(list){
   list = list || [];
   const full = window.floodWarningsCache && window.floodWarningsCache.length>0 ? window.floodWarningsCache : list;
   if(full.length>0) window.floodWarningsCache = full;
-  const counts = {all: full.length, latest: Math.min(5, full.length), critical:0, watch:0};
+  const counts = {all: full.length, latest: Math.min(5, full.length), critical:0, warning:0, watch:0};
   full.forEach(w=>{
     const lvl = (w.risk_level||w.level||'').toLowerCase();
-    if(lvl==='critical' || lvl==='danger' || lvl==='อันตราย') counts.critical++;
+    if(lvl==='critical' || lvl==='danger' || lvl==='อันตราย' || lvl.includes('อันตราย')) counts.critical++;
+    else if(lvl==='warning' || lvl==='เตือนภัย' || lvl.includes('เตือนภัย')) counts.warning++;
     else counts.watch++;
   });
   const setCount = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
   setCount('count-warn-all', counts.all);
   setCount('count-warn-latest', counts.latest);
   setCount('count-warn-critical', counts.critical);
+  setCount('count-warn-warning', counts.warning);
   setCount('count-warn-watch', counts.watch);
   setCount('segCountWarnings', counts.all);
   const container = document.getElementById('list-container');
@@ -7040,11 +7043,18 @@ function renderFloodWarningsList(list){
   }
   container.innerHTML = list.map(w=>{
     const lat = w.lat||w.latitude; const lng = w.lng||w.longitude;
-    const isCritical = (w.risk_level==='critical' || w.level==='danger' || (w.risk_level||'').includes('อันตราย'));
-    const icon = isCritical? '🔴':'🟡';
-    const bg = isCritical? '#fef2f2':'#fefce8';
-    const border = isCritical? '#fecaca':'#fde68a';
-    const statusText = isCritical? 'อันตราย':'เฝ้าระวัง';
+    const lvl = (w.risk_level||w.level||'').toLowerCase();
+    let levelType = 'watch';
+    if(lvl.includes('critical') || lvl.includes('danger') || lvl.includes('อันตราย')) levelType='critical';
+    else if(lvl.includes('warning') || lvl.includes('เตือนภัย')) levelType='warning';
+    else levelType='watch';
+    const isCritical = levelType==='critical';
+    const isWarning = levelType==='warning';
+    let icon = '🟡', bg = '#fefce8', border = '#fde68a', statusText = 'เฝ้าระวัง', dotColor = '#fef9c3';
+    if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; statusText='อันตราย'; dotColor='#ef4444'; }
+    else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; statusText='เตือนภัย'; dotColor='#d97706'; }
+    else { icon='🟡'; bg='#fefce8'; border='#fde68a'; statusText='เฝ้าระวัง'; dotColor='#fef9c3'; }
+
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     return `
@@ -7078,9 +7088,11 @@ function filterFloodWarnings(type){
   if(type==='latest'){
     filtered = [...base].sort((a,b)=> new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
   } else if(type==='critical'){
-    filtered = base.filter(w=> (w.risk_level==='critical' || w.level==='danger' || (w.risk_level||'').includes('อันตราย')));
+    filtered = base.filter(w=> { const l=(w.risk_level||w.level||'').toLowerCase(); return l.includes('critical')||l.includes('danger')||l.includes('อันตราย'); });
+  } else if(type==='warning'){
+    filtered = base.filter(w=> { const l=(w.risk_level||w.level||'').toLowerCase(); return l.includes('warning')||l.includes('เตือนภัย'); });
   } else if(type==='watch'){
-    filtered = base.filter(w=> !(w.risk_level==='critical' || w.level==='danger'));
+    filtered = base.filter(w=> { const l=(w.risk_level||w.level||'').toLowerCase(); return !(l.includes('critical')||l.includes('danger')||l.includes('อันตราย')||l.includes('warning')||l.includes('เตือนภัย')); });
   }
   renderFloodWarningsList(filtered);
   updateWarningMapMarkers(filtered);
@@ -7097,7 +7109,11 @@ function updateWarningMapMarkers(list){
   list.forEach((w)=>{
     const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
     if(isNaN(lat)||isNaN(lng)) return;
-    const col = (w.risk_level==='critical' || w.level==='danger' || (w.risk_level||'').includes('อันตราย'))?'#ef4444':'#eab308';
+    const _lvl = (w.risk_level||w.level||'').toLowerCase();
+    let col = '#fef9c3'; // เฝ้าระวัง = เหลืองอ่อนไปทางขาว
+    if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444'; // อันตราย = แดง
+    else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706'; // เตือนภัย = เหลืองเข้ม
+
     L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title||'เตือนภัย'}</b><br>🌊 ${w.water_level_cm||''}ซม.`).addTo(layer);
     L.marker([lat,lng]).addTo(layer).bindPopup(w.title||'เตือนภัย');
   });
