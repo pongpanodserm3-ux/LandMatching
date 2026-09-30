@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 10.7 FIXED - 4 issues (completed hide map, no delete, no DB full, auto-expire 3 days)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1148,13 +1148,10 @@
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
       <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
-        <div style="background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; padding: 0 10px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(255,59,48,0.3); height: 32px; overflow:hidden; white-space: nowrap;">
-          <div style="font-weight: 800; font-size: 11px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; flex:1; line-height:32px;">🚨 ศูนย์ประสานงานน้ำท่วม <span id="floodCenterLiveUpdate">อัปเดต --:-- น. --</span></div>
-          <button onclick="filterSOS('all')" style="background: rgba(255,255,255,0.25); border: none; color: white; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor:pointer; margin-left:6px; flex-shrink:0; white-space:nowrap; height:20px; line-height:1;">📍 ใกล้ฉัน</button>
-        </div>
+        
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-          <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
           <button id="btnWarningTop" class="action-show-list-btn" style="flex: 1; background: #ffffff; color: #d97706; border: 2px solid #f59e0b; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="toggleWarningView()">🌊 เตือนภัย / ระดับน้ำ</button>
+          <button class="action-show-list-btn" style="flex: 1.2; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color: white; border-color: #a80000; padding: 12px 6px; font-size: 13px; font-weight:bold;" onclick="openSOSModal()">📢 ขอความช่วยเหลือ / แจ้งพิกัด</button>
         </div>
         <div style="display: flex; gap: 6px; font-size: 11px; font-weight: bold; align-items:center; padding: 0 2px; margin-bottom:6px;">
           <span>🔴 ด่วน</span><span>🟢 กำลังช่วย</span><span>🔵 จุดแจก/พักพิง</span>
