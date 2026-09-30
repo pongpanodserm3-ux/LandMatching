@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1253,7 +1253,7 @@
               🆘 จุดขอให้ช่วย
             </button>
           </div>
-          <button class="btn-notify-compact" onclick="openSOSModal()">📍 แจ้งขอให้ช่วย</button>
+          <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">📍 แจ้งขอให้ช่วย</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
         <button id="btnWarningTop" style="display:none;" onclick="toggleWarningView()"></button>
@@ -1498,6 +1498,56 @@
       <div style="font-size:10px; color:#999; text-align:center; margin-top:6px;">ข้อมูลจะแสดงบนแผนที่สาธารณะแบบ Realtime • โทร 191 หากวิกฤตถึงชีวิต</div>
     </div>
   </div>
+
+
+  <!-- NEW: Flood Warning Modal - หน้าแจ้งเตือนท่วม (แยกจากหน้าขอให้ช่วย) -->
+  <style>
+    .flood-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; box-sizing: border-box; margin-bottom: 8px; }
+    .flood-level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .flood-level-btn { padding: 10px 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .flood-level-btn.selected { background: #f59e0b; color: white; border-color: #d97706; }
+    .flood-level-btn.critical.selected { background: #ef4444; border-color: #b91c1c; }
+    .flood-level-btn.watch.selected { background: #eab308; border-color: #a16207; }
+  </style>
+  <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
+    <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
+      <span class="close-modal" onclick="closeFloodWarningModal()">&times;</span>
+      <h3 style="margin-top:0; color: #d97706; font-size: 18px; text-align: center;">🌊 แจ้งเตือนท่วม</h3>
+      
+      <label style="font-size:12px; font-weight:bold;">1. ระดับความรุนแรง</label>
+      <div class="flood-level-grid" id="floodLevelGrid">
+        <button class="flood-level-btn watch" data-val="watch" onclick="toggleFloodLevel(this)">🟡 เฝ้าระวัง</button>
+        <button class="flood-level-btn" data-val="warning" onclick="toggleFloodLevel(this)">🟠 เตือนภัย</button>
+        <button class="flood-level-btn critical" data-val="critical" onclick="toggleFloodLevel(this)">🔴 อันตราย</button>
+      </div>
+
+      <label style="font-size:12px; font-weight:bold;">2. ปักหมุดพิกัดที่พบน้ำท่วม</label>
+      <div style="display:flex; gap:6px; margin-bottom:8px;">
+        <button class="filter-btn" style="flex:1;" onclick="if(typeof openLocationModal==='function') openLocationModal(true)">📍 ปักหมุดพิกัด</button>
+        <button class="filter-btn" style="flex:1;" onclick="getCurrentLocationForFloodWarning()">📌 ใช้ตำแหน่งปัจจุบัน</button>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <input type="text" class="flood-input" id="floodLat" placeholder="Lat" style="flex:1;">
+        <input type="text" class="flood-input" id="floodLng" placeholder="Lng" style="flex:1;">
+      </div>
+      <input type="text" class="flood-input" id="floodLocationText" placeholder="รายละเอียดตำแหน่ง เช่น ปากซอยรามคำแหง 24 น้ำสูง...">
+
+      <label style="font-size:12px; font-weight:bold;">3. ระดับน้ำ (ซม.)</label>
+      <input type="number" class="flood-input" id="floodWaterLevel" placeholder="เช่น 30, 50, 100">
+
+      <label style="font-size:12px; font-weight:bold;">4. รายละเอียดเพิ่มเติม</label>
+      <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."></textarea>
+
+      <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
+      <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 600 เมตร" value="600">
+
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button style="flex:1; background:#e2e8f0; color:#333; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="closeFloodWarningModal()">ยกเลิก</button>
+        <button style="flex:1; background:linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="submitFloodWarning()">🌊 ส่งแจ้งเตือนท่วม</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModalOverlay">
@@ -7130,26 +7180,172 @@ window.switchSOSSubView = function(mode){
   let sosLayerRef = window.sosMarkersLayer || window.sosLayer || (typeof sosMarkersLayer!=='undefined'?sosMarkersLayer:null) || (typeof sosLayer!=='undefined'?sosLayer:null);
   if(mode==='warnings'){
     window.currentViewMode = 'warnings';
-    console.log('-> v11.8 SEGMENTED: ไปโหมด WARNINGS');
+    console.log('-> v11.8 SEGMENTED: ไปโหมด WARNINGS + สลับปุ่มเป็น แจ้งเตือนท่วม');
     if(sosLayerRef && targetMap){ try{ if(targetMap.hasLayer(sosLayerRef)) targetMap.removeLayer(sosLayerRef); }catch(e){} }
     if(layer && targetMap && !targetMap.hasLayer(layer)) try{ targetMap.addLayer(layer); }catch(e){}
     if(window.userLocationLayer && targetMap && !targetMap.hasLayer(window.userLocationLayer)) try{ targetMap.addLayer(window.userLocationLayer); }catch(e){}
+    // --- คำสั่งที่ 2: เปลี่ยนปุ่ม แจ้งขอให้ช่วย -> แจ้งเตือนท่วม ---
+    const mainBtn = document.getElementById('sosMainActionBtn');
+    if(mainBtn){
+      mainBtn.innerHTML = '🌊 แจ้งเตือนท่วม';
+      mainBtn.setAttribute('onclick','openFloodWarningModal()');
+      mainBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)';
+      mainBtn.style.borderColor = '#c2410c';
+    }
     window.loadFloodWarnings();
   } else {
     window.currentViewMode = 'requests';
-    console.log('-> v11.8 SEGMENTED: กลับไปโหมด REQUESTS');
+    console.log('-> v11.8 SEGMENTED: กลับไปโหมด REQUESTS + สลับปุ่มกลับ + ปักหมุดปัจจุบัน');
     if(layer && targetMap && targetMap.hasLayer(layer)){ try{ targetMap.removeLayer(layer); }catch(e){} }
     if(sosLayerRef && targetMap && !targetMap.hasLayer(sosLayerRef)){ try{ targetMap.addLayer(sosLayerRef); }catch(e){} }
+    // --- คำสั่งที่ 2: เปลี่ยนปุ่มกลับเป็น แจ้งขอให้ช่วย ---
+    const mainBtn = document.getElementById('sosMainActionBtn');
+    if(mainBtn){
+      mainBtn.innerHTML = '📍 แจ้งขอให้ช่วย';
+      mainBtn.setAttribute('onclick','openSOSModal()');
+      mainBtn.style.background = 'linear-gradient(135deg, #ff3b30 0%, #d70000 100%)';
+      mainBtn.style.borderColor = '#a80000';
+    }
     updateSOSUIForMode('requests');
     updateSegmentedUI('requests');
     if(typeof loadSOSRequests==='function') loadSOSRequests();
+    // --- คำสั่งที่ 1: เมื่อกด จุดขอให้ช่วย ให้ปักหมุดตำแหน่งปัจจุบัน ---
+    pinCurrentLocationOnSOSMap();
   }
 }
 window.toggleWarningView = function(){ 
   if(window.currentViewMode==='requests') window.switchSOSSubView('warnings'); 
   else window.switchSOSSubView('requests'); 
 };
-console.log('✅ Patch v11.8 โหลดแล้ว - ไม่มี SyntaxError + ปักหมุดได้แม้เตือนภัย 0');
+
+// === v11.9 NEW FEATURES ===
+// คำสั่งที่ 1: ฟังก์ชันปักหมุดตำแหน่งปัจจุบันเมื่อกด จุดขอให้ช่วย
+function pinCurrentLocationOnSOSMap(){
+  console.log('[v11.9] คำสั่งที่1: ปักหมุดตำแหน่งปัจจุบัน - จุดขอให้ช่วย');
+  if(!navigator.geolocation){
+    console.warn('Browser ไม่รองรับ geolocation');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    const {latitude, longitude, accuracy} = pos.coords;
+    let targetMap = ensureSOSMapReady();
+    if(!targetMap){
+      console.warn('SOS Map ยังไม่พร้อม');
+      return;
+    }
+    let uLayer = ensureUserLocationLayer(targetMap);
+    uLayer.clearLayers();
+    targetMap.setView([latitude, longitude], 15, {animate:true});
+    L.marker([latitude, longitude], {
+      icon: L.divIcon({
+        html:'<div style="background:#ef4444; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 12px rgba(239,68,68,0.9);"></div>',
+        iconSize:[20,20], iconAnchor:[10,10]
+      })
+    }).addTo(uLayer).bindPopup('📍 ตำแหน่งของคุณ (จุดขอให้ช่วย)<br><span style="font-size:10px;">แม่น ~'+Math.round(accuracy||0)+'ม.</span>').openPopup();
+    L.circle([latitude, longitude], {radius: Math.min(accuracy||200, 200), color:'#ef4444', fillColor:'#ef4444', fillOpacity:0.15, weight:1, dashArray:'6,6'}).addTo(uLayer);
+    console.log('📍 ปักหมุดจุดขอให้ช่วย:', latitude, longitude);
+    // เติมลงฟอร์ม SOS ด้วยถ้ามี
+    const latEl = document.getElementById('sosLat'); if(latEl) latEl.value = latitude.toFixed(6);
+    const lngEl = document.getElementById('sosLng'); if(lngEl) lngEl.value = longitude.toFixed(6);
+    const latInput = document.getElementById('latInput'); if(latInput) latInput.value = latitude;
+    const lngInput = document.getElementById('lngInput'); if(lngInput) lngInput.value = longitude;
+  }, (err)=>{
+    console.warn('ขอตำแหน่งไม่สำเร็จ:', err.code, err.message);
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+}
+
+// คำสั่งที่ 2: ฟังก์ชันสำหรับ Modal แจ้งเตือนท่วม
+let selectedFloodLevel = 'warning';
+function openFloodWarningModal(){
+  document.getElementById('floodWarningModalOverlay').classList.add('active');
+  // auto fill ตำแหน่งปัจจุบันเมื่อเปิด
+  getCurrentLocationForFloodWarning();
+}
+function closeFloodWarningModal(){
+  document.getElementById('floodWarningModalOverlay').classList.remove('active');
+}
+function toggleFloodLevel(btn){
+  document.querySelectorAll('.flood-level-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedFloodLevel = btn.dataset.val;
+}
+function getCurrentLocationForFloodWarning(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    const lat = pos.coords.latitude.toFixed(6);
+    const lng = pos.coords.longitude.toFixed(6);
+    const fLat = document.getElementById('floodLat'); if(fLat) fLat.value = lat;
+    const fLng = document.getElementById('floodLng'); if(fLng) fLng.value = lng;
+    // ปักหมุดบนแผนที่ด้วย
+    let targetMap = ensureSOSMapReady();
+    if(targetMap){
+      let uLayer = ensureUserLocationLayer(targetMap);
+      // ไม่ clear เพื่อไม่ลบจุดอื่น แต่เพิ่มจุดเตือน
+      targetMap.setView([pos.coords.latitude, pos.coords.longitude], 14, {animate:true});
+    }
+  }, null, {enableHighAccuracy:true, timeout:8000});
+}
+async function submitFloodWarning(){
+  const lat = document.getElementById('floodLat')?.value;
+  const lng = document.getElementById('floodLng')?.value;
+  const waterLevel = document.getElementById('floodWaterLevel')?.value;
+  const detail = document.getElementById('floodDetailText')?.value;
+  const locationText = document.getElementById('floodLocationText')?.value;
+  const radius = document.getElementById('floodRadius')?.value || 600;
+
+  if(!lat || !lng){
+    alert('กรุณาระบุพิกัดน้ำท่วมก่อนครับ');
+    return;
+  }
+  if(typeof supabaseClient === 'undefined'){
+    alert('ระบบยังไม่พร้อม (supabaseClient)');
+    return;
+  }
+  try{
+    const payload = {
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+      latitude: parseFloat(lat),
+      longitude: parseFloat(lng),
+      water_level_cm: waterLevel ? parseInt(waterLevel) : null,
+      title: locationText || 'แจ้งเตือนน้ำท่วม',
+      description: detail || '',
+      risk_level: selectedFloodLevel,
+      level: selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel,
+      radius_m: parseInt(radius),
+      is_active: true,
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString() // หมดอายุ 24 ชม.
+    };
+    console.log('[FLOOD SUBMIT]', payload);
+    const { data, error } = await supabaseClient.from('flood_warnings').insert([payload]).select();
+    if(error){
+      console.error(error);
+      alert('บันทึกไม่สำเร็จ: '+error.message);
+    } else {
+      alert('✅ ส่งแจ้งเตือนท่วมเรียบร้อย');
+      closeFloodWarningModal();
+      // รีโหลดข้อมูล
+      if(typeof loadFloodWarnings === 'function') loadFloodWarnings();
+      else if(typeof filterFloodWarnings === 'function') filterFloodWarnings('latest');
+    }
+  }catch(e){
+    console.error(e);
+    alert('เกิดข้อผิดพลาด: '+e.message);
+  }
+}
+
+// Override openSOSModal เดิมให้ซ่อน flood modal ด้วย (กันซ้อน)
+const _origOpenSOS = window.openSOSModal;
+window.openSOSModal = function(){
+  const floodOverlay = document.getElementById('floodWarningModalOverlay');
+  if(floodOverlay) floodOverlay.classList.remove('active');
+  document.getElementById('sosModalOverlay').classList.add('active');
+  pinCurrentLocationOnSOSMap();
+};
+
+console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำสั่ง: 1)จุดขอให้ช่วยปักหมุดปัจจุบัน 2)สลับปุ่มแจ้งเตือนท่วม');
+
 </script>
 </body>
 </html>
