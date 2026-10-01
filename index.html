@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1210,6 +1210,74 @@
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
 
 .hidden{display:none!important;}
+
+    /* === v13 POPUP DETAIL MODAL - การ์ดล่างกดแล้วเด้งรายละเอียด === */
+    .detail-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .detail-modal-overlay.active { display: flex; }
+    .detail-modal-sheet {
+      background: white;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      border-radius: 24px 24px 0 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      animation: slideUpModal 0.32s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.25);
+    }
+    @keyframes slideUpModal {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .detail-modal-header {
+      position: sticky; top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 2;
+      border-radius: 24px 24px 0 0;
+    }
+    .detail-image-scroller {
+      display: flex; gap: 8px;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      padding: 12px 16px;
+      scrollbar-width: none;
+    }
+    .detail-image-scroller::-webkit-scrollbar { display: none; }
+    .detail-image-item {
+      flex: 0 0 auto;
+      width: 88vw; max-width: 340px;
+      height: 240px;
+      border-radius: 16px;
+      object-fit: cover;
+      scroll-snap-align: center;
+      border: 1.5px solid #e2e8f0;
+      cursor: pointer;
+    }
+    .detail-image-item.thumb {
+      width: 86px; height: 86px;
+    }
+    .detail-badge-more {
+      font-size: 10px; background: white; border: 1px solid #e2e8f0;
+      padding: 2px 8px; border-radius: 999px; color: #64748b;
+      font-weight: bold; display: inline-flex; align-items: center; gap: 2px;
+    }
+    .property-card { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .property-card:active { transform: scale(0.98); }
+    .property-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+
 </style> 
     
 </head>
@@ -7402,6 +7470,184 @@ window.openSOSModal = function(){
 
 console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำสั่ง: 1)จุดขอให้ช่วยปักหมุดปัจจุบัน 2)สลับปุ่มแจ้งเตือนท่วม');
 
+
+// === v13 POPUP DETAIL LOGIC ===
+function openSOSDetailModal(id){
+  const cache = (window.sosRequestsCache||[]).concat(window.floodWarningsCache||[]);
+  let item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(id));
+  if(!item){ console.warn('ไม่เจอ id',id); return; }
+  const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : item.status === 'completed' ? '⚫' : '🔵';
+  const statusText = item.status === 'waiting' ? 'รอความช่วยเหลือ' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : item.status === 'completed' ? 'เสร็จสิ้นแล้ว' : 'หมดอายุ';
+  const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
+  const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '-';
+  const vehicleMap = {boat:'🛶 เรือ (ท้องแบน/พาย)', high_truck:'🚚 รถยกสูง/รถทหาร', pickup:'🛻 รถกระบะ', car:'🚗 รถเก๋ง', any:'อะไรก็ได้'};
+  const origin = item.origin_text || item.location_text || '-';
+  const dest = item.evac_destination_text || item.evac_destination || '';
+  const veh = vehicleMap[item.evac_vehicle_type] || item.evac_vehicle_type || 'ไม่ระบุ';
+  const isEvac = (item.need_types||[]).includes('evacuate');
+  const images = Array.isArray(item.images) ? item.images : [];
+  
+  let html = `
+    ${images.length>0 ? `<div class="detail-image-scroller">${images.map(img=>`<img src="${img}" class="detail-image-item" onclick="if(typeof openImageLightbox==='function') openImageLightbox('${img}'); else { document.getElementById('lightboxImg').src='${img}'; document.getElementById('imageLightbox').classList.add('active'); }" loading="lazy">`).join('')}</div><div style="text-align:center;font-size:10px;color:#94a3b8;">◀ เลื่อนดูรูป ${images.length} รูป ▶</div>` : `<div style="text-align:center;padding:20px;color:#94a3b8;">ไม่มีรูปภาพ</div>`}
+    <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:14px; font-weight:800;">${statusIcon} ${needLabel||'ขอความช่วยเหลือ'}</span>
+        <span style="font-size:11px; background:#f1f5f9; border:1px solid #e2e8f0; padding:3px 8px; border-radius:999px;">${statusText}</span>
+        <span style="font-size:11px; color:#64748b;">${timeStr}</span>
+      </div>
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; line-height:1.6; font-size:13px;">
+        <div>📍 <b>จุดขอให้ช่วย:</b> ${item.location_text||'-'}</div>
+        <div>👥 <b>จำนวน:</b> ${item.people_count||1} คน</div>
+        <div>📞 <b>ติดต่อ:</b> ${item.contact_phone||'-'} <button onclick="if(item.contact_phone) window.open('tel:'+item.contact_phone)" style="margin-left:6px;background:#4a83cc;color:white;border:none;border-radius:999px;padding:4px 12px;font-size:11px;cursor:pointer;">โทร</button></div>
+        ${item.medicine_detail ? `<div style="margin-top:8px; background:#fef2f2; border:1px solid #fecaca; padding:8px; border-radius:10px;">💊 <b>รายละเอียดยา/อาการ:</b> ${item.medicine_detail}</div>` : ''}
+        ${isEvac ? `<div style="margin-top:10px; background:#fff7ed; border:1px solid #fdba74; border-radius:12px; padding:10px;">
+          <div style="font-weight:800; color:#9a3412; font-size:12px; margin-bottom:6px;">🚨 รายละเอียดอพยพ / ยานพาหนะ</div>
+          <div>📍 <b>ไปรับจาก:</b> ${origin}</div>
+          <div>🏁 <b>ไปส่งที่:</b> ${dest||'<span style=color:#dc2626>ยังไม่ระบุ (กรุณาโทรสอบถาม)</span>'}</div>
+          <div>🚗 <b>พาหนะ:</b> ${veh}</div>
+        </div>` : ''}
+        ${item.lat && item.lng ? `<div style="font-size:11px; color:#64748b; margin-top:6px;">📌 พิกัด: ${parseFloat(item.lat).toFixed(6)}, ${parseFloat(item.lng).toFixed(6)}</div>` : ''}
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่</button>
+        <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">💬 ติดต่อช่วยเหลือ</button>
+      </div>
+      ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="width:100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
+    </div>
+  `;
+  document.getElementById('sosDetailContent').innerHTML = html;
+  document.getElementById('sosDetailModalOverlay').classList.add('active');
+}
+function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
+
+function openWarningDetailModal(id){
+  let item = (window.floodWarningsCache||[]).find(x=>String(x.id)===String(id) || String(x.lat)===String(id));
+  // fallback by index if id not found
+  if(!item && !isNaN(id)){
+    item = (window.floodWarningsCache||[])[parseInt(id)];
+  }
+  if(!item){ console.warn('warning not found',id); return; }
+  const lvl = (item.risk_level||item.level||'').toLowerCase();
+  let levelLabel='เฝ้าระวัง', levelColor='#fefce8', icon='🟡';
+  if(lvl.includes('critical')||lvl.includes('danger')||lvl.includes('อันตราย')){ levelLabel='อันตราย'; levelColor='#fef2f2'; icon='🔴'; }
+  else if(lvl.includes('warning')||lvl.includes('เตือนภัย')){ levelLabel='เตือนภัย'; levelColor='#fff7ed'; icon='🟠'; }
+  const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  const water = item.water_level_cm ? `${item.water_level_cm} ซม.` : (item.water_level||'-');
+  const images = item.images || item.photos || [];
+  let html = `
+    <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+      <div style="background:${levelColor}; border:1.5px solid #fde68a; border-radius:14px; padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:800; font-size:15px;">${icon} ${item.title||'แจ้งเตือนน้ำท่วม'}</span>
+          <span style="font-size:11px; background:${levelLabel==='อันตราย'?'#ef4444':'#f59e0b'}; color:white; padding:3px 10px; border-radius:999px;">${levelLabel}</span>
+        </div>
+        <div style="margin-top:8px; font-size:13px; line-height:1.6;">
+          🌊 <b>ระดับน้ำ:</b> ${water}<br>
+          📍 <b>พื้นที่:</b> ${item.location_text||item.district||'-'}<br>
+          ${item.radius_m ? `📏 <b>รัศมี:</b> ${item.radius_m} เมตร<br>` : ''}
+          ${item.description||item.detail ? `📝 <b>รายละเอียด:</b> ${item.description||item.detail}<br>` : ''}
+          🕒 <b>เมื่อ:</b> ${timeStr}<br>
+          ${item.passage_status ? `🚧 <b>สถานะเส้นทาง:</b> ${item.passage_status}<br>` : ''}
+        </div>
+      </div>
+      ${images.length>0 ? `<div class="detail-image-scroller">${images.map(img=>`<img src="${img}" class="detail-image-item" loading="lazy">`).join('')}</div>` : ''}
+      <button onclick="focusWarningOnMap(${item.lat||item.latitude}, ${item.lng||item.longitude}); closeWarningDetailModal();" style="width:100%; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่และนำทาง</button>
+    </div>
+  `;
+  document.getElementById('warningDetailContent').innerHTML = html;
+  document.getElementById('warningDetailModalOverlay').classList.add('active');
+}
+function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
+
+// === v13 OVERRIDE RENDER TO MAKE CARD CLICKABLE ===
+const _origRenderSOSList = window.renderSOSList;
+window.renderSOSList = function(list){
+  if(typeof _origRenderSOSList === 'function') _origRenderSOSList(list);
+  // หลัง render เสร็จ เพิ่ม onclick ให้การ์ดทั้งหมด
+  setTimeout(()=>{
+    const cards = document.querySelectorAll('#list-container .property-card, #sosResults .property-card');
+    cards.forEach((card, idx)=>{
+      const item = (window.sosRequestsCache||list||[])[idx] || list[idx];
+      // ถ้าในโหมด warnings จะเป็น floodWarningsCache
+      if(window.currentViewMode==='warnings') return;
+      if(!item) return;
+      // ห่อด้วย clickable
+      card.style.cursor='pointer';
+      if(!card.dataset.detailBound){
+        card.dataset.detailBound='1';
+        card.addEventListener('click', (e)=>{
+          // ถ้ากดปุ่มข้างใน ไม่เด้งซ้ำ (ปุ่มมี stopPropagation อยู่แล้ว แต่กันไว้)
+          if(e.target.closest('button')) return;
+          openSOSDetailModal(item.id);
+        });
+        // เพิ่ม badge ดูเพิ่มเติม ที่มุมขวาบนของหัวข้อใหญ่
+        const headerRow = card.querySelector('div');
+        if(headerRow && !card.querySelector('.detail-badge-more')){
+          const badge = document.createElement('span');
+          badge.className='detail-badge-more';
+          badge.innerHTML='ดูเพิ่มเติม ›';
+          badge.style.marginLeft='auto';
+          // ใส่หลังปุ่ม ดูบนแผนที่ ถ้ามี
+          const mapBtn = card.querySelector('button');
+          if(mapBtn && mapBtn.parentElement){
+            mapBtn.parentElement.appendChild(badge);
+          }
+        }
+      }
+    });
+  }, 50);
+};
+
+const _origRenderFloodWarningsList = window.renderFloodWarningsList;
+window.renderFloodWarningsList = function(list){
+  if(typeof _origRenderFloodWarningsList === 'function') _origRenderFloodWarningsList(list);
+  setTimeout(()=>{
+    const cache = window.floodWarningsCache||[];
+    const cards = document.querySelectorAll('#list-container > div');
+    cards.forEach((card, idx)=>{
+      const item = list[idx];
+      if(!item) return;
+      card.style.cursor='pointer';
+      if(!card.dataset.warnBound){
+        card.dataset.warnBound='1';
+        // override onclick เดิมที่เป็น focusWarningOnMap
+        card.onclick = ()=> openWarningDetailModal(item.id||idx);
+        // เพิ่ม badge
+        if(!card.querySelector('.detail-badge-more')){
+          const badge = document.createElement('span');
+          badge.className='detail-badge-more';
+          badge.textContent='ดูเพิ่มเติม ›';
+          badge.style.float='right';
+          const titleDiv = card.querySelector('div');
+          if(titleDiv) titleDiv.appendChild(badge);
+        }
+      }
+    });
+  }, 50);
+};
+
 </script>
+
+<!-- === v13 DETAIL MODALS === -->
+<div class="detail-modal-overlay" id="sosDetailModalOverlay" onclick="if(event.target===this) closeSOSDetailModal()">
+  <div class="detail-modal-sheet" id="sosDetailSheet">
+    <div class="detail-modal-header">
+      <span style="font-weight:800; font-size:15px;">📋 รายละเอียดคำขอช่วยเหลือ</span>
+      <button onclick="closeSOSDetailModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;font-size:18px;cursor:pointer;">×</button>
+    </div>
+    <div id="sosDetailContent" style="padding-bottom:24px;"></div>
+  </div>
+</div>
+
+<div class="detail-modal-overlay" id="warningDetailModalOverlay" onclick="if(event.target===this) closeWarningDetailModal()">
+  <div class="detail-modal-sheet" id="warningDetailSheet">
+    <div class="detail-modal-header">
+      <span style="font-weight:800; font-size:15px;">🌊 รายละเอียดเตือนภัย</span>
+      <button onclick="closeWarningDetailModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;font-size:18px;cursor:pointer;">×</button>
+    </div>
+    <div id="warningDetailContent" style="padding-bottom:24px;"></div>
+  </div>
+</div>
+
 </body>
 </html>
