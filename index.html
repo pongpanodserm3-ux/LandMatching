@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 11.9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6169,7 +6169,17 @@ function tryLIFFLoginAgain(){
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : item.status === 'completed' ? '#f3f4f6' : item.status === 'expired' ? '#fafaf9' : '#eff6ff';
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : item.status === 'completed' ? '#d1d5db' : item.status === 'expired' ? '#e7e5e4' : '#bfdbfe';
         const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
-        const timeAgo = item.created_at ? new Date(item.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
+        // คำสั่งที่สอง: เวลา + วันที่แบบย่อที่สุด เช่น 1ต.ค. 11:30
+        let timeAgo = '';
+        if(item.created_at){
+          const d = new Date(item.created_at);
+          const monthsShort = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+          const day = d.getDate();
+          const mon = monthsShort[d.getMonth()];
+          const hr = String(d.getHours()).padStart(2,'0');
+          const min = String(d.getMinutes()).padStart(2,'0');
+          timeAgo = `${day}${mon} ${hr}:${min}`;
+        }
         const isEvac = (item.need_types||[]).includes('evacuate');
 
         // --- v8.6 FIX: เตรียมข้อมูลอพยพ 3 ฟิลด์ ---
@@ -6191,24 +6201,31 @@ function tryLIFFLoginAgain(){
         }
         
         return `
-        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
-          <div style="flex:1;">
+        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; gap:10px; align-items:stretch; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
+          <div style="flex:1; min-width:0;">
             <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
               ${statusText ? `<span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>` : ``}
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
+              <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
             </div>
-            <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
-            <div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span> ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}</div>
+            <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${item.location_text||'-'}</div>
+            <div style="font-size:11px; color:#666; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span>
+              <button style="background:#4a83cc; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.8;" onclick="openSOSChatById('${item.id}', event); event.stopPropagation();">💬 ติดต่อ</button>
+              ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
+              ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; margin-left:2px;" onclick="completeSOSFromList('${item.id}', event); event.stopPropagation();">🏁 เสร็จแล้ว</button>` : ''}
+              ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:8px; font-size:9px;">✅ เสร็จแล้ว</span>` : ''}
+            </div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
           </div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <button style="background:#ff3b30; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});}">📍 ดูบนแผนที่</button>
-            <button style="background:#4a83cc; color:white; border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;" onclick="openSOSChatById('${item.id}', event)">💬 ติดต่อ</button>
-            ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:10px; padding:6px 10px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="completeSOSFromList('${item.id}', event)">🏁 เสร็จแล้ว</button>` : ''}
-            ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:4px 8px; border-radius:8px; font-size:10px; text-align:center;">✅ เสร็จสิ้นแล้ว</span>` : ''}
-          </div>
+          ${(item.images && item.images.length>0) ? `
+          <div style="width:84px; flex-shrink:0; display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory;">
+              ${item.images.map((img,i)=>`<img src="${img}" style="width:76px; height:76px; object-fit:cover; border-radius:10px; flex-shrink:0; border:1px solid #e5e7eb; cursor:pointer; scroll-snap-align:start;" onclick="openImageLightbox('${img}'); event.stopPropagation();" loading="lazy">`).join('')}
+            </div>
+            ${item.images.length>1 ? `<div style="font-size:8px; color:#999; text-align:center;">◀ เลื่อนดู ${item.images.length} รูป ▶</div>` : ''}
+          </div>` : ''}
         </div>`;
       }).join('');
 
