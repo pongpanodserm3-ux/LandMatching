@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2370,6 +2370,20 @@
     // true = เปิดโหมดวิกฤตน้ำท่วม / false = ปิดทันที เหลือแค่ อสังหา
     const ENABLE_SOS_CRISIS = true;
     window.ENABLE_SOS_CRISIS = ENABLE_SOS_CRISIS;
+
+    // === FIX: กัน Error message channel closed จาก Extension / LIFF ===
+    window.addEventListener('unhandledrejection', function(e){
+      if(e.reason && e.reason.message && e.reason.message.includes('message channel closed')){
+        e.preventDefault();
+        console.warn('Ignored extension message channel error');
+      }
+    });
+    window.addEventListener('error', function(e){
+      if(e.message && e.message.includes('message channel closed')){
+        e.preventDefault();
+        return true;
+      }
+    });
     
     // เพิ่มตัวแปรสถานะเสียงแจ้งเตือน
     let isNotificationSoundEnabled = true;
@@ -6210,28 +6224,31 @@ function tryLIFFLoginAgain(){
         }
         
         return `
-        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
-          <div style="flex:1;">
-            <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px; flex-wrap:wrap;">
+        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:row; gap:10px; align-items:stretch; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
               ${statusText ? `<span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>` : ``}
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
               <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
             </div>
-            <div style="font-size:13px; color:#333; font-weight:600; margin-bottom:2px;">📍 ${item.location_text||'-'}</div>
+            <div style="font-size:13px; color:#333; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${item.location_text||'-'}</div>
             <div style="font-size:11px; color:#666; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span>
               <button style="background:#4a83cc; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.8;" onclick="openSOSChatById('${item.id}', event); event.stopPropagation();">💬 ติดต่อ</button>
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
               ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; margin-left:2px;" onclick="completeSOSFromList('${item.id}', event); event.stopPropagation();">🏁 เสร็จแล้ว</button>` : ''}
               ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:8px; font-size:9px;">✅ เสร็จแล้ว</span>` : ''}
             </div>
-            ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; margin-top:4px; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
+            ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
-            ${(item.images && item.images.length>0) ? `
-            <div style="display:flex; gap:6px; overflow-x:auto; margin-top:8px; padding-bottom:2px; scrollbar-width:none;">
-              ${item.images.map((img,i)=>`<img src="${img}" style="width:64px; height:64px; object-fit:cover; border-radius:10px; flex-shrink:0; border:1px solid #e5e7eb; cursor:pointer;" onclick="openImageLightbox('${img}'); event.stopPropagation();" loading="lazy">`).join('')}
-            </div>` : ''}
           </div>
+          ${(item.images && Array.isArray(item.images) && item.images.length>0 && item.images[0]) ? `
+          <div style="width:92px; flex-shrink:0; display:flex; flex-direction:column; gap:3px; align-items:stretch;">
+            <div style="display:flex; gap:5px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; border-radius:10px;">
+              ${(Array.isArray(item.images)?item.images:[]).map((img,i)=>`<img src="${img}" style="width:86px; height:86px; object-fit:cover; border-radius:10px; flex-shrink:0; border:1px solid #e5e7eb; cursor:pointer; scroll-snap-align:start;" onclick="if(typeof openImageLightbox==='function'){openImageLightbox('${img}');}else{document.getElementById('lightboxImg').src='${img}'; document.getElementById('imageLightbox').classList.add('active');} event.stopPropagation();" loading="lazy">`).join('')}
+            </div>
+            ${item.images.length>1 ? `<div style="font-size:8px; color:#888; text-align:center; line-height:1;">◀ ${item.images.length} รูป ▶</div>` : ''}
+          </div>` : `<div style="width:92px; flex-shrink:0;"></div>`}
         </div>`;
       }).join('');
 
