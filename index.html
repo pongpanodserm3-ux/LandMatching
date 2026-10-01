@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1576,11 +1576,10 @@
     .flood-level-btn.selected { background: #f59e0b; color: white; border-color: #d97706; }
     .flood-level-btn.critical.selected { background: #ef4444; border-color: #b91c1c; }
     .flood-level-btn.watch.selected { background: #eab308; border-color: #a16207; }
-    /* v12.6 Flood Warning 8 Photos Grid */
-    #floodWarningUploadGrid .upload-box { position:relative; width:100%; aspect-ratio:1; background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-    #floodWarningUploadGrid .upload-box img { width:100%; height:100%; object-fit:cover; }
-    #floodWarningUploadGrid .delete-img-btn { position:absolute; top:2px; right:2px; width:18px; height:18px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    #floodWarningUploadGrid .cover-label { position:absolute; bottom:0; left:0; right:0; background:#f59e0b; color:white; font-size:8px; text-align:center; padding:1px; font-weight:bold; }
+    #floodWarningUploadGrid .upload-box{position:relative;width:100%;aspect-ratio:1;background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    #floodWarningUploadGrid .upload-box img{width:100%;height:100%;object-fit:cover}
+    #floodWarningUploadGrid .delete-img-btn{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    #floodWarningUploadGrid .cover-label{position:absolute;bottom:0;left:0;right:0;background:#f59e0b;color:white;font-size:8px;text-align:center;padding:1px;font-weight:bold}
   </style>
   <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
@@ -1614,7 +1613,7 @@
       <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
       <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 600 เมตร" value="600">
 
-      <!-- STEP 1: โซนอัปโหลดรูป 8 รูป สำหรับ Flood Warning - เพิ่มใหม่ v12.6 -->
+      <!-- v12.6 8 Photos for Flood Warning -->
       <label style="font-size:12px; font-weight:bold; margin-top:8px; display:block;">6. รูปถ่ายสถานที่ (สูงสุด 8 รูป)</label>
       <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:10px; margin-bottom:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -6492,65 +6491,44 @@ function tryLIFFLoginAgain(){
       renderSOSUploadGrid();
     }
 
-// ============ v12.6 Flood Warning Photos - 8 รูป (ลอกแบบ SOS) ============
+// ============ v12.6 Flood Warning 8 Photos ============
 window.floodWarningUploadedFiles = window.floodWarningUploadedFiles || [];
-
 function handleFloodWarningFilesSelected(event){
   const fileInput = document.getElementById('floodWarningFileInput');
   const files = fileInput && fileInput.files ? Array.from(fileInput.files) : (event.target.files ? Array.from(event.target.files) : []);
   if(files.length===0) return;
-  if(!window.floodWarningUploadedFiles) window.floodWarningUploadedFiles = [];
-  
+  if(!window.floodWarningUploadedFiles) window.floodWarningUploadedFiles=[];
   for(let file of files){
-    if(window.floodWarningUploadedFiles.length < 8){
+    if(window.floodWarningUploadedFiles.length<8){
       if(!file.type.startsWith('image/')) continue;
       window.floodWarningUploadedFiles.push(file);
-    } else {
-      alert("อัปโหลดได้สูงสุด 8 รูปเท่านั้นครับ");
-      break;
-    }
+    }else{ alert("อัปโหลดได้สูงสุด 8 รูปเท่านั้นครับ"); break; }
   }
-  if(fileInput) fileInput.value = '';
+  if(fileInput) fileInput.value='';
   renderFloodWarningUploadGrid();
 }
-
 function renderFloodWarningUploadGrid(){
-  const grid = document.getElementById('floodWarningUploadGrid');
-  const statusText = document.getElementById('floodWarningUploadStatusText');
+  const grid=document.getElementById('floodWarningUploadGrid');
+  const statusText=document.getElementById('floodWarningUploadStatusText');
   if(!grid) return;
-  if(!window.floodWarningUploadedFiles) window.floodWarningUploadedFiles = [];
-  
-  if(statusText) statusText.innerText = `อัปโหลดรูปภาพ (${window.floodWarningUploadedFiles.length}/8)`;
-  grid.innerHTML = '';
-
-  window.floodWarningUploadedFiles.forEach((file, index)=>{
-    const box = document.createElement('div');
-    box.className = 'upload-box';
-    const imgUrl = URL.createObjectURL(file);
-    box.innerHTML = `
-      <img src="${imgUrl}" alt="fw-${index}">
-      ${index===0 ? '<span class="cover-label">ภาพปก</span>' : ''}
-      <button class="delete-img-btn" onclick="deleteFloodWarningImage(${index}); event.stopPropagation();">&times;</button>
-    `;
+  if(!window.floodWarningUploadedFiles) window.floodWarningUploadedFiles=[];
+  if(statusText) statusText.innerText=`อัปโหลดรูปภาพ (${window.floodWarningUploadedFiles.length}/8)`;
+  grid.innerHTML='';
+  window.floodWarningUploadedFiles.forEach((file,index)=>{
+    const box=document.createElement('div'); box.className='upload-box';
+    const imgUrl=URL.createObjectURL(file);
+    box.innerHTML=`<img src="${imgUrl}" alt="fw-${index}">${index===0?'<span class="cover-label">ภาพปก</span>':''}<button class="delete-img-btn" onclick="deleteFloodWarningImage(${index}); event.stopPropagation();">&times;</button>`;
     grid.appendChild(box);
   });
 }
-
 function deleteFloodWarningImage(index){
-  if(window.floodWarningUploadedFiles){
-    window.floodWarningUploadedFiles.splice(index,1);
-    renderFloodWarningUploadGrid();
-  }
+  if(window.floodWarningUploadedFiles){ window.floodWarningUploadedFiles.splice(index,1); renderFloodWarningUploadGrid(); }
 }
-
 function clearFloodWarningImages(){
-  window.floodWarningUploadedFiles = [];
-  const grid = document.getElementById('floodWarningUploadGrid');
-  const statusText = document.getElementById('floodWarningUploadStatusText');
-  if(grid) grid.innerHTML = '';
-  if(statusText) statusText.innerText = 'อัปโหลดรูปภาพ (0/8)';
+  window.floodWarningUploadedFiles=[];
+  const grid=document.getElementById('floodWarningUploadGrid'); const statusText=document.getElementById('floodWarningUploadStatusText');
+  if(grid) grid.innerHTML=''; if(statusText) statusText.innerText='อัปโหลดรูปภาพ (0/8)';
 }
-
     function deleteSOSExistingImage(idx){
       if(!confirm('ลบรูปเก่านี้ออก?')) return;
       window.sosExistingImageUrls.splice(idx,1);
@@ -7464,9 +7442,13 @@ function openFloodWarningModal(){
   // auto fill ตำแหน่งปัจจุบันเมื่อเปิด
   getCurrentLocationForFloodWarning();
 }
+
 function closeFloodWarningModal(){
-  document.getElementById('floodWarningModalOverlay').classList.remove('active');
+  const ov = document.getElementById('floodWarningModalOverlay');
+  if(ov) ov.classList.remove('active');
+  if(typeof clearFloodWarningImages === 'function') clearFloodWarningImages();
 }
+
 function toggleFloodLevel(btn){
   document.querySelectorAll('.flood-level-btn').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -7504,35 +7486,29 @@ async async function submitFloodWarning(){
   try{
     let userId = 'anon';
     if(typeof getCurrentUserId === 'function'){
-      const uid = await getCurrentUserId();
-      if(uid) userId = uid;
+      try{ const uid = await getCurrentUserId(); if(uid) userId = uid; }catch(e){}
     }
 
-    // อัปโหลดรูป 8 รูปไป bucket flood-photos (ใช้ bucket เดียวกับ SOS)
+    // อัปโหลดรูป 8 รูปไป bucket flood-photos
     let finalImageUrls = [];
     const newFiles = window.floodWarningUploadedFiles || [];
     const tempId = Date.now();
 
-    for(let i=0; i<newFiles.length; i++){
+    for(let i=0;i<newFiles.length;i++){
       const file = newFiles[i];
       const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
       const imageIndexStr = String(i+1).padStart(3,'0');
       const fileName = `${userId}-warning-${tempId}-${imageIndexStr}.${fileExt}`;
-
-      if(typeof supabaseClient === 'undefined'){ console.warn('supabaseClient not ready'); break; }
-
+      if(typeof supabaseClient === 'undefined') break;
       const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { cacheControl:'3600', upsert:true });
-      if(uploadError){
-        console.error('อัปโหลดรูป warning ไม่สำเร็จ', uploadError.message);
-      } else {
+      if(uploadError){ console.error('upload warning fail', uploadError.message); }
+      else {
         const {data} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
         if(data && data.publicUrl) finalImageUrls.push(data.publicUrl);
       }
     }
-
     if(finalImageUrls.length>8) finalImageUrls = finalImageUrls.slice(0,8);
 
-    // INSERT ลง DB
     const payload = {
       risk_level: level,
       lat: parseFloat(lat),
@@ -7552,7 +7528,6 @@ async async function submitFloodWarning(){
     alert('✅ ส่งแจ้งเตือนท่วมเรียบร้อย ' + (finalImageUrls.length>0 ? `(${finalImageUrls.length} รูป)` : ''));
     clearFloodWarningImages();
     if(typeof closeFloodWarningModal === 'function') closeFloodWarningModal();
-    // reset form
     document.getElementById('floodLat').value=''; document.getElementById('floodLng').value='';
     document.getElementById('floodLocationText').value=''; document.getElementById('floodWaterLevel').value='';
     document.getElementById('floodDetailText').value=''; document.getElementById('floodRadius').value='600';
@@ -7565,17 +7540,6 @@ async async function submitFloodWarning(){
   }
 }
 
-function closeFloodWarningModal(){
-  const ov = document.getElementById('floodWarningModalOverlay');
-  if(ov) ov.classList.remove('active');
-  clearFloodWarningImages();
-}
-
-  }catch(e){
-    console.error(e);
-    alert('เกิดข้อผิดพลาด: '+e.message);
-  }
-}
 
 // Override openSOSModal เดิมให้ซ่อน flood modal ด้วย (กันซ้อน)
 const _origOpenSOS = window.openSOSModal;
