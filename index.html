@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2333,11 +2333,6 @@
     // 2. CENTRALIZED APPLICATION STATE
     // ==========================================
     const AppState = {
-
-    // === SOS CRISIS TOGGLE - แยกขาดจาก property ===
-    // true = เปิดโหมดวิกฤตน้ำท่วม / false = ปิดทันที เหลือแค่ อสังหา
-    const ENABLE_SOS_CRISIS = true; // ปิดวิกฤต = false แล้วรัน SQL: SELECT cron.unschedule('clean-photos-completed-3h'); etc. 6 ตัว
-    window.ENABLE_SOS_CRISIS = true;
       voice: {
         isActive: false,
         isSetupReady: false,
@@ -2370,6 +2365,11 @@
         dropdownOptions: []
       }
     };
+
+    // === SOS CRISIS TOGGLE - แยกขาดจาก property ===
+    // true = เปิดโหมดวิกฤตน้ำท่วม / false = ปิดทันที เหลือแค่ อสังหา
+    const ENABLE_SOS_CRISIS = true;
+    window.ENABLE_SOS_CRISIS = ENABLE_SOS_CRISIS;
     
     // เพิ่มตัวแปรสถานะเสียงแจ้งเตือน
     let isNotificationSoundEnabled = true;
@@ -3572,9 +3572,8 @@ function tryLIFFLoginAgain(){
       if (sosFilterContainer) {
         sosFilterContainer.style.display = (tabId === 'sos' && window.ENABLE_SOS_CRISIS) ? 'block' : 'none';
       }
-      // === SEPARATED MODE: ถ้าปิดวิกฤต ห้ามเข้าแท็บ SOS ===
       if (tabId === 'sos' && !window.ENABLE_SOS_CRISIS) {
-        console.log('SOS Crisis Disabled - redirect to realestate');
+        console.log('SOS Disabled - redirect');
         tabId = 'realestate';
       }
       if (tabId === 'sos' && window.ENABLE_SOS_CRISIS) {
@@ -6695,19 +6694,7 @@ window.toggleWarningView = function(){
 }
 
 // === v10.6 FIX - แก้ sosMarkersLayer + fitBounds ไม่บิน ===
-console.log('=== v10.6 INIT ==="
-      // === SEPARATED MODE INIT ===
-      if(!window.ENABLE_SOS_CRISIS){
-        const sosBtn = document.getElementById('tab-btn-sos');
-        if(sosBtn) sosBtn.style.display='none';
-        const sosFilter = document.getElementById('sosFilterInListContainer');
-        if(sosFilter) sosFilter.style.display='none';
-        console.log('SOS Mode: DISABLED - SOS tab hidden');
-      } else {
-        console.log('SOS Mode: ENABLED - Separated from property');
-      }
-      // === END SEPARATED INIT ===
-      // v10.6 orig');
+console.log('=== v10.6 INIT ===');
 window.currentViewMode = 'requests';
 window.dangerLayer = window.dangerLayer || null;
 
