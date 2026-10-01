@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 12.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6292,7 +6292,7 @@ function tryLIFFLoginAgain(){
         }
         
         return `
-        <div class="property-card" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:row; gap:10px; align-items:stretch; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
+        <div class="property-card" onclick="openSOSDetailModal('${item.id}')" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:row; gap:10px; align-items:stretch; cursor:pointer; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
           <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
@@ -7166,7 +7166,7 @@ function renderFloodWarningsList(list){
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     return `
-      <div onclick="focusWarningOnMap(${lat},${lng})" style="background:${bg}; border:1.5px solid ${border}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer;">
+      <div onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:1.5px solid ${border}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-weight:bold; font-size:13px;">${icon} ${w.title||'เตือนภัยน้ำท่วม'}</span>
           <span style="font-size:10px; background:${isCritical?'#ef4444':'#eab308'}; color:white; padding:2px 8px; border-radius:10px;">${statusText}</span>
@@ -7519,6 +7519,8 @@ function openSOSDetailModal(id){
   document.getElementById('sosDetailModalOverlay').classList.add('active');
 }
 function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
+function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
+ document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
 
 function openWarningDetailModal(id){
   let item = (window.floodWarningsCache||[]).find(x=>String(x.id)===String(id) || String(x.lat)===String(id));
@@ -7558,6 +7560,14 @@ function openWarningDetailModal(id){
   document.getElementById('warningDetailModalOverlay').classList.add('active');
 }
 function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
+
+
+// === v13.1 HOTFIX ensure modal works even if id is number ===
+window.openWarningDetailModalByLatLng = function(lat,lng){
+  let item = (window.floodWarningsCache||[]).find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
+  if(item) openWarningDetailModal(item.id);
+  else focusWarningOnMap(lat,lng);
+};
 
 // === v13 OVERRIDE RENDER TO MAKE CARD CLICKABLE ===
 const _origRenderSOSList = window.renderSOSList;
