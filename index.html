@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.9.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.10.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1364,6 +1364,50 @@ window.switchTab = window.switchTab || function(tabId){
 <script>
 // === v14.3 UNIVERSAL HIGHLIGHT FOR BOTH SOS AND WARNING ===
 window._lastHighlightedId = null;
+
+  // v14.5 SCROLL TO VISIBLE - ensure highlight is in viewport
+  const scrollHighlightIntoView = (el) => {
+    if(!el) return;
+    try{
+      // 1. Scroll card itself to center
+      el.scrollIntoView({behavior:'smooth', block:'center', inline:'nearest'});
+    }catch(e){}
+    // 2. Find scrollable parents and scroll them
+    setTimeout(()=>{
+      try{
+        const listContainer = document.getElementById('list-container');
+        const sosResults = document.getElementById('sosResults');
+        const tabContent = document.getElementById('tab-content-sos');
+        // Calculate position of card relative to list-container
+        if(listContainer){
+          const containerRect = listContainer.getBoundingClientRect();
+          const cardRect = el.getBoundingClientRect();
+          const isVisible = cardRect.top >= containerRect.top && cardRect.bottom <= containerRect.bottom;
+          if(!isVisible){
+            const scrollTop = el.offsetTop - listContainer.offsetTop - (listContainer.clientHeight/2) + (el.clientHeight/2);
+            listContainer.scrollTo({top: scrollTop, behavior:'smooth'});
+          }
+        }
+        // 3. Also ensure whole page scrolls if needed (for mobile)
+        const finalRect = el.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        if(finalRect.top < 100 || finalRect.bottom > viewportHeight - 50){
+          const extraOffset = 120; // header offset
+          window.scrollTo({
+            top: window.scrollY + finalRect.top - (viewportHeight/2) + extraOffset,
+            behavior: 'smooth'
+          });
+        }
+        // 4. Flash effect to draw attention
+        el.animate([
+          {transform: 'scale(1.02)', boxShadow: '0 0 0 8px rgba(37,99,235,0.4)'},
+          {transform: 'scale(1.05)', boxShadow: '0 0 0 12px rgba(37,99,235,0.2)'},
+          {transform: 'scale(1.02)'}
+        ], {duration: 600, easing: 'ease-out'});
+      }catch(e){ console.warn('scrollHighlight error', e); }
+    }, 150);
+  };
+
 window.highlightCardUniversal = function(idStr, type){
   console.log('[v14.4] HIGHLIGHT UNIVERSAL ->', type, idStr, 'DUPLICATE ID FIX');
   window._lastHighlightedId = idStr;
@@ -1407,7 +1451,7 @@ window.highlightCardUniversal = function(idStr, type){
         cardEl.style.setProperty('background', type==='warning' ? '#fff7ed' : '#eff6ff', 'important');
         cardEl.style.setProperty('transform', 'scale(1.02)', 'important');
       });
-      if(retryCards.length>0) retryCards[0].scrollIntoView({behavior:'smooth', block:'center'});
+      if(retryCards.length>0) scrollHighlightIntoView(retryCards[0]);
       if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
       else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
     }, 350);
@@ -1420,7 +1464,7 @@ window.highlightCardUniversal = function(idStr, type){
     cardEl.style.setProperty('background', type==='warning' ? '#fff7ed' : '#eff6ff', 'important');
     cardEl.style.setProperty('transform', 'scale(1.02)', 'important');
   });
-  allCards[0].scrollIntoView({behavior:'smooth', block:'center'});
+  scrollHighlightIntoView(allCards[0]);
   console.log('[v14.4] HIGHLIGHTED ALL INSTANCES', type, idStr, 'count=', allCards.length, allCards);
   if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
   else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
