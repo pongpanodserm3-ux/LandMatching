@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1748,22 +1748,59 @@ window.highlightBoth = function(idStr, type){
       <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
       <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 600 เมตร" value="600">
 
-      <!-- === v12.6 NEW: โซนอัปโหลดรูปภาพ 8 รูป สำหรับแจ้งเตือนท่วม (คัดลอกหลักการจาก SOS) === -->
+      <!-- === v12.6 NEW: โซนอัปโหลดรูปภาพ 8 รูป สำหรับแจ้งเตือนท่วม (คัดลอกหลักการจาก SOS) - PATCHED v13.12.2 === -->
       <div id="floodImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span id="floodUploadStatusText" style="font-size:12px; font-weight:bold; color:#5c3a6b;">อัปโหลดรูปภาพ (0/8)</span>
           <span style="font-size:10px; color:#888;">หลักการ: userid-postid-001.jpg</span>
         </div>
         <input type="file" id="floodFileInput" accept="image/*" multiple style="display:none;" onchange="handleFloodFilesSelected(event)">
-        <!-- v13.12.1: input สำหรับเปิดกล้องมือถือโดยตรง -->
         <input type="file" id="floodCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFloodFilesSelected(event)">
-        <button type="button" class="upload-main-btn" style="width:100%; padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; cursor:pointer; font-weight:bold;" onclick="document.getElementById('floodFileInput').click()">📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)</button>
-        <!-- v13.12.1: ปุ่มเพิ่มใหม่ ต่อท้ายปุ่มอัปโหลด - ลิงก์ไปกล้องมือถือ ถ่ายแล้วบันทึกลงช่องสี่เหลี่ยมด้านล่าง -->
-        <button type="button" class="upload-main-btn" id="floodCameraBtn" style="width:100%; padding:10px; border:1.5px dashed #4a83cc; border-radius:10px; background:#eff6ff; cursor:pointer; font-weight:bold; color:#1e40af; margin-top:6px;" onclick="document.getElementById('floodCameraInput').click()">📷 เปิดกล้องถ่ายรูป</button>
+        <!-- คำสั่ง 1: ปุ่มแนวนอนคู่กัน -->
+        <div style="display:flex; gap:8px; width:100%;">
+          <button type="button" class="upload-main-btn" style="flex:1; padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; cursor:pointer; font-weight:bold;" onclick="document.getElementById('floodFileInput').click()">📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)</button>
+          <button type="button" class="upload-main-btn" id="floodCameraBtn" style="flex:1; padding:10px; border:1.5px dashed #4a83cc; border-radius:10px; background:#eff6ff; cursor:pointer; font-weight:bold; color:#1e40af;" onclick="openFloodCameraLive()">📷 เปิดกล้องถ่ายรูป</button>
+        </div>
         <div class="upload-grid" id="floodUploadGrid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:8px;"></div>
         <div id="floodExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
-      <!-- === END v12.6 === -->
+      <!-- === END v12.6 PATCHED === -->
+
+      <!-- v13.12.2: Modal กล้องถ่ายต่อเนื่อง (คำสั่ง 2) -->
+      <div id="floodCameraLiveModal" style="display:none; position:fixed; inset:0; z-index:9500; background:#000; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.8); color:white;">
+          <span style="font-weight:bold;">📷 กล้อง - ถ่ายต่อเนื่องได้ (สูงสุด 8)</span>
+          <button onclick="closeFloodCameraLive()" style="background:#333; color:white; border:1px solid #555; border-radius:50%; width:32px; height:32px; cursor:pointer;">×</button>
+        </div>
+        <div style="flex:1; position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          <video id="floodCameraVideo" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+          <canvas id="floodCameraCanvas" style="display:none;"></canvas>
+          <div id="floodCameraCountBadge" style="position:absolute; top:12px; left:12px; background:rgba(245,158,11,0.9); color:white; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">ถ่ายแล้ว 0 รูป</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.9); padding:12px; display:flex; gap:8px; align-items:center; justify-content:center;">
+          <button onclick="captureFloodCameraFrame()" style="width:70px; height:70px; border-radius:50%; border:4px solid white; background:#f59e0b; cursor:pointer; box-shadow:0 0 0 4px rgba(245,158,11,0.3); font-size:28px;">📸</button>
+        </div>
+        <div style="background:#111; padding:10px; display:flex; gap:6px; overflow-x:auto;" id="floodCameraStrip"></div>
+        <div style="background:#000; padding:12px; display:flex; gap:8px;">
+          <button onclick="closeFloodCameraLive()" style="flex:1; background:#333; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">ยกเลิก</button>
+          <button onclick="confirmFloodCameraCaptures()" style="flex:1; background:linear-gradient(135deg,#4a83cc 0%,#2b5893 100%); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">✅ ใช้รูปที่ถ่าย (นำไปพรีวิว)</button>
+        </div>
+      </div>
+
+      <!-- v13.12.2: Modal พรีวิวก่อนบันทึกลงช่อง (คำสั่ง 3) -->
+      <div id="floodPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
+        <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <b style="font-size:14px;">👁️ พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b>
+            <button onclick="closeFloodPreview()" style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button>
+          </div>
+          <div id="floodPreviewGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button onclick="closeFloodPreview()" style="flex:1; background:#e2e8f0; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">ยกเลิก</button>
+            <button onclick="saveFloodPreviewToGrid()" style="flex:1; background:#0e6b38; color:white; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">💾 บันทึกลงช่อง 8 ช่อง</button>
+          </div>
+        </div>
+      </div>
 
       <div style="display:flex; gap:8px; margin-top:12px;">
         <button style="flex:1; background:#e2e8f0; color:#333; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="closeFloodWarningModal()">ยกเลิก</button>
@@ -7734,23 +7771,171 @@ window.floodUploadedFiles = window.floodUploadedFiles || [];
 window.floodExistingImageUrls = window.floodExistingImageUrls || [];
 window.currentFloodWarningId = window.currentFloodWarningId || null;
 
+// === PATCHED v13.12.2: แก้บั๊กภาพกล้องไม่ลงช่อง + เพิ่มพรีวิว + รองรับถ่ายต่อเนื่อง ===
+window.floodPendingPreviewFiles = window.floodPendingPreviewFiles || [];
+window.floodCameraTempFiles = window.floodCameraTempFiles || [];
+window.floodCameraStream = null;
+
 function handleFloodFilesSelected(event){
-  const fileInput = document.getElementById('floodFileInput');
-  const files = fileInput && fileInput.files ? Array.from(fileInput.files) : (event.target.files ? Array.from(event.target.files) : []);
+  // สาเหตุเดิม: ฟังก์ชันเดิมอ่าน fileInput.files เป็นหลัก ทำให้ event.target ที่มาจากกล้องถูกมองข้าม (ได้ [] ว่าง)
+  // วิธีแก้: ให้ความสำคัญกับ event.target.files ก่อนเสมอ และเคลียร์ทั้ง 2 input
+  const targetFiles = event && event.target && event.target.files ? Array.from(event.target.files) : [];
+  const floodInput = document.getElementById('floodFileInput');
+  const camInput = document.getElementById('floodCameraInput');
+  let files = targetFiles;
+  if(files.length===0 && floodInput && floodInput.files && floodInput.files.length>0){
+    files = Array.from(floodInput.files);
+  }
   if(files.length===0) return;
+  // ไม่ push ลง grid ทันที แต่ส่งไปพรีวิวก่อน (คำสั่ง 3)
+  openFloodPreview(files);
+  // เคลียร์ value เพื่อให้เลือกไฟล์เดิมซ้ำได้
+  if(floodInput) floodInput.value='';
+  if(camInput) camInput.value='';
+  // เพื่อป้องกัน cache ของ input เดิม
+  if(event && event.target) event.target.value='';
+}
+
+function openFloodPreview(newFiles){
+  if(!window.floodPendingPreviewFiles) window.floodPendingPreviewFiles=[];
+  // กรองไม่ให้เกิน 8 เมื่อรวมกับที่มีอยู่
+  const existingTotal = (window.floodExistingImageUrls?.length||0) + (window.floodUploadedFiles?.length||0) + window.floodPendingPreviewFiles.length;
+  const remain = 8 - existingTotal;
+  if(remain<=0){
+    alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ หากเกินต้องลบรูปเดิมออกก่อน");
+    return;
+  }
+  const toAdd = newFiles.slice(0, remain);
+  if(newFiles.length>remain) alert(`เลือกได้อีกแค่ ${remain} รูป (เกิน 8) ระบบจะเอาแค่ ${remain} รูปแรก`);
+  window.floodPendingPreviewFiles = window.floodPendingPreviewFiles.concat(toAdd);
+  renderFloodPreview();
+  document.getElementById('floodPreviewModal').style.display='flex';
+}
+
+function renderFloodPreview(){
+  const grid = document.getElementById('floodPreviewGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  window.floodPendingPreviewFiles.forEach((file, idx)=>{
+    const url = URL.createObjectURL(file);
+    const div = document.createElement('div');
+    div.style.cssText='position:relative; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; aspect-ratio:1;';
+    div.innerHTML=`<img src="${url}" style="width:100%; height:100%; object-fit:cover;"><button onclick="removeFloodPreview(${idx})" style="position:absolute; top:4px; right:4px; background:#ef4444; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">×</button><span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:white; font-size:10px; text-align:center; padding:2px;">${file.name||'camera-'+(idx+1)}</span>`;
+    grid.appendChild(div);
+  });
+}
+
+function removeFloodPreview(idx){
+  window.floodPendingPreviewFiles.splice(idx,1);
+  renderFloodPreview();
+  if(window.floodPendingPreviewFiles.length===0) closeFloodPreview();
+}
+
+function closeFloodPreview(){
+  const m = document.getElementById('floodPreviewModal');
+  if(m) m.style.display='none';
+  // ไม่เคลียร์ไฟล์ เพื่อให้กลับมาเปิดใหม่ได้? แต่คำสั่งให้เคลียร์เมื่อยกเลิก
+  // window.floodPendingPreviewFiles=[];
+}
+
+function saveFloodPreviewToGrid(){
   if(!window.floodUploadedFiles) window.floodUploadedFiles=[];
   let totalCount = (window.floodExistingImageUrls?.length||0) + window.floodUploadedFiles.length;
-  for(let file of files){
+  for(let f of window.floodPendingPreviewFiles){
     if(totalCount < 8){
-      window.floodUploadedFiles.push(file);
+      window.floodUploadedFiles.push(f);
       totalCount++;
-    }else{
-      alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ หากเกินต้องลบรูปเดิมออกก่อน");
-      break;
     }
   }
-  if(fileInput) fileInput.value='';
+  window.floodPendingPreviewFiles=[];
+  closeFloodPreview();
   renderFloodUploadGrid();
+}
+
+// === คำสั่ง 2: กล้องถ่ายต่อเนื่องไม่ต้องปิด ===
+async function openFloodCameraLive(){
+  const modal = document.getElementById('floodCameraLiveModal');
+  const video = document.getElementById('floodCameraVideo');
+  if(!modal || !video) return;
+  window.floodCameraTempFiles=[];
+  renderFloodCameraStrip();
+  updateFloodCameraBadge();
+  modal.style.display='flex';
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+    window.floodCameraStream = stream;
+    video.srcObject = stream;
+    await video.play();
+  }catch(e){
+    console.warn('getUserMedia fail, fallback to file input', e);
+    modal.style.display='none';
+    // fallback ใช้ input capture เดิม
+    const camInput = document.getElementById('floodCameraInput');
+    if(camInput) camInput.click();
+  }
+}
+
+function closeFloodCameraLive(){
+  const modal = document.getElementById('floodCameraLiveModal');
+  const video = document.getElementById('floodCameraVideo');
+  if(window.floodCameraStream){
+    window.floodCameraStream.getTracks().forEach(t=>t.stop());
+    window.floodCameraStream=null;
+  }
+  if(video) video.srcObject=null;
+  if(modal) modal.style.display='none';
+}
+
+function captureFloodCameraFrame(){
+  const video = document.getElementById('floodCameraVideo');
+  const canvas = document.getElementById('floodCameraCanvas');
+  if(!video || !canvas) return;
+  const existingTotal = (window.floodExistingImageUrls?.length||0) + (window.floodUploadedFiles?.length||0) + (window.floodPendingPreviewFiles?.length||0) + window.floodCameraTempFiles.length;
+  if(existingTotal >= 8){
+    alert("ครบ 8 รูปแล้วครับ");
+    return;
+  }
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob((blob)=>{
+    if(!blob) return;
+    const file = new File([blob], `camera-${Date.now()}-${window.floodCameraTempFiles.length+1}.jpg`, {type:'image/jpeg'});
+    window.floodCameraTempFiles.push(file);
+    renderFloodCameraStrip();
+    updateFloodCameraBadge();
+  }, 'image/jpeg', 0.9);
+}
+
+function renderFloodCameraStrip(){
+  const strip = document.getElementById('floodCameraStrip');
+  if(!strip) return;
+  strip.innerHTML='';
+  window.floodCameraTempFiles.forEach((file, idx)=>{
+    const url = URL.createObjectURL(file);
+    const d = document.createElement('div');
+    d.style.cssText='position:relative; width:60px; height:60px; flex-shrink:0; border-radius:8px; overflow:hidden; border:1px solid #333;';
+    d.innerHTML=`<img src="${url}" style="width:100%; height:100%; object-fit:cover;"><button onclick="window.floodCameraTempFiles.splice(${idx},1); renderFloodCameraStrip(); updateFloodCameraBadge();" style="position:absolute; top:2px; right:2px; background:#ef4444; color:white; border:none; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer;">×</button>`;
+    strip.appendChild(d);
+  });
+}
+
+function updateFloodCameraBadge(){
+  const b = document.getElementById('floodCameraCountBadge');
+  if(b) b.innerText = `ถ่ายแล้ว ${window.floodCameraTempFiles.length} รูป`;
+}
+
+function confirmFloodCameraCaptures(){
+  if(window.floodCameraTempFiles.length===0){
+    alert('ยังไม่ได้ถ่ายรูปเลยครับ');
+    return;
+  }
+  // ปิดกล้องแต่ยังไม่ลง grid ทันที ส่งต่อไปพรีวิว (คำสั่ง 3)
+  const filesToPreview = [...window.floodCameraTempFiles];
+  window.floodCameraTempFiles=[];
+  closeFloodCameraLive();
+  openFloodPreview(filesToPreview);
 }
 
 function renderFloodUploadGrid(){
