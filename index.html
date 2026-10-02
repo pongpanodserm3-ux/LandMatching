@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.9.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.9.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1365,53 +1365,67 @@ window.switchTab = window.switchTab || function(tabId){
 // === v14.3 UNIVERSAL HIGHLIGHT FOR BOTH SOS AND WARNING ===
 window._lastHighlightedId = null;
 window.highlightCardUniversal = function(idStr, type){
-  console.log('[v14.3] HIGHLIGHT UNIVERSAL ->', type, idStr);
+  console.log('[v14.4] HIGHLIGHT UNIVERSAL ->', type, idStr, 'DUPLICATE ID FIX');
   window._lastHighlightedId = idStr;
   window._lastHighlightedType = type;
-  const possibleIds = ['sos-card-'+idStr, 'warning-card-'+idStr, 'flood-card-'+idStr, idStr];
-  let cardEl = null;
-  for(let pid of possibleIds){
-    cardEl = document.getElementById(pid);
-    if(cardEl) break;
-  }
-  // fallback search by data attribute
-  if(!cardEl){
-    cardEl = document.querySelector(`[data-sos-id="${idStr}"]`) || document.querySelector(`[data-warning-id="${idStr}"]`);
-  }
-  if(!cardEl){
-    console.warn('[v14.3] หา card ไม่เจอสำหรับ', idStr, 'ลอง render ใหม่');
+  // Clear old
+  document.querySelectorAll('.sos-card-highlight, .warning-card-highlight').forEach(el=> {
+    el.classList.remove('sos-card-highlight','warning-card-highlight');
+    el.style.removeProperty('border');
+    el.style.removeProperty('box-shadow');
+    el.style.removeProperty('background');
+    el.style.removeProperty('transform');
+  });
+  // Find ALL cards with this id (there are 2 due to duplicate innerHTML)
+  const selectors = [
+    '#sos-card-' + idStr,
+    '#warning-card-' + idStr,
+    '[data-sos-id="' + idStr + '"]',
+    '[data-warning-id="' + idStr + '"]'
+  ];
+  let allCards = [];
+  selectors.forEach(sel=>{
+    try{
+      document.querySelectorAll(sel).forEach(el=> allCards.push(el));
+    }catch(e){}
+  });
+  // Deduplicate by element
+  allCards = [...new Set(allCards)];
+  if(allCards.length===0){
+    console.warn('[v14.4] หา card ไม่เจอสำหรับ', idStr, 'ลอง render ใหม่');
     if(type==='sos' && typeof renderSOSList==='function' && window.sosRequestsCache){
       renderSOSList(window.sosRequestsCache);
-    } else if(type==='warning' && typeof renderFloodWarningsList==='function' && window.floodWarningsCache){
-      // try to call original render if exists
-      if(typeof window._origRenderFloodWarningsList==='function') window._origRenderFloodWarningsList(window.floodWarningsCache);
-      else if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(window.floodWarningsCache);
     }
     setTimeout(()=>{
-      for(let pid of possibleIds){
-        cardEl = document.getElementById(pid);
-        if(cardEl) break;
-      }
-      if(!cardEl) cardEl = document.querySelector(`[data-sos-id="${idStr}"]`) || document.querySelector(`[data-warning-id="${idStr}"]`);
-      if(cardEl){
-        document.querySelectorAll('.sos-card-highlight, .warning-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight','warning-card-highlight'));
+      let retryCards = [];
+      selectors.forEach(sel=>{ try{ document.querySelectorAll(sel).forEach(el=> retryCards.push(el)); }catch(e){} });
+      retryCards = [...new Set(retryCards)];
+      retryCards.forEach(cardEl=>{
         cardEl.classList.add(type==='warning' ? 'warning-card-highlight' : 'sos-card-highlight');
-        cardEl.scrollIntoView({behavior:'smooth', block:'center'});
-      }
-      // open modal
+        cardEl.style.setProperty('border', type==='warning' ? '3.5px solid #ea580c' : '3.5px solid #2563eb', 'important');
+        cardEl.style.setProperty('box-shadow', type==='warning' ? '0 0 0 4px rgba(234,88,12,0.28), 0 10px 28px rgba(234,88,12,0.4)' : '0 0 0 4px rgba(37,99,235,0.28), 0 10px 28px rgba(37,99,235,0.4)', 'important');
+        cardEl.style.setProperty('background', type==='warning' ? '#fff7ed' : '#eff6ff', 'important');
+        cardEl.style.setProperty('transform', 'scale(1.02)', 'important');
+      });
+      if(retryCards.length>0) retryCards[0].scrollIntoView({behavior:'smooth', block:'center'});
       if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
       else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
-    }, 300);
+    }, 350);
     return;
   }
-  document.querySelectorAll('.sos-card-highlight, .warning-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight','warning-card-highlight'));
-  cardEl.classList.add(type==='warning' ? 'warning-card-highlight' : 'sos-card-highlight');
-  cardEl.scrollIntoView({behavior:'smooth', block:'center'});
-  console.log('[v14.3] HIGHLIGHTED', type, idStr, cardEl);
-  // open modal
+  allCards.forEach(cardEl=>{
+    cardEl.classList.add(type==='warning' ? 'warning-card-highlight' : 'sos-card-highlight');
+    cardEl.style.setProperty('border', type==='warning' ? '3.5px solid #ea580c' : '3.5px solid #2563eb', 'important');
+    cardEl.style.setProperty('box-shadow', type==='warning' ? '0 0 0 4px rgba(234,88,12,0.28), 0 10px 28px rgba(234,88,12,0.4)' : '0 0 0 4px rgba(37,99,235,0.28), 0 10px 28px rgba(37,99,235,0.4)', 'important');
+    cardEl.style.setProperty('background', type==='warning' ? '#fff7ed' : '#eff6ff', 'important');
+    cardEl.style.setProperty('transform', 'scale(1.02)', 'important');
+  });
+  allCards[0].scrollIntoView({behavior:'smooth', block:'center'});
+  console.log('[v14.4] HIGHLIGHTED ALL INSTANCES', type, idStr, 'count=', allCards.length, allCards);
   if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
   else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
 };
+
 </script>
 
 </head>
