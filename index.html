@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.10.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.10.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1452,8 +1452,8 @@ window.highlightCardUniversal = function(idStr, type){
         cardEl.style.setProperty('transform', 'scale(1.02)', 'important');
       });
       if(retryCards.length>0) scrollHighlightIntoView(retryCards[0]);
-      if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
-      else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
+      if(type==='sos' && typeof openSOSDetailModal==='function') // v14.7 NO MODAL - only highlight
+      else if(type==='warning' && typeof openWarningDetailModal==='function') // v14.7 NO MODAL - only highlight
     }, 350);
     return;
   }
@@ -1466,8 +1466,8 @@ window.highlightCardUniversal = function(idStr, type){
   });
   scrollHighlightIntoView(allCards[0]);
   console.log('[v14.4] HIGHLIGHTED ALL INSTANCES', type, idStr, 'count=', allCards.length, allCards);
-  if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
-  else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
+  if(type==='sos' && typeof openSOSDetailModal==='function') // v14.7 NO MODAL - only highlight
+  else if(type==='warning' && typeof openWarningDetailModal==='function') // v14.7 NO MODAL - only highlight
 };
 
 </script>
@@ -6439,10 +6439,10 @@ function initSOSMap(){
 
     // === v13.6 FIX กดหมุด -> ฟีดล่างเลื่อนหา + เปิดรายละเอียด (ตามรูป 1,2,3) ===
     
-    function onSOSMarkerClicked(sosId){
+        function onSOSMarkerClicked(sosId){
       if(!sosId) return;
       const idStr = String(sosId);
-      console.log('[v14.3] CLICK SOS MARKER ->', idStr);
+      console.log('[v14.7] CLICK SOS MARKER BOTH TYPES - ONLY HIGHLIGHT ->', idStr);
       const cache = window.sosRequestsCache || [];
       const item = cache.find(x=> String(x.id)===idStr);
       if(!item){ console.warn('ไม่พบ SOS id', idStr); return; }
@@ -6456,7 +6456,6 @@ function initSOSMap(){
           }
         }
       }catch(e){}
-      // Ensure in requests mode
       if(window.currentViewMode!=='requests' && typeof switchSOSSubView==='function'){
         switchSOSSubView('requests');
         setTimeout(()=>{ window.highlightCardUniversal(idStr, 'sos'); }, 500);
@@ -6470,6 +6469,7 @@ function initSOSMap(){
       }
     }
     window.onSOSMarkerClicked = onSOSMarkerClicked;
+
     // Alias for old calls
     window.onFloodMarkerClickedSafe = onSOSMarkerClicked;
 
@@ -6590,7 +6590,7 @@ function initSOSMap(){
         }
         
         return `
-        <div id="sos-card-${item.id}" class="property-card sos-card" data-sos-id="${item.id}" onclick="openSOSDetailModal('${item.id}')" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:row; gap:10px; align-items:stretch; cursor:pointer; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
+        <div id="sos-card-${item.id}" class="property-card sos-card" data-sos-id="${item.id}" onclick="// v14.7 NO MODAL - only highlight" style="background:${statusColor}; border:1.5px solid ${borderColor}; border-radius:16px; padding:12px; margin-bottom:10px; display:flex; flex-direction:row; gap:10px; align-items:stretch; cursor:pointer; ${item.status==='completed' || item.status==='expired' ? 'opacity:0.7;' : ''}">
           <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
@@ -7197,7 +7197,7 @@ window.loadFloodWarnings = async function(){
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
       L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
-      L.marker([lat,lng]).addTo(layer).bindPopup(w.title);
+      L.marker([lat,lng]).addTo(layer).bindPopup(w.title + '<br><small>แตะเพื่อไฮไลต์รายการ</small>');
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
     if(layer.getLayers && layer.getLayers().length>0 && targetMap){
@@ -7466,7 +7466,7 @@ function renderFloodWarningsList(list){
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     return `
-      <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : `1.5px solid ${border}`}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; ${selectedId && String(w.id)===selectedId ? 'box-shadow:0 0 0 4px rgba(59,130,246,0.2);' : ''}">
+      <div data-warning-id="${w.id}" onclick="// v14.7 NO MODAL - only highlight" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : `1.5px solid ${border}`}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; ${selectedId && String(w.id)===selectedId ? 'box-shadow:0 0 0 4px rgba(59,130,246,0.2);' : ''}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span style="font-weight:bold; font-size:13px;">${icon} ${w.title||'เตือนภัยน้ำท่วม'}</span>
           <span style="font-size:10px; background:${isCritical?'#ef4444':'#eab308'}; color:white; padding:2px 8px; border-radius:10px;">${statusText}</span>
@@ -7533,20 +7533,19 @@ function onFloodMarkerClicked(w){
       if(listCont) listCont.scrollTop = 0;
     }
     if(typeof openWarningDetailModal==='function'){
-      openWarningDetailModal(w.id);
+      // v14.7 NO MODAL - only highlight
     }
   }, 300);
 }
 
 
 function focusWarningOnMap(lat,lng){
-  console.log('[v14.3] focusWarningOnMap', lat,lng);
+  console.log('[v14.7] focusWarningOnMap - ONLY HIGHLIGHT BOTH TYPES', lat,lng);
   let targetMap = (typeof ensureSOSMapReady==='function'?ensureSOSMapReady():null) || window.sosMap || null;
   if(targetMap){
     if(typeof targetMap.flyTo==='function') targetMap.flyTo([parseFloat(lat), parseFloat(lng)], 15, {duration:0.8});
     else targetMap.setView([parseFloat(lat), parseFloat(lng)], 15, {animate:true});
   }
-  // find warning id by latlng
   const cache = window.floodWarningsCache || [];
   let item = cache.find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng)) || cache.find(x=> Math.abs(parseFloat(x.lat)-parseFloat(lat))<0.0005 && Math.abs(parseFloat(x.lng)-parseFloat(lng))<0.0005);
   if(item){
@@ -8206,7 +8205,7 @@ window.deleteFloodWarningFromDetail = async function(id){
 
 
 
-function openSOSDetailModal(id){
+function // v14.7 NO MODAL - only highlight{
   const cache = (window.sosRequestsCache||[]).concat(window.floodWarningsCache||[]);
   let item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(id));
   if(!item){ console.warn('ไม่เจอ id',id); return; }
@@ -8256,7 +8255,7 @@ function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay')
 function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
 
-function openWarningDetailModal(id){
+function // v14.7 NO MODAL - only highlight{
   window._selectedFloodWarningId = String(id);
   let item = (window.floodWarningsCache||[]).find(x=>String(x.id)===String(id) || String(x.lat)===String(id));
   // fallback by index if id not found
@@ -8301,7 +8300,7 @@ function closeWarningDetailModal(){ document.getElementById('warningDetailModalO
 // === v13.1 HOTFIX ensure modal works even if id is number ===
 window.openWarningDetailModalByLatLng = function(lat,lng){
   let item = (window.floodWarningsCache||[]).find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
-  if(item) openWarningDetailModal(item.id);
+  if(item) // v14.7 NO MODAL - only highlight
   else focusWarningOnMap(lat,lng);
 };
 
@@ -8324,7 +8323,7 @@ window.renderSOSList = function(list){
         card.addEventListener('click', (e)=>{
           // ถ้ากดปุ่มข้างใน ไม่เด้งซ้ำ (ปุ่มมี stopPropagation อยู่แล้ว แต่กันไว้)
           if(e.target.closest('button')) return;
-          openSOSDetailModal(item.id);
+          // v14.7 NO MODAL - only highlight
         });
         // เพิ่ม badge ดูเพิ่มเติม ที่มุมขวาบนของหัวข้อใหญ่
         const headerRow = card.querySelector('div');
@@ -8363,7 +8362,7 @@ window.renderFloodWarningsList = function(list){
       if(!card.dataset.warnBound){
         card.dataset.warnBound='1';
         // override onclick เดิมที่เป็น focusWarningOnMap
-        card.onclick = ()=> openWarningDetailModal(item.id||idx);
+        card.onclick = ()=> // v14.7 NO MODAL - only highlight
         // เพิ่ม badge
         if(!card.querySelector('.detail-badge-more')){
           const badge = document.createElement('span');
