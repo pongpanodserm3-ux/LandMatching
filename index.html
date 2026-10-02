@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v 13
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -2505,8 +2505,7 @@
     }
   
     let CURRENT_ROOM_ID = 101;
-    let CURRENT_USER_I
-D = null; // v6.7 FIX: เปลี่ยนจาก 1 เป็น null เพื่อกัน anonymous มั่ว
+    let CURRENT_USER_ID = null; // v6.7 FIX: เปลี่ยนจาก 1 เป็น null เพื่อกัน anonymous มั่ว
     let currentUserLineProfile = null;
     let activeRealtimeChannel = null;
 
@@ -5414,8 +5413,7 @@ function tryLIFFLoginAgain(){
         listZone.classList.add('expanded');
         listZone.classList.remove('shrunk');
         roomZone.classList.add('shrunk');
-        roomZone.classList.r
-emove('expanded');
+        roomZone.classList.remove('expanded');
       } else if (zone === 'room') {
         roomZone.classList.add('expanded');
         roomZone.classList.remove('shrunk');
@@ -7535,11 +7533,11 @@ async function submitFloodWarning(){
     return;
   }
   try{
+    // v13.3 FIX: ตาราง flood_warnings ไม่มีคอลัมน์ latitude/longitude มีแค่ lat/lng
+    // ถ้าใส่ latitude จะ error PGRST204 schema cache -> เลยส่งแค่ lat/lng เท่านั้น
     const payload = {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lng),
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
       title: locationText || 'แจ้งเตือนน้ำท่วม',
       description: detail || '',
@@ -7613,6 +7611,7 @@ window.openSOSModal = function(){
   pinCurrentLocationOnSOSMap();
 };
 
+console.log('✅ v13.4 FIXED โหลดแล้ว - แก้ latitude schema + มี 8 รูป + ลบจริงครบวงจร');
 console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำสั่ง: 1)จุดขอให้ช่วยปักหมุดปัจจุบัน 2)สลับปุ่มแจ้งเตือนท่วม');
 
 
