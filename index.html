@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1278,6 +1278,13 @@
     .property-card:active { transform: scale(0.98); }
     .property-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 
+
+    /* FIX v13.4 - Flood pin modal must be on top */
+    #locationModalOverlay{ z-index:10010 !important; }
+    #locationModalOverlay.active{ display:flex !important; }
+    #locationModalOverlay .detail-modal{ z-index:10011; max-height:92vh; height:auto; }
+    #locationMap{ z-index:1; }
+
 </style> 
     
 </head>
@@ -1710,7 +1717,7 @@
   </div>
 
   <!-- Location Map Modal -->
-  <div class="modal-overlay" id="locationModalOverlay">
+  <div class="modal-overlay" id="locationModalOverlay" style="z-index: 10010; align-items: center; justify-content: center;">
     <div class="detail-modal" style="height: 90vh;">
       <span class="close-modal" onclick="closeLocationModal()">&times;</span>
       <h3 style="margin-top:0; color: var(--text-main); font-size: 18px;">📍 ปักหมุดเลือกพิกัดค้นหา</h3>
@@ -4256,9 +4263,13 @@ function tryLIFFLoginAgain(){
       leafletMap.fitBounds(radiusCircle.getBounds());
     }
 
-    function openLocationModal() {
+    function openLocationModal(isFromFlood){
       stopAIVoiceSpeech();
-      document.getElementById('locationModalOverlay').classList.add('active');
+      const locOverlay = document.getElementById('locationModalOverlay');
+      locOverlay.classList.add('active');
+      // FIX v13.4: force to front above flood modal (9001) and detail modals (9999)
+      locOverlay.style.zIndex = '10010';
+      locOverlay.style.display = 'flex';
       
       const defaultLat = selectedLat || 13.7563;
       const defaultLng = selectedLng || 100.5018;
@@ -4300,7 +4311,7 @@ function tryLIFFLoginAgain(){
         }, 200);
       } else {
         setTimeout(() => {
-          leafletMap.invalidateSize();
+          if(leafletMap){ leafletMap.invalidateSize(); setTimeout(()=>leafletMap.invalidateSize(), 200); }
           if (selectedLat && selectedLng) {
             const latLng = [selectedLat, selectedLng];
             mapMarker.setLatLng(latLng);
@@ -4444,22 +4455,21 @@ function tryLIFFLoginAgain(){
       selectedLng = parseFloat(lng).toFixed(6);
       document.getElementById('latInput').value = selectedLat;
       document.getElementById('lngInput').value = selectedLng;
-      // FIX คำสั่งที่ 2: sync ไป SOS ทันทีที่เลือกพิกัดบนแผนที่
+      // FIX v13.4: sync ไปทุกฟอร์มที่เกี่ยวข้อง
       const sosLatEl = document.getElementById('sosLat');
       const sosLngEl = document.getElementById('sosLng');
-      if (sosLatEl && sosLngEl) {
-        // ถ้า modal SOS เปิดอยู่ ให้ใส่ค่าเลย
-        const sosModal = document.getElementById('sosModalOverlay');
-        if (sosModal && sosModal.classList.contains('active')) {
-          sosLatEl.value = selectedLat;
-          sosLngEl.value = selectedLng;
-        } else {
-          // ถ้าไม่ได้เปิด SOS แต่มีการเรียกจาก SOS (openLocationModal(true)) ให้ใส่ด้วย
-          // เช็คว่ามีการกดจาก SOS ภายใน 5 วินาทีล่าสุด
-          sosLatEl.value = selectedLat;
-          sosLngEl.value = selectedLng;
-        }
-      }
+      if (sosLatEl) sosLatEl.value = selectedLat;
+      if (sosLngEl) sosLngEl.value = selectedLng;
+      // --- Flood warning form ---
+      const fLat = document.getElementById('floodLat');
+      const fLng = document.getElementById('floodLng');
+      if (fLat) fLat.value = selectedLat;
+      if (fLng) fLng.value = selectedLng;
+      // --- Compatibility: any other flood lat/lng fields ---
+      const floodLat2 = document.getElementById('floodLatitude');
+      const floodLng2 = document.getElementById('floodLongitude');
+      if (floodLat2) floodLat2.value = selectedLat;
+      if (floodLng2) floodLng2.value = selectedLng;
     }
 
     function updateMapFromInputs() {
@@ -4500,7 +4510,10 @@ function tryLIFFLoginAgain(){
       stopAIVoiceSpeech();
       const resultsDiv = document.getElementById('placeSearchResults');
       if (resultsDiv) resultsDiv.style.display = 'none';
-      document.getElementById('locationModalOverlay').classList.remove('active');
+      const ov = document.getElementById('locationModalOverlay');
+      ov.classList.remove('active');
+      ov.style.display = 'none';
+      setTimeout(()=>{ if(!ov.classList.contains('active')) ov.style.display=''; }, 300);
     }
 
     function clearLocationFilter() {
@@ -4570,7 +4583,6 @@ function tryLIFFLoginAgain(){
       const radiusSelect = document.getElementById('radiusSelect');
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
       
-      // ส่วนที่เพิ่มใหม่: ค้นหาปุ่ม "ปักหมุดพิกัด" ที่อยู่ในหน้าต่างลงประกาศขายบ้าน (postModalOverlay)
       const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
 
       if (lat && lng) {
@@ -4578,38 +4590,44 @@ function tryLIFFLoginAgain(){
         selectedLng = parseFloat(lng);
         selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
         
-        // 1. อัปเดตข้อความปุ่มพิกัดหน้าแรก (ของเดิม ยังคงอยู่)
         document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
         
-        // 2. อัปเดตข้อความปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
         if (postLocationBtn) {
           postLocationBtn.innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)}`;
         }
 
-        // 3. FIX คำสั่งที่ 2: ส่งค่า lat/lng กลับไปใส่ในหน้าต่าง SOS ด้วย
+        // SOS
         const sosLatEl = document.getElementById('sosLat');
         const sosLngEl = document.getElementById('sosLng');
         if (sosLatEl) sosLatEl.value = selectedLat.toFixed(6);
         if (sosLngEl) sosLngEl.value = selectedLng.toFixed(6);
-        // FIX: ไม่ใส่ lat/lng ลงช่องรายละเอียดเพิ่ม เพื่อไม่ให้ซ้ำกัน 2 จุด (ตามคำสั่งล่าสุด)
+
+        // FIX v13.4 - FLOOD: sync lat/lng to flood form
+        const fLat = document.getElementById('floodLat');
+        const fLng = document.getElementById('floodLng');
+        if (fLat) fLat.value = selectedLat.toFixed(6);
+        if (fLng) fLng.value = selectedLng.toFixed(6);
+
+        // Also try alternative ids
+        const fLatAlt = document.getElementById('floodLatitude');
+        const fLngAlt = document.getElementById('floodLongitude');
+        if (fLatAlt) fLatAlt.value = selectedLat.toFixed(6);
+        if (fLngAlt) fLngAlt.value = selectedLng.toFixed(6);
+
+        // Update detail text if flood form has location detail input
+        const floodLocationInput = document.getElementById('floodLocationText') || document.getElementById('floodDetail');
+        // keep existing
+
       } else {
         selectedLat = null;
         selectedLng = null;
         selectedRadius = 1;
         
-        // คืนค่าข้อความปุ่มพิกัดหน้าแรก (ของเดิม)
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
         
-        // คืนค่าข้อความปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
         if (postLocationBtn) {
           postLocationBtn.innerText = '📍 ปักหมุดพิกัด';
         }
-        // ล้างค่าใน SOS ด้วยถ้าไม่มีพิกัด
-        const sosLatEl = document.getElementById('sosLat');
-        const sosLngEl = document.getElementById('sosLng');
-        // ไม่ล้างอัตโนมัติเพื่อกันผู้ใช้กรอกเองไว้ แต่ถ้าต้องการล้างให้ comment ออกได้
-        // if (sosLatEl) sosLatEl.value = '';
-        // if (sosLngEl) sosLngEl.value = '';
       }
       
       closeLocationModal();
