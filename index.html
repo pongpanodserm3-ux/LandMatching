@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.10.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Land Matching AI</title>
+  <title>Land Matching AI v13.12</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1343,7 +1343,7 @@
 
 
 <script>
-// === v14.10 CLEAN - BOTH MARKERS ONLY HIGHLIGHT + AUTO SCROLL ===
+// === v14.10 + v13.12 CLEAN - BOTH MARKERS ONLY HIGHLIGHT + AUTO SCROLL (NO MODAL ON PIN) ===
 window._lastHL = null;
 window.scrollHL = function(el){
   if(!el) return;
@@ -7101,7 +7101,7 @@ window.loadFloodWarnings = async function(){
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
       L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
-      (()=>{ const _m=L.marker([lat,lng]).addTo(layer).bindPopup(w.title); _m.on('click', ()=>{ console.log('[v14.10] WARNING MARKER', w.id); window.highlightBoth(String(w.id),'warning'); }); })();
+      (()=>{ const _m=L.marker([lat,lng]).addTo(layer); _m.on('click', ()=>{ console.log('[v13.12] WARNING MARKER ONLY HIGHLIGHT', w.id); onFloodMarkerClicked(w); }); })();
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
     if(layer.getLayers && layer.getLayers().length>0 && targetMap){
@@ -7385,15 +7385,15 @@ function renderFloodWarningsList(list){
   }).join('');
 }
 
-// === v13.5 FIX: กดหมุดน้ำท่วม -> ฟีดล่างโชว์การ์ด + เปิดรายละเอียด ===
+// === v13.12 FIX: กดหมุดน้ำท่วม -> ONLY HIGHLIGHT + AUTO SCROLL (ไม่เด้ง Modal) ===
 window._selectedFloodWarningId = window._selectedFloodWarningId || null;
 
 function onFloodMarkerClicked(w){
   if(!w) return;
-  console.log('[FLOOD CLICK v13.7] marker clicked', w.id, w.title);
+  console.log('[FLOOD CLICK v13.12] marker clicked - ONLY HIGHLIGHT', w.id, w.title);
   window._selectedFloodWarningId = String(w.id);
   
-  // === v13.7 AUTO-ZOOM สำหรับเตือนท่วม ===
+  // Auto-zoom ไปที่หมุด
   try{
     let targetMap = ensureSOSMapReady ? ensureSOSMapReady() : (window.sosMap || null);
     if(targetMap){
@@ -7426,22 +7426,30 @@ function onFloodMarkerClicked(w){
   window._currentWarningFilter = 'all';
 
   setTimeout(()=>{
+    // ใช้ highlightBoth เพื่อทำขอบน้ำเงิน + ฟ้าอ่อน ตามระบบเดิม v14.10
+    if(typeof window.highlightBoth === 'function'){
+      window.highlightBoth(String(w.id), 'warning');
+    } else {
+      const card = document.querySelector(`[data-warning-id="${w.id}"]`);
+      if(card){
+        document.querySelectorAll('.highlight-pulse').forEach(el=> el.classList.remove('highlight-pulse'));
+        card.classList.add('highlight-pulse');
+        card.style.setProperty('border', '3.5px solid #2563eb', 'important');
+        card.style.setProperty('background', '#eff6ff', 'important');
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        setTimeout(()=>card.classList.remove('highlight-pulse'), 2500);
+      }
+    }
     const card = document.querySelector(`[data-warning-id="${w.id}"]`);
     if(card){
-      document.querySelectorAll('.highlight-pulse').forEach(el=> el.classList.remove('highlight-pulse'));
-      card.classList.add('highlight-pulse');
       card.scrollIntoView({behavior:'smooth', block:'center'});
-      setTimeout(()=>card.classList.remove('highlight-pulse'), 2500);
     } else {
       const listCont = document.getElementById('list-container');
       if(listCont) listCont.scrollTop = 0;
     }
-    if(typeof openWarningDetailModal==='function'){
-      openWarningDetailModal(w.id);
-    }
-  }, 300);
+    // v13.12: ไม่เรียก openWarningDetailModal ที่นี่แล้ว เพื่อแก้บั๊กทับซ้อน
+  }, 150);
 }
-
 
 function focusWarningOnMap(lat,lng){
   console.log('[v14.10] WARNING MARKER ONLY HIGHLIGHT', lat,lng);
@@ -7508,8 +7516,9 @@ function updateWarningMapMarkers(list){
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
 
-    const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title||'เตือนภัย'}</b><br>🌊 ${w.water_level_cm||''}ซม.`).addTo(layer);
-    const marker = L.marker([lat,lng]).addTo(layer).bindPopup(w.title||'เตือนภัย');
+    const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).addTo(layer);
+    const marker = L.marker([lat,lng]).addTo(layer);
+    // v13.12: ตัด bindPopup ออก เพื่อไม่ให้ popup เล็กซ้อนกับ highlight logic
 
     // === v13.5 CLICK HANDLER ===
     const clickFn = ()=> onFloodMarkerClicked(w);
