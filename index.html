@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6215,12 +6215,97 @@ function tryLIFFLoginAgain(){
           iconAnchor: [16, 16]
         });
         const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon})
-          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div></div>`);
+          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div><div style="margin-top:8px; text-align:center;"><span style="background:#ff3b30; color:white; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:bold;">แตะเพื่อดูรายละเอียด</span></div></div>`);
+        marker.sosId = item.id;
+        marker.on('click', function(){
+          try{ if(typeof onSOSMarkerClicked==='function') onSOSMarkerClicked(item.id); }catch(e){ console.warn(e); }
+        });
+        // Popup click also trigger detail
+        marker.on('popupopen', function(){
+          // when popup opens, auto scroll after small delay? keep popup visible
+        });
         sosMarkersLayer.addLayer(marker);
       });
       // init map after load
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 300);
     }
+
+    // === v13.6 FIX กดหมุด -> ฟีดล่างเลื่อนหา + เปิดรายละเอียด (ตามรูป 1,2,3) ===
+    function onSOSMarkerClicked(sosId){
+      if(!sosId) return;
+      const idStr = String(sosId);
+      const cache = window.sosRequestsCache || sosRequestsCache || [];
+      const item = cache.find(x=> String(x.id)===idStr);
+      if(!item){
+        console.warn('ไม่พบ SOS id', sosId);
+        return;
+      }
+      // 1. สลับมาหมวด จุดขอให้ช่วย เสมอ (ไม่ใช่เตือนท่วม)
+      try{
+        // ถ้ามีฟังก์ชันสลับโหมด
+        if(typeof window.switchSOSSubView==='function'){
+          // บังคับโชว์ tab ขอความช่วยเหลือ
+          window.currentSOSViewMode = 'requests';
+          window.currentViewMode = 'requests';
+          // active UI ของ segmented
+          const btnRequests = document.querySelector('[data-view="requests"]') || document.getElementById('btnSOSRequests');
+          // fallback เรียก render ทั้งหมด
+        }
+        // รีเซ็ตฟิลเตอร์เป็นทั้งหมด เพื่อให้การ์ดไม่ถูกซ่อน
+        if(window._currentSOSFilter && window._currentSOSFilter!=='all'){
+          if(typeof filterSOS==='function') filterSOS('all');
+        }else{
+          // ถ้ายังไม่เคย render ให้ render cache ทั้งหมด
+          if(typeof renderSOSList==='function' && window.sosRequestsCache){
+            // ไม่รีเรนเดอร์ทับถ้าฟิลเตอร์ all อยู่แล้ว เพื่อไม่ให้กระพริบ
+            // แต่ถ้าลิสต์ปัจจุบันไม่รวม item นี้ ให้รีเรนเดอร์
+            const listContainer = document.getElementById('list-container');
+            const exists = document.getElementById('sos-card-'+idStr);
+            if(!exists){
+              renderSOSList(window.sosRequestsCache);
+            }
+          }
+        }
+      }catch(e){ console.warn(e); }
+
+      // 2. รอให้ DOM อัปเดตแล้วเลื่อนฟีดล่างไปที่การ์ดนั้น
+      setTimeout(()=>{
+        const cardEl = document.getElementById('sos-card-'+idStr);
+        if(cardEl){
+          // เอา highlight เก่าออก
+          document.querySelectorAll('.sos-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight'));
+          cardEl.classList.add('sos-card-highlight');
+          cardEl.scrollIntoView({behavior:'smooth', block:'center'});
+          // กระพริบเบาๆ ให้เห็นว่าเลือก
+          cardEl.style.transition = 'transform 0.3s, box-shadow 0.3s';
+          cardEl.style.transform = 'scale(1.02)';
+          cardEl.style.boxShadow = '0 0 0 3px #ff3b30, 0 6px 18px rgba(0,0,0,0.15)';
+          setTimeout(()=>{ cardEl.style.transform=''; }, 600);
+          // เลื่อนหน้าจอลงให้เห็นฟีดล่าง (กรณีอยู่โหมดแผนที่เต็มจอ)
+          const listContainer = document.getElementById('list-container') || document.getElementById('sosResults');
+          if(listContainer){
+            // ถ้าอยู่ใน sosMapContainer expanded ให้เลื่อนลงนิด
+            try{ listContainer.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){}
+          }
+        }else{
+          console.warn('หาการ์ดไม่เจอ', idStr);
+        }
+        // 3. เปิด modal รายละเอียด (รูป 3)
+        try{
+          if(typeof openSOSDetailModal==='function'){
+            openSOSDetailModal(idStr);
+          }else if(typeof window.openSOSDetailModal==='function'){
+            window.openSOSDetailModal(idStr);
+          }
+        }catch(e){ console.warn('เปิด modal ไม่ได้', e); }
+      }, 180);
+    }
+    window.onSOSMarkerClicked = onSOSMarkerClicked;
+
+    // Alias สำหรับโค้ดเก่าที่เรียก onFloodMarkerClicked แต่จริงๆ เป็น SOS
+    window.onSOSMarkerClickedSafe = onSOSMarkerClicked;
+
+
 
 
 
