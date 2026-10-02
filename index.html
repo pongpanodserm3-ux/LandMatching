@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6232,71 +6232,71 @@ function tryLIFFLoginAgain(){
 
     // === v13.6 FIX กดหมุด -> ฟีดล่างเลื่อนหา + เปิดรายละเอียด (ตามรูป 1,2,3) ===
     
-    
-    // === v13.8 FIX เฉพาะหน้า จุดขอให้ช่วย - กดหมุด -> ฟีดล่าง + ขอบน้ำเงินหนา + shadow ===
     function onSOSMarkerClicked(sosId){
       if(!sosId) return;
       const idStr = String(sosId);
       const cache = window.sosRequestsCache || sosRequestsCache || [];
       const item = cache.find(x=> String(x.id)===idStr);
-      if(!item) return;
-      
-      // 1. AUTO-ZOOM เฉพาะ SOS - บินไปที่หมุด
+      if(!item){
+        console.warn('ไม่พบ SOS id', sosId);
+        return;
+      }
+      // === v13.7 AUTO-ZOOM ทั้ง 2 หน้า ===
       try{
-        let targetMap = (typeof ensureSOSMapReady==='function'?ensureSOSMapReady():null) || window.sosMap || null;
+        let targetMap = ensureSOSMapReady ? ensureSOSMapReady() : (window.sosMap || null);
         if(targetMap && item.lat && item.lng){
-          const lat=parseFloat(item.lat), lng=parseFloat(item.lng);
-          if(!isNaN(lat)&&!isNaN(lng)){
-            if(typeof targetMap.flyTo==='function') targetMap.flyTo([lat,lng], 16, {duration:0.6});
-            else targetMap.setView([lat,lng], 16, {animate:true});
+          const lat = parseFloat(item.lat), lng = parseFloat(item.lng);
+          if(!isNaN(lat) && !isNaN(lng)){
+            // flyTo ลื่นๆ ซูม 16 สำหรับ SOS
+            if(typeof targetMap.flyTo === 'function'){
+              targetMap.flyTo([lat,lng], 16, {duration:0.8, easeLinearity:0.2});
+            }else{
+              targetMap.setView([lat,lng], 16, {animate:true});
+            }
           }
         }
-      }catch(e){}
+      }catch(e){ console.warn('auto-zoom SOS error', e); }
 
-      // 2. บังคับอยู่หน้า จุดขอให้ช่วย เท่านั้น ไม่ยุ่งกับ เตือนท่วม
+      // 1. สลับมาหมวด จุดขอให้ช่วย
       try{
-        window.currentSOSViewMode = 'requests';
-        window.currentViewMode = 'requests';
-        // ถ้าฟิลเตอร์อยู่ ให้รีเซ็ตเป็นทั้งหมดเพื่อให้เจอการ์ด
+        if(typeof window.switchSOSSubView==='function'){
+          window.currentSOSViewMode = 'requests';
+          window.currentViewMode = 'requests';
+        }
         if(window._currentSOSFilter && window._currentSOSFilter!=='all'){
           if(typeof filterSOS==='function') filterSOS('all');
-        } else {
-          // ถ้าการ์ดยังไม่มีใน DOM ให้เรนเดอร์ใหม่
-          if(!document.getElementById('sos-card-'+idStr) && typeof renderSOSList==='function'){
-            renderSOSList(window.sosRequestsCache || cache);
+        }else{
+          const listContainer = document.getElementById('list-container');
+          const exists = document.getElementById('sos-card-'+idStr);
+          if(!exists && typeof renderSOSList==='function' && window.sosRequestsCache){
+            renderSOSList(window.sosRequestsCache);
           }
         }
-      }catch(e){}
+      }catch(e){ console.warn(e); }
 
-      // 3. เลื่อนฟีดล่างไปหาการ์ด + ขอบน้ำเงินหนา + shadow ชัด (รูป 2)
+      // 2. เลื่อนฟีดล่าง + ขอบน้ำเงินหนา + shadow
       setTimeout(()=>{
-        // ลบไฮไลท์เก่าทั้งหมด
-        document.querySelectorAll('.sos-card-highlight').forEach(el=>{
-          el.classList.remove('sos-card-highlight');
-          el.style.border=''; el.style.boxShadow=''; el.style.background='';
-        });
         const cardEl = document.getElementById('sos-card-'+idStr);
         if(cardEl){
+          document.querySelectorAll('.sos-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight'));
           cardEl.classList.add('sos-card-highlight');
-          cardEl.scrollIntoView({behavior:'smooth', block:'center', inline:'nearest'});
-          // ย้ำ style inline กัน CSS ทับ
-          cardEl.style.border = '3px solid #2563eb';
-          cardEl.style.background = '#eff6ff';
-          cardEl.style.boxShadow = '0 0 0 4px rgba(37,99,235,0.25), 0 10px 24px rgba(37,99,235,0.35)';
-          cardEl.style.borderRadius = '16px';
-          // เลื่อน container ฟีดให้ขึ้นมาเห็น
-          const feed = document.getElementById('list-container');
-          if(feed){
-            // ถ้า list-container มี scroll ภายใน
-            setTimeout(()=>{ try{feed.scrollTop = Math.max(0, cardEl.offsetTop - 120);}catch(e){} }, 100);
+          cardEl.scrollIntoView({behavior:'smooth', block:'center'});
+          setTimeout(()=>{ /* keep highlight 2.5s then fade */ }, 600);
+          const listContainer = document.getElementById('list-container') || document.getElementById('sosResults');
+          if(listContainer){
+            try{ listContainer.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){}
           }
         }
-        // ไม่เปิด modal รายละเอียดใน v13.8 ตามคำขอใหม่ (เน้นแค่ฟีดล่าง) ถ้าอยากเปิดให้ uncomment บรรทัดล่าง
-        // if(typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
-      }, 250);
+        try{
+          if(typeof openSOSDetailModal==='function'){
+            openSOSDetailModal(idStr);
+          }else if(typeof window.openSOSDetailModal==='function'){
+            window.openSOSDetailModal(idStr);
+          }
+        }catch(e){ console.warn('เปิด modal ไม่ได้', e); }
+      }, 300);
     }
     window.onSOSMarkerClicked = onSOSMarkerClicked;
-
 
 
     // Alias สำหรับโค้ดเก่าที่เรียก onFloodMarkerClicked แต่จริงๆ เป็น SOS
@@ -7300,8 +7300,24 @@ window._selectedFloodWarningId = window._selectedFloodWarningId || null;
 
 function onFloodMarkerClicked(w){
   if(!w) return;
-  console.log('[FLOOD CLICK v13.8 - only SOS edited, flood stays normal]', w.id);
+  console.log('[FLOOD CLICK v13.7] marker clicked', w.id, w.title);
   window._selectedFloodWarningId = String(w.id);
+  
+  // === v13.7 AUTO-ZOOM สำหรับเตือนท่วม ===
+  try{
+    let targetMap = ensureSOSMapReady ? ensureSOSMapReady() : (window.sosMap || null);
+    if(targetMap){
+      const lat = parseFloat(w.lat||w.latitude), lng = parseFloat(w.lng||w.longitude);
+      if(!isNaN(lat) && !isNaN(lng)){
+        if(typeof targetMap.flyTo === 'function'){
+          targetMap.flyTo([lat,lng], 16, {duration:0.8, easeLinearity:0.2});
+        }else{
+          targetMap.setView([lat,lng], 16, {animate:true});
+        }
+      }
+    }
+  }catch(e){ console.warn('auto-zoom flood error', e); }
+
   if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings');
   if(typeof updateSegmentedUI==='function') updateSegmentedUI('warnings');
   const base = window.floodWarningsCache || [];
@@ -7318,17 +7334,22 @@ function onFloodMarkerClicked(w){
   const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
   if(allBtn) allBtn.classList.add('active');
   window._currentWarningFilter = 'all';
+
   setTimeout(()=>{
     const card = document.querySelector(`[data-warning-id="${w.id}"]`);
     if(card){
-      card.scrollIntoView({behavior:'smooth', block:'center'});
+      document.querySelectorAll('.highlight-pulse').forEach(el=> el.classList.remove('highlight-pulse'));
       card.classList.add('highlight-pulse');
+      card.scrollIntoView({behavior:'smooth', block:'center'});
       setTimeout(()=>card.classList.remove('highlight-pulse'), 2500);
+    } else {
+      const listCont = document.getElementById('list-container');
+      if(listCont) listCont.scrollTop = 0;
     }
     if(typeof openWarningDetailModal==='function'){
       openWarningDetailModal(w.id);
     }
-  }, 250);
+  }, 300);
 }
 
 function focusWarningOnMap(lat,lng){
