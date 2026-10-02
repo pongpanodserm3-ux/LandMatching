@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1755,7 +1755,11 @@ window.highlightBoth = function(idStr, type){
           <span style="font-size:10px; color:#888;">หลักการ: userid-postid-001.jpg</span>
         </div>
         <input type="file" id="floodFileInput" accept="image/*" multiple style="display:none;" onchange="handleFloodFilesSelected(event)">
+        <!-- v13.12.1: input สำหรับเปิดกล้องมือถือโดยตรง -->
+        <input type="file" id="floodCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFloodFilesSelected(event)">
         <button type="button" class="upload-main-btn" style="width:100%; padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; cursor:pointer; font-weight:bold;" onclick="document.getElementById('floodFileInput').click()">📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)</button>
+        <!-- v13.12.1: ปุ่มเพิ่มใหม่ ต่อท้ายปุ่มอัปโหลด - ลิงก์ไปกล้องมือถือ ถ่ายแล้วบันทึกลงช่องสี่เหลี่ยมด้านล่าง -->
+        <button type="button" class="upload-main-btn" id="floodCameraBtn" style="width:100%; padding:10px; border:1.5px dashed #4a83cc; border-radius:10px; background:#eff6ff; cursor:pointer; font-weight:bold; color:#1e40af; margin-top:6px;" onclick="document.getElementById('floodCameraInput').click()">📷 เปิดกล้องถ่ายรูป</button>
         <div class="upload-grid" id="floodUploadGrid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:8px;"></div>
         <div id="floodExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
