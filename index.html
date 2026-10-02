@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -7509,8 +7509,8 @@ function getCurrentLocationForFloodWarning(){
     }
   }, null, {enableHighAccuracy:true, timeout:8000});
 }
+
 async function submitFloodWarning(){
-  // v6.7 FIX: ยามเฝ้าประตู LINE
   if (typeof currentUserLineProfile !== 'undefined' && !currentUserLineProfile && typeof CURRENT_USER_ID !== 'undefined' && !CURRENT_USER_ID) {
     if(typeof getCurrentUserId === 'function'){
       const freshId = await getCurrentUserId();
@@ -7533,475 +7533,100 @@ async function submitFloodWarning(){
     return;
   }
   try{
-    // v13.3 FIX: ตาราง flood_warnings ไม่มีคอลัมน์ latitude/longitude มีแค่ lat/lng
-    // ถ้าใส่ latitude จะ error PGRST204 schema cache -> เลยส่งแค่ lat/lng เท่านั้น
-    const payload = {
+    console.log('[FLOOD SUBMIT v13.6] เริ่มบันทึก... lat,lng:', lat, lng);
+    
+    // v13.6 RESILIENT FIX: สร้าง payload แบบ minimal ที่ตารางมีชัวร์ๆ แล้วค่อยๆลองเพิ่ม ถ้าคอลัมน์ไหนไม่มีจะตัดออกเอง
+    let basePayload = {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
-      water_level_cm: waterLevel ? parseInt(waterLevel) : null,
       title: locationText || 'แจ้งเตือนน้ำท่วม',
       description: detail || '',
-      risk_level: selectedFloodLevel,
-      level: selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel,
-      radius_m: parseInt(radius),
       is_active: true,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString() // หมดอายุ 24 ชม.
+      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString()
     };
-    console.log('[FLOOD SUBMIT]', payload);
-    // v12.6: insert ก่อนเพื่อเอา ID แล้วค่อยอัปโหลดรูป 8 รูป (หลักการเดียวกับ SOS)
-    let userIdForFlood = null;
-    try{ if(typeof getCurrentUserId === 'function') userIdForFlood = await getCurrentUserId(); }catch(e){}
-    if(!userIdForFlood) userIdForFlood = (typeof CURRENT_USER_ID !== 'undefined' && CURRENT_USER_ID) ? CURRENT_USER_ID : 'anon';
 
-    const { data, error } = await supabaseClient.from('flood_warnings').insert([payload]).select();
-    if(error){
-      console.error(error);
-      alert('บันทึกไม่สำเร็จ: '+error.message);
-      return;
-    }
-    // อัปโหลดรูป 8 รูปไปยัง bucket 'flood-photos' (ใช้ bucket เดียวกับ SOS)
-    let postIdToUse = data && data[0] ? data[0].id : Date.now();
-    window.currentFloodWarningId = postIdToUse;
-    let finalImageUrls = [...(window.floodExistingImageUrls||[])];
-    const newFiles = window.floodUploadedFiles||[];
-    let startIndex = finalImageUrls.length;
-    for(let i=0;i<newFiles.length;i++){
-      const file = newFiles[i];
-      const fileExt = file.name.split('.').pop();
-      const imageIndexStr = String(startIndex + i + 1).padStart(3,'0');
-      const fileName = `FLOOD-${userIdForFlood}-${postIdToUse}-${imageIndexStr}.${fileExt}`;
-      try{
-        const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { cacheControl: '3600', upsert: true });
-        if(uploadError){
-          console.error(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message);
-        }else{
+    // คอลัมน์เสริมที่อาจมีหรือไม่มีในตาราง - จะลองใส่ ถ้าไม่มีจะถูกตัดออกอัตโนมัติตอน retry
+    let optionalFields = {
+      water_level_cm: waterLevel ? parseInt(waterLevel) : null,
+      radius_m: parseInt(radius),
+      risk_level: (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'medium'),
+      level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
+      images: [] // จะใส่หลังอัปโหลดรูป
+    };
+
+    // === อัปโหลดรูป 8 รูป (ถ้ามี) ก่อน insert ===
+    let finalImageUrls = [];
+    const floodFiles = window.floodFiles || [];
+    if(floodFiles.length>0){
+      console.log(`[FLOOD] อัปโหลดรูป ${floodFiles.length} รูป...`);
+      const userId = (typeof CURRENT_USER_ID !== 'undefined' && CURRENT_USER_ID) ? CURRENT_USER_ID : 'anon';
+      const postIdToUse = Date.now();
+      for(let i=0;i<floodFiles.length;i++){
+        const file = floodFiles[i];
+        const fileExt = file.name.split('.').pop() || 'jpg';
+        const imageIndexStr = String(i+1).padStart(3,'0');
+        const fileName = `FLOOD-${userId}-${postIdToUse}-${imageIndexStr}.${fileExt}`;
+        try{
+          const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { upsert: true, cacheControl: '3600' });
+          if(uploadError){ console.warn(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message); continue; }
           const {data: publicUrlData} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
-          finalImageUrls.push(publicUrlData.publicUrl);
+          if(publicUrlData && publicUrlData.publicUrl) finalImageUrls.push(publicUrlData.publicUrl);
+        }catch(e){ console.warn(e); }
+      }
+      optionalFields.images = finalImageUrls;
+    }
+
+    // รวม payload
+    let payload = {...basePayload, ...optionalFields};
+    console.log('[FLOOD SUBMIT v13.6] payload เริ่มต้น:', payload);
+
+    // ฟังก์ชันลอง insert แบบถ้าติด PGRST204 (ไม่มีคอลัมน์) ให้ตัดคอลัมน์นั้นออกแล้วลองใหม่
+    async function resilientInsert(p){
+      let current = {...p};
+      let attempts = 0;
+      while(attempts < 10){
+        attempts++;
+        const {data, error} = await supabaseClient.from('flood_warnings').insert([current]).select().maybeSingle();
+        if(!error){
+          console.log('[FLOOD] บันทึกสำเร็จ:', data);
+          return data;
         }
-      }catch(ue){ console.error(ue); }
-    }
-    if(finalImageUrls.length>8) finalImageUrls = finalImageUrls.slice(0,8);
-    if(finalImageUrls.length>0){
-      try{
-        const {error: imgUpdErr} = await supabaseClient.from('flood_warnings').update({images: finalImageUrls}).eq('id', postIdToUse);
-        if(imgUpdErr) console.warn('อัปเดต images ไม่สำเร็จ', imgUpdErr);
-      }catch(e){ console.warn(e); }
-    }
-    // เคลียร์
-    window.floodUploadedFiles=[];
-    window.floodExistingImageUrls=[];
-    window.currentFloodWarningId=null;
-    alert('✅ ส่งแจ้งเตือนท่วมเรียบร้อย' + (finalImageUrls.length>0 ? ` พร้อมรูป ${finalImageUrls.length} รูป` : ''));
-    closeFloodWarningModal();
-    if(typeof loadFloodWarnings === 'function') loadFloodWarnings();
-    else if(typeof filterFloodWarnings === 'function') filterFloodWarnings('latest');
-  }catch(e){
-    console.error(e);
-    alert('เกิดข้อผิดพลาด: '+e.message);
-  }
-}
-
-// Override openSOSModal เดิมให้ซ่อน flood modal ด้วย (กันซ้อน)
-const _origOpenSOS = window.openSOSModal;
-window.openSOSModal = function(){
-  const floodOverlay = document.getElementById('floodWarningModalOverlay');
-  if(floodOverlay) floodOverlay.classList.remove('active');
-  document.getElementById('sosModalOverlay').classList.add('active');
-  pinCurrentLocationOnSOSMap();
-};
-
-console.log('✅ v13.4 FIXED โหลดแล้ว - แก้ latitude schema + มี 8 รูป + ลบจริงครบวงจร');
-console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำสั่ง: 1)จุดขอให้ช่วยปักหมุดปัจจุบัน 2)สลับปุ่มแจ้งเตือนท่วม');
-
-
-// === v13 POPUP DETAIL LOGIC ===
-
-// ============================================================
-// === v13.2 FULL AUTO CLEANUP - ลบจริงครบวงจร โพสต์ + รูป + แชท ===
-// ============================================================
-// หลักการ:
-// 1. SOS: completed หรือ expired (3 วันไม่อัปเดต) -> รอ 7 วันแล้วลบจริง
-// 2. Flood Warning: expires_at เกิน 24 ชม. -> ลบจริงทันที
-// 3. ลบ 3 อย่าง: row ในตาราง + ไฟล์ใน storage (flood-photos) + chat_rooms + chat_messages
-
-// --- Helper: แยกชื่อไฟล์จาก Public URL ---
-function extractFileNameFromUrl(url){
-  try{
-    if(!url) return null;
-    // url แบบ https://xxx.supabase.co/storage/v1/object/public/flood-photos/SOS-123-456-001.jpg
-    const parts = url.split('/');
-    const last = parts[parts.length-1].split('?')[0]; // เอาแค่ชื่อไฟล์ กัน query string
-    // ถ้ามี folder เช่น sos/SOS-... ให้เอาทั้ง path หลัง bucket
-    const bucketIdx = url.indexOf('flood-photos/');
-    if(bucketIdx !== -1){
-      return url.substring(bucketIdx + 'flood-photos/'.length).split('?')[0];
-    }
-    return last;
-  }catch(e){ return null; }
-}
-
-async function deleteFilesFromStorage(imageUrls){
-  if(!imageUrls || imageUrls.length===0) return {ok:true, deleted:0};
-  if(typeof supabaseClient==='undefined' || !supabaseClient) return {ok:false};
-  try{
-    const fileNames = imageUrls.map(u=>extractFileNameFromUrl(u)).filter(Boolean);
-    if(fileNames.length===0) return {ok:true, deleted:0};
-    console.log('[CLEANUP] ลบไฟล์ storage:', fileNames);
-    const {data, error} = await supabaseClient.storage.from('flood-photos').remove(fileNames);
-    if(error){ console.warn('[CLEANUP] ลบไฟล์ไม่สำเร็จ', error); return {ok:false, error}; }
-    console.log('[CLEANUP] ลบไฟล์สำเร็จ', data);
-    return {ok:true, deleted:fileNames.length};
-  }catch(e){ console.warn(e); return {ok:false, error:e}; }
-}
-
-async function deleteChatsBySOSId(sosId){
-  if(!sosId) return;
-  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
-  try{
-    // หา room ที่ผูกกับ sos นี้
-    const {data: rooms, error: roomErr} = await supabaseClient.from('chat_rooms').select('room_id').or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`);
-    if(roomErr){ console.warn('หา chat_rooms ไม่ได้', roomErr); return; }
-    if(!rooms || rooms.length===0){ console.log('[CLEANUP] ไม่มีแชทให้ลบสำหรับ SOS', sosId); return; }
-    const roomIds = rooms.map(r=>r.room_id);
-    console.log('[CLEANUP] ลบแชท room_ids:', roomIds);
-    // ลบ messages ก่อน (กัน FK)
-    const {error: msgErr} = await supabaseClient.from('chat_messages').delete().in('room_id', roomIds);
-    if(msgErr) console.warn('ลบ chat_messages ไม่ได้', msgErr);
-    // ลบ rooms
-    const {error: delRoomErr} = await supabaseClient.from('chat_rooms').delete().in('room_id', roomIds);
-    if(delRoomErr) console.warn('ลบ chat_rooms ไม่ได้', delRoomErr);
-    else console.log('[CLEANUP] ลบแชทสำเร็จ', sosId);
-  }catch(e){ console.warn('[CLEANUP] deleteChats error', e); }
-}
-
-// --- ลบ SOS แบบครบวงจร ---
-async function deleteSOSAndAssetsCompletely(sosId, options={}){
-  const {skipConfirm=false, reason='expired'} = options;
-  if(!sosId) return;
-  if(!skipConfirm){
-    if(!confirm(`ยืนยันลบเคส ${sosId} แบบถาวร?\nจะลบทั้งโพสต์ รูป ${'8 รูป'} และแชททั้งหมด\nเหตุผล: ${reason}`)) return;
-  }
-  if(typeof supabaseClient==='undefined' || !supabaseClient){ alert('supabaseClient ไม่พร้อม'); return; }
-  try{
-    // 1. ดึงข้อมูลเก่าเพื่อเอารูป
-    const {data: oldData} = await supabaseClient.from('flood_help_requests').select('images, image_urls').eq('id', sosId).maybeSingle();
-    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
-    // 2. ลบไฟล์รูป
-    await deleteFilesFromStorage(imgs);
-    // 3. ลบแชท
-    await deleteChatsBySOSId(sosId);
-    // 4. ลบโพสต์หลัก
-    const {error: delErr} = await supabaseClient.from('flood_help_requests').delete().eq('id', sosId);
-    if(delErr) throw delErr;
-    console.log(`[CLEANUP] ลบ SOS ${sosId} สำเร็จ (${reason})`);
-    // 5. ลบจาก cache หน้าเว็บ
-    if(window.sosRequestsCache){
-      window.sosRequestsCache = window.sosRequestsCache.filter(x=>String(x.id)!==String(sosId));
-      if(typeof renderSOSList==='function') renderSOSList(window.sosRequestsCache);
-    }
-    return true;
-  }catch(e){
-    console.error('[CLEANUP] ลบ SOS ไม่สำเร็จ', e);
-    alert('ลบไม่สำเร็จ: '+e.message);
-    return false;
-  }
-}
-
-// --- ลบ Flood Warning แบบครบวงจร ---
-async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
-  const {skipConfirm=false, reason='expired_24h'} = options;
-  if(!warningId) return;
-  if(!skipConfirm){
-    if(!confirm(`ยืนยันลบแจ้งเตือนท่วม ${warningId} แบบถาวร?\nจะลบทั้งโพสต์และรูป`)) return;
-  }
-  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
-  try{
-    const {data: oldData} = await supabaseClient.from('flood_warnings').select('images').eq('id', warningId).maybeSingle();
-    const imgs = (oldData && oldData.images) || [];
-    await deleteFilesFromStorage(imgs);
-    const {error} = await supabaseClient.from('flood_warnings').delete().eq('id', warningId);
-    if(error) throw error;
-    console.log(`[CLEANUP] ลบ Flood Warning ${warningId} สำเร็จ (${reason})`);
-    if(window.floodWarningsCache){
-      window.floodWarningsCache = window.floodWarningsCache.filter(x=>String(x.id)!==String(warningId));
-      if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(window.floodWarningsCache);
-    }
-    return true;
-  }catch(e){ console.error(e); alert('ลบเตือนภัยไม่สำเร็จ: '+e.message); return false; }
-}
-
-// --- Auto Purge: ลบ expired/completed เกิน 7 วัน + flood warning หมดอายุ ---
-async function autoPurgeOldRequests(){
-  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
-  try{
-    console.log('[AUTO PURGE] เริ่มตรวจสอบลบอัตโนมัติ...');
-    // 1. Flood Warnings ที่หมดอายุเกิน 1 วัน -> ลบจริง
-    const {data: expiredWarnings} = await supabaseClient.from('flood_warnings').select('id, images, expires_at').lt('expires_at', new Date(Date.now() - 24*60*60*1000).toISOString()).limit(20);
-    if(expiredWarnings && expiredWarnings.length>0){
-      console.log(`[AUTO PURGE] เจอ Flood Warning หมดอายุ ${expiredWarnings.length} รายการ`);
-      for(let w of expiredWarnings){
-        await deleteFloodWarningAndAssetsCompletely(w.id, {skipConfirm:true, reason:'auto_expired_24h'});
-        await new Promise(r=>setTimeout(r, 500)); // กัน rate limit
-      }
-    }
-
-    // 2. SOS ที่ completed เกิน 7 วัน -> ลบจริง
-    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-    const {data: completedOld} = await supabaseClient.from('flood_help_requests').select('id, images, image_urls').eq('status','completed').lt('updated_at', sevenDaysAgo).limit(20);
-    if(completedOld && completedOld.length>0){
-      console.log(`[AUTO PURGE] เจอ SOS completed เกิน 7 วัน ${completedOld.length} รายการ`);
-      for(let item of completedOld){
-        const imgs = item.images || item.image_urls || [];
-        await deleteFilesFromStorage(imgs);
-        await deleteChatsBySOSId(item.id);
-        await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
-        await new Promise(r=>setTimeout(r, 500));
-      }
-    }
-
-    // 3. SOS ที่ expired เกิน 7 วัน -> ลบจริง
-    const {data: expiredOld} = await supabaseClient.from('flood_help_requests').select('id, images, image_urls').eq('status','expired').lt('archived_at', sevenDaysAgo).limit(20);
-    if(expiredOld && expiredOld.length>0){
-      console.log(`[AUTO PURGE] เจอ SOS expired เกิน 7 วัน ${expiredOld.length} รายการ`);
-      for(let item of expiredOld){
-        const imgs = item.images || item.image_urls || [];
-        await deleteFilesFromStorage(imgs);
-        await deleteChatsBySOSId(item.id);
-        await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
-        await new Promise(r=>setTimeout(r, 500));
-      }
-    }
-
-    console.log('[AUTO PURGE] เสร็จสิ้น');
-  }catch(e){ console.warn('[AUTO PURGE] error', e); }
-}
-
-// เรียก auto purge ทุกครั้งที่โหลด + ทุก 1 ชั่วโมง
-document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(()=>{ autoPurgeOldRequests(); }, 8000); // รอ 8 วิหลังโหลด
-  setInterval(()=>{ autoPurgeOldRequests(); }, 60*60*1000); // ทุก 1 ชม.
-});
-
-// เพิ่มปุ่มลบใน Detail Modal (ถ้าอยากให้ admin ลบเองได้)
-window.deleteSOSFromDetail = async function(id){
-  await deleteSOSAndAssetsCompletely(id, {skipConfirm:false, reason:'manual'});
-  if(typeof closeSOSDetailModal==='function') closeSOSDetailModal();
-};
-window.deleteFloodWarningFromDetail = async function(id){
-  await deleteFloodWarningAndAssetsCompletely(id, {skipConfirm:false, reason:'manual'});
-  if(typeof closeWarningDetailModal==='function') closeWarningDetailModal();
-};
-
-// SQL สำหรับตั้ง pg_cron ใน Supabase (เอาไปรันใน SQL Editor ครั้งเดียว)
-// ---------------------------------------------------------------
-// -- เปิด extension
-// create extension if not exists pg_cron;
-// -- ลบ flood_warnings หมดอายุเกิน 1 วัน (ลบจริง) - ทำทุกวันตี 2
-// select cron.schedule('purge-flood-warnings-daily', '0 2 * * *', $$
-//   delete from flood_warnings where expires_at < now() - interval '1 day';
-// $$);
-// -- ลบ SOS completed/expired เกิน 7 วัน (ลบจริง) - ทำทุกวันตี 3
-// select cron.schedule('purge-sos-completed-expired-7d', '0 3 * * *', $$
-//   delete from chat_messages where room_id in (select room_id from chat_rooms where sos_request_id in (select id from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days'));
-//   delete from chat_rooms where sos_request_id in (select id from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days');
-//   delete from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days';
-// $$);
-// -- หมายเหตุ: ลบไฟล์ใน storage ต้องทำผ่าน Supabase Function หรือ Edge Function เพราะ pg_cron ลบไฟล์ storage ไม่ได้โดยตรง
-// -- แนะนำให้เรียก autoPurgeOldRequests() จาก client ที่เป็น admin หรือทำ Edge Function เรียกทุกวัน
-// ============================================================
-// === END v13.2 ===
-// ============================================================
-
-
-
-function openSOSDetailModal(id){
-  const cache = (window.sosRequestsCache||[]).concat(window.floodWarningsCache||[]);
-  let item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(id));
-  if(!item){ console.warn('ไม่เจอ id',id); return; }
-  const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : item.status === 'completed' ? '⚫' : '🔵';
-  const statusText = item.status === 'waiting' ? 'รอความช่วยเหลือ' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : item.status === 'completed' ? 'เสร็จสิ้นแล้ว' : 'หมดอายุ';
-  const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
-  const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '-';
-  const vehicleMap = {boat:'🛶 เรือ (ท้องแบน/พาย)', high_truck:'🚚 รถยกสูง/รถทหาร', pickup:'🛻 รถกระบะ', car:'🚗 รถเก๋ง', any:'อะไรก็ได้'};
-  const origin = item.origin_text || item.location_text || '-';
-  const dest = item.evac_destination_text || item.evac_destination || '';
-  const veh = vehicleMap[item.evac_vehicle_type] || item.evac_vehicle_type || 'ไม่ระบุ';
-  const isEvac = (item.need_types||[]).includes('evacuate');
-  const images = Array.isArray(item.images) ? item.images : [];
-  
-  let html = `
-    ${images.length>0 ? `<div class="detail-image-scroller">${images.map(img=>`<img src="${img}" class="detail-image-item" onclick="if(typeof openImageLightbox==='function') openImageLightbox('${img}'); else { document.getElementById('lightboxImg').src='${img}'; document.getElementById('imageLightbox').classList.add('active'); }" loading="lazy">`).join('')}</div><div style="text-align:center;font-size:10px;color:#94a3b8;">◀ เลื่อนดูรูป ${images.length} รูป ▶</div>` : `<div style="text-align:center;padding:20px;color:#94a3b8;">ไม่มีรูปภาพ</div>`}
-    <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        <span style="font-size:14px; font-weight:800;">${statusIcon} ${needLabel||'ขอความช่วยเหลือ'}</span>
-        <span style="font-size:11px; background:#f1f5f9; border:1px solid #e2e8f0; padding:3px 8px; border-radius:999px;">${statusText}</span>
-        <span style="font-size:11px; color:#64748b;">${timeStr}</span>
-      </div>
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; line-height:1.6; font-size:13px;">
-        <div>📍 <b>จุดขอให้ช่วย:</b> ${item.location_text||'-'}</div>
-        <div>👥 <b>จำนวน:</b> ${item.people_count||1} คน</div>
-        <div>📞 <b>ติดต่อ:</b> ${item.contact_phone||'-'} <button onclick="if(item.contact_phone) window.open('tel:'+item.contact_phone)" style="margin-left:6px;background:#4a83cc;color:white;border:none;border-radius:999px;padding:4px 12px;font-size:11px;cursor:pointer;">โทร</button></div>
-        ${item.medicine_detail ? `<div style="margin-top:8px; background:#fef2f2; border:1px solid #fecaca; padding:8px; border-radius:10px;">💊 <b>รายละเอียดยา/อาการ:</b> ${item.medicine_detail}</div>` : ''}
-        ${isEvac ? `<div style="margin-top:10px; background:#fff7ed; border:1px solid #fdba74; border-radius:12px; padding:10px;">
-          <div style="font-weight:800; color:#9a3412; font-size:12px; margin-bottom:6px;">🚨 รายละเอียดอพยพ / ยานพาหนะ</div>
-          <div>📍 <b>ไปรับจาก:</b> ${origin}</div>
-          <div>🏁 <b>ไปส่งที่:</b> ${dest||'<span style=color:#dc2626>ยังไม่ระบุ (กรุณาโทรสอบถาม)</span>'}</div>
-          <div>🚗 <b>พาหนะ:</b> ${veh}</div>
-        </div>` : ''}
-        ${item.lat && item.lng ? `<div style="font-size:11px; color:#64748b; margin-top:6px;">📌 พิกัด: ${parseFloat(item.lat).toFixed(6)}, ${parseFloat(item.lng).toFixed(6)}</div>` : ''}
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่</button>
-        <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">💬 ติดต่อช่วยเหลือ</button>
-      </div>
-      ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="width:100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
-    </div>
-  `;
-  document.getElementById('sosDetailContent').innerHTML = html;
-  document.getElementById('sosDetailModalOverlay').classList.add('active');
-}
-function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
-function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
- document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
-
-function openWarningDetailModal(id){
-  let item = (window.floodWarningsCache||[]).find(x=>String(x.id)===String(id) || String(x.lat)===String(id));
-  // fallback by index if id not found
-  if(!item && !isNaN(id)){
-    item = (window.floodWarningsCache||[])[parseInt(id)];
-  }
-  if(!item){ console.warn('warning not found',id); return; }
-  const lvl = (item.risk_level||item.level||'').toLowerCase();
-  let levelLabel='เฝ้าระวัง', levelColor='#fefce8', icon='🟡';
-  if(lvl.includes('critical')||lvl.includes('danger')||lvl.includes('อันตราย')){ levelLabel='อันตราย'; levelColor='#fef2f2'; icon='🔴'; }
-  else if(lvl.includes('warning')||lvl.includes('เตือนภัย')){ levelLabel='เตือนภัย'; levelColor='#fff7ed'; icon='🟠'; }
-  const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-  const water = item.water_level_cm ? `${item.water_level_cm} ซม.` : (item.water_level||'-');
-  const images = item.images || item.photos || [];
-  let html = `
-    <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
-      <div style="background:${levelColor}; border:1.5px solid #fde68a; border-radius:14px; padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:800; font-size:15px;">${icon} ${item.title||'แจ้งเตือนน้ำท่วม'}</span>
-          <span style="font-size:11px; background:${levelLabel==='อันตราย'?'#ef4444':'#f59e0b'}; color:white; padding:3px 10px; border-radius:999px;">${levelLabel}</span>
-        </div>
-        <div style="margin-top:8px; font-size:13px; line-height:1.6;">
-          🌊 <b>ระดับน้ำ:</b> ${water}<br>
-          📍 <b>พื้นที่:</b> ${item.location_text||item.district||'-'}<br>
-          ${item.radius_m ? `📏 <b>รัศมี:</b> ${item.radius_m} เมตร<br>` : ''}
-          ${item.description||item.detail ? `📝 <b>รายละเอียด:</b> ${item.description||item.detail}<br>` : ''}
-          🕒 <b>เมื่อ:</b> ${timeStr}<br>
-          ${item.passage_status ? `🚧 <b>สถานะเส้นทาง:</b> ${item.passage_status}<br>` : ''}
-        </div>
-      </div>
-      ${images.length>0 ? `<div class="detail-image-scroller">${images.map(img=>`<img src="${img}" class="detail-image-item" loading="lazy">`).join('')}</div>` : ''}
-      <div style="display:flex; gap:8px;"><button onclick="deleteFloodWarningFromDetail('${item.id}');" style="flex:1; background:#fee2e2; border:1.5px solid #ef4444; color:#b91c1c; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">🗑️ ลบเตือนภัยนี้ถาวร</button></div>
-      <button onclick="focusWarningOnMap(${item.lat||item.latitude}, ${item.lng||item.longitude}); closeWarningDetailModal();" style="width:100%; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่และนำทาง</button>
-    </div>
-  `;
-  document.getElementById('warningDetailContent').innerHTML = html;
-  document.getElementById('warningDetailModalOverlay').classList.add('active');
-}
-function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
-
-
-// === v13.1 HOTFIX ensure modal works even if id is number ===
-window.openWarningDetailModalByLatLng = function(lat,lng){
-  let item = (window.floodWarningsCache||[]).find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
-  if(item) openWarningDetailModal(item.id);
-  else focusWarningOnMap(lat,lng);
-};
-
-// === v13 OVERRIDE RENDER TO MAKE CARD CLICKABLE ===
-const _origRenderSOSList = window.renderSOSList;
-window.renderSOSList = function(list){
-  if(typeof _origRenderSOSList === 'function') _origRenderSOSList(list);
-  // หลัง render เสร็จ เพิ่ม onclick ให้การ์ดทั้งหมด
-  setTimeout(()=>{
-    const cards = document.querySelectorAll('#list-container .property-card, #sosResults .property-card');
-    cards.forEach((card, idx)=>{
-      const item = (window.sosRequestsCache||list||[])[idx] || list[idx];
-      // ถ้าในโหมด warnings จะเป็น floodWarningsCache
-      if(window.currentViewMode==='warnings') return;
-      if(!item) return;
-      // ห่อด้วย clickable
-      card.style.cursor='pointer';
-      if(!card.dataset.detailBound){
-        card.dataset.detailBound='1';
-        card.addEventListener('click', (e)=>{
-          // ถ้ากดปุ่มข้างใน ไม่เด้งซ้ำ (ปุ่มมี stopPropagation อยู่แล้ว แต่กันไว้)
-          if(e.target.closest('button')) return;
-          openSOSDetailModal(item.id);
-        });
-        // เพิ่ม badge ดูเพิ่มเติม ที่มุมขวาบนของหัวข้อใหญ่
-        const headerRow = card.querySelector('div');
-        if(headerRow && !card.querySelector('.detail-badge-more')){
-          const badge = document.createElement('span');
-          badge.className='detail-badge-more';
-          badge.innerHTML='ดูเพิ่มเติม ›';
-          badge.style.marginLeft='auto';
-          // ใส่หลังปุ่ม ดูบนแผนที่ ถ้ามี
-          const mapBtn = card.querySelector('button');
-          if(mapBtn && mapBtn.parentElement){
-            mapBtn.parentElement.appendChild(badge);
+        // ถ้า error เป็น PGRST204 Could not find column
+        if(error.code === 'PGRST204' && error.message && error.message.includes('Could not find the')){
+          const match = error.message.match(/Could not find the '([^']+)' column/);
+          if(match){
+            const missingCol = match[1];
+            console.warn(`[FLOOD RESILIENT] ตารางไม่มีคอลัมน์ '${missingCol}' -> ตัดออกแล้วลองใหม่ (ครั้งที่ ${attempts})`);
+            delete current[missingCol];
+            continue;
           }
         }
+        // error อื่น
+        throw error;
       }
-    });
-  }, 50);
-};
+      throw new Error('ลอง insert หลายครั้งแล้วยังไม่สำเร็จ');
+    }
 
-const _origRenderFloodWarningsList = window.renderFloodWarningsList;
-window.renderFloodWarningsList = function(list){
-  if(typeof _origRenderFloodWarningsList === 'function') _origRenderFloodWarningsList(list);
-  setTimeout(()=>{
-    const cache = window.floodWarningsCache||[];
-    const cards = document.querySelectorAll('#list-container > div');
-    cards.forEach((card, idx)=>{
-      const item = list[idx];
-      if(!item) return;
-      card.style.cursor='pointer';
-      if(!card.dataset.warnBound){
-        card.dataset.warnBound='1';
-        // override onclick เดิมที่เป็น focusWarningOnMap
-        card.onclick = ()=> openWarningDetailModal(item.id||idx);
-        // เพิ่ม badge
-        if(!card.querySelector('.detail-badge-more')){
-          const badge = document.createElement('span');
-          badge.className='detail-badge-more';
-          badge.textContent='ดูเพิ่มเติม ›';
-          badge.style.float='right';
-          const titleDiv = card.querySelector('div');
-          if(titleDiv) titleDiv.appendChild(badge);
-        }
-      }
-    });
-  }, 50);
-};
+    const result = await resilientInsert(payload);
+    
+    alert('✅ ส่งแจ้งเตือนน้ำท่วมสำเร็จ!');
+    if(typeof closeFloodWarningModal === 'function') closeFloodWarningModal();
+    // ล้างฟอร์ม
+    window.floodFiles = [];
+    if(typeof renderFloodImageGrid === 'function') renderFloodImageGrid();
+    const locInput = document.getElementById('floodLocationText'); if(locInput) locInput.value='';
+    const detailInput = document.getElementById('floodDetailText'); if(detailInput) detailInput.value='';
+    const levelInput = document.getElementById('floodWaterLevel'); if(levelInput) levelInput.value='';
+    
+    if(typeof loadFloodWarningsList === 'function') loadFloodWarningsList();
 
-</script>
+  }catch(e){
+    console.error('[FLOOD SUBMIT] error', e);
+    alert('บันทึกไม่สำเร็จ: '+(e.message||e));
+  }
+}
 
-<!-- === v13 DETAIL MODALS === -->
-<div class="detail-modal-overlay" id="sosDetailModalOverlay" onclick="if(event.target===this) closeSOSDetailModal()">
-  <div class="detail-modal-sheet" id="sosDetailSheet">
-    <div class="detail-modal-header">
-      <span style="font-weight:800; font-size:15px;">📋 รายละเอียดคำขอช่วยเหลือ</span>
-      <button onclick="closeSOSDetailModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;font-size:18px;cursor:pointer;">×</button>
-    </div>
-    <div id="sosDetailContent" style="padding-bottom:24px;"></div>
-  </div>
-</div>
 
-<div class="detail-modal-overlay" id="warningDetailModalOverlay" onclick="if(event.target===this) closeWarningDetailModal()">
-  <div class="detail-modal-sheet" id="warningDetailSheet">
-    <div class="detail-modal-header">
-      <span style="font-weight:800; font-size:15px;">🌊 รายละเอียดเตือนภัย</span>
-      <button onclick="closeWarningDetailModal()" style="width:32px;height:32px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;font-size:18px;cursor:pointer;">×</button>
-    </div>
-    <div id="warningDetailContent" style="padding-bottom:24px;"></div>
-  </div>
-</div>
 
-</body>
-</html>
+>
