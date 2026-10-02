@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -7130,8 +7130,8 @@ window.loadFloodWarnings = async function(){
       const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
-      L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
-      (()=>{ const _m=L.marker([lat,lng]).addTo(layer); _m.on('click', ()=>{ console.log('[v13.12] WARNING MARKER ONLY HIGHLIGHT', w.id); onFloodMarkerClicked(w); }); })();
+      L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
+      (()=>{ const _c=layer.getLayers().slice(-1)[0]; if(_c) _c.on('click', ()=>{ onFloodMarkerClicked(w); }); })(); // v13.11.3 FIX: ลบหมุดฟ้า, คลิกที่วงกลมแทน
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
     if(layer.getLayers && layer.getLayers().length>0 && targetMap){
@@ -7563,14 +7563,13 @@ function updateWarningMapMarkers(list){
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
 
-    const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, color:col, fillColor:col, fillOpacity:0.45, weight:4}).addTo(layer);
-    const marker = L.marker([lat,lng]).addTo(layer);
+    const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
+    // v13.11.3 FIX: ลบขอบส้ม (stroke:false) และลบหมุดสีฟ้า (ไม่สร้าง L.marker แล้ว)
     // v13.12: ตัด bindPopup ออก เพื่อไม่ให้ popup เล็กซ้อนกับ highlight logic
 
     // === v13.5 CLICK HANDLER ===
     const clickFn = ()=> onFloodMarkerClicked(w);
     circle.on('click', clickFn);
-    marker.on('click', clickFn);
   });
 }
 function updateSegmentedUI(mode){
