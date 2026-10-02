@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.9.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.9.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -1286,6 +1286,27 @@
       position: relative;
       z-index: 5;
     }
+    .warning-card-highlight {
+      border: 3.5px solid #ea580c !important;
+      box-shadow: 0 0 0 4px rgba(234,88,12,0.28), 0 10px 28px rgba(234,88,12,0.4) !important;
+      transform: scale(1.02) !important;
+      background: #fff7ed !important;
+      position: relative;
+      z-index: 5;
+    }
+    .warning-card-highlight::before {
+      content: '🌊 กำลังดู';
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      background: #ea580c;
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(234,88,12,0.5);
+    }
     .sos-card-highlight::before {
       content: '📍 กำลังดู';
       position: absolute;
@@ -1339,6 +1360,60 @@ window.switchTab = window.switchTab || function(tabId){
   }catch(e){ console.warn('early switchTab error', e); }
 };
 </script>
+
+<script>
+// === v14.3 UNIVERSAL HIGHLIGHT FOR BOTH SOS AND WARNING ===
+window._lastHighlightedId = null;
+window.highlightCardUniversal = function(idStr, type){
+  console.log('[v14.3] HIGHLIGHT UNIVERSAL ->', type, idStr);
+  window._lastHighlightedId = idStr;
+  window._lastHighlightedType = type;
+  const possibleIds = ['sos-card-'+idStr, 'warning-card-'+idStr, 'flood-card-'+idStr, idStr];
+  let cardEl = null;
+  for(let pid of possibleIds){
+    cardEl = document.getElementById(pid);
+    if(cardEl) break;
+  }
+  // fallback search by data attribute
+  if(!cardEl){
+    cardEl = document.querySelector(`[data-sos-id="${idStr}"]`) || document.querySelector(`[data-warning-id="${idStr}"]`);
+  }
+  if(!cardEl){
+    console.warn('[v14.3] หา card ไม่เจอสำหรับ', idStr, 'ลอง render ใหม่');
+    if(type==='sos' && typeof renderSOSList==='function' && window.sosRequestsCache){
+      renderSOSList(window.sosRequestsCache);
+    } else if(type==='warning' && typeof renderFloodWarningsList==='function' && window.floodWarningsCache){
+      // try to call original render if exists
+      if(typeof window._origRenderFloodWarningsList==='function') window._origRenderFloodWarningsList(window.floodWarningsCache);
+      else if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(window.floodWarningsCache);
+    }
+    setTimeout(()=>{
+      for(let pid of possibleIds){
+        cardEl = document.getElementById(pid);
+        if(cardEl) break;
+      }
+      if(!cardEl) cardEl = document.querySelector(`[data-sos-id="${idStr}"]`) || document.querySelector(`[data-warning-id="${idStr}"]`);
+      if(cardEl){
+        document.querySelectorAll('.sos-card-highlight, .warning-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight','warning-card-highlight'));
+        cardEl.classList.add(type==='warning' ? 'warning-card-highlight' : 'sos-card-highlight');
+        cardEl.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+      // open modal
+      if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
+      else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
+    }, 300);
+    return;
+  }
+  document.querySelectorAll('.sos-card-highlight, .warning-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight','warning-card-highlight'));
+  cardEl.classList.add(type==='warning' ? 'warning-card-highlight' : 'sos-card-highlight');
+  cardEl.scrollIntoView({behavior:'smooth', block:'center'});
+  console.log('[v14.3] HIGHLIGHTED', type, idStr, cardEl);
+  // open modal
+  if(type==='sos' && typeof openSOSDetailModal==='function') openSOSDetailModal(idStr);
+  else if(type==='warning' && typeof openWarningDetailModal==='function') openWarningDetailModal(idStr);
+};
+</script>
+
 </head>
 <body>
   <button class="voice-btn" id="toggleBtn" onclick="toggleVoiceSession()">🎙️คุยกับAI</button>
@@ -6309,9 +6384,10 @@ function initSOSMap(){
     function onSOSMarkerClicked(sosId){
       if(!sosId) return;
       const idStr = String(sosId);
-      const cache = window.sosRequestsCache || (typeof sosRequestsCache!=='undefined'?sosRequestsCache:[]) || [];
+      console.log('[v14.3] CLICK SOS MARKER ->', idStr);
+      const cache = window.sosRequestsCache || [];
       const item = cache.find(x=> String(x.id)===idStr);
-      if(!item){ console.warn('ไม่พบ SOS id', sosId); return; }
+      if(!item){ console.warn('ไม่พบ SOS id', idStr); return; }
       try{
         let targetMap = (typeof ensureSOSMapReady==='function'?ensureSOSMapReady():null) || window.sosMap || null;
         if(targetMap && item.lat && item.lng){
@@ -6321,37 +6397,24 @@ function initSOSMap(){
             else targetMap.setView([lat,lng], 16, {animate:true});
           }
         }
-      }catch(e){ console.warn('auto-zoom error', e); }
-      const doHighlight = ()=>{
-        let cardEl = document.getElementById('sos-card-'+idStr);
-        if(!cardEl){
-          if(typeof renderSOSList==='function' && window.sosRequestsCache) renderSOSList(window.sosRequestsCache);
-          setTimeout(()=>{
-            cardEl = document.getElementById('sos-card-'+idStr);
-            if(cardEl){
-              window._lastHighlightedSOSId = idStr;
-              document.querySelectorAll('.sos-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight'));
-              cardEl.classList.add('sos-card-highlight');
-              cardEl.scrollIntoView({behavior:'smooth', block:'center'});
-            }
-            try{ if(typeof openSOSDetailModal==='function') openSOSDetailModal(idStr); }catch(e){}
-          }, 200);
-          return;
+      }catch(e){}
+      // Ensure in requests mode
+      if(window.currentViewMode!=='requests' && typeof switchSOSSubView==='function'){
+        switchSOSSubView('requests');
+        setTimeout(()=>{ window.highlightCardUniversal(idStr, 'sos'); }, 500);
+      } else {
+        if(window._currentSOSFilter && window._currentSOSFilter!=='all' && typeof filterSOS==='function'){
+          filterSOS('all');
+          setTimeout(()=>{ window.highlightCardUniversal(idStr, 'sos'); }, 400);
+        } else {
+          window.highlightCardUniversal(idStr, 'sos');
         }
-        window._lastHighlightedSOSId = idStr;
-        document.querySelectorAll('.sos-card-highlight').forEach(el=> el.classList.remove('sos-card-highlight'));
-        cardEl.classList.add('sos-card-highlight');
-        cardEl.scrollIntoView({behavior:'smooth', block:'center'});
-        try{ if(typeof openSOSDetailModal==='function') openSOSDetailModal(idStr); }catch(e){}
-      };
-      if(window._currentSOSFilter && window._currentSOSFilter!=='all' && typeof filterSOS==='function'){
-        filterSOS('all');
-        setTimeout(doHighlight, 400);
-      }else{
-        setTimeout(doHighlight, 200);
       }
     }
     window.onSOSMarkerClicked = onSOSMarkerClicked;
+    // Alias for old calls
+    window.onFloodMarkerClickedSafe = onSOSMarkerClicked;
+
 
 
     // Alias สำหรับโค้ดเก่าที่เรียก onFloodMarkerClicked แต่จริงๆ เป็น SOS
@@ -7417,13 +7480,27 @@ function onFloodMarkerClicked(w){
   }, 300);
 }
 
+
 function focusWarningOnMap(lat,lng){
-  let targetMap = ensureSOSMapReady();
-  if(targetMap && lat && lng){
-    if(typeof targetMap.flyTo==='function') targetMap.flyTo([parseFloat(lat), parseFloat(lng)], 16, {duration:0.8});
-    else targetMap.setView([parseFloat(lat), parseFloat(lng)], 16, {animate:true});
+  console.log('[v14.3] focusWarningOnMap', lat,lng);
+  let targetMap = (typeof ensureSOSMapReady==='function'?ensureSOSMapReady():null) || window.sosMap || null;
+  if(targetMap){
+    if(typeof targetMap.flyTo==='function') targetMap.flyTo([parseFloat(lat), parseFloat(lng)], 15, {duration:0.8});
+    else targetMap.setView([parseFloat(lat), parseFloat(lng)], 15, {animate:true});
+  }
+  // find warning id by latlng
+  const cache = window.floodWarningsCache || [];
+  let item = cache.find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng)) || cache.find(x=> Math.abs(parseFloat(x.lat)-parseFloat(lat))<0.0005 && Math.abs(parseFloat(x.lng)-parseFloat(lng))<0.0005);
+  if(item){
+    if(window.currentViewMode!=='warnings' && typeof switchSOSSubView==='function'){
+      switchSOSSubView('warnings');
+      setTimeout(()=>{ window.highlightCardUniversal(String(item.id), 'warning'); }, 600);
+    } else {
+      window.highlightCardUniversal(String(item.id), 'warning');
+    }
   }
 }
+
 
 // highlight CSS inject
 (function(){
@@ -8218,6 +8295,12 @@ window.renderFloodWarningsList = function(list){
     cards.forEach((card, idx)=>{
       const item = list[idx];
       if(!item) return;
+      // v14.3 add id for warning cards
+      if(item.id){
+        card.id = 'warning-card-'+item.id;
+        card.setAttribute('data-warning-id', item.id);
+        card.classList.add('warning-card');
+      }
       card.style.cursor='pointer';
       if(!card.dataset.warnBound){
         card.dataset.warnBound='1';
