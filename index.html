@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.11.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1333,6 +1333,36 @@
 
 .hl-blue{border:3.5px solid #2563eb !important; background:#eff6ff !important; box-shadow:0 0 0 4px rgba(37,99,235,0.28), 0 10px 28px rgba(37,99,235,0.4) !important; transform:scale(1.02) !important;}
 .hl-orange{border:3.5px solid #ea580c !important; background:#fff7ed !important; box-shadow:0 0 0 4px rgba(234,88,12,0.28) !important; transform:scale(1.02) !important;}
+
+
+/* === v14 NEW CARD: ลบ badge เฝ้าระวัง/ดูเพิ่มเติม + เพิ่มรูปเลื่อนได้ด้านขวา === */
+.fw-image-scroller{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  width:110px;
+  height:86px;
+  border-radius:10px;
+  scrollbar-width:none;
+}
+.fw-image-scroller::-webkit-scrollbar{ display:none; }
+.fw-image-item{
+  width:90px;
+  height:86px;
+  object-fit:cover;
+  border-radius:10px;
+  flex-shrink:0;
+  scroll-snap-align:start;
+  background:#e2e8f0;
+  border:1px solid rgba(0,0,0,0.06);
+}
+.fw-no-image{
+  width:90px; height:86px; display:flex; align-items:center; justify-content:center;
+  background:#f1f5f9; border-radius:10px; font-size:11px; color:#94a3b8; border:1px dashed #cbd5e1;
+}
+.detail-badge-more{ display:none !important; }
 
 </style> 
     
@@ -7362,28 +7392,45 @@ function renderFloodWarningsList(list){
     else levelType='watch';
     const isCritical = levelType==='critical';
     const isWarning = levelType==='warning';
-    let icon = '🟡', bg = '#fefce8', border = '#fde68a', statusText = 'เฝ้าระวัง', dotColor = '#fef9c3';
-    if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; statusText='อันตราย'; dotColor='#ef4444'; }
-    else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; statusText='เตือนภัย'; dotColor='#d97706'; }
-    else { icon='🟡'; bg='#fefce8'; border='#fde68a'; statusText='เฝ้าระวัง'; dotColor='#fef9c3'; }
+    let icon = '🟡', bg = '#fefce8', border = '#fde68a';
+    if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; }
+    else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; }
+    else { icon='🟡'; bg='#fefce8'; border='#fde68a'; }
 
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
+    
+    // === v14: รูปเลื่อนได้ด้านขวา รองรับ w.images / w.image_urls / w.image_url / w.photos ===
+    const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
+    const imgs = (Array.isArray(rawImgs) ? rawImgs : [rawImgs]).filter(Boolean).flat().filter(Boolean);
+    const imageScrollerHtml = imgs.length>0 ? `
+      <div class="fw-image-scroller" onclick="event.stopPropagation()">
+        ${imgs.map(src=>`<img src="${src}" class="fw-image-item" loading="lazy" onerror="this.style.display='none'">`).join('')}
+      </div>
+    ` : `
+      <div class="fw-image-scroller" onclick="event.stopPropagation()">
+        <div class="fw-no-image">📷 ไม่มีรูป</div>
+      </div>
+    `;
+
     return `
-      <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : `1.5px solid ${border}`}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; ${selectedId && String(w.id)===selectedId ? 'box-shadow:0 0 0 4px rgba(59,130,246,0.2);' : ''}">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-weight:bold; font-size:13px;">${icon} ${w.title||'เตือนภัยน้ำท่วม'}</span>
-          <span style="font-size:10px; background:${isCritical?'#ef4444':'#eab308'}; color:white; padding:2px 8px; border-radius:10px;">${statusText}</span>
+      <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : `1.5px solid ${border}`}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; display:flex; gap:10px; align-items:stretch; ${selectedId && String(w.id)===selectedId ? 'box-shadow:0 0 0 4px rgba(59,130,246,0.2);' : ''}">
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column; justify-content:space-between;">
+          <div style="font-weight:bold; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${w.title||'แจ้งเตือนน้ำท่วม'}</div>
+          <div style="font-size:12px; color:#475569; line-height:1.6; margin-top:6px;">
+            🌊 ระดับน้ำ: ${water}<br>
+            📍 ${w.location_text||w.district||''} ${w.passage_status||''}<br>
+            🕒 ${time}
+          </div>
         </div>
-        <div style="font-size:12px; color:#475569; line-height:1.4;">
-          🌊 ระดับน้ำ: ${water}<br>
-          📍 ${w.location_text||w.district||''} ${w.passage_status||''}<br>
-          🕒 ${time}
+        <div style="width:110px; flex-shrink:0;">
+          ${imageScrollerHtml}
         </div>
       </div>
     `;
   }).join('');
 }
+
 
 // === v13.12 FIX: กดหมุดน้ำท่วม -> ONLY HIGHLIGHT + AUTO SCROLL (ไม่เด้ง Modal) ===
 window._selectedFloodWarningId = window._selectedFloodWarningId || null;
@@ -8235,25 +8282,15 @@ window.renderSOSList = function(list){
           if(e.target.closest('button')) return;
           openSOSDetailModal(item.id);
         });
-        // เพิ่ม badge ดูเพิ่มเติม ที่มุมขวาบนของหัวข้อใหญ่
+        // v14: ไม่เพิ่ม badge ดูเพิ่มเติมแล้ว
         const headerRow = card.querySelector('div');
-        if(headerRow && !card.querySelector('.detail-badge-more')){
-          const badge = document.createElement('span');
-          badge.className='detail-badge-more';
-          badge.innerHTML='ดูเพิ่มเติม ›';
-          badge.style.marginLeft='auto';
-          // ใส่หลังปุ่ม ดูบนแผนที่ ถ้ามี
-          const mapBtn = card.querySelector('button');
-          if(mapBtn && mapBtn.parentElement){
-            mapBtn.parentElement.appendChild(badge);
-          }
-        }
+        // v14: ลบ badge ดูเพิ่มเติมออก
       }
     });
   }, 50);
 };
 
-const _origRenderFloodWarningsList = window.renderFloodWarningsList;
+const _origRenderFloodWarningsList = window.renderFloodWarningsList; // v14 patched - badge removed
 window.renderFloodWarningsList = function(list){
   if(typeof _origRenderFloodWarningsList === 'function') _origRenderFloodWarningsList(list);
   setTimeout(()=>{
@@ -8273,15 +8310,7 @@ window.renderFloodWarningsList = function(list){
         card.dataset.warnBound='1';
         // override onclick เดิมที่เป็น focusWarningOnMap
         card.onclick = ()=> openWarningDetailModal(item.id||idx);
-        // เพิ่ม badge
-        if(!card.querySelector('.detail-badge-more')){
-          const badge = document.createElement('span');
-          badge.className='detail-badge-more';
-          badge.textContent='ดูเพิ่มเติม ›';
-          badge.style.float='right';
-          const titleDiv = card.querySelector('div');
-          if(titleDiv) titleDiv.appendChild(badge);
-        }
+        // v14: ลบ badge ดูเพิ่มเติมออก - ไม่ต้องเพิ่มแล้ว
       }
     });
   }, 50);
