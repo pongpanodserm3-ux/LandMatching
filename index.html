@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.8.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v13.8.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI</title>
@@ -6215,35 +6215,28 @@ function tryLIFFLoginAgain(){
           iconAnchor: [16, 16]
         });
         const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon, riseOnHover:true, title: String(item.id)})
-          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div><div style="margin-top:8px; text-align:center;"><span style="background:#2563eb; color:white; padding:4px 10px; border-radius:8px; font-size:11px;">👆 กดเพื่อเลือก</span></div></div>`);
+          .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${item.location_text||'-'}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div></div>`);
         marker._sosData = item;
         marker.on('click', function(){
-          console.log('[SOS MARKER CLICK v13.9]', item.id);
-          if(typeof onSOSMarkerClicked==='function') onSOSMarkerClicked(item.id);
-          else if(typeof window.onSOSMarkerClicked==='function') window.onSOSMarkerClicked(item.id);
+          console.log('[SOS MARKER CLICK v13.10]', item.id);
+          if(window.onSOSMarkerClicked) window.onSOSMarkerClicked(item.id);
         });
         sosMarkersLayer.addLayer(marker);
       });
       // init map after load
-      
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 300);
     }
 
-    // === v13.9 FINAL FIX เฉพาะหน้า จุดขอให้ช่วย - กดหมุด -> ฟีดล่าง + ขอบน้ำเงินหนา ===
+    // === v13.10 FINAL - เฉพาะหน้า จุดขอให้ช่วย ===
     window._lastSelectedSOSId = null;
-    function onSOSMarkerClicked(sosId){
+    window.onSOSMarkerClicked = function(sosId){
       if(!sosId) return;
       const idStr = String(sosId);
       window._lastSelectedSOSId = idStr;
-      console.log('[v13.9] onSOSMarkerClicked', idStr);
+      console.log('[v13.10] click', idStr);
       const cache = window.sosRequestsCache || (typeof sosRequestsCache!=='undefined'?sosRequestsCache:[]) || [];
       let item = cache.find(x=> String(x.id)===idStr);
-      if(!item){
-        // try find in full list
-        const all = document.querySelectorAll('[data-sos-id]');
-        console.warn('item not in cache, but DOM has', all.length);
-      }
-      // AUTO-ZOOM
+      // auto-zoom เฉพาะ SOS
       try{
         let m = (typeof ensureSOSMapReady==='function'?ensureSOSMapReady():null) || window.sosMap;
         if(m && item && item.lat && item.lng){
@@ -6253,9 +6246,7 @@ function tryLIFFLoginAgain(){
             else m.setView([la,ln], 16, {animate:true});
           }
         }
-      }catch(e){ console.warn(e); }
-
-      // บังคับอยู่หน้า requests
+      }catch(e){}
       try{
         window.currentViewMode='requests';
         window.currentSOSViewMode='requests';
@@ -6263,40 +6254,27 @@ function tryLIFFLoginAgain(){
           filterSOS('all');
         }
       }catch(e){}
+      setTimeout(function(){ highlightSOSCard(idStr); }, 300);
+      setTimeout(function(){ highlightSOSCard(idStr); }, 800);
+    };
 
-      // รอ render เสร็จแล้วค่อยไฮไลท์
-      setTimeout(()=>{ highlightSOSCard(idStr); }, 300);
-      setTimeout(()=>{ highlightSOSCard(idStr); }, 800); // กัน render ช้า
-    }
-
-    function highlightSOSCard(idStr){
-      const sel = 'sos-card-'+idStr;
-      let card = document.getElementById(sel);
+    window.highlightSOSCard = function(idStr){
+      let card = document.getElementById('sos-card-'+idStr);
+      if(!card) card = document.querySelector('[data-sos-id="'+idStr+'"]');
       if(!card){
-        // fallback หาใน sosResults
-        card = document.querySelector('[data-sos-id="'+idStr+'"]');
-      }
-      if(!card){
-        console.warn('[v13.9] หาการ์ดไม่เจอ', idStr);
-        // ถ้าไม่มีจริงๆ ให้ re-render ทั้งหมด
         if(typeof renderSOSList==='function' && window.sosRequestsCache){
           renderSOSList(window.sosRequestsCache);
-          setTimeout(()=>highlightSOSCard(idStr), 400);
+          setTimeout(function(){ window.highlightSOSCard(idStr); }, 400);
         }
         return;
       }
-      // ลบเก่า
-      document.querySelectorAll('.sos-card-highlight').forEach(el=>{
-        el.classList.remove('sos-card-highlight');
-      });
+      document.querySelectorAll('.sos-card-highlight').forEach(function(el){ el.classList.remove('sos-card-highlight'); });
       card.classList.add('sos-card-highlight');
-      // บังคับ inline กัน css ทับ
       card.style.setProperty('border','3.5px solid #2563eb','important');
       card.style.setProperty('background','#dbeafe','important');
       card.style.setProperty('box-shadow','0 0 0 5px rgba(37,99,235,0.25), 0 12px 28px rgba(37,99,235,0.4)','important');
       card.style.setProperty('border-radius','18px','important');
-      card.scrollIntoView({behavior:'smooth', block:'center', inline:'nearest'});
-      // เลื่อน list-container
+      card.scrollIntoView({behavior:'smooth', block:'center'});
       try{
         const lc=document.getElementById('list-container');
         if(lc){
@@ -6304,34 +6282,7 @@ function tryLIFFLoginAgain(){
           lc.scrollTo({top: top, behavior:'smooth'});
         }
       }catch(e){}
-      console.log('[v13.9] highlight done', idStr);
-    }
-    window.onSOSMarkerClicked = onSOSMarkerClicked;
-    window.highlightSOSCard = highlightSOSCard;
-
-
-    }
-
-    // === v13.6 FIX กดหมุด -> ฟีดล่างเลื่อนหา + เปิดรายละเอียด (ตามรูป 1,2,3) ===
-    
-    function onSOSMarkerClicked(sosId){
-      if(!sosId) return;
-      const idStr = String(sosId);
-      const cache = window.sosRequestsCache || sosRequestsCache || [];
-      const item = cache.find(x=> String(x.id)===idStr);
-      if(!item){
-        console.warn('ไม่พบ SOS id', sosId);
-        return;
-      }
-      
-
-
-    // Alias สำหรับโค้ดเก่าที่เรียก onFloodMarkerClicked แต่จริงๆ เป็น SOS
-    window.onSOSMarkerClickedSafe = onSOSMarkerClicked;
-
-
-
-
+    };
 
     // ===== v9.5 FIX - Auto Expire Logic (3 วันไม่มีอัปเดต) =====
     // เรียกทุกครั้งที่โหลดลิสต์ - จะเปลี่ยน status เป็น expired แบบ soft delete ไม่ลบจริง
@@ -7143,7 +7094,7 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
 
 
-/* === v13.9 FIX ขอบน้ำเงินหนา + shadow สำหรับ SOS เท่านั้น - บังคับทับทุก style === */
+/* === v13.10 SOS ONLY - Blue border highlight === */
 #list-container .sos-card-highlight,
 #sosResults .sos-card-highlight,
 div.sos-card-highlight{
@@ -7152,23 +7103,7 @@ div.sos-card-highlight{
   box-shadow: 0 0 0 5px rgba(37,99,235,0.25), 0 12px 28px rgba(37,99,235,0.4) !important;
   border-radius: 18px !important;
   transform: scale(1.02) !important;
-  position: relative;
-  z-index: 5;
 }
-.sos-card-highlight::after{
-  content:'📌 เลือกจากแผนที่';
-  position:absolute;
-  top:-12px;
-  left:12px;
-  background:#2563eb;
-  color:white;
-  font-size:10px;
-  font-weight:bold;
-  padding:2px 8px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.2);
-}
-@keyframes sosPulseBlue{0%{box-shadow:0 0 0 0 rgba(37,99,235,0.6),0 12px 28px rgba(37,99,235,0.4)}50%{box-shadow:0 0 0 14px rgba(37,99,235,0),0 12px 28px rgba(37,99,235,0.4)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0),0 12px 28px rgba(37,99,235,0.4)}}
 
 </style>
 <div id="lineRequiredModalOverlay" onclick="if(event.target===this) closeLineRequiredModal()">
