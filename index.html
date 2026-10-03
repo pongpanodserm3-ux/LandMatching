@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.10-9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.11
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -8930,6 +8930,229 @@ window.renderFloodWarningsList = function(list){
   }, 50);
 };
 
+</script>
+
+
+<script>
+// === v15.11 FIX SOS FULLSCREEN CIRCLE FILTER - แก้เฉพาะหน้า จุดขอให้ช่วย เท่านั้น (ห้ามแก้ส่วนอื่น) ===
+(function(){
+  console.log('[v15.11] PATCH SOS FULLSCREEN CIRCLE FILTER LOADED');
+
+  // Helper: update overlay for SOS mode (copy logic from flood but use sos cache)
+  window.updateFullscreenOverlaySOS = function(list){
+    const overlay=document.getElementById('fullscreenListOverlay');
+    const container=document.getElementById('sosMapContainer');
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || (container && container.classList.contains('map-fullscreen-fallback')));
+    if(!isFs){
+      if(overlay) overlay.style.display='none';
+      return;
+    }
+    if(typeof ensureFullscreenListOverlay==='function') ensureFullscreenListOverlay();
+    const ov=document.getElementById('fullscreenListOverlay');
+    if(!ov) return;
+    if(!list || list.length===0){
+      ov.style.display='none';
+      return;
+    }
+    const listContainer=document.getElementById('list-container');
+    if(!listContainer){
+      ov.style.display='none';
+      return;
+    }
+    let html = listContainer.innerHTML;
+    const tempDiv=document.createElement('div');
+    tempDiv.innerHTML=html;
+    tempDiv.querySelectorAll('#circleFilterBar, #circleFilterBarFullscreen, #circleFilterBarSOS, #circleFilterBarFullscreenSOS').forEach(el=>el.remove());
+    const cardsHtml = tempDiv.innerHTML;
+
+    const base=window.sosRequestsCache||[];
+    const barHtml = `<div id="circleFilterBarFullscreenSOS" style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#b91c1c;"><span>📍 ในวงกลมนี้มี ${list.length} รายการ (จาก ${base.length})</span><button onclick="clearSOSCircleFilter();" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button></div>`;
+
+    ov.innerHTML = barHtml + cardsHtml;
+    ov.style.display='block';
+
+    // v15.11: กดการ์ดใน overlay เต็มจอ -> ออกจากเต็มจอแล้วเด้งไปหน้า detail SOS
+    setTimeout(()=>{
+      ov.querySelectorAll('[data-sos-id], [data-warning-id]').forEach(card=>{
+        let sid = card.getAttribute('data-sos-id') || card.getAttribute('data-warning-id');
+        if(!sid){
+          // try find from id sos-card-xxx
+          const m = (card.id||'').match(/sos-card-(.+)/);
+          if(m) sid=m[1];
+        }
+        if(!sid) return;
+        card.style.cursor='pointer';
+        card.style.position='relative';
+        card.style.zIndex='10';
+        // remove previous listener by cloning? use onclick overwrite
+        card.onclick = (e)=>{
+          if(e.target.closest('button')) return;
+          console.log('[v15.11] SOS overlay card clicked -> open detail', sid);
+          const doOpen = ()=>{
+            if(typeof openSOSDetailModal==='function'){
+              openSOSDetailModal(sid);
+            }
+          };
+          const isFsNow = !!(document.fullscreenElement || document.webkitFullscreenElement);
+          if(isFsNow){
+            if(document.exitFullscreen) document.exitFullscreen().then(()=>setTimeout(doOpen, 250)).catch(()=>{ doOpen(); });
+            else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); setTimeout(doOpen, 300); }
+            else { doOpen(); }
+          } else {
+            doOpen();
+          }
+        };
+      });
+    }, 80);
+  };
+
+  window.clearSOSCircleFilter = function(){
+    const base = window.sosRequestsCache || [];
+    if(typeof renderSOSList==='function') renderSOSList(base);
+    const bar=document.getElementById('circleFilterBarSOS');
+    if(bar) bar.remove();
+    const bar2=document.getElementById('circleFilterBarFullscreenSOS');
+    if(bar2) bar2.remove();
+    const barF=document.getElementById('circleFilterBar');
+    if(barF) barF.remove();
+    const barF2=document.getElementById('circleFilterBarFullscreen');
+    if(barF2) barF2.remove();
+    const overlay=document.getElementById('fullscreenListOverlay');
+    if(overlay) overlay.style.display='none';
+    // reset highlight
+    if(typeof updateFullscreenOverlaySOS==='function'){
+      // hide overlay handled
+    }
+  };
+
+  // Override clearCircleFilter to handle SOS mode too
+  const _origClearCircleFilter = window.clearCircleFilter;
+  window.clearCircleFilter = function(){
+    if(window.currentViewMode==='requests' || window.currentViewMode!=='warnings'){
+      // SOS mode
+      window.clearSOSCircleFilter();
+      // also call original to clean flood bars if any
+      if(typeof _origClearCircleFilter==='function'){
+        try{ _origClearCircleFilter(); }catch(e){}
+      }
+    } else {
+      if(typeof _origClearCircleFilter==='function') return _origClearCircleFilter();
+    }
+  };
+
+  // === OVERRIDE onSOSMarkerClicked for SOS tab only ===
+  window.onSOSMarkerClicked = function(sosId){
+    if(!sosId) return;
+    const idStr=String(sosId);
+    console.log('[v15.11] SOS MARKER CLICKED FULLSCREEN LOGIC', idStr);
+    try{
+      const it=(window.sosRequestsCache||[]).find(x=>String(x.id)===idStr);
+      let m=window.sosMap;
+      if(m && it && it.lat){ const la=parseFloat(it.lat), ln=parseFloat(it.lng); if(!isNaN(la)) m.flyTo([la,ln],16,{duration:0.6}); }
+    }catch(e){}
+
+    const base = window.sosRequestsCache || [];
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.querySelector('#sosMapContainer.map-expanded') || document.querySelector('#sosMapContainer.map-fullscreen-fallback'));
+
+    let filteredList = base;
+    const clickedItem = base.find(x=>String(x.id)===idStr);
+
+    if(isFullscreen){
+      // ตาม requirement: แสดงการ์ดลิสต์รายการตามที่กด 1 รายการ
+      if(clickedItem){
+        filteredList = [clickedItem];
+        console.log('[v15.11 FULLSCREEN SOS] กรองเหลือ 1 รายการ', idStr);
+      } else {
+        filteredList = base.filter(x=>String(x.id)===idStr);
+        if(filteredList.length===0 && clickedItem) filteredList=[clickedItem];
+      }
+
+      if(typeof renderSOSList==='function'){
+        renderSOSList(filteredList);
+        setTimeout(()=>{ 
+          if(typeof updateFullscreenOverlaySOS==='function') updateFullscreenOverlaySOS(filteredList);
+        }, 150);
+      }
+
+      // แสดงแถบ ในวงกลมนี้มี X รายการ (สำหรับโหมดเต็มจอปกติ)
+      if(filteredList.length < base.length || filteredList.length===1){
+        setTimeout(()=>{
+          const listCont = document.getElementById('list-container');
+          if(!listCont) return;
+          document.querySelectorAll('#circleFilterBarSOS, #circleFilterBarFullscreenSOS, #circleFilterBar, #circleFilterBarFullscreen').forEach(el=>{
+            if(el.parentElement && el.parentElement.id!=='fullscreenListOverlay') el.remove();
+          });
+          const bar=document.createElement('div');
+          bar.id='circleFilterBarSOS';
+          bar.style.cssText='background:#fef2f2; border:1.5px solid #ef4444; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#b91c1c;';
+          bar.innerHTML=`<span>📍 ในวงกลมนี้มี ${filteredList.length} รายการ (จาก ${base.length})</span><button onclick="clearSOSCircleFilter()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button>`;
+          listCont.prepend(bar);
+        }, 100);
+      }
+    } else {
+      // โหมดปกติ: เอาตัวที่กดขึ้นบน + highlight เหมือนเดิม
+      filteredList = [...base];
+      filteredList.sort((a,b)=>{
+        if(String(a.id)===idStr) return -1;
+        if(String(b.id)===idStr) return 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      if(typeof renderSOSList==='function') renderSOSList(filteredList);
+    }
+
+    // Highlight + scroll
+    setTimeout(()=>{
+      if(typeof window.highlightBoth === 'function'){
+        window.highlightBoth(idStr, 'sos');
+      } else {
+        const card = document.getElementById('sos-card-'+idStr) || document.querySelector(`[data-sos-id="${idStr}"]`);
+        if(card){
+          document.querySelectorAll('.sos-card-highlight').forEach(e=>e.classList.remove('sos-card-highlight'));
+          card.classList.add('sos-card-highlight');
+          card.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+      }
+    }, 200);
+
+    // ถ้าไม่ได้อยู่ในโหมด requests ให้สลับกลับ
+    if(window.currentViewMode!=='requests' && typeof switchSOSSubView==='function'){
+      switchSOSSubView('requests');
+      setTimeout(()=> {
+        if(typeof window.highlightBoth==='function') window.highlightBoth(idStr,'sos');
+        // re-apply filter after switch if fullscreen
+        if(isFullscreen && clickedItem){
+          if(typeof renderSOSList==='function') renderSOSList([clickedItem]);
+          setTimeout(()=>{ if(typeof updateFullscreenOverlaySOS==='function') updateFullscreenOverlaySOS([clickedItem]); }, 300);
+        }
+      }, 500);
+    }
+  };
+
+  // Also patch the map marker click to support circle-like hit area
+  // Add listener for fullscreenchange to show/hide SOS overlay correctly
+  document.addEventListener('fullscreenchange', ()=>{
+    const isFs = !!document.fullscreenElement;
+    const container=document.getElementById('sosMapContainer');
+    const overlay=document.getElementById('fullscreenListOverlay');
+    if(!isFs){
+      // When exit, keep overlay hidden (clear handled by doOpen)
+      // But if still filtered, keep bar?
+      if(window.currentViewMode==='requests'){
+        // don't auto clear, user may have exited via card click
+      }
+    } else {
+      if(window.currentViewMode==='requests'){
+        // เข้า fullscreen ในโหมด SOS: ซ่อน overlay ก่อน รอกดวงกลม
+        if(overlay && !document.getElementById('circleFilterBarSOS')){
+          overlay.style.display='none';
+        }
+      }
+    }
+    if(window.sosMap) setTimeout(()=>window.sosMap.invalidateSize(), 350);
+  });
+
+  console.log('[v15.11] SOS fullscreen logic ready');
+})();
 </script>
 
 <!-- === v13 DETAIL MODALS === -->
