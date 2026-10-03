@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1367,7 +1367,7 @@
 
 /* === v15.4 RECOMMENDED EXPAND MAP === */
 #sosMapContainer { transition: height 0.35s cubic-bezier(0.4,0,0.2,1) !important; }
-#sosMapContainer.map-expanded { height:82vh !important; border-radius:0 !important; margin-bottom:0 !important; }
+/* v15.5 removed map-expanded hide-feed rule */
 #sosMapContainer:fullscreen { width:100vw !important; height:100vh !important; border-radius:0 !important; }
 .map-fullscreen-fallback { position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; z-index:999999 !important; background:white; border-radius:0 !important; }
 #mapControlBar button:hover { background:#f1f5f9; transform:translateY(-1px); }
@@ -6389,18 +6389,16 @@ function initSOSMap(){
     // === v15.4 RECOMMENDED: ปุ่มขยายเต็มจอ + ปุ่มขยายพื้นที่แผนที่เต็มมือถือ ===
     const containerEl = document.getElementById('sosMapContainer');
     if(containerEl){
-      // สร้างแถบปุ่มบนแผนที่
+      // === v15.5 CLEAN: เหลือแค่ปุ่มเต็มจอ ไม่เอาปุ่ม ↕️ แล้ว ===
       if(!document.getElementById('mapControlBar')){
         const bar = document.createElement('div');
         bar.id='mapControlBar';
         bar.style.cssText='position:absolute; top:8px; right:8px; z-index:800; display:flex; gap:6px;';
         bar.innerHTML = `
-          <button id="mapExpandFeedBtn" title="ขยายแผนที่เต็มจอ / พับฟีด" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:16px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">↕️</button>
-          <button id="mapFullscreenBtn" title="เต็มจอแบบ Browser" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">⛶</button>
+          <button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">⛶</button>
         `;
         containerEl.appendChild(bar);
         document.getElementById('mapFullscreenBtn').onclick=()=>toggleSOSMapFullscreen();
-        document.getElementById('mapExpandFeedBtn').onclick=()=>toggleWarningMapExpand();
       }
     }
     // ปรับความสูงอัตโนมัติเมื่ออยู่ในโหมด warnings
@@ -6410,31 +6408,7 @@ function initSOSMap(){
     }
   }catch(e){ console.warn('initSOSMap failed', e); }
 }
-let _isMapExpanded=false;
-function toggleWarningMapExpand(){
-  const container=document.getElementById('sosMapContainer');
-  const list=document.getElementById('list-container');
-  const aiSec=document.getElementById('ai-section');
-  const btn=document.getElementById('mapExpandFeedBtn');
-  if(!container) return;
-  _isMapExpanded=!_isMapExpanded;
-  if(_isMapExpanded){
-    container.style.height='82vh';
-    container.classList.add('map-expanded');
-    if(list) list.style.display='none';
-    if(aiSec) aiSec.classList.add('collapsed');
-    if(btn) btn.innerHTML='📋';
-    if(btn) btn.title='แสดงฟีด';
-  }else{
-    container.style.height='60vh';
-    container.classList.remove('map-expanded');
-    if(list) list.style.display='block';
-    if(aiSec) aiSec.classList.remove('collapsed');
-    if(btn) btn.innerHTML='↕️';
-    if(btn) btn.title='ขยายแผนที่เต็มมือถือ';
-  }
-  setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 350);
-}
+let _isMapExpanded=false; // v15.5 ลบฟังก์ชันขยายแล้วซ่อนฟีดออก ไม่ใช้งานแล้ว
 // === v15.4 Fullscreen logic (ไม่รบกวน layer อื่น) ===
 function toggleSOSMapFullscreen(){
   const mapEl=document.getElementById('sosMapPreview');
@@ -7584,7 +7558,7 @@ function onFloodMarkerClicked(w){
     }
   }catch(e){ console.warn('auto-zoom flood error', e); }
 
-  if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings'); const mc=document.getElementById('sosMapContainer'); if(mc && !_isMapExpanded) mc.style.height='60vh'; setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 400);
+  if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings'); const mc=document.getElementById('sosMapContainer'); if(mc) mc.style.height='60vh'; setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 400);
   if(typeof updateSegmentedUI==='function') updateSegmentedUI('warnings');
   const base = window.floodWarningsCache || [];
   let reordered = [...base];
@@ -7730,7 +7704,7 @@ window.loadFloodWarnings = async function(){
     console.log(`[WARNING] ได้ ${data.length} รายการ`);
 
     // 1. เปลี่ยน UI ฟีดล่างก่อนเลย - ต้องทำไม่ว่า data จะ 0 หรือไม่
-    updateSOSUIForMode('warnings'); const mc=document.getElementById('sosMapContainer'); if(mc && !_isMapExpanded) mc.style.height='60vh'; setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 400);
+    updateSOSUIForMode('warnings'); const mc=document.getElementById('sosMapContainer'); if(mc) mc.style.height='60vh'; setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 400);
     updateSegmentedUI('warnings');
 
     if(data.length===0){
