@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -8196,17 +8196,25 @@ async function deleteChatsBySOSId(sosId){
   if(!sosId) return;
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const {data: rooms, error: roomErr} = await supabaseClient.from('chat_rooms').select('room_id').or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`);
-    if(roomErr){ console.warn('หา chat_rooms ไม่ได้', roomErr); return; }
-    if(!rooms || rooms.length===0){ console.log('[FLOW-STEP2] ไม่มีแชทให้ลบสำหรับ SOS', sosId); return; }
+    const sosIdText = String(sosId);
+    // ตาม schema จริง: sos_request_id เป็น text, room_id เป็น integer
+    const {data: rooms, error: roomErr} = await supabaseClient.from('chat_rooms').select('room_id').eq('sos_request_id', sosIdText);
+    if(roomErr){
+      console.warn('[FLOW-STEP2] หา chat_rooms ไม่ได้ (อาจไม่มี)', roomErr.message);
+      return;
+    }
+    if(!rooms || rooms.length===0){
+      console.log('[FLOW-STEP2] ไม่มีแชทให้ลบสำหรับ SOS', sosIdText);
+      return;
+    }
     const roomIds = rooms.map(r=>r.room_id);
-    console.log('[FLOW-STEP2] ลบแชท room_ids:', roomIds);
+    console.log('[FLOW-STEP2] ลบแชท room_ids:', roomIds, 'สำหรับ SOS', sosIdText);
     const {error: msgErr} = await supabaseClient.from('chat_messages').delete().in('room_id', roomIds);
-    if(msgErr) console.warn('ลบ chat_messages ไม่ได้', msgErr);
+    if(msgErr) console.warn('ลบ chat_messages ไม่ได้', msgErr.message);
     const {error: delRoomErr} = await supabaseClient.from('chat_rooms').delete().in('room_id', roomIds);
-    if(delRoomErr) console.warn('ลบ chat_rooms ไม่ได้', delRoomErr);
-    else console.log('[FLOW-STEP2] ลบแชทสำเร็จ', sosId);
-  }catch(e){ console.warn('[FLOW-STEP2] deleteChats error', e); }
+    if(delRoomErr) console.warn('ลบ chat_rooms ไม่ได้', delRoomErr.message);
+    else console.log('[FLOW-STEP2] ลบแชทสำเร็จ', sosIdText);
+  }catch(e){ console.warn('[FLOW-STEP2] deleteChats error', e.message); }
 }
 
 // ขั้น 1: สำเร็จ 3 ชม / เงียบ 3 วัน ลบแค่รูป
