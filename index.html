@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -7540,10 +7540,10 @@ window._selectedFloodWarningId = window._selectedFloodWarningId || null;
 
 function onFloodMarkerClicked(w){
   if(!w) return;
-  console.log('[FLOOD CLICK v13.12] marker clicked - ONLY HIGHLIGHT', w.id, w.title);
+  console.log('[FLOOD CLICK v15.6] marker clicked', w.id, w.title);
   window._selectedFloodWarningId = String(w.id);
   
-  // Auto-zoom ไปที่หมุด
+  // Auto-zoom ไปที่หมุด (v15.4 FIX 14)
   try{
     let targetMap = ensureSOSMapReady ? ensureSOSMapReady() : (window.sosMap || null);
     if(targetMap){
@@ -7558,25 +7558,73 @@ function onFloodMarkerClicked(w){
     }
   }catch(e){ console.warn('auto-zoom flood error', e); }
 
-  if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings'); const mc=document.getElementById('sosMapContainer'); if(mc) mc.style.height='60vh'; setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 400);
+  if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings');
   if(typeof updateSegmentedUI==='function') updateSegmentedUI('warnings');
+
   const base = window.floodWarningsCache || [];
-  let reordered = [...base];
-  reordered.sort((a,b)=>{
-    if(String(a.id)===String(w.id)) return -1;
-    if(String(b.id)===String(w.id)) return 1;
-    return new Date(b.created_at) - new Date(a.created_at);
-  });
-  if(typeof renderFloodWarningsList==='function'){
-    renderFloodWarningsList(reordered);
+  const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.querySelector('#sosMapContainer.map-expanded'));
+
+  // === v15.6 NEW: ถ้าอยู่ในโหมดเต็มจอ ให้กรองเฉพาะรายการในวงกลม ===
+  let filteredList = base;
+  if(isFullscreen){
+    const centerLat = parseFloat(w.lat||w.latitude);
+    const centerLng = parseFloat(w.lng||w.longitude);
+    const radiusM = parseInt(w.radius_m)||600;
+    // หาระยะห่างด้วย Haversine
+    function getDistance(lat1,lon1,lat2,lon2){
+      const R=6371000;
+      const dLat=(lat2-lat1)*Math.PI/180;
+      const dLon=(lon2-lon1)*Math.PI/180;
+      const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    }
+    filteredList = base.filter(item=>{
+      if(String(item.id)===String(w.id)) return true;
+      const lat=parseFloat(item.lat||item.latitude), lng=parseFloat(item.lng||item.longitude);
+      if(isNaN(lat)||isNaN(lng)) return false;
+      const dist=getDistance(centerLat,centerLng,lat,lng);
+      return dist <= radiusM;
+    });
+    // ถ้าไม่มีรายการอื่นในรัศมี อย่างน้อยโชว์ตัวที่กด
+    if(filteredList.length===0) filteredList=[w];
+    console.log('[v15.6 FULLSCREEN] กรองในวงกลม', w.id, 'รัศมี', radiusM, 'ได้', filteredList.length, 'รายการ');
+  } else {
+    // โหมดปกติ: เอาตัวที่กดขึ้นบนเหมือนเดิม
+    filteredList = [...base];
+    filteredList.sort((a,b)=>{
+      if(String(a.id)===String(w.id)) return -1;
+      if(String(b.id)===String(w.id)) return 1;
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
   }
+
+  if(typeof renderFloodWarningsList==='function'){
+    renderFloodWarningsList(filteredList);
+  }
+
+  // แสดงปุ่ม "ดูทั้งหมด" เมื่ออยู่ในโหมดกรองวงกลม
+  if(isFullscreen && filteredList.length < base.length){
+    setTimeout(()=>{
+      const listCont = document.getElementById('list-container');
+      if(!listCont) return;
+      if(document.getElementById('circleFilterBar')) document.getElementById('circleFilterBar').remove();
+      const bar=document.createElement('div');
+      bar.id='circleFilterBar';
+      bar.style.cssText='background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#1e40af;';
+      bar.innerHTML=`<span>📍 ในวงกลมนี้มี ${filteredList.length} รายการ (จาก ${base.length})</span><button onclick="clearCircleFilter()" style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button>`;
+      listCont.prepend(bar);
+    }, 100);
+  } else {
+    const oldBar=document.getElementById('circleFilterBar');
+    if(oldBar) oldBar.remove();
+  }
+
   document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
   const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
   if(allBtn) allBtn.classList.add('active');
   window._currentWarningFilter = 'all';
 
   setTimeout(()=>{
-    // ใช้ highlightBoth เพื่อทำขอบน้ำเงิน + ฟ้าอ่อน ตามระบบเดิม v14.10
     if(typeof window.highlightBoth === 'function'){
       window.highlightBoth(String(w.id), 'warning');
     } else {
@@ -7597,9 +7645,18 @@ function onFloodMarkerClicked(w){
       const listCont = document.getElementById('list-container');
       if(listCont) listCont.scrollTop = 0;
     }
-    // v13.12: ไม่เรียก openWarningDetailModal ที่นี่แล้ว เพื่อแก้บั๊กทับซ้อน
   }, 150);
 }
+function clearCircleFilter(){
+  const base = window.floodWarningsCache || [];
+  if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(base);
+  const bar=document.getElementById('circleFilterBar');
+  if(bar) bar.remove();
+  document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
+  const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
+  if(allBtn) allBtn.classList.add('active');
+}
+
 
 function focusWarningOnMap(lat,lng){
   console.log('[v14.10] WARNING MARKER ONLY HIGHLIGHT', lat,lng);
