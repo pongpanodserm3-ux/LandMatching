@@ -1,128 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
-  
-/*
-=== v17.1 RLS SQL สำหรับ Supabase - รันใน SQL Editor ครั้งเดียว ===
--- 1. เปิด RLS (ถ้ายังไม่เปิด)
-ALTER TABLE public.flood_help_requests ENABLE ROW LEVEL SECURITY;
-
--- 2. ลบ policy เก่าที่อาจขัดกัน (ถ้ามี)
-DROP POLICY IF EXISTS "allow_all_for_sos" ON public.flood_help_requests;
-DROP POLICY IF EXISTS "sos_select_all" ON public.flood_help_requests;
-DROP POLICY IF EXISTS "sos_insert_own" ON public.flood_help_requests;
-DROP POLICY IF EXISTS "sos_update_own_or_admin" ON public.flood_help_requests;
-DROP POLICY IF EXISTS "sos_delete_own_or_admin" ON public.flood_help_requests;
-
--- 3. SELECT: ทุกคนอ่านได้ (แผนที่สาธารณะ)
-CREATE POLICY "sos_select_all" ON public.flood_help_requests
-FOR SELECT USING (true);
-
--- 4. INSERT: ต้องมี user_id ตรงกับตัวเอง (general=1, special=9 เช็คฝั่ง client + จะเช็คด้วย function ก็ได้)
-CREATE POLICY "sos_insert_own" ON public.flood_help_requests
-FOR INSERT WITH CHECK (user_id IS NOT NULL);
-
--- 5. UPDATE: เจ้าของโพสต์แก้ได้ + admin แก้ได้ทุกโพสต์
--- ต้องมีคอลัมน์ users.role และ users.user_id เชื่อม
-CREATE POLICY "sos_update_own_or_admin" ON public.flood_help_requests
-FOR UPDATE USING (
-  EXISTS (
-    SELECT 1 FROM public.users 
-    WHERE users.user_id = flood_help_requests.user_id 
-    AND users.user_id = current_setting('request.jwt.claims', true)::json->>'sub' -- ถ้าใช้ auth
-  )
-  OR
-  user_id = (SELECT user_id FROM public.users WHERE users.user_id::text = auth.uid()::text LIMIT 1)
-  OR
-  -- fallback แบบง่ายสำหรับโปรเจกต์ที่ใช้ user_id เป็น text ไม่ได้ใช้ auth.uid(): ให้ client ส่ง user_id ตรงและเช็ค role
-  true -- จะไปบังคับละเอียดด้วย trigger ด้านล่าง
-);
-
--- แนะนำแบบง่ายที่เข้ากับโปรเจกต์คุณ (ไม่มี Supabase Auth ใช้ LINE ID เป็น user_id text):
--- ใช้ trigger function เช็คสิทธิ์ก่อน UPDATE/DELETE
-
--- 6. DELETE: เจ้าของลบได้ + admin ลบได้
-CREATE POLICY "sos_delete_own_or_admin" ON public.flood_help_requests
-FOR DELETE USING (true); -- ไปบังคับด้วย trigger ให้ชัวร์
-
--- 7. Trigger Function เช็คสิทธิ์จริง (สำคัญ!)
-CREATE OR REPLACE FUNCTION public.check_sos_role_limit_and_owner()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_role text;
-  v_is_trusted boolean;
-  v_count int;
-  v_owner text;
-  v_my_id text;
-BEGIN
-  -- หา role ของคนทำรายการ จาก NEW.user_id (insert) หรือ OLD.user_id (update/delete)
-  IF TG_OP = 'INSERT' THEN
-    v_my_id := NEW.user_id;
-  ELSIF TG_OP = 'UPDATE' THEN
-    v_my_id := NEW.user_id;
-    v_owner := OLD.user_id;
-  ELSE -- DELETE
-    v_my_id := OLD.user_id;
-    v_owner := OLD.user_id;
-  END IF;
-
-  -- ดึง role จากตาราง users
-  SELECT lower(role), is_trusted INTO v_role, v_is_trusted FROM public.users WHERE user_id::text = v_my_id::text LIMIT 1;
-  IF v_role IS NULL THEN v_role := 'general'; END IF;
-
-  -- DELETE / UPDATE: ถ้าไม่ใช่เจ้าของและไม่ใช่ admin/special trusted ที่เป็น admin ห้าม
-  IF TG_OP IN ('UPDATE','DELETE') THEN
-    -- ถ้า role เป็น admin ให้ผ่านหมด
-    IF v_role = 'admin' THEN
-      RETURN NEW; -- admin ทำได้ทุกอย่าง
-      IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
-    END IF;
-    -- ถ้าไม่ใช่ admin ต้องเป็นเจ้าของเท่านั้น
-    -- หมายเหตุ: ในโปรเจกต์นี้ client ส่ง user_id มาเอง จึงต้องเช็คว่า OLD.user_id = NEW.user_id (สำหรับ update) หรือ OLD.user_id = คนลบ
-    -- ถ้า frontend ส่ง user_id ไม่ตรง จะบล็อกที่ trigger นี้ไม่ได้ 100% แนะนำให้ใช้ Supabase Auth หรือเช็คเพิ่มฝั่ง Edge Function
-    -- สำหรับตอนนี้ เราจะเช็คว่า ถ้า OLD.user_id != v_my_id และ v_role != 'admin' ให้บล็อก
-    IF TG_OP = 'UPDATE' AND OLD.user_id::text != NEW.user_id::text AND v_role != 'admin' THEN
-      RAISE EXCEPTION 'ห้ามแก้ไขโพสต์ของคนอื่น';
-    END IF;
-    IF TG_OP = 'DELETE' THEN
-      -- อนุญาตถ้าเป็นเจ้าของ หรือ admin (เช็คแล้วข้างบน)
-      -- ตรงนี้ client ต้องส่ง user_id ที่ตรงกับ OLD.user_id มา เราจะเช็คจาก count ไม่ได้ ต้องเช็ค ownership
-      -- ถ้าจะให้ชัวร์ ต้องให้ frontend ส่ง current_user_id มาอีกคอลัมน์ หรือใช้ auth
-      NULL; -- ผ่าน
-    END IF;
-  END IF;
-
-  -- INSERT: เช็ค limit
-  IF TG_OP = 'INSERT' THEN
-    SELECT COUNT(*) INTO v_count FROM public.flood_help_requests 
-    WHERE user_id::text = v_my_id::text 
-    AND status NOT IN ('completed','expired');
-    
-    IF v_role = 'general' AND v_count >= 1 THEN
-      RAISE EXCEPTION 'บุคคลทั่วไปมีได้ 1 โพสต์เท่านั้น กรุณาแก้ไขโพสต์เดิม (general limit 1)';
-    END IF;
-    IF v_role = 'special' AND v_count >= 9 THEN
-      RAISE EXCEPTION 'จิตอาสามีได้ 9 โพสต์เท่านั้น กรุณาแก้ไขหรือลบโพสต์เก่า (special limit 9)';
-    END IF;
-    -- admin ไม่จำกัด
-  END IF;
-
-  IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_check_sos_limit ON public.flood_help_requests;
-CREATE TRIGGER trg_check_sos_limit
-BEFORE INSERT OR UPDATE OR DELETE ON public.flood_help_requests
-FOR EACH ROW EXECUTE FUNCTION public.check_sos_role_limit_and_owner();
-
--- จบ RLS
-*/
-
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -6467,12 +6349,10 @@ function tryLIFFLoginAgain(){
     }
 
     async function openSOSModalForEdit(postData){
-      // ดึงข้อมูลเก่ามาใส่ฟอร์ม
       try{
         window.currentSOSPostId = postData.id;
         window.sosExistingImageUrls = [...(postData.images || postData.image_urls || [])];
         window.sosUploadedFiles = [];
-        // เติมฟอร์ม
         const detailEl = document.getElementById('sosDetailText');
         if(detailEl) detailEl.value = postData.detail || '';
         const latEl = document.getElementById('sosLat');
@@ -6483,7 +6363,6 @@ function tryLIFFLoginAgain(){
         if(peopleEl) peopleEl.value = postData.people_count || 1;
         const phoneEl = document.getElementById('sosPhone');
         if(phoneEl) phoneEl.value = postData.phone || '';
-        // tags
         if(typeof selectedSOSTags !== 'undefined'){
           selectedSOSTags.clear();
           (postData.need_types||[]).forEach(t=>selectedSOSTags.add(t));
@@ -6494,15 +6373,12 @@ function tryLIFFLoginAgain(){
         }
         if(typeof renderSOSUploadGrid==='function') renderSOSUploadGrid();
         document.getElementById('sosModalOverlay').classList.add('active');
-        // เปลี่ยนปุ่ม
         const submitBtn = document.querySelector('#sosModalOverlay button[onclick="submitSOS()"]');
         if(submitBtn) submitBtn.textContent = '💾 บันทึกการแก้ไข';
       }catch(e){ console.error('[v17.1 edit] error', e); }
     }
 
-    // Modal เลือกโพสต์ที่จะแก้ไขเมื่อครบ limit สำหรับ special
     function showSOSLimitPickerModal(myPosts, limit){
-      // ลบ modal เก่าถ้ามี
       const old = document.getElementById('sosLimitPickerOverlay');
       if(old) old.remove();
       const overlay = document.createElement('div');
@@ -6510,7 +6386,7 @@ function tryLIFFLoginAgain(){
       overlay.style.cssText='position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:16px;';
       let html = '<div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:16px;">';
       html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><b>📋 คุณมีครบ '+limit+' โพสต์แล้ว</b><button onclick="document.getElementById(\'sosLimitPickerOverlay\').remove()" style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button></div>';
-      html += '<div style="font-size:12px; color:#666; margin-bottom:10px;">ตามสิทธิ์ '+limit+' โพสต์/คน กรุณาเลือกโพสต์ที่จะแก้ไขหรือลบโพสต์เก่าก่อนสร้างใหม่ (ลบได้เฉพาะของตัวเอง)</div>';
+      html += '<div style="font-size:12px; color:#666; margin-bottom:10px;">ตามสิทธิ์ '+limit+' โพสต์/คน กรุณาเลือกโพสต์ที่จะแก้ไขหรือลบโพสต์เก่าก่อนสร้างใหม่</div>';
       myPosts.forEach((p,i)=>{
         const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('th-TH') : '';
         const types = (p.need_types||[]).join(', ') || '-';
@@ -6522,7 +6398,6 @@ function tryLIFFLoginAgain(){
       html += '<button onclick="document.getElementById(\'sosLimitPickerOverlay\').remove()" style="width:100%; background:#e2e8f0; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer; margin-top:6px;">ปิด</button></div>';
       overlay.innerHTML = html;
       document.body.appendChild(overlay);
-
       window._pickEditSOS = async function(id){
         const post = myPosts.find(x=>String(x.id)===String(id));
         if(!post) return;
@@ -6542,7 +6417,6 @@ function tryLIFFLoginAgain(){
 
     async function openSOSModal() { 
       try{
-        // ===== v17.1 เช็คสิทธิ์เฉพาะ SOS =====
         const myRoleInfo = await getCurrentUserRole();
         const myUserId = myRoleInfo.user_id || await getCurrentUserId();
         if(!myUserId){
@@ -6552,23 +6426,17 @@ function tryLIFFLoginAgain(){
         const myPosts = await getMySOSCountAndPosts(myUserId);
         const roleKey = (myRoleInfo.role||'general').toLowerCase();
         const limit = SOS_LIMITS[roleKey] ?? 1;
-        
         console.log('[v17.1 SOS] role:', roleKey, 'limit:', limit, 'current:', myPosts.length);
-
         if(roleKey !== 'admin' && myPosts.length >= limit){
-          // ครบจำนวนแล้ว -> ไปโหมดแก้ไข
           if(roleKey === 'general'){
-            // general 1 โพสต์ -> ดึงโพสต์เดียวมาแก้เลย
-            alert('ℹ️ คุณเป็นบุคคลทั่วไป มีสิทธิ์ 1 โพสต์/คน\nระบบจะพาไปแก้ไขโพสต์เดิมของคุณ\n(แก้ไขได้ ลบของตัวเองได้ แต่ลบของคนอื่นไม่ได้)');
+            alert('ℹ️ คุณเป็นบุคคลทั่วไป มีสิทธิ์ 1 โพสต์/คน\nระบบจะพาไปแก้ไขโพสต์เดิมของคุณ');
             await openSOSModalForEdit(myPosts[0]);
             return;
           }else if(roleKey === 'special'){
-            // special 9 โพสต์ -> ให้เลือกว่าจะแก้/ลบอันไหน
             showSOSLimitPickerModal(myPosts, limit);
             return;
           }
         }
-        // ยังไม่ครบ -> เปิดฟอร์มใหม่ปกติ
         window.currentSOSPostId = null;
         window.sosExistingImageUrls = [];
         window.sosUploadedFiles = [];
@@ -6586,7 +6454,6 @@ function tryLIFFLoginAgain(){
         document.getElementById('sosModalOverlay').classList.add('active');
       }catch(e){
         console.error('[v17.1 openSOSModal] error', e);
-        // fallback เปิดปกติถ้าเช็คพลาด
         document.getElementById('sosModalOverlay').classList.add('active');
       }
     }
@@ -8998,7 +8865,6 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
   try{
   // ===== v17.1 RLS client-side check - START =====
   try{
-    const myRoleForDel = await getCurrentUserRole();
     const {data: ownerData} = await supabaseClient.from('flood_help_requests').select('user_id').eq('id', sosId).maybeSingle();
     if(ownerData){
       const allowed = await canDeleteSOS(sosId, ownerData.user_id);
