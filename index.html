@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -7358,13 +7358,35 @@ document.addEventListener('fullscreenchange', ()=>{
       try{
         if(typeof supabaseClient==='undefined' || !supabaseClient) throw new Error('No supabaseClient');
 
-        // คำสั่งที่3: ตรวจสอบว่า user เคยลงแล้วหรือไม่ (1 คน 1 โพสต์)
+        // v17.8 FIX: ตรวจสอบ role ก่อนบังคับ 1 คน 1 โพสต์ - แก้บั๊ก admin ได้แค่ 1 โพสต์
         let existingPost = null;
+        let myRoleForSubmit = {role:'general'};
+        try{ myRoleForSubmit = await getCurrentUserRole(); }catch(_){}
+        const roleKeySubmit = (myRoleForSubmit.role||'general').toLowerCase();
+        const limitSubmit = (typeof SOS_LIMITS !== 'undefined' ? SOS_LIMITS[roleKeySubmit] : 1) ?? 1;
+        console.log('[v17.8 SUBMIT] role:', roleKeySubmit, 'limit:', limitSubmit, 'currentPostId:', window.currentSOSPostId);
+        
         if(!window.currentSOSPostId){
-          const {data: chk} = await supabaseClient.from('flood_help_requests').select('id').eq('user_id', userId).limit(1);
-          if(chk && chk.length>0){
-            existingPost = chk[0];
-            window.currentSOSPostId = existingPost.id;
+          // ถ้าเป็น admin ให้ข้ามการเช็ค 1 คน 1 โพสต์ - สร้างใหม่ได้ไม่จำกัด
+          if(roleKeySubmit === 'admin'){
+            // admin ไม่จำกัด - ไม่ต้องหาโพสต์เก่า
+            existingPost = null;
+          }else{
+            // general / special ต้องเช็คตาม limit
+            const {data: myExistingPosts} = await supabaseClient.from('flood_help_requests')
+              .select('id').eq('user_id', userId)
+              .neq('status','completed').neq('status','expired')
+              .order('created_at',{ascending:false});
+            const currentCount = myExistingPosts ? myExistingPosts.length : 0;
+            console.log('[v17.8 SUBMIT] current active posts:', currentCount, '/', limitSubmit);
+            if(currentCount >= limitSubmit){
+              // เกิน limit แล้ว ต้องอัปเดตโพสต์เก่าแทน (ตามกฎ general 1, special 9)
+              if(myExistingPosts && myExistingPosts.length>0){
+                existingPost = myExistingPosts[0];
+                window.currentSOSPostId = existingPost.id;
+                console.log('[v17.8 SUBMIT] เกิน limit ดึงโพสต์เก่ามาแก้:', existingPost.id);
+              }
+            }
           }
         }
 
