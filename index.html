@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -3174,6 +3174,20 @@ function tryLIFFLoginAgain(){
       }
       return '<span class="trust-badge general"><span class="icon">👤</span> บุคคลทั่วไป</span>';
     }
+
+    // v17.9 NEW - Badge สำหรับ SOS โดยเฉพาะ แสดงแค่ชื่อ role ตามตัวอย่าง ADMIN
+    function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
+      const r = (role||reporter_type||'general').toLowerCase();
+      // ตามคำขอ: แสดงแค่ชื่อบทบาทอย่างเดียว เช่น แอดมิน
+      if(r==='admin'){
+        return '<span class="trust-badge admin" style="background:#e0f2fe; border:1px solid #7dd3fc; color:#0369a1;"><span class="icon">🔹</span> ADMIN</span>';
+      }
+      if(r==='special'){
+        return '<span class="trust-badge special" style="background:#dcfce7; border:1px solid #86efac; color:#166534;"><span class="icon">⭐</span> SPECIAL</span>';
+      }
+      return '<span class="trust-badge general" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#334155;"><span class="icon">👤</span> GENERAL</span>';
+    }
+
 
     // ==========================================
     // v17 - ระบบ 2 คอลัมน์ role + is_trusted - END
@@ -6976,6 +6990,9 @@ document.addEventListener('fullscreenchange', ()=>{
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : item.status === 'completed' ? '#f3f4f6' : item.status === 'expired' ? '#fafaf9' : '#eff6ff';
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : item.status === 'completed' ? '#d1d5db' : item.status === 'expired' ? '#e7e5e4' : '#bfdbfe';
         const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
+        // v17.9 - เพิ่ม badge บทบาทในแต่ละโพสต์ SOS ตามตัวอย่างหน้าเตือนท่วม แต่มีแค่ชื่อบทบาท
+        const sosRoleBadge = getSOSRoleBadgeHTML(item.reporter_role || item.role || item.reporter_type, item.reporter_trusted || item.is_trusted, item.reporter_type);
+
         // คำสั่งที่สอง: เวลา + วันที่แบบย่อที่สุด เช่น 1ต.ค. 11:30
         let timeAgo = '';
         if(item.created_at){
@@ -7012,6 +7029,7 @@ document.addEventListener('fullscreenchange', ()=>{
           <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
             <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
               <span style="font-size:12px; font-weight:800;">${statusIcon} ${needLabel}</span>
+              ${sosRoleBadge}
               ${statusText ? `<span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>` : ``}
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
               <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
