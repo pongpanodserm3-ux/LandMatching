@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.10-9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1382,6 +1382,13 @@
 #fullscreenListOverlay .property-card { margin-bottom:8px; }
 #fullscreenListOverlay::-webkit-scrollbar { width:6px; }
 #fullscreenListOverlay::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:6px; }
+
+
+/* v15.10 ensure detail modal on top even after fullscreen */
+.detail-modal-overlay { z-index: 9999999 !important; }
+#warningDetailModalOverlay.active { display:flex !important; }
+#fullscreenListOverlay { pointer-events:auto; }
+#fullscreenListOverlay [data-warning-id] { pointer-events:auto; }
 
 </style> 
     
@@ -6477,17 +6484,31 @@ function updateFullscreenOverlay(list){
     ov.innerHTML = barHtml + cardsHtml;
     ov.style.display='block';
 
-    // === v15.9 FIX ONLY THIS POINT: กดการ์ดใน overlay เต็มจอ -> เด้งไปหน้า detail ===
+    // === v15.9 FIX + v15.10 FIX z-index/fullscreen: กดการ์ดใน overlay เต็มจอ -> ออกจากเต็มจอแล้วเด้งไปหน้า detail ===
     setTimeout(()=>{
       ov.querySelectorAll('[data-warning-id]').forEach(card=>{
         const wid = card.getAttribute('data-warning-id');
         if(!wid) return;
         card.style.cursor='pointer';
-        // ลบ onclick เก่าที่อาจหายไปตอน clone แล้วผูกใหม่ให้เปิด detail เท่านั้น
+        // v15.10: ลบ pointer-events ที่อาจโดน overlay บัง
+        card.style.position='relative';
+        card.style.zIndex='10';
         card.onclick = (e)=>{
-          if(e.target.closest('button')) return; // ถ้ากดปุ่มดูทั้งหมด ไม่เด้ง
-          if(typeof openWarningDetailModal==='function'){
-            openWarningDetailModal(wid);
+          if(e.target.closest('button')) return;
+          console.log('[v15.10] overlay card clicked -> open detail', wid);
+          const doOpen = ()=>{
+            if(typeof openWarningDetailModal==='function'){
+              openWarningDetailModal(wid);
+            }
+          };
+          const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+          if(isFs){
+            // ต้องออกจาก fullscreen ก่อน เพราะ modal อยู่ข้างนอก container ไม่งั้นจะมองไม่เห็น (z-index ไม่ช่วย)
+            if(document.exitFullscreen) document.exitFullscreen().then(()=>setTimeout(doOpen, 250)).catch(()=>{ doOpen(); });
+            else if(document.webkitExitFullscreen){ document.webkitExitFullscreen(); setTimeout(doOpen, 300); }
+            else { doOpen(); }
+          } else {
+            doOpen();
           }
         };
       });
