@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -1456,7 +1456,6 @@ window.highlightBoth = function(idStr, type){
         <!-- ย้ายสถานะ AI voice มาซ้ายหุ่นยนต์ แบบสั้น -->
         <div id="statusText" class="ai-status-compact">💤 รอ</div>
         <div class="ai-avatar" id="avatarCircle">🤖</div>
-        <!-- v17.6 Role Badge - แสดง role ข้างหุ่นยนต์ -->
         <div id="userRoleBadge" class="role-badge" style="font-size:10px; font-weight:bold; padding:2px 6px; border-radius:8px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; margin-left:4px; white-space:nowrap; display:none;">⏳</div>
         <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
       </div>
@@ -3031,7 +3030,7 @@ function tryLIFFLoginAgain(){
       }
     }  
 
-    async async function getCurrentUserId() {
+    async function getCurrentUserId() {
       // v6.7 FIX: ต้องมี LINE profile จริงเท่านั้น
       if (currentUserLineProfile && currentUserLineProfile.userId) {
         const dbId = await saveUserLineIdToSupabase(currentUserLineProfile); // v6.8 ใช้ profile เต็ม
@@ -3087,7 +3086,6 @@ function tryLIFFLoginAgain(){
     }
 
     
-    // v17.6 - แสดง role ข้างหุ่นยนต์โลโก้ + แก้บั๊ก admin ไม่ขึ้นใน SOS
     async function updateRoleBadge(){
       try{
         const badge = document.getElementById('userRoleBadge');
@@ -3106,34 +3104,21 @@ function tryLIFFLoginAgain(){
           badge.innerHTML = '👤 general';
           badge.title = 'บุคคลทั่วไป - 1 โพสต์ | user_id:'+roleInfo.user_id;
         }
-        // เก็บ role ไว้ global ให้ทุกหน้าต่างใช้ตรงกัน (แก้บั๊ก 2 หน้าเห็นไม่ตรงกัน)
         window.CURRENT_USER_ROLE = roleInfo;
         window.CURRENT_USER_ROLE_CACHE = roleInfo;
-        console.log('[v17.6 RoleBadge] role:', role, 'user_id:', roleInfo.user_id, 'is_trusted:', roleInfo.is_trusted);
+        console.log('[v17.7 RoleBadge] role:', role, 'user_id:', roleInfo.user_id);
         return roleInfo;
       }catch(e){
-        console.warn('[v17.6 RoleBadge] error', e);
+        console.warn('[v17.7 RoleBadge] error', e);
         const badge = document.getElementById('userRoleBadge');
         if(badge){ badge.style.display='inline-block'; badge.className='role-badge general'; badge.innerHTML='👤 general'; }
         return {role:'general'};
       }
     }
-    
-    // เรียกอัปเดต badge ทุกครั้งที่ได้ CURRENT_USER_ID และทุก 10 วินาที (กัน cache ไม่ตรงกันระหว่าง 2 หน้า)
     document.addEventListener('DOMContentLoaded', ()=>{
       setTimeout(()=>{ updateRoleBadge(); }, 2000);
       setInterval(()=>{ updateRoleBadge(); }, 10000);
     });
-    
-    // Hook เข้าไปใน initLIFF และหลัง login สำเร็จ
-    const _origSaveUserLineId = window.saveUserLineIdToSupabase;
-    if(typeof _origSaveUserLineId === 'function'){
-      window.saveUserLineIdToSupabase = async function(...args){
-        const result = await _origSaveUserLineId.apply(this, args);
-        setTimeout(()=>{ updateRoleBadge(); }, 500);
-        return result;
-      };
-    }
 
 
     async function canPostWarning(userId, lat, lng){
@@ -6405,7 +6390,6 @@ function tryLIFFLoginAgain(){
         window.currentSOSPostId = postData.id;
         window.sosExistingImageUrls = [...(postData.images || postData.image_urls || [])];
         window.sosUploadedFiles = [];
-        window.sosImagesToDelete = [];
         const detailEl = document.getElementById('sosDetailText');
         if(detailEl) detailEl.value = postData.detail || '';
         const latEl = document.getElementById('sosLat');
@@ -7215,7 +7199,6 @@ document.addEventListener('fullscreenchange', ()=>{
       window.sosExistingImageUrls.splice(idx,1);
       renderSOSUploadGrid();
     }
-    // init delete tracker
     window.sosImagesToDelete = window.sosImagesToDelete || [];
 
     async function checkAndLoadExistingSOS(){
@@ -7295,7 +7278,6 @@ document.addEventListener('fullscreenchange', ()=>{
           window.currentSOSPostId=null;
           window.sosExistingImageUrls=[];
           window.sosUploadedFiles=[];
-          window.sosImagesToDelete=[];
           renderSOSUploadGrid();
         }
       }catch(e){
@@ -7402,7 +7384,7 @@ document.addEventListener('fullscreenchange', ()=>{
         }
 
         // อัปโหลดรูปภาพ 8 รูป ไปยัง bucket 'flood-photos'
-        // v17.3 FIX รูปเพี้ยนตอนแก้ไข: ใช้ชื่อไฟล์แบบ unique ไม่ชนกับของเก่า + ลบไฟล์เก่าที่ user ลบออก
+        // v17.7 FINAL 100% CLEAN - ชื่อ unique + ลบจริง + verify
         let finalImageUrls = [...(window.sosExistingImageUrls||[])];
         const newFiles = window.sosUploadedFiles||[];
         const timestamp = Date.now();
@@ -7410,7 +7392,6 @@ document.addEventListener('fullscreenchange', ()=>{
         for(let i=0;i<newFiles.length;i++){
           const file = newFiles[i];
           const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
-          // ชื่อใหม่ไม่ซ้ำ: SOS-userId-postId-timestamp-i-random.ext ป้องกัน cache ชน
           const randomStr = Math.random().toString(36).substring(2,7);
           const fileName = `SOS-${userId}-${postIdToUse}-${timestamp}-${i+1}-${randomStr}.${fileExt}`;
 
@@ -7424,35 +7405,28 @@ document.addEventListener('fullscreenchange', ()=>{
           }else{
             const {data: publicUrlData} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
             if(publicUrlData && publicUrlData.publicUrl){
-              // เติม timestamp ป้องกัน browser cache รูปเก่า
-              finalImageUrls.push(publicUrlData.publicUrl + `?t=${timestamp}`);
+              finalImageUrls.push(publicUrlData.publicUrl);
             }
           }
         }
 
-        // จำกัด 8 รูป
         if(finalImageUrls.length>8) finalImageUrls = finalImageUrls.slice(0,8);
 
-        // v17.3 FIX สำคัญ: ต้องอัปเดต images เสมอ แม้ลบหมดเหลือ 0 ก็ต้องอัปเดตเป็น []
+        // v17.7 FIX: อัปเดต images เสมอ แม้ลบหมดเหลือ 0
         try{
-          // ลบ query param ?t= ออกก่อนเก็บลง DB เพื่อความสะอาด แต่ตอนแสดงจะเติม cache-buster เอง
           const cleanUrls = finalImageUrls.map(u=>u.split('?')[0]);
           const {error: imgUpdErr} = await supabaseClient.from('flood_help_requests').update({images: cleanUrls}).eq('id', postIdToUse);
           if(imgUpdErr) console.warn('อัปเดต images ไม่สำเร็จ', imgUpdErr);
           
-          // v17.4 100% DELETE - ลบไฟล์เก่าที่ user กดลบออกแบบการันตี
           if(window.sosImagesToDelete && window.sosImagesToDelete.length>0){
-            console.log('[EDIT-DELETE-100%] กำลังลบรูปเก่าที่ user ลบ:', window.sosImagesToDelete);
+            console.log('[EDIT-DELETE-100%] ลบรูปเก่า:', window.sosImagesToDelete);
             const delResult = await deleteSOSImage100Percent(window.sosImagesToDelete, 'edit_delete_old_images');
             if(!delResult.verified){
               console.warn('[EDIT-DELETE-100%] ลบไม่หมด เหลือ:', delResult.stillExists);
-              // ไม่ block user แต่แจ้งเตือน
-              alert(`⚠️ ลบรูปเก่าได้ ${delResult.deleted||0} รูป แต่ยังมีบางไฟล์ค้าง (${(delResult.stillExists||[]).length} รูป) ระบบจะลองลบอีกครั้งอัตโนมัติ`);
             }
             window.sosImagesToDelete = [];
           }
         }catch(e){ console.warn('update images exception', e); }
-        // อัปเดตตัวแปร global ให้ตรงกับที่เก็บจริง
         finalImageUrls = finalImageUrls.map(u=>u.split('?')[0]);
 
 
@@ -7763,7 +7737,6 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
 
 
-    /* v17.6 Role Badge */
     .role-badge.admin { background: linear-gradient(135deg,#ff4b2b,#ff416c) !important; color:white !important; border-color:#ff416c !important; }
     .role-badge.special { background: linear-gradient(135deg,#10b981,#059669) !important; color:white !important; border-color:#059669 !important; }
     .role-badge.general { background: #f1f5f9 !important; color:#334155 !important; border-color:#cbd5e1 !important; }
@@ -8750,7 +8723,6 @@ function extractFileNameFromUrl(url){
     if(bucketIdx !== -1){
       return clean.substring(bucketIdx + 'flood-photos/'.length);
     }
-    // fallback: last segment
     const parts = clean.split('/');
     return parts[parts.length-1];
   }catch(e){ return null; }
@@ -8763,45 +8735,35 @@ async function deleteFilesFromStorage(imageUrls){
     const fileNames = imageUrls.map(u=>extractFileNameFromUrl(u)).filter(Boolean);
     if(fileNames.length===0) return {ok:true, deleted:0, verified:true};
     console.log('[STORAGE-DELETE-100%] เริ่มลบไฟล์:', fileNames);
-    
-    // ลบจริง
     const {data, error} = await supabaseClient.storage.from('flood-photos').remove(fileNames);
     if(error){ 
       console.warn('[STORAGE-DELETE-100%] ลบไม่สำเร็จ', error); 
       return {ok:false, error, verified:false, attempted:fileNames}; 
     }
-    
-    // ยืนยันว่าลบจริง 100% - เช็คซ้ำว่าไฟล์หายไปแล้ว
     let verifiedCount = 0;
     let stillExists = [];
     for(const fn of fileNames){
       try{
-        // พยายาม list ดูว่ายังอยู่ไหม
         const {data: listData} = await supabaseClient.storage.from('flood-photos').list('', {search: fn});
         const exists = listData && listData.some(f=>f.name===fn);
         if(!exists) verifiedCount++;
         else stillExists.push(fn);
-      }catch(_){ verifiedCount++; } // ถ้า list ไม่ได้ ให้ถือว่าลบแล้ว
+      }catch(_){ verifiedCount++; }
     }
-    
     const verified = stillExists.length===0;
     if(!verified){
       console.warn('[STORAGE-DELETE-100%] ยังเหลือไฟล์ที่ลบไม่หมด:', stillExists);
-      // retry ครั้งที่ 2
       const {error: retryErr} = await supabaseClient.storage.from('flood-photos').remove(stillExists);
       if(!retryErr) console.log('[STORAGE-DELETE-100%] retry ลบรอบ 2 สำเร็จ');
     }
-    
-    console.log(`[STORAGE-DELETE-100%] ลบสำเร็จ ${data?.length||fileNames.length} ไฟล์, verified: ${verified} (${verifiedCount}/${fileNames.length})`);
+    console.log(`[STORAGE-DELETE-100%] ลบสำเร็จ ${data?.length||fileNames.length} ไฟล์, verified: ${verified}`);
     return {ok:true, deleted:fileNames.length, verified, stillExists};
   }catch(e){ console.warn('[STORAGE-DELETE-100%] exception', e); return {ok:false, error:e, verified:false}; }
 }
 
-// v17.4 - ฟังก์ชันลบแบบการันตี 100% พร้อม log ลง DB
 async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
   const result = await deleteFilesFromStorage(imageUrls);
   try{
-    // log การลบลง console แบบละเอียด + เก็บไว้ใน localStorage เพื่อ audit
     const logEntry = {
       time: new Date().toISOString(),
       context,
@@ -8811,14 +8773,12 @@ async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
     console.log('[AUDIT-DELETE]', logEntry);
     const existingLogs = JSON.parse(localStorage.getItem('sos_delete_audit')||'[]');
     existingLogs.push(logEntry);
-    if(existingLogs.length>100) existingLogs.shift(); // เก็บแค่ 100 รายการล่าสุด
+    if(existingLogs.length>100) existingLogs.shift();
     localStorage.setItem('sos_delete_audit', JSON.stringify(existingLogs));
   }catch(_){}
   return result;
 }
 
-
-// v17.4 STORAGE AUDIT - ฟังก์ชันเช็คพื้นที่
 async function checkSOSStorageUsage(){
   try{
     const {data, error} = await supabaseClient.storage.from('flood-photos').list('', {limit:1000});
@@ -8826,7 +8786,6 @@ async function checkSOSStorageUsage(){
     const total = data ? data.length : 0;
     const sosFiles = data ? data.filter(f=>f.name.startsWith('SOS-')) : [];
     console.log(`[STORAGE-AUDIT] ทั้งหมด ${total} ไฟล์, SOS files ${sosFiles.length} ไฟล์`);
-    console.log('[STORAGE-AUDIT] SOS files:', sosFiles.map(f=>f.name));
     return {total, sosCount: sosFiles.length, files: sosFiles};
   }catch(e){ console.warn(e); }
 }
@@ -9031,7 +8990,7 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
 
     const {data: oldData} = await supabaseClient.from('flood_help_requests').select('images, image_urls').eq('id', sosId).maybeSingle();
     const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
-    console.log(`[DELETE-POST-100%] กำลังลบโพสต์ ${sosId} พร้อมรูป ${imgs.length} รูป`);
+    console.log(`[DELETE-POST-100%] ลบโพสต์ ${sosId} พร้อมรูป ${imgs.length} รูป`);
     const delImgResult = await deleteSOSImage100Percent(imgs, 'delete_full_post_'+sosId);
     if(!delImgResult.ok){
       console.error('[DELETE-POST-100%] ลบรูปไม่สำเร็จ แต่จะลบโพสต์ต่อ:', delImgResult.error);
@@ -9135,7 +9094,6 @@ async function autoWarningStep3_DeletePermanently_7Days(){
     console.log(`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`, toDelete);
     if(!toDelete || toDelete.length===0) return;
     for(let item of toDelete){
-      // v17.5 100% DELETE - ลบรูปที่เหลือแบบการันตี (กันเหนียว)
       const imgs = item.images || item.image_urls || [];
       if(imgs && imgs.length>0){
         console.log('[WARNING-STEP3-100%] ลบรูปถาวรเตือนท่วม:', item.id);
