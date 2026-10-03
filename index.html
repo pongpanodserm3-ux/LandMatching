@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1376,6 +1376,12 @@
   #sosMapContainer { height:60vh !important; min-height:420px !important; }
   #sosMapContainer.map-expanded { height:85vh !important; }
 }
+
+
+/* v15.7 fullscreen list overlay */
+#fullscreenListOverlay .property-card { margin-bottom:8px; }
+#fullscreenListOverlay::-webkit-scrollbar { width:6px; }
+#fullscreenListOverlay::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:6px; }
 
 </style> 
     
@@ -6409,27 +6415,92 @@ function initSOSMap(){
   }catch(e){ console.warn('initSOSMap failed', e); }
 }
 let _isMapExpanded=false; // v15.5 ลบฟังก์ชันขยายแล้วซ่อนฟีดออก ไม่ใช้งานแล้ว
-// === v15.4 Fullscreen logic (ไม่รบกวน layer อื่น) ===
+// === v15.7 FIX FULLSCREEN: ให้เห็นลิสต์ตอนเต็มจอด้วย ===
 function toggleSOSMapFullscreen(){
   const mapEl=document.getElementById('sosMapPreview');
   const container=document.getElementById('sosMapContainer');
-  if(!mapEl) return;
-  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if(!mapEl || !container) return;
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
   if(isFs){
     if(document.exitFullscreen) document.exitFullscreen();
     else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
   }else{
-    const target = container||mapEl;
+    // สร้าง overlay สำหรับลิสต์ก่อนเข้า fullscreen
+    ensureFullscreenListOverlay();
+    const target = container;
     if(target.requestFullscreen) target.requestFullscreen();
     else if(target.webkitRequestFullscreen) target.webkitRequestFullscreen();
     else target.classList.toggle('map-fullscreen-fallback');
+  }
+}
+function ensureFullscreenListOverlay(){
+  const container=document.getElementById('sosMapContainer');
+  if(!container) return;
+  let overlay=document.getElementById('fullscreenListOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='fullscreenListOverlay';
+    overlay.style.cssText='position:absolute; bottom:0; left:0; right:0; max-height:38vh; overflow-y:auto; background:rgba(255,255,255,0.97); border-top:2px solid #cbd5e1; border-radius:14px 14px 0 0; z-index:900; padding:8px; display:none; box-shadow:0 -4px 20px rgba(0,0,0,0.15);';
+    container.appendChild(overlay);
+  }
+}
+function updateFullscreenOverlay(list){
+  const overlay=document.getElementById('fullscreenListOverlay');
+  const container=document.getElementById('sosMapContainer');
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || container.classList.contains('map-fullscreen-fallback'));
+  if(!isFs){
+    if(overlay) overlay.style.display='none';
+    return;
+  }
+  ensureFullscreenListOverlay();
+  const ov=document.getElementById('fullscreenListOverlay');
+  if(!ov) return;
+  if(!list || list.length===0){
+    ov.style.display='none';
+    return;
+  }
+  // clone การ์ดจาก list-container มาโชว์ หรือ render ง่ายๆ
+  const listContainer=document.getElementById('list-container');
+  if(listContainer && listContainer.innerHTML){
+    ov.innerHTML = listContainer.innerHTML;
+    ov.style.display='block';
+    // copy ปุ่มดูทั้งหมดด้วย
+    const bar=document.getElementById('circleFilterBar');
+    if(bar){
+      const barClone=bar.cloneNode(true);
+      barClone.id='circleFilterBarFullscreen';
+      barClone.querySelector('button')?.addEventListener('click', clearCircleFilter);
+      // fix onclick
+      const btn=barClone.querySelector('button');
+      if(btn) btn.setAttribute('onclick','clearCircleFilter(); updateFullscreenOverlay(window.floodWarningsCache||[]);');
+      ov.prepend(barClone);
+    }
+  } else {
+    ov.style.display='none';
   }
 }
 document.addEventListener('fullscreenchange', ()=>{
   if(window.sosMap) setTimeout(()=>window.sosMap.invalidateSize(), 350);
   const btn=document.getElementById('mapFullscreenBtn');
   if(btn) btn.innerHTML = document.fullscreenElement ? '✕' : '⛶';
+  const container=document.getElementById('sosMapContainer');
+  const overlay=document.getElementById('fullscreenListOverlay');
+  const isFs=!!document.fullscreenElement;
+  if(!isFs && overlay){
+    overlay.style.display='none';
+  } else if(isFs){
+    // ถ้าเข้า fullscreen ให้โชว์ overlay ตาม list ปัจจุบัน
+    const base=window.floodWarningsCache||[];
+    // ถ้ามีการกรองวงกลมอยู่แล้ว จะมี circleFilterBar
+    if(document.getElementById('circleFilterBar')){
+      // overlay จะถูกอัพเดทจาก onFloodMarkerClicked อยู่แล้ว
+    } else {
+      // ยังไม่ได้กรอง ให้ซ่อนก่อน รอกดวงกลม
+      if(overlay) overlay.style.display='none';
+    }
+  }
 });
+
 
 
     function _old_initSOSMap_temp() {
@@ -7600,6 +7671,8 @@ function onFloodMarkerClicked(w){
 
   if(typeof renderFloodWarningsList==='function'){
     renderFloodWarningsList(filteredList);
+    // v15.7: อัพเดท overlay ตอนเต็มจอด้วย
+    setTimeout(()=>updateFullscreenOverlay(filteredList), 150);
   }
 
   // แสดงปุ่ม "ดูทั้งหมด" เมื่ออยู่ในโหมดกรองวงกลม
@@ -7652,6 +7725,11 @@ function clearCircleFilter(){
   if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(base);
   const bar=document.getElementById('circleFilterBar');
   if(bar) bar.remove();
+  const bar2=document.getElementById('circleFilterBarFullscreen');
+  if(bar2) bar2.remove();
+  const overlay=document.getElementById('fullscreenListOverlay');
+  if(overlay) overlay.style.display='none';
+  // v15.7 clear overlay
   document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
   const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
   if(allBtn) allBtn.classList.add('active');
@@ -8839,3 +8917,12 @@ window.renderFloodWarningsList = function(list){
 
 </body>
 </html>
+
+English
+title
+THAI
+ชื่อ
+noun
+หัวข้อ, สมญา, ชื่อหนังสือ
+
+EXTENSION OPTIONSMORE »
