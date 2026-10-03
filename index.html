@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -6459,22 +6459,23 @@ function updateFullscreenOverlay(list){
     ov.style.display='none';
     return;
   }
-  // clone การ์ดจาก list-container มาโชว์ หรือ render ง่ายๆ
+  // v15.8 FIX: ป้องกันแถบซ้ำ 2 อัน
   const listContainer=document.getElementById('list-container');
-  if(listContainer && listContainer.innerHTML){
-    ov.innerHTML = listContainer.innerHTML;
+  if(listContainer){
+    // เอา HTML แต่ตัดแถบเก่าออกก่อน clone
+    let html = listContainer.innerHTML;
+    // ลบ circleFilterBar ตัวเดิมออกถ้ามีซ้ำ
+    const tempDiv=document.createElement('div');
+    tempDiv.innerHTML=html;
+    tempDiv.querySelectorAll('#circleFilterBar, #circleFilterBarFullscreen').forEach(el=>el.remove());
+    const cardsHtml = tempDiv.innerHTML;
+
+    // สร้างแถบเดียวเท่านั้น
+    const base=window.floodWarningsCache||[];
+    const barHtml = `<div id="circleFilterBarFullscreen" style="background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#1e40af;"><span>📍 ในวงกลมนี้มี ${list.length} รายการ (จาก ${base.length})</span><button onclick="clearCircleFilter(); updateFullscreenOverlay(window.floodWarningsCache||[]);" style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button></div>`;
+
+    ov.innerHTML = barHtml + cardsHtml;
     ov.style.display='block';
-    // copy ปุ่มดูทั้งหมดด้วย
-    const bar=document.getElementById('circleFilterBar');
-    if(bar){
-      const barClone=bar.cloneNode(true);
-      barClone.id='circleFilterBarFullscreen';
-      barClone.querySelector('button')?.addEventListener('click', clearCircleFilter);
-      // fix onclick
-      const btn=barClone.querySelector('button');
-      if(btn) btn.setAttribute('onclick','clearCircleFilter(); updateFullscreenOverlay(window.floodWarningsCache||[]);');
-      ov.prepend(barClone);
-    }
   } else {
     ov.style.display='none';
   }
@@ -7680,7 +7681,7 @@ function onFloodMarkerClicked(w){
     setTimeout(()=>{
       const listCont = document.getElementById('list-container');
       if(!listCont) return;
-      if(document.getElementById('circleFilterBar')) document.getElementById('circleFilterBar').remove();
+      document.querySelectorAll('#circleFilterBar, #circleFilterBarFullscreen').forEach(el=>{ if(el.parentElement && el.parentElement.id!=='fullscreenListOverlay') el.remove(); }); // v15.8 FIX ลบซ้ำ
       const bar=document.createElement('div');
       bar.id='circleFilterBar';
       bar.style.cssText='background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#1e40af;';
@@ -8917,12 +8918,3 @@ window.renderFloodWarningsList = function(list){
 
 </body>
 </html>
-
-English
-title
-THAI
-ชื่อ
-noun
-หัวข้อ, สมญา, ชื่อหนังสือ
-
-EXTENSION OPTIONSMORE »
