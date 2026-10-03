@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v16
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v16.1 (role+is_trusted)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Land Matching AI v13.12</title>
+  <title>Land Matching AI v13.13 - v17 Flood Role System</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1606,6 +1606,13 @@ window.highlightBoth = function(idStr, type){
   <style>
     .sos-tag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
     .sos-tag-btn { padding: 10px 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
+    /* === v17 Trust Badge System - START === */
+    .trust-badge{display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; border:1.5px solid; line-height:1.2;}
+    .trust-badge.general{background:#fff7ed; border-color:#fdba74; color:#9a3412;}
+    .trust-badge.special{background:#eff6ff; border-color:#60a5fa; color:#1e40af; box-shadow:0 0 0 2px rgba(59,130,246,0.15);}
+    .trust-badge.admin{background:#fef2f2; border-color:#fca5a5; color:#991b1b; box-shadow:0 0 0 2px rgba(239,68,68,0.15);}
+    .trust-badge .icon{font-size:11px;}
+    /* === v17 Trust Badge System - END === */
     .sos-tag-btn.selected { background: #ff3b30; color: white; border-color: #d70000; }
     .sos-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; box-sizing: border-box; margin-bottom: 8px; }
     .sos-chip.active { background: #4a83cc !important; color: white !important; border-color: #2b5893 !important; }
@@ -3004,7 +3011,7 @@ function tryLIFFLoginAgain(){
         const { data: existing } = await query.maybeSingle();
         if (existing) return existing.user_id;
     
-        const payload = isNumeric ? {} : { line_id: String(userId) };
+        const payload = isNumeric ? { role: 'general', is_trusted: false } : { line_id: String(userId), role: 'general', is_trusted: false };
         const { data: newUser, error } = await supabaseClient
           .from('users')
           .insert([payload])
@@ -3042,6 +3049,98 @@ function tryLIFFLoginAgain(){
       // ไม่มีตัวตนจริง -> return null เพื่อให้ submitSOS บล็อก
       return null;
     }
+
+    // ==========================================
+    // v17 - ระบบ 2 คอลัมน์ role + is_trusted (general vs special) - START
+    // ==========================================
+    // คำสั่งที่ 1: ฟังก์ชันคำนวณระยะทาง (Haversine) หน่วยเมตร
+    function getDistanceMeters(lat1, lng1, lat2, lng2){
+      const R = 6371e3;
+      const toRad = x => x * Math.PI / 180;
+      const dLat = toRad(lat2-lat1);
+      const dLng = toRad(lng2-lng1);
+      const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)*Math.sin(dLng/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    async function getCurrentUserRole(){
+      try{
+        const uid = await getCurrentUserId();
+        if(!uid) return {role:'general', is_trusted:false, user_id:null};
+        if(typeof supabaseClient==='undefined' || !supabaseClient) return {role:'general', is_trusted:false, user_id:uid};
+        const {data, error} = await supabaseClient.from('users').select('user_id, role, is_trusted').eq('user_id', uid).maybeSingle();
+        if(error || !data){
+          console.warn('[v17 role] ดึง role ไม่ได้', error);
+          return {role:'general', is_trusted:false, user_id:uid};
+        }
+        // Normalize role ให้เหลือ 3 ค่าเท่านั้น: general, special, admin
+        let r = (data.role||'general').toLowerCase();
+        if(!['general','special','admin'].includes(r)) r = 'general';
+        return {role: r, is_trusted: !!data.is_trusted, user_id: data.user_id};
+      }catch(e){
+        console.warn('[v17 role] error', e);
+        return {role:'general', is_trusted:false, user_id:null};
+      }
+    }
+
+    async function canPostWarning(userId, lat, lng){
+      try{
+        if(!userId) return {ok:false, msg:'ไม่พบตัวตนผู้ใช้ กรุณาเข้าใหม่ผ่าน LINE'};
+        // 1. Cooldown 30 นาที
+        const thirtyMinAgo = new Date(Date.now() - 30*60*1000).toISOString();
+        const {data: recent, error: e1} = await supabaseClient.from('flood_warnings')
+          .select('id, created_at').eq('user_id', String(userId)).gte('created_at', thirtyMinAgo).limit(1);
+        if(e1) console.warn('[v17 limit] check 30m error', e1);
+        if(recent && recent.length>0){
+          return {ok:false, msg:'⏳ บุคคลทั่วไป: กรุณารอ 30 นาที ก่อนแจ้งจุดใหม่ครับ'};
+        }
+        // 2. จำกัด 5 จุดต่อวัน
+        const oneDayAgo = new Date(Date.now() - 24*60*60*1000).toISOString();
+        const {data: today, error: e2} = await supabaseClient.from('flood_warnings')
+          .select('id').eq('user_id', String(userId)).gte('created_at', oneDayAgo);
+        if(e2) console.warn('[v17 limit] check 1day error', e2);
+        if(today && today.length>=5){
+          return {ok:false, msg:'📅 บุคคลทั่วไป: วันนี้คุณแจ้งครบ 5 จุดแล้ว (พรุ่งนี้แจ้งได้ใหม่)'};
+        }
+        // 3. กันจุดซ้ำซ้อน 100 เมตร ใน 2 ชม.
+        const twoHoursAgo = new Date(Date.now() - 2*60*60*1000).toISOString();
+        const {data: near, error: e3} = await supabaseClient.from('flood_warnings')
+          .select('lat, lng').eq('is_active', true).gte('created_at', twoHoursAgo).limit(50);
+        if(e3) console.warn('[v17 limit] check near error', e3);
+        if(near && near.length>0){
+          for(let w of near){
+            const wLat = parseFloat(w.lat||w.latitude);
+            const wLng = parseFloat(w.lng||w.longitude);
+            if(isNaN(wLat)||isNaN(wLng)) continue;
+            const dist = getDistanceMeters(parseFloat(lat), parseFloat(lng), wLat, wLng);
+            if(dist < 100){
+              return {ok:false, msg:'📍 มีคนแจ้งจุดนี้ในรัศมี 100 เมตรไปแล้วเมื่อ 2 ชม.ที่ผ่านมา (กรุณาไปกดยืนยันแทน)'};
+            }
+          }
+        }
+        return {ok:true};
+      }catch(e){
+        console.warn('[v17 canPostWarning] error', e);
+        return {ok:true}; // ถ้าเช็คพลาด ให้ผ่านไปก่อน อย่าบล็อกมั่ว
+      }
+    }
+
+    function getTrustBadgeHTML(role, is_trusted, reporter_type){
+      const r = (role||reporter_type||'general').toLowerCase();
+      const trusted = !!is_trusted;
+      if(r==='admin'){
+        return '<span class="trust-badge admin"><span class="icon">🛡️</span> ADMIN • เชื่อถือได้</span>';
+      }
+      if(r==='special' || trusted){
+        return '<span class="trust-badge special"><span class="icon">✅</span> จิตอาสา • ยืนยันแล้ว</span>';
+      }
+      return '<span class="trust-badge general"><span class="icon">👤</span> บุคคลทั่วไป</span>';
+    }
+
+    // ==========================================
+    // v17 - ระบบ 2 คอลัมน์ role + is_trusted - END
+    // ==========================================
 
     // ==========================================
     // ตรรกะระบบแชทเมื่อกดปุ่ม "(chat)" (เช็กตาราง chat_rooms)
@@ -7611,6 +7710,7 @@ function renderFloodWarningsList(list){
 
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
+    const cardBadge = getTrustBadgeHTML(w.reporter_role||w.reporter_type, w.reporter_trusted, w.reporter_type);
     
     // === v14: รูปเลื่อนได้ด้านขวา รองรับ w.images / w.image_urls / w.image_url / w.photos ===
     const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
@@ -8291,6 +8391,31 @@ async function submitFloodWarning(){
   }
   try{
     console.log('[FLOOD SUBMIT v13.2 FIXED] เริ่มบันทึก...', lat, lng);
+
+    // ===== v17: เช็คสิทธิ์ general vs special (2 คอลัมน์) - START =====
+    const myRoleInfo = await getCurrentUserRole();
+    const myUserIdForCheck = myRoleInfo.user_id || await getCurrentUserId();
+    const isSpecialMember = myRoleInfo.role === 'special' || myRoleInfo.role === 'admin' || myRoleInfo.is_trusted === true;
+    console.log('[v17] Role check:', myRoleInfo, 'isSpecialMember:', isSpecialMember);
+
+    if(!isSpecialMember){
+      // บุคคลทั่วไป: 1 คนแจ้งได้หลายจุด แต่ใส่กรอบ 30นาที/5ครั้ง/100เมตร/ต้องมีรูป
+      const limitCheck = await canPostWarning(myUserIdForCheck, lat, lng);
+      if(!limitCheck.ok){
+        alert(limitCheck.msg);
+        return;
+      }
+      const floodFilesForCheck = window.floodUploadedFiles || window.floodFiles || [];
+      if(floodFilesForCheck.length === 0){
+        alert('📸 บุคคลทั่วไปต้องแนบรูปถ่ายจุดน้ำท่วมอย่างน้อย 1 รูปครับ (เพื่อกันแจ้งมั่ว)');
+        return;
+      }
+    } else {
+      // สมาชิกพิเศษ: 1 คนแจ้งได้หลายจุด และ ไร้กรอบ
+      console.log('✅ สมาชิกพิเศษ ('+myRoleInfo.role+' / trusted='+myRoleInfo.is_trusted+') : ข้ามการตรวจสอบกรอบทั้งหมด');
+    }
+    // ===== v17: เช็คสิทธิ์ general vs special - END =====
+
     let basePayload = {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
@@ -8298,7 +8423,12 @@ async function submitFloodWarning(){
       description: detail || '',
       is_active: true,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString()
+      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString(),
+      user_id: String(myUserIdForCheck), // DB flood_warnings.user_id เป็น text (จากรูป)
+      reporter_type: isSpecialMember ? 'special' : 'general',
+      reporter_role: myRoleInfo.role,
+      reporter_trusted: myRoleInfo.is_trusted,
+      created_by: String(myUserIdForCheck) // เผื่อคอลัมน์ created_by ที่เป็น text
     };
     let optionalFields = {
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
@@ -8838,7 +8968,9 @@ function openWarningDetailModal(id){
   let levelLabel='เฝ้าระวัง', levelColor='#fefce8', icon='🟡';
   if(lvl.includes('critical')||lvl.includes('danger')||lvl.includes('อันตราย')){ levelLabel='อันตราย'; levelColor='#fef2f2'; icon='🔴'; }
   else if(lvl.includes('warning')||lvl.includes('เตือนภัย')){ levelLabel='เตือนภัย'; levelColor='#fff7ed'; icon='🟠'; }
+  const cardBadge = getTrustBadgeHTML(item.reporter_role||item.reporter_type, item.reporter_trusted, item.reporter_type);
   const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  const badgeHTML = getTrustBadgeHTML(item.reporter_role||item.reporter_type, item.reporter_trusted, item.reporter_type);
   const water = item.water_level_cm ? `${item.water_level_cm} ซม.` : (item.water_level||'-');
   const images = item.images || item.photos || [];
   let html = `
