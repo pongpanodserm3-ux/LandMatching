@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -7494,9 +7494,9 @@ function onFloodMarkerClicked(w){
       const lat = parseFloat(w.lat||w.latitude), lng = parseFloat(w.lng||w.longitude);
       if(!isNaN(lat) && !isNaN(lng)){
         if(typeof targetMap.flyTo === 'function'){
-          targetMap.flyTo([lat,lng], 8, {duration:0.8, easeLinearity:0.2}); // v15.1 FIX: ลดซูมเหลือครึ่งหนึ่งจากเดิม 16 -> 8
+          targetMap.flyTo([lat,lng], 14, {duration:0.8, easeLinearity:0.2}); // v15.2 FIX: เดิมซูม 16 ลึกไป -> ลดเหลือ 14 ซูมเข้านิดหน่อยพอ
         }else{
-          targetMap.setView([lat,lng], 8, {animate:true}); // v15.1 FIX: ลดซูมเหลือครึ่งหนึ่งจากเดิม 16 -> 8
+          targetMap.setView([lat,lng], 14, {animate:true}); // v15.2 FIX: เดิม 16 -> 14
         }
       }
     }
@@ -7547,7 +7547,7 @@ function onFloodMarkerClicked(w){
 
 function focusWarningOnMap(lat,lng){
   console.log('[v14.10] WARNING MARKER ONLY HIGHLIGHT', lat,lng);
-  let m=window.sosMap; if(m) m.flyTo([parseFloat(lat), parseFloat(lng)],7,{duration:0.6}); // v15.1 FIX: ลดซูมเหลือครึ่งหนึ่งจากเดิม 15 -> 7
+  let m=window.sosMap; if(m) m.flyTo([parseFloat(lat), parseFloat(lng)],13,{duration:0.6}); // v15.2 FIX: เดิม 15 -> 13 ซูมเข้านิดหน่อย ไม่ zoom out
   const cache=window.floodWarningsCache||[];
   let it=cache.find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
   if(it){
