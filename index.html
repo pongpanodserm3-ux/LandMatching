@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -8390,9 +8390,142 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
   }
 }
 
+
+// ============================================================
+// === v14.8 WARNING FLOW ONLY 1วัน/3วัน/7วัน - แก้เฉพาะเตือนท่วมเท่านั้น ===
+// === SOS Flow เดิมไม่แก้: สำเร็จลบรูป 3ชม / เงียบลบรูป 3วัน / 1วันArchive / 7วันลบถาวร ===
+// ============================================================
+
+// --- WARNING FLOW: 1วันซ่อน / 3วันลบรูป / 7วันลบถาวร ---
+// ตามคำขอ: แก้เฉพาะหน้าเตือนท่วมเท่านั้น ส่วนอื่นห้ามแก้ไขเด็ดขาด
+
+async function autoWarningStep1_HideFromMap_1Day(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+  try{
+    const oneDayAgo = new Date(Date.now() - 1*24*60*60*1000).toISOString();
+    console.log('[WARNING-FLOW-STEP1] เช็ค 1วันซ่อนจากแผนที่:', oneDayAgo);
+    // หาเตือนที่ยัง active และหมดอายุเกิน 1 วัน
+    const {data: toHide, error} = await supabaseClient.from('flood_warnings')
+      .select('id, is_active, created_at, expires_at')
+      .eq('is_active', true)
+      .lt('created_at', oneDayAgo)
+      .limit(30);
+    if(error){ console.warn('[WARNING-STEP1] query error', error); return; }
+    console.log(`[WARNING-STEP1] เจอ ${toHide?.length||0} เตือนต้องซ่อนจากแผนที่ (1วัน)`, toHide);
+    if(!toHide || toHide.length===0) return;
+    for(let item of toHide){
+      const {error: upErr} = await supabaseClient.from('flood_warnings').update({
+        is_active: false
+      }).eq('id', item.id);
+      if(upErr) console.error('[WARNING-STEP1] ซ่อนไม่สำเร็จ', upErr);
+      else console.log('[WARNING-STEP1] ซ่อนสำเร็จ', item.id);
+      await new Promise(r=>setTimeout(r, 200));
+    }
+    // รีโหลด cache
+    if(typeof window.loadFloodWarnings==='function') window.loadFloodWarnings();
+  }catch(e){ console.warn('[WARNING-STEP1] error', e); }
+}
+
+async function autoWarningStep2_DeleteImages_3Days(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+  try{
+    const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
+    console.log('[WARNING-FLOW-STEP2] เช็ค 3วันลบรูป:', threeDaysAgo);
+    const {data: toClean, error} = await supabaseClient.from('flood_warnings')
+      .select('id, images, image_urls, created_at')
+      .lt('created_at', threeDaysAgo)
+      .limit(30);
+    if(error){ console.warn('[WARNING-STEP2] query error', error); return; }
+    // กรองเฉพาะที่มีรูป
+    const withImages = (toClean||[]).filter(x=> (x.images && x.images.length>0) || (x.image_urls && x.image_urls.length>0));
+    console.log(`[WARNING-STEP2] เจอ ${withImages.length} เตือนต้องลบรูป (3วัน)`, withImages);
+    if(withImages.length===0) return;
+    for(let item of withImages){
+      const imgs = item.images || item.image_urls || [];
+      if(imgs.length>0){
+        // ใช้ฟังก์ชันลบ storage เดิม
+        const fileNames = imgs.map(u=>{
+          try{
+            if(!u) return null;
+            const idx = u.indexOf('flood-photos/');
+            if(idx!==-1) return u.substring(idx+'flood-photos/'.length).split('?')[0];
+            return u.split('/').pop().split('?')[0];
+          }catch(_){ return null; }
+        }).filter(Boolean);
+        if(fileNames.length>0){
+          console.log('[WARNING-STEP2] ลบไฟล์ storage:', fileNames);
+          const {error: delErr} = await supabaseClient.storage.from('flood-photos').remove(fileNames);
+          if(delErr) console.warn('[WARNING-STEP2] ลบไฟล์ไม่สำเร็จ', delErr);
+          else console.log('[WARNING-STEP2] ลบไฟล์สำเร็จ', item.id);
+        }
+      }
+      const {error: upErr} = await supabaseClient.from('flood_warnings').update({
+        images: [],
+        image_urls: []
+      }).eq('id', item.id);
+      if(upErr) console.error('[WARNING-STEP2] อัปเดต DB ไม่ได้', upErr);
+      else console.log('[WARNING-STEP2] ลบรูปสำเร็จ DB', item.id);
+      await new Promise(r=>setTimeout(r, 300));
+    }
+  }catch(e){ console.warn('[WARNING-STEP2] error', e); }
+}
+
+async function autoWarningStep3_DeletePermanently_7Days(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+  try{
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    console.log('[WARNING-FLOW-STEP3] เช็ค 7วันลบถาวร:', sevenDaysAgo);
+    const {data: toDelete, error} = await supabaseClient.from('flood_warnings')
+      .select('id, images, image_urls, created_at')
+      .lt('created_at', sevenDaysAgo)
+      .limit(30);
+    if(error){ console.warn('[WARNING-STEP3] query error', error); return; }
+    console.log(`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`, toDelete);
+    if(!toDelete || toDelete.length===0) return;
+    for(let item of toDelete){
+      // ลบรูปที่เหลือ (กันเหนียว)
+      const imgs = item.images || item.image_urls || [];
+      if(imgs && imgs.length>0){
+        const fileNames = imgs.map(u=>{
+          try{
+            if(!u) return null;
+            const idx = u.indexOf('flood-photos/');
+            if(idx!==-1) return u.substring(idx+'flood-photos/'.length).split('?')[0];
+            return u.split('/').pop().split('?')[0];
+          }catch(_){ return null; }
+        }).filter(Boolean);
+        if(fileNames.length>0){
+          await supabaseClient.storage.from('flood-photos').remove(fileNames);
+        }
+      }
+      const {error: delErr} = await supabaseClient.from('flood_warnings').delete().eq('id', item.id);
+      if(delErr) console.error('[WARNING-STEP3] ลบถาวรไม่สำเร็จ', delErr);
+      else console.log('[WARNING-STEP3] ลบถาวรสำเร็จ', item.id);
+      if(window.floodWarningsCache){
+        window.floodWarningsCache = window.floodWarningsCache.filter(x=>String(x.id)!==String(item.id));
+      }
+      await new Promise(r=>setTimeout(r, 300));
+    }
+    if(typeof window.loadFloodWarnings==='function') window.loadFloodWarnings();
+    if(typeof renderFloodWarningsList==='function' && window.floodWarningsCache) renderFloodWarningsList(window.floodWarningsCache);
+  }catch(e){ console.warn('[WARNING-STEP3] error', e); }
+}
+
+async function autoPurgeFloodWarnings(){
+  console.log('[WARNING-FLOW v14.8] เริ่มตรวจ 3 ขั้น - 1วันซ่อน / 3วันลบรูป / 7วันลบถาวร...');
+  await autoWarningStep1_HideFromMap_1Day();
+  await autoWarningStep2_DeleteImages_3Days();
+  await autoWarningStep3_DeletePermanently_7Days();
+  console.log('[WARNING-FLOW v14.8] จบรอบตรวจเตือนท่วม');
+}
+
+// === END v14.8 WARNING FLOW ONLY ===
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(()=>{ autoPurgeOldRequests(); }, 8000);
+  setTimeout(()=>{ autoPurgeOldRequests(); autoPurgeFloodWarnings(); }, 8000);
   setInterval(()=>{ autoPurgeOldRequests(); }, 60*60*1000);
+  setInterval(()=>{ autoPurgeFloodWarnings(); }, 60*60*1000);
 });
 
 window.deleteSOSFromDetail = async function(id){
