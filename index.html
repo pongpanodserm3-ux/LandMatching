@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v16.3 - general vs special (role+is_trusted)
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v16.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17 Flood Role System</title>
@@ -7707,14 +7707,11 @@ function renderFloodWarningsList(list){
     if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; }
     else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; }
     else { icon='🟡'; bg='#fefce8'; border='#fde68a'; }
-
     const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
-    const cardBadge = getTrustBadgeHTML(w.reporter_role||w.reporter_type, w.reporter_trusted, w.reporter_type);
-    
-    // === v14: รูปเลื่อนได้ด้านขวา รองรับ w.images / w.image_urls / w.image_url / w.photos ===
     const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
     const imgs = (Array.isArray(rawImgs) ? rawImgs : [rawImgs]).filter(Boolean).flat().filter(Boolean);
+    const badgeHTML = getTrustBadgeHTML(w.reporter_role||w.reporter_type, w.reporter_trusted, w.reporter_type);
     const imageScrollerHtml = imgs.length>0 ? `
       <div class="fw-image-scroller" onclick="event.stopPropagation()">
         ${imgs.map(src=>`<img src="${src}" class="fw-image-item" loading="lazy" onerror="this.style.display='none'">`).join('')}
@@ -7724,20 +7721,18 @@ function renderFloodWarningsList(list){
         <div class="fw-no-image">📷 ไม่มีรูป</div>
       </div>
     `;
-
     return `
-      <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : `1.5px solid ${border}`}; border-radius:14px; padding:12px; margin-bottom:10px; cursor:pointer; display:flex; gap:10px; align-items:stretch; ${selectedId && String(w.id)===selectedId ? 'box-shadow:0 0 0 4px rgba(59,130,246,0.2);' : ''}">
-        <div style="flex:1; min-width:0; display:flex; flex-direction:column; justify-content:space-between;">
-          <div style="font-weight:bold; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${w.title||'แจ้งเตือนน้ำท่วม'}</div>
-          <div style="font-size:12px; color:#475569; line-height:1.6; margin-top:6px;">
-            🌊 ระดับน้ำ: ${water}<br>
-            📍 ${w.location_text||w.district||''} ${w.passage_status||''}<br>
-            🕒 ${time}
+      <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : '1px solid '+border}; border-radius:14px; padding:10px 12px; margin-bottom:10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${w.title||w.location_text||'แจ้งเตือนน้ำท่วม'}</span>
+            ${badgeHTML}
           </div>
+          <div style="font-size:12px; color:#555; margin-top:4px;">🌊 ระดับน้ำ: ${water}</div>
+          <div style="font-size:12px; color:#555;">📍 ${w.location_text||w.passage_status||'car_passable'}</div>
+          <div style="font-size:11px; color:#777; margin-top:2px;">🕒 ${time}</div>
         </div>
-        <div style="width:110px; flex-shrink:0;">
-          ${imageScrollerHtml}
-        </div>
+        <div style="flex:0 0 80px;">${imageScrollerHtml}</div>
       </div>
     `;
   }).join('');
@@ -8978,7 +8973,7 @@ function openWarningDetailModal(id){
       <div style="background:${levelColor}; border:1.5px solid #fde68a; border-radius:14px; padding:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-weight:800; font-size:15px;">${icon} ${item.title||'แจ้งเตือนน้ำท่วม'}</span>
-          <span style="font-size:11px; background:${levelLabel==='อันตราย'?'#ef4444':'#f59e0b'}; color:white; padding:3px 10px; border-radius:999px;">${levelLabel}</span>
+          <span style="font-size:11px; background:${levelLabel==='อันตราย'?'#ef4444':'#f59e0b'}; color:white; padding:3px 10px; border-radius:999px;">${levelLabel} ${badgeHTML}</span>
         </div>
         <div style="margin-top:8px; font-size:13px; line-height:1.6;">
           🌊 <b>ระดับน้ำ:</b> ${water}<br>
