@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v14.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -8159,21 +8159,19 @@ console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำ
 // === v13 POPUP DETAIL LOGIC ===
 
 // ============================================================
-// === v13.2 FULL AUTO CLEANUP - ลบจริงครบวงจร โพสต์ + รูป + แชท ===
+// === v14.3 FLOW ใหม่ ชัดเจน - จุดขอให้ช่วย 3 ขั้น (แก้ตามที่ตกลงล่าสุด) ===
 // ============================================================
-// หลักการ:
-// 1. SOS: completed หรือ expired (3 วันไม่อัปเดต) -> รอ 7 วันแล้วลบจริง
-// 2. Flood Warning: expires_at เกิน 24 ชม. -> ลบจริงทันที
-// 3. ลบ 3 อย่าง: row ในตาราง + ไฟล์ใน storage (flood-photos) + chat_rooms + chat_messages
+// ตกลงใหม่ 3 ขั้น:
+// ขั้น 1: สำเร็จลบรูปใน 3 ชม. / เงียบลบรูปใน 3 วัน
+// ขั้น 2: (1 วันสำเร็จ / 3 วันเงียบ) ลบแชท + ลบหมุดจากแผนที่ + ย้ายรายละเอียดโพสต์ไป Archive
+// ขั้น 3: (7 วัน) ลบรายละเอียดใน Archive ถาวร
 
 // --- Helper: แยกชื่อไฟล์จาก Public URL ---
 function extractFileNameFromUrl(url){
   try{
     if(!url) return null;
-    // url แบบ https://xxx.supabase.co/storage/v1/object/public/flood-photos/SOS-123-456-001.jpg
     const parts = url.split('/');
-    const last = parts[parts.length-1].split('?')[0]; // เอาแค่ชื่อไฟล์ กัน query string
-    // ถ้ามี folder เช่น sos/SOS-... ให้เอาทั้ง path หลัง bucket
+    const last = parts[parts.length-1].split('?')[0];
     const bucketIdx = url.indexOf('flood-photos/');
     if(bucketIdx !== -1){
       return url.substring(bucketIdx + 'flood-photos/'.length).split('?')[0];
@@ -8188,10 +8186,10 @@ async function deleteFilesFromStorage(imageUrls){
   try{
     const fileNames = imageUrls.map(u=>extractFileNameFromUrl(u)).filter(Boolean);
     if(fileNames.length===0) return {ok:true, deleted:0};
-    console.log('[CLEANUP] ลบไฟล์ storage:', fileNames);
+    console.log('[FLOW-STEP1] ลบรูป 3ชม. storage:', fileNames);
     const {data, error} = await supabaseClient.storage.from('flood-photos').remove(fileNames);
-    if(error){ console.warn('[CLEANUP] ลบไฟล์ไม่สำเร็จ', error); return {ok:false, error}; }
-    console.log('[CLEANUP] ลบไฟล์สำเร็จ', data);
+    if(error){ console.warn('[FLOW-STEP1] ลบรูปไม่สำเร็จ', error); return {ok:false, error}; }
+    console.log('[FLOW-STEP1] ลบรูปสำเร็จ', data);
     return {ok:true, deleted:fileNames.length};
   }catch(e){ console.warn(e); return {ok:false, error:e}; }
 }
@@ -8200,56 +8198,161 @@ async function deleteChatsBySOSId(sosId){
   if(!sosId) return;
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    // หา room ที่ผูกกับ sos นี้
     const {data: rooms, error: roomErr} = await supabaseClient.from('chat_rooms').select('room_id').or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`);
     if(roomErr){ console.warn('หา chat_rooms ไม่ได้', roomErr); return; }
-    if(!rooms || rooms.length===0){ console.log('[CLEANUP] ไม่มีแชทให้ลบสำหรับ SOS', sosId); return; }
+    if(!rooms || rooms.length===0){ console.log('[FLOW-STEP2] ไม่มีแชทให้ลบสำหรับ SOS', sosId); return; }
     const roomIds = rooms.map(r=>r.room_id);
-    console.log('[CLEANUP] ลบแชท room_ids:', roomIds);
-    // ลบ messages ก่อน (กัน FK)
+    console.log('[FLOW-STEP2] ลบแชท room_ids:', roomIds);
     const {error: msgErr} = await supabaseClient.from('chat_messages').delete().in('room_id', roomIds);
     if(msgErr) console.warn('ลบ chat_messages ไม่ได้', msgErr);
-    // ลบ rooms
     const {error: delRoomErr} = await supabaseClient.from('chat_rooms').delete().in('room_id', roomIds);
     if(delRoomErr) console.warn('ลบ chat_rooms ไม่ได้', delRoomErr);
-    else console.log('[CLEANUP] ลบแชทสำเร็จ', sosId);
-  }catch(e){ console.warn('[CLEANUP] deleteChats error', e); }
+    else console.log('[FLOW-STEP2] ลบแชทสำเร็จ', sosId);
+  }catch(e){ console.warn('[FLOW-STEP2] deleteChats error', e); }
 }
 
-// --- ลบ SOS แบบครบวงจร ---
-async function deleteSOSAndAssetsCompletely(sosId, options={}){
-  const {skipConfirm=false, reason='expired'} = options;
-  if(!sosId) return;
-  if(!skipConfirm){
-    if(!confirm(`ยืนยันลบเคส ${sosId} แบบถาวร?\nจะลบทั้งโพสต์ รูป ${'8 รูป'} และแชททั้งหมด\nเหตุผล: ${reason}`)) return;
-  }
-  if(typeof supabaseClient==='undefined' || !supabaseClient){ alert('supabaseClient ไม่พร้อม'); return; }
+// ===================== FLOW 3 ขั้น =====================
+
+// ขั้น 1: ลบแค่รูป - แยกชัดเจน 2 กรณีตามที่ตกลงใหม่
+// กรณี A: ถ้าสำเร็จ (completed) -> ลบรูปภายใน 3 ชั่วโมง
+// กรณี B: ถ้าเงียบ (waiting/going ไม่มีอัปเดต) -> ลบรูปภายใน 3 วัน
+async function autoStep1_DeleteImages_3hr(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    // 1. ดึงข้อมูลเก่าเพื่อเอารูป
-    const {data: oldData} = await supabaseClient.from('flood_help_requests').select('images, image_urls').eq('id', sosId).maybeSingle();
-    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
-    // 2. ลบไฟล์รูป
-    await deleteFilesFromStorage(imgs);
-    // 3. ลบแชท
-    await deleteChatsBySOSId(sosId);
-    // 4. ลบโพสต์หลัก
-    const {error: delErr} = await supabaseClient.from('flood_help_requests').delete().eq('id', sosId);
-    if(delErr) throw delErr;
-    console.log(`[CLEANUP] ลบ SOS ${sosId} สำเร็จ (${reason})`);
-    // 5. ลบจาก cache หน้าเว็บ
-    if(window.sosRequestsCache){
-      window.sosRequestsCache = window.sosRequestsCache.filter(x=>String(x.id)!==String(sosId));
-      if(typeof renderSOSList==='function') renderSOSList(window.sosRequestsCache);
+    const threeHoursAgo = new Date(Date.now() - 3*60*60*1000).toISOString();
+    const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
+
+    // A: สำเร็จเกิน 3 ชม. ยังมีรูป -> ลบรูป
+    const {data: completedToClean} = await supabaseClient.from('flood_help_requests')
+      .select('id, images, image_urls, image_cleaned_at, status, updated_at')
+      .eq('status','completed')
+      .is('image_cleaned_at', null)
+      .lt('updated_at', threeHoursAgo)
+      .limit(20);
+
+    // B: เงียบเกิน 3 วัน (waiting/going ไม่มีอัปเดต) ยังมีรูป -> ลบรูป
+    const {data: silentToClean} = await supabaseClient.from('flood_help_requests')
+      .select('id, images, image_urls, image_cleaned_at, status, updated_at')
+      .in('status',['waiting','going'])
+      .is('image_cleaned_at', null)
+      .lt('updated_at', threeDaysAgo)
+      .limit(20);
+
+    const list = [...(completedToClean||[]), ...(silentToClean||[])];
+    if(list.length===0) return;
+    console.log(`[FLOW-STEP1] เจอ ${list.length} เคสต้องลบรูป (สำเร็จ>3ชม.=${completedToClean?.length||0} / เงียบ>3วัน=${silentToClean?.length||0})`);
+
+    for(let item of list){
+      const imgs = item.images || item.image_urls || [];
+      if(imgs.length>0) await deleteFilesFromStorage(imgs);
+      await supabaseClient.from('flood_help_requests').update({
+        images: [],
+        image_urls: [],
+        image_cleaned_at: new Date().toISOString()
+      }).eq('id', item.id);
+      if(window.sosRequestsCache){
+        const c = window.sosRequestsCache.find(x=>String(x.id)===String(item.id));
+        if(c){ c.images=[]; c.image_urls=[]; c.image_cleaned_at=new Date().toISOString(); }
+      }
+      await new Promise(r=>setTimeout(r, 300));
     }
-    return true;
-  }catch(e){
-    console.error('[CLEANUP] ลบ SOS ไม่สำเร็จ', e);
-    alert('ลบไม่สำเร็จ: '+e.message);
-    return false;
-  }
+  }catch(e){ console.warn('[FLOW-STEP1] error', e); }
 }
 
-// --- ลบ Flood Warning แบบครบวงจร ---
+// ขั้น 2: (1 วันสำเร็จ / 3 วันเงียบ) -> ลบแชท + ลบหมุดจากแผนที่ + ย้ายรายละเอียดโพสต์ไป Archive
+async function autoStep2_ArchiveAndCleanup(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+  try{
+    const now = Date.now();
+    const oneDayAgo = new Date(now - 1*24*60*60*1000).toISOString();
+    const threeDaysAgo = new Date(now - 3*24*60*60*1000).toISOString();
+
+    // 2.1 เคสสำเร็จเกิน 1 วัน
+    const {data: completedList} = await supabaseClient.from('flood_help_requests')
+      .select('id, images, image_urls, status, updated_at, archived_at')
+      .eq('status','completed')
+      .is('archived_at', null)
+      .lt('updated_at', oneDayAgo)
+      .limit(20);
+
+    // 2.2 เคสเงียบเกิน 3 วัน (waiting / going ไม่มีอัปเดต)
+    const {data: silentList} = await supabaseClient.from('flood_help_requests')
+      .select('id, images, image_urls, status, updated_at, archived_at')
+      .in('status',['waiting','going'])
+      .is('archived_at', null)
+      .lt('updated_at', threeDaysAgo)
+      .limit(20);
+
+    const toArchive = [...(completedList||[]), ...(silentList||[])];
+    if(toArchive.length===0) return;
+    console.log(`[FLOW-STEP2] เจอ ${toArchive.length} เคสต้อง Archive (ลบแชท+ลบหมุด)`);
+
+    for(let item of toArchive){
+      // ลบแชท
+      await deleteChatsBySOSId(item.id);
+      // ลบหมุดจากแผนที่ (ลบจาก cache + ลบ marker ถ้ามี)
+      if(window.sosRequestsCache){
+        window.sosRequestsCache = window.sosRequestsCache.filter(x=>String(x.id)!==String(item.id));
+        if(typeof renderSOSList==='function') renderSOSList(window.sosRequestsCache);
+      }
+      // ลบ marker บนแผนที่ (ถ้าใช้ Layer)
+      try{
+        if(window.sosMarkers && window.sosMarkers[item.id]){
+          if(window.sosMap && window.sosMarkers[item.id].remove) window.sosMarkers[item.id].remove();
+          delete window.sosMarkers[item.id];
+        }
+      }catch(_){}
+
+      // ย้ายรายละเอียดโพสต์ไป Archive: update ให้มี archived_at + is_archived + ลบ lat/lng จากการแสดงผลหลัก (soft)
+      // ไม่ลบ row แต่ซ่อนจากแผนที่และลิสต์หลัก
+      const reason = item.status==='completed' ? 'completed_1d_to_archive' : 'silent_3d_to_archive';
+      await supabaseClient.from('flood_help_requests').update({
+        archived_at: new Date().toISOString(),
+        expired_reason: reason,
+        is_archived: true,
+        status: item.status==='completed' ? 'completed' : 'expired'
+      }).eq('id', item.id);
+
+      await new Promise(r=>setTimeout(r, 400));
+    }
+  }catch(e){ console.warn('[FLOW-STEP2] error', e); }
+}
+
+// ขั้น 3: ครบ 7 วันหลัง Archive -> ลบรายละเอียดใน Archive ถาวร
+async function autoStep3_DeleteArchivePermanently(){
+  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+  try{
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const {data: archiveOld} = await supabaseClient.from('flood_help_requests')
+      .select('id, images, image_urls')
+      .not('archived_at','is', null)
+      .lt('archived_at', sevenDaysAgo)
+      .limit(20);
+
+    if(!archiveOld || archiveOld.length===0) return;
+    console.log(`[FLOW-STEP3] เจอ ${archiveOld.length} เคสใน Archive เกิน 7 วัน ลบถาวร`);
+
+    for(let item of archiveOld){
+      const imgs = item.images || item.image_urls || [];
+      if(imgs.length>0) await deleteFilesFromStorage(imgs);
+      await deleteChatsBySOSId(item.id); // กันเหนียว ลบซ้ำ
+      const {error} = await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
+      if(!error) console.log(`[FLOW-STEP3] ลบ Archive ถาวร ${item.id} สำเร็จ`);
+      await new Promise(r=>setTimeout(r, 400));
+    }
+  }catch(e){ console.warn('[FLOW-STEP3] error', e); }
+}
+
+// Wrapper เรียกทั้ง 3 ขั้น
+async function autoPurgeOldRequests(){
+  console.log('[FLOW v14.3] เริ่มตรวจ 3 ขั้น - สำเร็จลบรูป 3ชม / เงียบลบรูป 3วัน...');
+  await autoStep1_DeleteImages_3hr();
+  await autoStep2_ArchiveAndCleanup();
+  await autoStep3_DeleteArchivePermanently();
+  console.log('[FLOW v14.3] จบรอบตรวจ');
+}
+
+// สำหรับ Flood Warning ยังลบเหมือนเดิม ไม่เกี่ยวกับ Flow จุดขอให้ช่วย
 async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   const {skipConfirm=false, reason='expired_24h'} = options;
   if(!warningId) return;
@@ -8272,59 +8375,40 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   }catch(e){ console.error(e); alert('ลบเตือนภัยไม่สำเร็จ: '+e.message); return false; }
 }
 
-// --- Auto Purge: ลบ expired/completed เกิน 7 วัน + flood warning หมดอายุ ---
-async function autoPurgeOldRequests(){
-  if(typeof supabaseClient==='undefined' || !supabaseClient) return;
+async function deleteSOSAndAssetsCompletely(sosId, options={}){
+  // Manual ลบถาวร (สำหรับแอดมิน) - ยังคงไว้ แต่ Flow ปกติจะไปตาม 3 ขั้น
+  const {skipConfirm=false, reason='manual'} = options;
+  if(!sosId) return;
+  if(!skipConfirm){
+    if(!confirm(`ยืนยันลบเคส ${sosId} แบบถาวร?\nจะลบทั้งโพสต์ รูป และแชททั้งหมด\nเหตุผล: ${reason}`)) return;
+  }
+  if(typeof supabaseClient==='undefined' || !supabaseClient){ alert('supabaseClient ไม่พร้อม'); return; }
   try{
-    console.log('[AUTO PURGE] เริ่มตรวจสอบลบอัตโนมัติ...');
-    // 1. Flood Warnings ที่หมดอายุเกิน 1 วัน -> ลบจริง
-    const {data: expiredWarnings} = await supabaseClient.from('flood_warnings').select('id, images, expires_at').lt('expires_at', new Date(Date.now() - 24*60*60*1000).toISOString()).limit(20);
-    if(expiredWarnings && expiredWarnings.length>0){
-      console.log(`[AUTO PURGE] เจอ Flood Warning หมดอายุ ${expiredWarnings.length} รายการ`);
-      for(let w of expiredWarnings){
-        await deleteFloodWarningAndAssetsCompletely(w.id, {skipConfirm:true, reason:'auto_expired_24h'});
-        await new Promise(r=>setTimeout(r, 500)); // กัน rate limit
-      }
+    const {data: oldData} = await supabaseClient.from('flood_help_requests').select('images, image_urls').eq('id', sosId).maybeSingle();
+    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
+    await deleteFilesFromStorage(imgs);
+    await deleteChatsBySOSId(sosId);
+    const {error: delErr} = await supabaseClient.from('flood_help_requests').delete().eq('id', sosId);
+    if(delErr) throw delErr;
+    console.log(`[CLEANUP] ลบ SOS ${sosId} สำเร็จ (${reason})`);
+    if(window.sosRequestsCache){
+      window.sosRequestsCache = window.sosRequestsCache.filter(x=>String(x.id)!==String(sosId));
+      if(typeof renderSOSList==='function') renderSOSList(window.sosRequestsCache);
     }
-
-    // 2. SOS ที่ completed เกิน 7 วัน -> ลบจริง
-    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-    const {data: completedOld} = await supabaseClient.from('flood_help_requests').select('id, images, image_urls').eq('status','completed').lt('updated_at', sevenDaysAgo).limit(20);
-    if(completedOld && completedOld.length>0){
-      console.log(`[AUTO PURGE] เจอ SOS completed เกิน 7 วัน ${completedOld.length} รายการ`);
-      for(let item of completedOld){
-        const imgs = item.images || item.image_urls || [];
-        await deleteFilesFromStorage(imgs);
-        await deleteChatsBySOSId(item.id);
-        await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
-        await new Promise(r=>setTimeout(r, 500));
-      }
-    }
-
-    // 3. SOS ที่ expired เกิน 7 วัน -> ลบจริง
-    const {data: expiredOld} = await supabaseClient.from('flood_help_requests').select('id, images, image_urls').eq('status','expired').lt('archived_at', sevenDaysAgo).limit(20);
-    if(expiredOld && expiredOld.length>0){
-      console.log(`[AUTO PURGE] เจอ SOS expired เกิน 7 วัน ${expiredOld.length} รายการ`);
-      for(let item of expiredOld){
-        const imgs = item.images || item.image_urls || [];
-        await deleteFilesFromStorage(imgs);
-        await deleteChatsBySOSId(item.id);
-        await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
-        await new Promise(r=>setTimeout(r, 500));
-      }
-    }
-
-    console.log('[AUTO PURGE] เสร็จสิ้น');
-  }catch(e){ console.warn('[AUTO PURGE] error', e); }
+    return true;
+  }catch(e){
+    console.error('[CLEANUP] ลบ SOS ไม่สำเร็จ', e);
+    alert('ลบไม่สำเร็จ: '+e.message);
+    return false;
+  }
 }
 
 // เรียก auto purge ทุกครั้งที่โหลด + ทุก 1 ชั่วโมง
 document.addEventListener('DOMContentLoaded', ()=>{
-  setTimeout(()=>{ autoPurgeOldRequests(); }, 8000); // รอ 8 วิหลังโหลด
-  setInterval(()=>{ autoPurgeOldRequests(); }, 60*60*1000); // ทุก 1 ชม.
+  setTimeout(()=>{ autoPurgeOldRequests(); }, 8000);
+  setInterval(()=>{ autoPurgeOldRequests(); }, 60*60*1000);
 });
 
-// เพิ่มปุ่มลบใน Detail Modal (ถ้าอยากให้ admin ลบเองได้)
 window.deleteSOSFromDetail = async function(id){
   await deleteSOSAndAssetsCompletely(id, {skipConfirm:false, reason:'manual'});
   if(typeof closeSOSDetailModal==='function') closeSOSDetailModal();
@@ -8334,24 +8418,31 @@ window.deleteFloodWarningFromDetail = async function(id){
   if(typeof closeWarningDetailModal==='function') closeWarningDetailModal();
 };
 
-// SQL สำหรับตั้ง pg_cron ใน Supabase (เอาไปรันใน SQL Editor ครั้งเดียว)
+// SQL สำหรับตั้ง pg_cron ใหม่ตาม Flow 3 ขั้น (เอาไปรันใน Supabase SQL Editor ครั้งเดียว)
 // ---------------------------------------------------------------
-// -- เปิด extension
-// create extension if not exists pg_cron;
-// -- ลบ flood_warnings หมดอายุเกิน 1 วัน (ลบจริง) - ทำทุกวันตี 2
-// select cron.schedule('purge-flood-warnings-daily', '0 2 * * *', $$
-//   delete from flood_warnings where expires_at < now() - interval '1 day';
+// -- เพิ่มคอลัมน์ที่ต้องใช้ถ้ายังไม่มี
+// alter table flood_help_requests add column if not exists image_cleaned_at timestamptz;
+// alter table flood_help_requests add column if not exists archived_at timestamptz;
+// alter table flood_help_requests add column if not exists is_archived boolean default false;
+// alter table flood_help_requests add column if not exists expired_reason text;
+// -- ขั้น 1: ลบรูปหลัง 3 ชม. ทำทุก 30 นาที
+// select cron.schedule('flow-step1-delete-images-3hr', '*/30 * * * *', $$
+//   update public.flood_help_requests set images='{}', image_urls='{}', image_cleaned_at=now()
+//   where image_cleaned_at is null and created_at < now() - interval '3 hours' and (array_length(images,1) > 0 or array_length(image_urls,1) > 0);
 // $$);
-// -- ลบ SOS completed/expired เกิน 7 วัน (ลบจริง) - ทำทุกวันตี 3
-// select cron.schedule('purge-sos-completed-expired-7d', '0 3 * * *', $$
-//   delete from chat_messages where room_id in (select room_id from chat_rooms where sos_request_id in (select id from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days'));
-//   delete from chat_rooms where sos_request_id in (select id from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days');
-//   delete from flood_help_requests where (status='completed' or status='expired') and updated_at < now() - interval '7 days';
+// -- ขั้น 2: Archive หลัง 1 วันสำเร็จ / 3 วันเงียบ ทำทุกชั่วโมง
+// select cron.schedule('flow-step2-archive', '0 * * * *', $$
+//   update public.flood_help_requests set archived_at=now(), is_archived=true, expired_reason='auto_archive_step2'
+//   where archived_at is null and ((status='completed' and updated_at < now() - interval '1 day') or (status in ('waiting','going') and updated_at < now() - interval '3 days'));
 // $$);
-// -- หมายเหตุ: ลบไฟล์ใน storage ต้องทำผ่าน Supabase Function หรือ Edge Function เพราะ pg_cron ลบไฟล์ storage ไม่ได้โดยตรง
-// -- แนะนำให้เรียก autoPurgeOldRequests() จาก client ที่เป็น admin หรือทำ Edge Function เรียกทุกวัน
+// -- ขั้น 3: ลบถาวรหลังอยู่ใน Archive 7 วัน ทำทุกวันตี 3
+// select cron.schedule('flow-step3-permanent-delete-7d', '0 3 * * *', $$
+//   delete from chat_messages where room_id in (select room_id from chat_rooms where sos_request_id in (select id from flood_help_requests where archived_at < now() - interval '7 days'));
+//   delete from chat_rooms where sos_request_id in (select id from flood_help_requests where archived_at < now() - interval '7 days');
+//   delete from flood_help_requests where archived_at < now() - interval '7 days';
+// $$);
 // ============================================================
-// === END v13.2 ===
+// === END v14.3 FLOW ใหม่ ชัดเจน ===
 // ============================================================
 
 
