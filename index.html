@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.4
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.5
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -1456,6 +1456,8 @@ window.highlightBoth = function(idStr, type){
         <!-- ย้ายสถานะ AI voice มาซ้ายหุ่นยนต์ แบบสั้น -->
         <div id="statusText" class="ai-status-compact">💤 รอ</div>
         <div class="ai-avatar" id="avatarCircle">🤖</div>
+        <!-- v17.6 Role Badge - แสดง role ข้างหุ่นยนต์ -->
+        <div id="userRoleBadge" class="role-badge" style="font-size:10px; font-weight:bold; padding:2px 6px; border-radius:8px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; margin-left:4px; white-space:nowrap; display:none;">⏳</div>
         <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
       </div>
       <div style="width: 80px;"></div>
@@ -3029,7 +3031,7 @@ function tryLIFFLoginAgain(){
       }
     }  
 
-    async function getCurrentUserId() {
+    async async function getCurrentUserId() {
       // v6.7 FIX: ต้องมี LINE profile จริงเท่านั้น
       if (currentUserLineProfile && currentUserLineProfile.userId) {
         const dbId = await saveUserLineIdToSupabase(currentUserLineProfile); // v6.8 ใช้ profile เต็ม
@@ -3083,6 +3085,56 @@ function tryLIFFLoginAgain(){
         return {role:'general', is_trusted:false, user_id:null};
       }
     }
+
+    
+    // v17.6 - แสดง role ข้างหุ่นยนต์โลโก้ + แก้บั๊ก admin ไม่ขึ้นใน SOS
+    async function updateRoleBadge(){
+      try{
+        const badge = document.getElementById('userRoleBadge');
+        if(!badge) return;
+        const roleInfo = await getCurrentUserRole();
+        const role = (roleInfo.role||'general').toLowerCase();
+        badge.style.display = 'inline-block';
+        badge.className = 'role-badge ' + role;
+        if(role==='admin'){
+          badge.innerHTML = '👑 admin';
+          badge.title = 'ผู้ดูแลระบบ - ลบได้ทุกโพสต์ | user_id:'+roleInfo.user_id;
+        }else if(role==='special'){
+          badge.innerHTML = '⭐ special';
+          badge.title = 'จิตอาสา - 9 โพสต์ | user_id:'+roleInfo.user_id;
+        }else{
+          badge.innerHTML = '👤 general';
+          badge.title = 'บุคคลทั่วไป - 1 โพสต์ | user_id:'+roleInfo.user_id;
+        }
+        // เก็บ role ไว้ global ให้ทุกหน้าต่างใช้ตรงกัน (แก้บั๊ก 2 หน้าเห็นไม่ตรงกัน)
+        window.CURRENT_USER_ROLE = roleInfo;
+        window.CURRENT_USER_ROLE_CACHE = roleInfo;
+        console.log('[v17.6 RoleBadge] role:', role, 'user_id:', roleInfo.user_id, 'is_trusted:', roleInfo.is_trusted);
+        return roleInfo;
+      }catch(e){
+        console.warn('[v17.6 RoleBadge] error', e);
+        const badge = document.getElementById('userRoleBadge');
+        if(badge){ badge.style.display='inline-block'; badge.className='role-badge general'; badge.innerHTML='👤 general'; }
+        return {role:'general'};
+      }
+    }
+    
+    // เรียกอัปเดต badge ทุกครั้งที่ได้ CURRENT_USER_ID และทุก 10 วินาที (กัน cache ไม่ตรงกันระหว่าง 2 หน้า)
+    document.addEventListener('DOMContentLoaded', ()=>{
+      setTimeout(()=>{ updateRoleBadge(); }, 2000);
+      setInterval(()=>{ updateRoleBadge(); }, 10000);
+    });
+    
+    // Hook เข้าไปใน initLIFF และหลัง login สำเร็จ
+    const _origSaveUserLineId = window.saveUserLineIdToSupabase;
+    if(typeof _origSaveUserLineId === 'function'){
+      window.saveUserLineIdToSupabase = async function(...args){
+        const result = await _origSaveUserLineId.apply(this, args);
+        setTimeout(()=>{ updateRoleBadge(); }, 500);
+        return result;
+      };
+    }
+
 
     async function canPostWarning(userId, lat, lng){
       try{
@@ -7709,6 +7761,12 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
     .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
     .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
+
+
+    /* v17.6 Role Badge */
+    .role-badge.admin { background: linear-gradient(135deg,#ff4b2b,#ff416c) !important; color:white !important; border-color:#ff416c !important; }
+    .role-badge.special { background: linear-gradient(135deg,#10b981,#059669) !important; color:white !important; border-color:#059669 !important; }
+    .role-badge.general { background: #f1f5f9 !important; color:#334155 !important; border-color:#cbd5e1 !important; }
 
 </style>
 <div id="lineRequiredModalOverlay" onclick="if(event.target===this) closeLineRequiredModal()">
