@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -8607,9 +8607,9 @@ async function submitFloodWarning(){
         const file = floodFiles[i];
         const fileExt = file.name.split('.').pop() || 'jpg';
         const imageIndexStr = String(i+1).padStart(3,'0');
-        const fileName = `FLOOD-${userId}-${postIdToUse}-${imageIndexStr}.${fileExt}`;
+        const fileName = `FLOOD-${userId}-${postIdToUse}-${Date.now()}-${i+1}-${Math.random().toString(36).substring(2,6)}.${fileExt}`;
         try{
-          const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { upsert: true, cacheControl: '3600' });
+          const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { upsert: false, cacheControl: '3600' });
           if(uploadError){ console.warn(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message); continue; }
           const {data: publicUrlData} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
           if(publicUrlData && publicUrlData.publicUrl) finalImageUrls.push(publicUrlData.publicUrl);
@@ -8932,9 +8932,13 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   }
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const {data: oldData} = await supabaseClient.from('flood_warnings').select('images').eq('id', warningId).maybeSingle();
-    const imgs = (oldData && oldData.images) || [];
-    await deleteFilesFromStorage(imgs);
+    const {data: oldData} = await supabaseClient.from('flood_warnings').select('images, image_urls').eq('id', warningId).maybeSingle();
+    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
+    console.log(`[DELETE-WARNING-100%] ลบเตือนท่วม ${warningId} พร้อมรูป ${imgs.length} รูป`);
+    const delImgResult = await deleteSOSImage100Percent(imgs, 'delete_full_warning_'+warningId);
+    if(!delImgResult.ok){
+      console.error('[DELETE-WARNING-100%] ลบรูปไม่สำเร็จ แต่จะลบโพสต์ต่อ:', delImgResult.error);
+    }
     const {error} = await supabaseClient.from('flood_warnings').delete().eq('id', warningId);
     if(error) throw error;
     console.log(`[CLEANUP] ลบ Flood Warning ${warningId} สำเร็จ (${reason})`);
@@ -9043,20 +9047,10 @@ async function autoWarningStep2_DeleteImages_3Days(){
     for(let item of withImages){
       const imgs = item.images || item.image_urls || [];
       if(imgs.length>0){
-        // ใช้ฟังก์ชันลบ storage เดิม
-        const fileNames = imgs.map(u=>{
-          try{
-            if(!u) return null;
-            const idx = u.indexOf('flood-photos/');
-            if(idx!==-1) return u.substring(idx+'flood-photos/'.length).split('?')[0];
-            return u.split('/').pop().split('?')[0];
-          }catch(_){ return null; }
-        }).filter(Boolean);
-        if(fileNames.length>0){
-          console.log('[WARNING-STEP2] ลบไฟล์ storage:', fileNames);
-          const {error: delErr} = await supabaseClient.storage.from('flood-photos').remove(fileNames);
-          if(delErr) console.warn('[WARNING-STEP2] ลบไฟล์ไม่สำเร็จ', delErr);
-          else console.log('[WARNING-STEP2] ลบไฟล์สำเร็จ', item.id);
+        console.log('[WARNING-STEP2-100%] เตรียมลบรูปเตือนท่วม:', item.id, imgs.length);
+        const delResult = await deleteSOSImage100Percent(imgs, 'warning_auto_3day_'+item.id);
+        if(!delResult.verified){
+          console.warn('[WARNING-STEP2-100%] ลบไม่หมด เหลือ:', delResult.stillExists);
         }
       }
       const {error: upErr} = await supabaseClient.from('flood_warnings').update({
@@ -9083,20 +9077,11 @@ async function autoWarningStep3_DeletePermanently_7Days(){
     console.log(`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`, toDelete);
     if(!toDelete || toDelete.length===0) return;
     for(let item of toDelete){
-      // ลบรูปที่เหลือ (กันเหนียว)
+      // v17.5 100% DELETE - ลบรูปที่เหลือแบบการันตี (กันเหนียว)
       const imgs = item.images || item.image_urls || [];
       if(imgs && imgs.length>0){
-        const fileNames = imgs.map(u=>{
-          try{
-            if(!u) return null;
-            const idx = u.indexOf('flood-photos/');
-            if(idx!==-1) return u.substring(idx+'flood-photos/'.length).split('?')[0];
-            return u.split('/').pop().split('?')[0];
-          }catch(_){ return null; }
-        }).filter(Boolean);
-        if(fileNames.length>0){
-          await supabaseClient.storage.from('flood-photos').remove(fileNames);
-        }
+        console.log('[WARNING-STEP3-100%] ลบรูปถาวรเตือนท่วม:', item.id);
+        await deleteSOSImage100Percent(imgs, 'warning_auto_7day_'+item.id);
       }
       const {error: delErr} = await supabaseClient.from('flood_warnings').delete().eq('id', item.id);
       if(delErr) console.error('[WARNING-STEP3] ลบถาวรไม่สำเร็จ', delErr);
