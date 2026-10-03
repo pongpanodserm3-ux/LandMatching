@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.8
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.9
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -6459,7 +6459,7 @@ function updateFullscreenOverlay(list){
     ov.style.display='none';
     return;
   }
-  // v15.8 FIX: ป้องกันแถบซ้ำ 2 อัน
+  // v15.8 FIX: ป้องกันแถบซ้ำ 2 อัน + v15.9 FIX: กดลิสต์แล้วเด้งไปหน้า detail
   const listContainer=document.getElementById('list-container');
   if(listContainer){
     // เอา HTML แต่ตัดแถบเก่าออกก่อน clone
@@ -6476,6 +6476,22 @@ function updateFullscreenOverlay(list){
 
     ov.innerHTML = barHtml + cardsHtml;
     ov.style.display='block';
+
+    // === v15.9 FIX ONLY THIS POINT: กดการ์ดใน overlay เต็มจอ -> เด้งไปหน้า detail ===
+    setTimeout(()=>{
+      ov.querySelectorAll('[data-warning-id]').forEach(card=>{
+        const wid = card.getAttribute('data-warning-id');
+        if(!wid) return;
+        card.style.cursor='pointer';
+        // ลบ onclick เก่าที่อาจหายไปตอน clone แล้วผูกใหม่ให้เปิด detail เท่านั้น
+        card.onclick = (e)=>{
+          if(e.target.closest('button')) return; // ถ้ากดปุ่มดูทั้งหมด ไม่เด้ง
+          if(typeof openWarningDetailModal==='function'){
+            openWarningDetailModal(wid);
+          }
+        };
+      });
+    }, 50);
   } else {
     ov.style.display='none';
   }
