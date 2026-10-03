@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.9
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.10
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -6990,8 +6990,23 @@ document.addEventListener('fullscreenchange', ()=>{
         const statusColor = item.status === 'waiting' ? '#fef2f2' : item.status === 'going' ? '#f0fdf4' : item.status === 'completed' ? '#f3f4f6' : item.status === 'expired' ? '#fafaf9' : '#eff6ff';
         const borderColor = item.status === 'waiting' ? '#fecaca' : item.status === 'going' ? '#bbf7d0' : item.status === 'completed' ? '#d1d5db' : item.status === 'expired' ? '#e7e5e4' : '#bfdbfe';
         const needLabel = (item.need_types||[]).map(t => ({evacuate:'🚗 ยานพาหนะ/อพยพ', food:'🍞 อาหาร/น้ำดื่ม', medicine:'💊 ยา/เวชภัณฑ์', clothes:'👕 เสื้อผ้า/ของใช้', power:'⚡ พลังงาน/ช่าง', shelter:'🏠 ที่พัก/ที่จอดรถ'}[t]||t)).join(', ');
-        // v17.9 - เพิ่ม badge บทบาทในแต่ละโพสต์ SOS ตามตัวอย่างหน้าเตือนท่วม แต่มีแค่ชื่อบทบาท
-        const sosRoleBadge = getSOSRoleBadgeHTML(item.reporter_role || item.role || item.reporter_type, item.reporter_trusted || item.is_trusted, item.reporter_type);
+        // v17.11 FIX - ถ้าโพสต์นี้เป็นของเราเอง และ role ที่บันทึกไว้เป็น general แต่ปัจจุบันเราเป็น admin ให้ใช้ role ปัจจุบันแทน (แก้บั๊ก GENERAL ที่เห็นในรูป)
+        let effectiveRole = item.reporter_role || item.role || item.reporter_type || 'general';
+        let effectiveTrusted = item.reporter_trusted || item.is_trusted || false;
+        // ถ้าเป็นโพสต์ของตัวเอง ให้ใช้ role ล่าสุดจาก badge บนหัวแทน
+        try{
+          const currentUid = window.CURRENT_USER_ID || window.CURRENT_USER_ROLE?.user_id;
+          const currentRole = window.CURRENT_USER_ROLE?.role || window.CURRENT_USER_ROLE_CACHE?.role;
+          if(currentUid && String(item.user_id) === String(currentUid) && currentRole){
+            // ถ้าโพสต์เก่าไม่มี role หรือ role เป็น general แต่ปัจจุบันเป็น admin/special ให้ใช้ปัจจุบัน
+            if(!item.reporter_role && !item.role || (effectiveRole === 'general' && currentRole !== 'general')){
+              effectiveRole = currentRole;
+              effectiveTrusted = window.CURRENT_USER_ROLE?.is_trusted || false;
+              console.log('[v17.11] ใช้ role ปัจจุบันสำหรับโพสต์ตัวเอง:', effectiveRole);
+            }
+          }
+        }catch(_){}
+        const sosRoleBadge = getSOSRoleBadgeHTML(effectiveRole, effectiveTrusted, item.reporter_type);
 
         // คำสั่งที่สอง: เวลา + วันที่แบบย่อที่สุด เช่น 1ต.ค. 11:30
         let timeAgo = '';
@@ -7349,6 +7364,11 @@ document.addEventListener('fullscreenchange', ()=>{
         return;
       }
 
+      // v17.11 FIX - ดึง role มาก่อนสร้าง payload เพื่อบันทึก role ลงโพสต์
+      let myRoleForPayload = {role:'general', is_trusted:false};
+      try{ myRoleForPayload = await getCurrentUserRole(); }catch(_){}
+      const isSpecialMemberSOS = myRoleForPayload.role === 'special' || myRoleForPayload.role === 'admin' || myRoleForPayload.is_trusted === true;
+      
       const payload = {
         need_types: Array.from(selectedSOSTags),
         location_text: locText,
@@ -7370,7 +7390,13 @@ document.addEventListener('fullscreenchange', ()=>{
         origin_text: document.getElementById('sosLocationText')?.value || '',
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting',
-        user_id: userId
+        user_id: userId,
+        // v17.11 - บันทึก role ลงโพสต์เพื่อให้แสดง badge ถูกต้อง
+        reporter_type: isSpecialMemberSOS ? 'special' : 'general',
+        reporter_role: myRoleForPayload.role,
+        reporter_trusted: myRoleForPayload.is_trusted,
+        role: myRoleForPayload.role,
+        created_by: String(userId)
       };
 
       try{
