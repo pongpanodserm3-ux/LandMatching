@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.2
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v15.3
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.12</title>
@@ -1363,6 +1363,12 @@
   background:#f1f5f9; border-radius:10px; font-size:11px; color:#94a3b8; border:1px dashed #cbd5e1;
 }
 .detail-badge-more{ display:none !important; }
+
+
+/* === v15.3 Fullscreen fallback style === */
+#sosMapContainer:fullscreen, #sosMapPreview:fullscreen { width:100vw !important; height:100vh !important; }
+.map-fullscreen-fallback { position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; z-index:999999 !important; background:white; }
+#mapFullscreenBtn:hover { background:#f1f5f9; }
 
 </style> 
     
@@ -6373,8 +6379,44 @@ function initSOSMap(){
     window.userLocationLayer = L.featureGroup().addTo(window.sosMap);
     window.sosMap.whenReady(()=>{ setTimeout(()=>window.sosMap.invalidateSize(), 300); });
     setTimeout(()=>{ if(window.sosMap) window.sosMap.invalidateSize(); }, 600);
+    // === v15.3 FULLSCREEN BUTTON - เพิ่มปุ่มขยายเต็มจอสำหรับหน้าเตือนท่วม ===
+    if(!document.getElementById('mapFullscreenBtn')){
+      const fsBtn = document.createElement('button');
+      fsBtn.id='mapFullscreenBtn';
+      fsBtn.innerHTML='⛶';
+      fsBtn.title='ขยายเต็มจอ';
+      fsBtn.style.cssText='position:absolute; top:10px; right:10px; z-index:800; width:34px; height:34px; background:white; border:2px solid rgba(0,0,0,0.2); border-radius:4px; font-size:18px; font-weight:bold; cursor:pointer; box-shadow:0 1px 5px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;';
+      fsBtn.onclick=()=>toggleSOSMapFullscreen();
+      mapEl.style.position='relative';
+      mapEl.appendChild(fsBtn);
+    }
   }catch(e){ console.warn('initSOSMap failed', e); }
 }
+// === v15.3 Fullscreen logic ===
+function toggleSOSMapFullscreen(){
+  const mapEl=document.getElementById('sosMapPreview');
+  const container=document.getElementById('sosMapContainer')||mapEl?.parentElement;
+  if(!mapEl) return;
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if(isFs){
+    if(document.exitFullscreen) document.exitFullscreen();
+    else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }else{
+    const target = container||mapEl;
+    if(target.requestFullscreen) target.requestFullscreen();
+    else if(target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+    else {
+      // fallback: CSS fullscreen
+      target.classList.toggle('map-fullscreen-fallback');
+    }
+  }
+}
+document.addEventListener('fullscreenchange', ()=>{
+  if(window.sosMap) setTimeout(()=>window.sosMap.invalidateSize(), 300);
+  const btn=document.getElementById('mapFullscreenBtn');
+  if(btn) btn.innerHTML = document.fullscreenElement ? '✕' : '⛶';
+});
+
 
     function _old_initSOSMap_temp() {
       const mapEl = document.getElementById('sosMapPreview');
@@ -7494,9 +7536,9 @@ function onFloodMarkerClicked(w){
       const lat = parseFloat(w.lat||w.latitude), lng = parseFloat(w.lng||w.longitude);
       if(!isNaN(lat) && !isNaN(lng)){
         if(typeof targetMap.flyTo === 'function'){
-          targetMap.flyTo([lat,lng], 14, {duration:0.8, easeLinearity:0.2}); // v15.2 FIX: เดิมซูม 16 ลึกไป -> ลดเหลือ 14 ซูมเข้านิดหน่อยพอ
+          targetMap.flyTo([lat,lng], 14, {duration:0.8, easeLinearity:0.2});
         }else{
-          targetMap.setView([lat,lng], 14, {animate:true}); // v15.2 FIX: เดิม 16 -> 14
+          targetMap.setView([lat,lng], 14, {animate:true});
         }
       }
     }
@@ -7547,7 +7589,7 @@ function onFloodMarkerClicked(w){
 
 function focusWarningOnMap(lat,lng){
   console.log('[v14.10] WARNING MARKER ONLY HIGHLIGHT', lat,lng);
-  let m=window.sosMap; if(m) m.flyTo([parseFloat(lat), parseFloat(lng)],13,{duration:0.6}); // v15.2 FIX: เดิม 15 -> 13 ซูมเข้านิดหน่อย ไม่ zoom out
+  let m=window.sosMap; if(m) m.flyTo([parseFloat(lat), parseFloat(lng)],13,{duration:0.6});
   const cache=window.floodWarningsCache||[];
   let it=cache.find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
   if(it){
