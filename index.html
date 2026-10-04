@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_2 v1
+  <link rel="shortcut icon" href="#">//Git_Index_2 v2.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -1733,10 +1733,47 @@ window.highlightBoth = function(idStr, type){
         <input type="file" id="sosCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleSOSFilesSelected(event)">
         <div style="display:flex; gap:8px; width:100%;">
           <button type="button" class="upload-main-btn" style="flex:1; padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; cursor:pointer; font-weight:bold;" onclick="document.getElementById('sosFileInput').click()">📸 อัปโหลดรูปภาพ (สูงสุด 8 รูป)</button>
-          <button type="button" class="upload-main-btn" id="sosCameraBtn" style="flex:1; padding:10px; border:1.5px dashed #4a83cc; border-radius:10px; background:#eff6ff; cursor:pointer; font-weight:bold; color:#1e40af;" onclick="document.getElementById('sosCameraInput').click()">📷 เปิดกล้องถ่ายรูป</button>
+          <button type="button" class="upload-main-btn" id="sosCameraBtn" style="flex:1; padding:10px; border:1.5px dashed #4a83cc; border-radius:10px; background:#eff6ff; cursor:pointer; font-weight:bold; color:#1e40af;" onclick="openSOSCameraLive()">📷 เปิดกล้องถ่ายรูป</button>
         </div>
         <div class="upload-grid" id="sosUploadGrid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-top:8px;"></div>
-        <div id="sosExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
+        
+      <!-- v18 SOS: Modal กล้องถ่ายต่อเนื่อง 8 ช็อต (ลอกแบบ floodCameraLiveModal) -->
+      <div id="sosCameraLiveModal" style="display:none; position:fixed; inset:0; z-index:9500; background:#000; flex-direction:column; height:100dvh; max-height:100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); box-sizing:border-box;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.8); color:white;">
+          <span style="font-weight:bold;">📷 SOS กล้อง - ถ่ายต่อเนื่องได้ (สูงสุด 8)</span>
+          <button onclick="closeSOSCameraLive()" style="background:#333; color:white; border:1px solid #555; border-radius:50%; width:32px; height:32px; cursor:pointer;">×</button>
+        </div>
+        <div style="flex:1; position:relative; background:#000; display:flex; align-items:center; justify-content:center; overflow:hidden; min-height:0;">
+          <video id="sosCameraVideo" autoplay playsinline muted style="width:100%; height:100%; max-height:55dvh; object-fit:contain; background:#000;"></video>
+          <canvas id="sosCameraCanvas" style="display:none;"></canvas>
+          <div id="sosCameraCountBadge" style="position:absolute; top:12px; left:12px; background:rgba(239,68,68,0.9); color:white; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">ถ่ายแล้ว 0 รูป</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.9); padding:12px; display:flex; gap:8px; align-items:center; justify-content:center;">
+          <button onclick="captureSOSCameraFrame()" style="width:70px; height:70px; border-radius:50%; border:4px solid white; background:#ef4444; cursor:pointer; box-shadow:0 0 0 4px rgba(239,68,68,0.3); font-size:28px;">📸</button>
+        </div>
+        <div style="background:#111; padding:10px; display:flex; gap:6px; overflow-x:auto;" id="sosCameraStrip"></div>
+        <div style="background:#000; padding:12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); display:flex; gap:8px; flex-shrink:0; position:sticky; bottom:0; z-index:2;">
+          <button onclick="closeSOSCameraLive()" style="flex:1; background:#333; color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer; min-height:48px;">ยกเลิก</button>
+          <button onclick="confirmSOSCameraCaptures()" style="flex:1; background:linear-gradient(135deg,#ff3b30 0%,#d70000 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer; min-height:48px;">✅ ใช้รูปที่ถ่าย</button>
+        </div>
+      </div>
+
+      <!-- v18 SOS: Modal พรีวิวก่อนบันทึกลงช่อง 8 ช่อง -->
+      <div id="sosPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
+        <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <b style="font-size:14px;">👁️ SOS พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b>
+            <button onclick="closeSOSPreview()" style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button>
+          </div>
+          <div id="sosPreviewGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button onclick="closeSOSPreview()" style="flex:1; background:#e2e8f0; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">ยกเลิก</button>
+            <button onclick="saveSOSPreviewToGrid()" style="flex:1; background:#0e6b38; color:white; border:none; padding:10px; border-radius:10px; font-weight:bold; cursor:pointer;">💾 บันทึกลงช่อง 8 ช่อง</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sosExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
 
       <button style="margin-top:12px; width:100%; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:15px; cursor:pointer;" onclick="submitSOS()">🚨 ส่งขอความช่วยเหลือทันที</button>
@@ -7194,25 +7231,153 @@ document.addEventListener('fullscreenchange', ()=>{
     window.currentSOSUserId = window.currentSOSUserId || null;
 
     function handleSOSFilesSelected(event){
+      // v18 SOS: เปลี่ยนมาใช้ระบบพรีวิวก่อนลงช่อง แบบ flood
+      const targetFiles = event && event.target && event.target.files ? Array.from(event.target.files) : [];
       const fileInput = document.getElementById('sosFileInput');
-      const cameraInput = document.getElementById('sosCameraInput');
-      const srcInput = (event && event.target && event.target.files && event.target.files.length>0) ? event.target : (fileInput && fileInput.files && fileInput.files.length>0 ? fileInput : cameraInput);
-      const files = srcInput && srcInput.files ? Array.from(srcInput.files) : (event.target.files ? Array.from(event.target.files) : []);
+      const camInput = document.getElementById('sosCameraInput');
+      let files = targetFiles;
+      if(files.length===0 && fileInput && fileInput.files && fileInput.files.length>0){
+        files = Array.from(fileInput.files);
+      }
       if(files.length===0) return;
+      openSOSPreview(files);
+      if(fileInput) fileInput.value='';
+      if(camInput) camInput.value='';
+      if(event && event.target) event.target.value='';
+    }
+
+    // === v18 SOS Camera Continuous 8 shots === //
+    function openSOSPreview(newFiles){
+      if(!window.sosPendingPreviewFiles) window.sosPendingPreviewFiles=[];
+      const existingTotal = (window.sosExistingImageUrls?.length||0) + (window.sosUploadedFiles?.length||0) + window.sosPendingPreviewFiles.length;
+      const remain = 8 - existingTotal;
+      if(remain<=0){
+        alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ หากเกินต้องลบรูปเดิมออกก่อน");
+        return;
+      }
+      const toAdd = newFiles.slice(0, remain);
+      if(newFiles.length>remain) alert(`เลือกได้อีกแค่ ${remain} รูป (เกิน 8) ระบบจะเอาแค่ ${remain} รูปแรก`);
+      window.sosPendingPreviewFiles = window.sosPendingPreviewFiles.concat(toAdd);
+      renderSOSPreview();
+      document.getElementById('sosPreviewModal').style.display='flex';
+    }
+    function renderSOSPreview(){
+      const grid = document.getElementById('sosPreviewGrid');
+      if(!grid) return;
+      grid.innerHTML='';
+      window.sosPendingPreviewFiles.forEach((file, idx)=>{
+        const url = URL.createObjectURL(file);
+        const div = document.createElement('div');
+        div.style.cssText='position:relative; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; aspect-ratio:1;';
+        div.innerHTML=`<img src="${url}" style="width:100%; height:100%; object-fit:cover;"><button onclick="removeSOSPreview(${idx})" style="position:absolute; top:4px; right:4px; background:#ef4444; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">×</button><span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:white; font-size:10px; text-align:center; padding:2px;">${file.name||'camera-'+(idx+1)}</span>`;
+        grid.appendChild(div);
+      });
+    }
+    function removeSOSPreview(idx){
+      window.sosPendingPreviewFiles.splice(idx,1);
+      renderSOSPreview();
+      if(window.sosPendingPreviewFiles.length===0) closeSOSPreview();
+    }
+    function closeSOSPreview(){
+      const m = document.getElementById('sosPreviewModal');
+      if(m) m.style.display='none';
+    }
+    function saveSOSPreviewToGrid(){
       if(!window.sosUploadedFiles) window.sosUploadedFiles=[];
       let totalCount = (window.sosExistingImageUrls?.length||0) + window.sosUploadedFiles.length;
-      for(let file of files){
+      for(let f of window.sosPendingPreviewFiles){
         if(totalCount < 8){
-          window.sosUploadedFiles.push(file);
+          window.sosUploadedFiles.push(f);
           totalCount++;
-        }else{
-          alert("อัปโหลดรูปภาพได้สูงสุด 8 รูปเท่านั้นครับ หากเกินต้องลบรูปเดิมออกก่อน");
-          break;
         }
       }
-      if(fileInput) fileInput.value=''; const camI=document.getElementById('sosCameraInput'); if(camI) camI.value='';
+      window.sosPendingPreviewFiles=[];
+      closeSOSPreview();
       renderSOSUploadGrid();
     }
+    async function openSOSCameraLive(){
+      const modal = document.getElementById('sosCameraLiveModal');
+      const video = document.getElementById('sosCameraVideo');
+      if(!modal || !video) return;
+      window.sosCameraTempFiles=[];
+      renderSOSCameraStrip();
+      updateSOSCameraBadge();
+      modal.style.display='flex';
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}, audio:false});
+        window.sosCameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+      }catch(e){
+        console.warn('SOS getUserMedia fail, fallback to file input', e);
+        modal.style.display='none';
+        const camInput = document.getElementById('sosCameraInput');
+        if(camInput) camInput.click();
+      }
+    }
+    function closeSOSCameraLive(){
+      const modal = document.getElementById('sosCameraLiveModal');
+      const video = document.getElementById('sosCameraVideo');
+      if(window.sosCameraStream){
+        window.sosCameraStream.getTracks().forEach(t=>t.stop());
+        window.sosCameraStream=null;
+      }
+      if(video) video.srcObject=null;
+      if(modal) modal.style.display='none';
+    }
+    function captureSOSCameraFrame(){
+      const video = document.getElementById('sosCameraVideo');
+      const canvas = document.getElementById('sosCameraCanvas');
+      if(!video || !canvas) return;
+      const existingTotal = (window.sosExistingImageUrls?.length||0) + (window.sosUploadedFiles?.length||0) + (window.sosPendingPreviewFiles?.length||0) + window.sosCameraTempFiles.length;
+      if(existingTotal >= 8){
+        alert("ครบ 8 รูปแล้วครับ");
+        return;
+      }
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob)=>{
+        if(!blob) return;
+        const file = new File([blob], `sos-camera-${Date.now()}-${window.sosCameraTempFiles.length+1}.jpg`, {type:'image/jpeg'});
+        window.sosCameraTempFiles.push(file);
+        renderSOSCameraStrip();
+        updateSOSCameraBadge();
+      }, 'image/jpeg', 0.9);
+    }
+    function renderSOSCameraStrip(){
+      const strip = document.getElementById('sosCameraStrip');
+      if(!strip) return;
+      strip.innerHTML='';
+      window.sosCameraTempFiles.forEach((file, idx)=>{
+        const url = URL.createObjectURL(file);
+        const d = document.createElement('div');
+        d.style.cssText='position:relative; width:60px; height:60px; flex-shrink:0; border-radius:8px; overflow:hidden; border:1px solid #333;';
+        d.innerHTML=`<img src="${url}" style="width:100%; height:100%; object-fit:cover;"><button onclick="window.sosCameraTempFiles.splice(${idx},1); renderSOSCameraStrip(); updateSOSCameraBadge();" style="position:absolute; top:2px; right:2px; background:#ef4444; color:white; border:none; border-radius:50%; width:16px; height:16px; font-size:10px; cursor:pointer;">×</button>`;
+        strip.appendChild(d);
+      });
+    }
+    function updateSOSCameraBadge(){
+      const b = document.getElementById('sosCameraCountBadge');
+      if(b) b.innerText = `ถ่ายแล้ว ${window.sosCameraTempFiles.length} รูป`;
+    }
+    function confirmSOSCameraCaptures(){
+      if(window.sosCameraTempFiles.length===0){
+        alert('ยังไม่ได้ถ่ายรูปเลยครับ');
+        return;
+      }
+      const filesToPreview = [...window.sosCameraTempFiles];
+      window.sosCameraTempFiles=[];
+      closeSOSCameraLive();
+      openSOSPreview(filesToPreview);
+    }
+    // Init SOS camera vars
+    window.sosPendingPreviewFiles = window.sosPendingPreviewFiles || [];
+    window.sosCameraTempFiles = window.sosCameraTempFiles || [];
+    window.sosCameraStream = window.sosCameraStream || null;
+
+
 
     function renderSOSUploadGrid(){
       const grid = document.getElementById('sosUploadGrid');
