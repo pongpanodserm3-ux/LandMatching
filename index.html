@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">
+  <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Land Matching Git_Index_2-v4</title>
+  <title>Land Matching AI Git_Index_2 v4_1</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -6475,35 +6475,58 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }catch(e){ return false; }
     }
 
+    // [REMOVED old openSOSModalForEdit - replaced v17.22]
 
-    async function openSOSModalForEdit(postData){
+    // === FIX v17.22 - แมปตรง DB schema 31 columns ===
+    function setSOSSubmitButtonText(isEdit){
+      const txt = isEdit ? '💾 บันทึกการแก้ไข' : '🚨 ส่งขอความช่วยเหลือทันที';
+      const sels = ['#sosSubmitBtn','#sosModalOverlay button[onclick="submitSOS()"]','#sosModalOverlay button[onclick*="submitSOS"]','#sosDropdownModal button[onclick="submitSOS()"]','#sosDropdownModal button[onclick*="submitSOS"]','button[onclick="submitSOS()"]'];
+      sels.forEach(sel=>{ const b=document.querySelector(sel); if(b){ b.textContent=txt; b.innerText=txt; if(isEdit) b.dataset.mode='edit'; else delete b.dataset.mode; } });
+    }
+
+    function openSOSModalForEdit(postData){
       try{
+        console.log('[v17.22 edit] DB row:', postData);
         window.currentSOSPostId = postData.id;
-        window.sosExistingImageUrls = [...(postData.images || postData.image_urls || [])];
+        // รองรับทั้ง images และ image_urls
+        let existingImgs = postData.images || postData.image_urls || [];
+        if(postData.photo_url && existingImgs.length===0) existingImgs=[postData.photo_url];
+        window.sosExistingImageUrls = [...existingImgs];
         window.sosUploadedFiles = [];
-        const detailEl = document.getElementById('sosDetailText');
-        if(detailEl) detailEl.value = postData.detail || '';
-        const latEl = document.getElementById('sosLat');
-        const lngEl = document.getElementById('sosLng');
-        if(latEl) latEl.value = postData.lat || '';
-        if(lngEl) lngEl.value = postData.lng || '';
-        const peopleEl = document.getElementById('sosPeopleCount');
-        if(peopleEl) peopleEl.value = postData.people_count || 1;
-        const phoneEl = document.getElementById('sosPhone');
-        if(phoneEl) phoneEl.value = postData.phone || '';
-        if(typeof selectedSOSTags !== 'undefined'){
+        window.sosImagesToDelete = [];
+        const setVal=(id,val)=>{ const el=document.getElementById(id); if(el) el.value = (val!=null?val:''); };
+        // แมปตรงตาม DB
+        setVal('sosLocationText', postData.location_text || postData.origin_text || '');
+        const dEl=document.getElementById('sosDetailText');
+        if(dEl) dEl.value = postData.origin_text || postData.location_text || '';
+        setVal('sosLat', postData.lat||'');
+        setVal('sosLng', postData.lng||'');
+        setVal('sosPhone', postData.contact_phone||''); // ตัวที่หาย
+        setVal('sosPeople', postData.people_count||'');
+        setVal('medicineDetail', postData.medicine_detail||'');
+        if(postData.people_detail){
+          setVal('sosAdult', postData.people_detail.adult||'');
+          setVal('sosChild', postData.people_detail.child||'');
+          setVal('sosElder', postData.people_detail.elder||'');
+        }
+        setVal('sosEvacDestination', postData.evac_destination_text||'');
+        setVal('sosEvacLat', postData.evac_lat||'');
+        setVal('sosEvacLng', postData.evac_lng||'');
+        setVal('sosEvacVehicle', postData.evac_vehicle_type||'');
+        if(typeof selectedSOSTags!=='undefined'){
           selectedSOSTags.clear();
           (postData.need_types||[]).forEach(t=>selectedSOSTags.add(t));
           document.querySelectorAll('.sos-tag-btn').forEach(btn=>{
-            if(selectedSOSTags.has(btn.dataset.val)) btn.classList.add('selected');
-            else btn.classList.remove('selected');
+            if(selectedSOSTags.has(btn.dataset.val)) btn.classList.add('selected'); else btn.classList.remove('selected');
           });
+          const medEl=document.getElementById('medicineExtra'); if(medEl) medEl.style.display = postData.need_types?.includes('medicine')?'block':'none';
+          const eg=document.getElementById('evacDestinationGroup'); if(eg) eg.style.display = postData.need_types?.includes('evacuate')?'block':'none';
+          const eh=document.getElementById('evacHintBox'); if(eh) eh.style.display = postData.need_types?.includes('evacuate')?'block':'none';
         }
         if(typeof renderSOSUploadGrid==='function') renderSOSUploadGrid();
-        document.getElementById('sosModalOverlay').classList.add('active');
-        const submitBtn = document.querySelector('#sosModalOverlay button[onclick="submitSOS()"]');
-        if(submitBtn) submitBtn.textContent = '💾 บันทึกการแก้ไข';
-      }catch(e){ console.error('[v17.1 edit] error', e); }
+        const ov=document.getElementById('sosModalOverlay'); if(ov) ov.classList.add('active');
+        setSOSSubmitButtonText(true);
+      }catch(e){ console.error('[v17.22 edit] error', e); }
     }
 
     function showSOSLimitPickerModal(myPosts, limit){
@@ -7584,10 +7607,13 @@ document.addEventListener('fullscreenchange', ()=>{
       if(!post) return;
       window.currentSOSPostId = post.id || post.post_id;
       const setVal=(id,val)=>{ const el=document.getElementById(id); if(el && val!==null && val!==undefined) el.value=val; };
-      setVal('sosLocationText', post.location_text||'');
+      // แมปตรงตาม DB schema จริง
+      setVal('sosLocationText', post.location_text||post.origin_text||'');
+      const detailEl=document.getElementById('sosDetailText');
+      if(detailEl) detailEl.value = post.origin_text || post.location_text || '';
       setVal('sosLat', post.lat||'');
       setVal('sosLng', post.lng||'');
-      setVal('sosPhone', post.contact_phone||'');
+      setVal('sosPhone', post.contact_phone||''); // สำคัญ: contact_phone
       setVal('sosPeople', post.people_count||'');
       setVal('medicineDetail', post.medicine_detail||'');
       if(post.people_detail){
@@ -7595,24 +7621,33 @@ document.addEventListener('fullscreenchange', ()=>{
         setVal('sosChild', post.people_detail.child||'');
         setVal('sosElder', post.people_detail.elder||'');
       }
+      setVal('sosEvacDestination', post.evac_destination_text||'');
+      setVal('sosEvacLat', post.evac_lat||'');
+      setVal('sosEvacLng', post.evac_lng||'');
+      setVal('sosEvacVehicle', post.evac_vehicle_type||'');
       if(post.need_types && Array.isArray(post.need_types)){
-        selectedSOSTags = new Set(post.need_types);
-        document.querySelectorAll('.sos-tag-btn').forEach(btn=>{
-          if(post.need_types.includes(btn.dataset.val)) btn.classList.add('selected');
-          else btn.classList.remove('selected');
-        });
-        if(post.need_types.includes('medicine')) document.getElementById('medicineExtra').style.display='block';
-        if(post.need_types.includes('evacuate')){
-          const eg=document.getElementById('evacDestinationGroup'); if(eg) eg.style.display='block';
-          const eh=document.getElementById('evacHintBox'); if(eh) eh.style.display='block';
+        if(typeof selectedSOSTags!=='undefined'){
+          selectedSOSTags = new Set(post.need_types);
+          document.querySelectorAll('.sos-tag-btn').forEach(btn=>{
+            if(post.need_types.includes(btn.dataset.val)) btn.classList.add('selected');
+            else btn.classList.remove('selected');
+          });
+          const medEl=document.getElementById('medicineExtra');
+          if(medEl) medEl.style.display = post.need_types.includes('medicine') ? 'block' : 'none';
+          const eg=document.getElementById('evacDestinationGroup'); if(eg) eg.style.display = post.need_types.includes('evacuate')?'block':'none';
+          const eh=document.getElementById('evacHintBox'); if(eh) eh.style.display = post.need_types.includes('evacuate')?'block':'none';
         }
       }
-      window.sosExistingImageUrls = post.images && Array.isArray(post.images) ? post.images : (post.image_urls || []);
+      // รูป: รองรับทั้ง images[] และ image_urls[] และ photo_url
+      let imgs = [];
+      if(post.images && Array.isArray(post.images) && post.images.length) imgs = post.images;
+      else if(post.image_urls && Array.isArray(post.image_urls) && post.image_urls.length) imgs = post.image_urls;
+      else if(post.photo_url) imgs = [post.photo_url];
+      window.sosExistingImageUrls = imgs;
       window.sosUploadedFiles=[];
-      renderSOSUploadGrid();
-      // เปลี่ยนปุ่มเป็นแก้ไข
-      const btn = document.querySelector('#sosDropdownModal button[onclick="submitSOS()"]');
-      if(btn) btn.innerText = '✏️ แก้ไขขอความช่วยเหลือ';
+      window.sosImagesToDelete=[];
+      if(typeof renderSOSUploadGrid==='function') renderSOSUploadGrid();
+      if(typeof setSOSSubmitButtonText==='function') setSOSSubmitButtonText(true);
     }
 
     // Override openSOSModal to include check existing + scroll reset + clear
@@ -7653,9 +7688,7 @@ document.addEventListener('fullscreenchange', ()=>{
 
     window.closeSOSModal = function(){
       document.getElementById('sosModalOverlay').classList.remove('active');
-      // ไม่เคลียร์ค่าเพื่อให้กลับมาแก้ไขได้ แต่รีเซ็ตปุ่ม
-      const btn = document.querySelector('#sosDropdownModal button[onclick="submitSOS()"]');
-      if(btn) btn.innerText = '🚨 ส่งขอความช่วยเหลือทันที';
+      if(typeof setSOSSubmitButtonText==='function') setSOSSubmitButtonText(false);
     };
 
     // Override submitSOS - รวม logic รูปภาพ 8 รูป + 1 คน 1 โพสต์
@@ -8801,7 +8834,7 @@ function closeFloodPreview(){
   // window.floodPendingPreviewFiles=[];
 }
 
-async function saveFloodPreviewToGrid(){
+async async function saveFloodPreviewToGrid(){
   if(!window.floodUploadedFiles) window.floodUploadedFiles=[];
   window.floodPendingPreviewFiles = await compressFilesTo500KB(window.floodPendingPreviewFiles);
   let totalCount = (window.floodExistingImageUrls?.length||0) + window.floodUploadedFiles.length;
@@ -9785,7 +9818,7 @@ async function deleteSOSFromDetail(sosId){
 }
 
 // v17.21 FIX - ฟังก์ชันแก้ไขโพสต์จากหน้า detail (เฉพาะจุดขอให้ช่วยเท่านั้น) - ใช้ openSOSModalForEdit ที่มีอยู่แล้ว
-async function editSOSFromDetail(sosId){
+async async function editSOSFromDetail(sosId){
   if(!sosId) return;
   const item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(sosId));
   if(!item){
