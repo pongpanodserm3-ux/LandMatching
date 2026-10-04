@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_2_1_debug1of4   </title>
+  <title> v4_2_2_debug1of3   </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9138,7 +9138,7 @@ function getCurrentLocationForFloodWarning(){
       description: detail || '',
       is_active: true,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now()+ 72*60*60*1000).toISOString(),
+      expires_at: new Date(Date.now()+ 48*60*60*1000).toISOString(),
       user_id: String(myUserIdForCheck), // DB flood_warnings.user_id เป็น text (จากรูป)
       reporter_type: isSpecialMember ? 'special' : 'general',
       reporter_role: myRoleInfo.role,
@@ -9419,7 +9419,7 @@ async function autoStep1_DeleteImages_3hr(){
 async function autoStep2_ArchiveAndCleanup(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const oneDayAgo = new Date(Date.now() - 1*24*60*60*1000).toISOString();
+    const oneDayAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วัน
     const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
     console.log('[FLOW-STEP2] เช็ค สำเร็จ>1วัน:', oneDayAgo, 'เงียบ>3วัน:', threeDaysAgo);
 
@@ -9610,12 +9610,13 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
 // ตามคำขอ: แก้เฉพาะหน้าเตือนท่วมเท่านั้น ส่วนอื่นห้ามแก้ไขเด็ดขาด
 
 async function autoWarningStep1_HideFromMap_1Day(){
-  console.log('[HOTFIX Step1] autoWarningStep1 disabled for flood crisis - keep pins 72h'); return; // HOTFIX disabled
+  // HOTFIX v4_2_2: เปลี่ยนจาก 1 วัน -> 2 วันตามคำขอผู้ใช้ (expire 2 วัน)
+  // console.log('[HOTFIX Step1] autoWarningStep1 disabled for flood crisis - keep pins 72h'); return; // HOTFIX disabled - ยกเลิกการ disable
 
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const oneDayAgo = new Date(Date.now() - 1*24*60*60*1000).toISOString();
-    console.log('[WARNING-FLOW-STEP1] เช็ค 1วันซ่อนจากแผนที่:', oneDayAgo);
+    const oneDayAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วัน
+    console.log('[WARNING-FLOW-STEP1] เช็ค 2วันซ่อนจากแผนที่ (expire 2 วัน):', oneDayAgo);
     // หาเตือนที่ยัง active และหมดอายุเกิน 1 วัน
     const {data: toHide, error} = await supabaseClient.from('flood_warnings')
       .select('id, is_active, created_at, expires_at')
@@ -9641,8 +9642,8 @@ async function autoWarningStep1_HideFromMap_1Day(){
 async function autoWarningStep2_DeleteImages_3Days(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
-    console.log('[WARNING-FLOW-STEP2] เช็ค 3วันลบรูป:', threeDaysAgo);
+    const threeDaysAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วันตาม expire
+    console.log('[WARNING-FLOW-STEP2] เช็ค 2วันลบรูป (ตาม expire 2 วัน):', threeDaysAgo);
     const {data: toClean, error} = await supabaseClient.from('flood_warnings')
       .select('id, images, image_urls, created_at')
       .lt('created_at', threeDaysAgo)
@@ -9704,7 +9705,7 @@ async function autoWarningStep3_DeletePermanently_7Days(){
 }
 
 async function autoPurgeFloodWarnings(){
-  console.log('[WARNING-FLOW v14.8] เริ่มตรวจ 3 ขั้น - 1วันซ่อน / 3วันลบรูป / 7วันลบถาวร...');
+  console.log('[WARNING-FLOW v14.8] เริ่มตรวจ 3 ขั้น - 2วันซ่อน(expire) / 2วันลบรูป / 7วันลบถาวร...');
   await autoWarningStep1_HideFromMap_1Day();
   await autoWarningStep2_DeleteImages_3Days();
   await autoWarningStep3_DeletePermanently_7Days();
