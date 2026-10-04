@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_3_1_debug2of3   </title>
+  <title> v4_4_1_debug3of3   </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -8190,7 +8190,7 @@ window.loadFloodWarnings = async function(){
       const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
-      L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
+      L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${escapeHtml(w.title)}</b><br>🌊 ${escapeHtml(w.water_level_cm)}ซม.<br>${escapeHtml(w.passage_status)}`).addTo(layer);
       (()=>{ const _c=layer.getLayers().slice(-1)[0]; if(_c) _c.on('click', ()=>{ onFloodMarkerClicked(w); }); })(); // v13.11.3 FIX: ลบหมุดฟ้า, คลิกที่วงกลมแทน
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
@@ -8198,12 +8198,13 @@ window.loadFloodWarnings = async function(){
       try{
         let bounds; try{ bounds = layer.getBounds(); }catch(e){ console.warn("getBounds fail, use first point", e); const first=data[0]; bounds = L.latLngBounds([[parseFloat(first.lat||first.latitude), parseFloat(first.lng||first.longitude)]]); }
         console.log('fitBounds to', bounds);
-        if(bounds && bounds.isValid && bounds.isValid()){ targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:16}); } else { targetMap.setView([parseFloat(data[0].lat||data[0].latitude), parseFloat(data[0].lng||data[0].longitude)], 15); }
-        setTimeout(()=>{
-          const first = data[0];
-          targetMap.setView([parseFloat(first.lat||first.latitude), parseFloat(first.lng||first.longitude)], 15);
-          console.log('setView ไปจรัญ 69 แล้ว');
-        }, 500);
+        // 3.3 FIX แผนที่กระตุก - เลือกอย่างใดอย่างหนึ่งพอ ไม่เรียกซ้ำ
+        if(bounds && bounds.isValid && bounds.isValid()){
+          targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:16});
+        } else {
+          targetMap.setView([parseFloat(data[0].lat||data[0].latitude), parseFloat(data[0].lng||data[0].longitude)], 15);
+        }
+        // ลบ setTimeout setView ซ้ำที่ทำให้กระตุก
       }catch(e){ console.warn('fitBounds error', e); }
     }
     console.log(`✅ เตือนภัย ${data.length} จุด: ${data[0]?.title}`);
@@ -8468,7 +8469,7 @@ function renderFloodWarningsList(list){
     if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; }
     else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; }
     else { icon='🟡'; bg='#fefce8'; border='#fde68a'; }
-    const water = w.water_level_cm ? `${w.water_level_cm} ซม.` : (w.water_level||'-');
+    const water = w.water_level_cm ? `${escapeHtml(w.water_level_cm)} ซม.` : (w.water_level||'-');
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
     const imgs = (Array.isArray(rawImgs) ? rawImgs : [rawImgs]).filter(Boolean).flat().filter(Boolean);
@@ -9242,8 +9243,22 @@ function getCurrentLocationForFloodWarning(){
         return;
       }
     } else {
-      // สมาชิกพิเศษ: 1 คนแจ้งได้หลายจุด และ ไร้กรอบ
-      console.log('✅ สมาชิกพิเศษ ('+myRoleInfo.role+' / trusted='+myRoleInfo.is_trusted+') : ข้ามการตรวจสอบกรอบทั้งหมด');
+      // 3.2 FIX กันสแปมแม้ special: จำกัด 1 ครั้ง / 5 นาที กันยิง 1000 จุด
+      console.log('✅ สมาชิกพิเศษ ('+myRoleInfo.role+' / trusted='+myRoleInfo.is_trusted+') : ข้ามกรอบทั่วไป แต่ยังจำกัด 5 นาที');
+      const lastSpecialPost = localStorage.getItem('last_special_flood_'+myUserIdForCheck);
+      if(lastSpecialPost){
+        const diff = Date.now() - parseInt(lastSpecialPost);
+        if(diff < 5*60*1000){
+          const remain = Math.ceil((5*60*1000 - diff)/1000);
+          alert('⏳ สมาชิกพิเศษก็ต้องรอ '+remain+' วินาที ก่อนแจ้งจุดใหม่ครับ (กันสแปม 1 ครั้ง/5 นาที)');
+          window._isSubmittingFlood=false;
+          let btnTmp = document.getElementById('floodSubmitBtn');
+          if(btnTmp){ btnTmp.disabled=false; btnTmp.innerHTML=btnTmp.dataset.origText||'📢 ส่งแจ้งเตือนท่วม'; }
+          return;
+        }
+      }
+      // ผ่านแล้วบันทึกเวลาไว้
+      try{ localStorage.setItem('last_special_flood_'+myUserIdForCheck, String(Date.now())); }catch(e){}
     }
     // ===== v17: เช็คสิทธิ์ general vs special - END =====
 
@@ -9683,7 +9698,7 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
             const col = (w.risk_level==='critical'||w.level==='critical')?'#ef4444':'#f97316';
             const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m||w.radius)||600, fillColor:col, fillOpacity:0.35, stroke:false});
             circle._warningId = w.id; // เก็บ id ไว้เพื่อลบครั้งต่อไป
-            circle.bindPopup(`<b>${w.title||w.location_text||'เตือนท่วม'}</b>`);
+            circle.bindPopup(`<b>${escapeHtml(w.title||w.location_text||'เตือนท่วม')}</b>`);
             circle.on('click', ()=>{ if(typeof onFloodMarkerClicked==='function') onFloodMarkerClicked(w); });
             layer.addLayer(circle);
           });
