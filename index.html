@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.1
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.2
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -9438,6 +9438,21 @@ window.renderFloodWarningsList = function(list){
   window.clearSOSCircleFilter = function(){
     const base = window.sosRequestsCache || [];
     if(typeof renderSOSList==='function') renderSOSList(base);
+    // v17.13 FIX - แก้บั๊กวงกลมหายเมื่อซูมออก: คืนหมุดบนแผนที่ทั้งหมดด้วย
+    try{
+      if(typeof updateSOSMapMarkers==='function' && base.length>0){
+        console.log('[v17.13 FIX] คืนหมุดแผนที่ทั้งหมด', base.length, 'จุด');
+        updateSOSMapMarkers(base);
+      }else if(window.sosMap && window.sosMarkersLayer){
+        // fallback: โหลดใหม่ทั้งหมด
+        if(typeof loadSOSRequests==='function'){
+          // ไม่โหลดใหม่จาก server ให้ใช้ cache
+        }
+      }
+      // ซ่อน overlay เต็มจอ
+      const ov = document.getElementById('fullscreenListOverlay');
+      if(ov) ov.style.display='none';
+    }catch(e){ console.warn('[v17.13 FIX] restore markers error', e); }
     const bar=document.getElementById('circleFilterBarSOS');
     if(bar) bar.remove();
     const bar2=document.getElementById('circleFilterBarFullscreenSOS');
@@ -9460,12 +9475,24 @@ window.renderFloodWarningsList = function(list){
     if(window.currentViewMode==='requests' || window.currentViewMode!=='warnings'){
       // SOS mode
       window.clearSOSCircleFilter();
-      // also call original to clean flood bars if any
       if(typeof _origClearCircleFilter==='function'){
         try{ _origClearCircleFilter(); }catch(e){}
       }
     } else {
-      if(typeof _origClearCircleFilter==='function') return _origClearCircleFilter();
+      // v17.13 FIX - Flood mode: คืนหมุดทั้งหมดด้วย
+      const baseF = window.floodWarningsCache || [];
+      if(typeof _origClearCircleFilter==='function'){
+        try{ _origClearCircleFilter(); }catch(e){}
+      }
+      // คืน overlay และหมุด
+      try{
+        if(typeof loadFloodWarnings==='function' && baseF.length>0){
+          // ไม่โหลดใหม่ ใช้ render ที่มีอยู่
+          if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(baseF);
+        }
+        const ov = document.getElementById('fullscreenListOverlay');
+        if(ov) ov.style.display='none';
+      }catch(e){}
     }
   };
 
@@ -9487,18 +9514,27 @@ window.renderFloodWarningsList = function(list){
     const clickedItem = base.find(x=>String(x.id)===idStr);
 
     if(isFullscreen){
-      // ตาม requirement: แสดงการ์ดลิสต์รายการตามที่กด 1 รายการ
+      // v17.13 FIX - แก้บั๊กว้งกลมหาย: กรองแค่ลิสต์การ์ด ไม่กรองหมุดบนแผนที่
+      // หมุดบนแผนที่ต้องอยู่ครบทุกจุด แม้ลิสต์จะกรองเหลือ 1
       if(clickedItem){
         filteredList = [clickedItem];
-        console.log('[v15.11 FULLSCREEN SOS] กรองเหลือ 1 รายการ', idStr);
+        console.log('[v17.13 FIX FULLSCREEN SOS] กรองลิสต์เหลือ 1 รายการ (หมุดแผนที่ไม่กรอง)', idStr);
       } else {
         filteredList = base.filter(x=>String(x.id)===idStr);
         if(filteredList.length===0 && clickedItem) filteredList=[clickedItem];
       }
 
       if(typeof renderSOSList==='function'){
+        // ส่ง filteredList ไป render แค่ลิสต์การ์ดเท่านั้น ห้ามไปยุ่งกับ map markers
         renderSOSList(filteredList);
-        setTimeout(()=>{ 
+        // คืนหมุดทั้งหมดกลับมา (กันกรณี renderSOSList ไป clear markers)
+        setTimeout(()=>{
+          try{
+            if(typeof updateSOSMapMarkers==='function'){
+              // คืนหมุดทั้งหมด ไม่ใช่แค่ filteredList
+              updateSOSMapMarkers(base);
+            }
+          }catch(e){}
           if(typeof updateFullscreenOverlaySOS==='function') updateFullscreenOverlaySOS(filteredList);
         }, 150);
       }
