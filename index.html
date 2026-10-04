@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_2_debug1of4 </title>
+  <title> v4_2_1_debug1of4   </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -8105,7 +8105,7 @@ window.loadFloodWarnings = async function(){
       const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
-      L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), // HOTFIX max 600 fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
+      L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
       (()=>{ const _c=layer.getLayers().slice(-1)[0]; if(_c) _c.on('click', ()=>{ onFloodMarkerClicked(w); }); })(); // v13.11.3 FIX: ลบหมุดฟ้า, คลิกที่วงกลมแทน
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
@@ -8233,15 +8233,26 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
 
 
 <script>
-// อัปเดตวันที่เวลาปัจจุบันสำหรับแถบสถานะเหนือฟิลเตอร์ SOS
-
-// v17.12 FIX - ลบ updateSOSDateTime ซ้ำซ้อน
+// อัปเดตวันที่เวลาปัจจุบันสำหรับแถบสถานะเหนือฟิลเตอร์ SOS - HOTFIX restore missing function
+function updateSOSDateTime(){
+  var el=document.getElementById('sosCurrentDateTime');
+  if(!el) return;
+  var now=new Date();
+  try{
+    el.textContent = now.toLocaleString('th-TH', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  }catch(e){ el.textContent = now.toString(); }
+}
+function updateFloodCenterTime(){
+  var el=document.getElementById('floodCenterTime');
+  if(el){ el.textContent = new Date().toLocaleString('th-TH'); }
+}
 
 document.addEventListener('DOMContentLoaded', function(){
-  updateSOSDateTime();
-  setInterval(updateSOSDateTime, 60000);
+  try{ updateSOSDateTime(); }catch(e){}
+  try{ updateFloodCenterTime(); }catch(e){}
+  setInterval(function(){ try{ updateSOSDateTime(); }catch(e){} }, 60000);
+  setInterval(function(){ try{ updateFloodCenterTime(); }catch(e){} }, 60000);
 });
-// เรียกทันทีถ้า DOM โหลดแล้ว
 try{ updateSOSDateTime(); }catch(e){}
 </script>
 
@@ -8602,7 +8613,7 @@ function updateWarningMapMarkers(list){
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
 
-    const circle = L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), // HOTFIX max 600 fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
+    const circle = L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
     // v13.11.3 FIX: ลบขอบส้ม (stroke:false) และลบหมุดสีฟ้า (ไม่สร้าง L.marker แล้ว)
     // v13.12: ตัด bindPopup ออก เพื่อไม่ให้ popup เล็กซ้อนกับ highlight logic
 
@@ -9067,8 +9078,7 @@ function getCurrentLocationForFloodWarning(){
     floodSubmitBtn.disabled=true; floodSubmitBtn.innerHTML='⏳ กำลังบันทึก...'; 
   }
   // HOTFIX Step1: removed non-await LINE check, handled below with await
-  const lat =
- document.getElementById('floodLat')?.value;
+  const lat = document.getElementById('floodLat')?.value;
   const lng = document.getElementById('floodLng')?.value;
   const waterLevel = document.getElementById('floodWaterLevel')?.value;
   const detail = document.getElementById('floodDetailText')?.value;
