@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_2 v2.1
+  <link rel="shortcut icon" href="#">//Git_Index_2_v3_0_compress_image_sos
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -7230,8 +7230,89 @@ document.addEventListener('fullscreenchange', ()=>{
     window.currentSOSPostId = window.currentSOSPostId || null;
     window.currentSOSUserId = window.currentSOSUserId || null;
 
-    function handleSOSFilesSelected(event){
-      // v18 SOS: เปลี่ยนมาใช้ระบบพรีวิวก่อนลงช่อง แบบ flood
+    
+    // === v18.1 SOS: บีบอัดรูปไม่เกิน 500KB ===
+    const SOS_MAX_KB = 500;
+    const SOS_MAX_BYTES = SOS_MAX_KB * 1024;
+
+    function loadImageFromFile(file){
+      return new Promise((resolve, reject)=>{
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = (e)=>{ URL.revokeObjectURL(url); reject(e); };
+        img.src = url;
+      });
+    }
+    function canvasToFile(canvas, fileName, quality){
+      return new Promise((resolve)=>{
+        canvas.toBlob((blob)=>{
+          if(!blob){ resolve(null); return; }
+          const f = new File([blob], fileName, {type:'image/jpeg'});
+          resolve(f);
+        }, 'image/jpeg', quality);
+      });
+    }
+    async function compressImageFileTo500KB(file, maxBytes = SOS_MAX_BYTES){
+      if(!file || !file.type.startsWith('image/')) return file;
+      if(file.size <= maxBytes) return file;
+      try{
+        let img = await loadImageFromFile(file);
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        // จำกัดด้านยาวสุด 1920 ก่อน (ลดขนาดเร็ว)
+        const MAX_SIDE = 1920;
+        if(w > MAX_SIDE || h > MAX_SIDE){
+          if(w > h){ h = Math.round(h * MAX_SIDE / w); w = MAX_SIDE; }
+          else { w = Math.round(w * MAX_SIDE / h); h = MAX_SIDE; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        let quality = 0.85;
+        let compressed = await canvasToFile(canvas, file.name, quality);
+        let attempts = 0;
+        while(compressed && compressed.size > maxBytes && attempts < 12){
+          attempts++;
+          if(quality > 0.2){
+            quality -= 0.1; // ลด quality
+          }else{
+            // quality ต่ำสุดแล้วยังเกิน -> ลด resolution 10%
+            w = Math.round(w * 0.9);
+            h = Math.round(h * 0.9);
+            canvas.width = w;
+            canvas.height = h;
+            ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            quality = 0.75;
+          }
+          compressed = await canvasToFile(canvas, file.name, quality);
+        }
+        if(compressed && compressed.size <= maxBytes) {
+          console.log(`[SOS Compress] ${file.name} ${Math.round(file.size/1024)}KB -> ${Math.round(compressed.size/1024)}KB`);
+          return compressed;
+        }
+        // fallback คืนไฟล์ล่าสุดที่บีบได้ (ถึงจะยังเกินนิดหน่อยก็ดีกว่าเดิม)
+        return compressed || file;
+      }catch(e){
+        console.warn('compress fail', e);
+        return file;
+      }
+    }
+    async function compressFilesTo500KB(files){
+      const out = [];
+      for(let f of files){
+        const cf = await compressImageFileTo500KB(f);
+        out.push(cf);
+      }
+      return out;
+    }
+
+    async function handleSOSFilesSelected(event){
+      // v18.1 SOS: บีบอัดไม่เกิน 500KB ก่อนพรีวิว
       const targetFiles = event && event.target && event.target.files ? Array.from(event.target.files) : [];
       const fileInput = document.getElementById('sosFileInput');
       const camInput = document.getElementById('sosCameraInput');
@@ -7240,6 +7321,10 @@ document.addEventListener('fullscreenchange', ()=>{
         files = Array.from(fileInput.files);
       }
       if(files.length===0) return;
+      // แสดงสถานะกำลังบีบอัด
+      const statusEl = document.getElementById('sosUploadStatusText');
+      if(statusEl) statusEl.innerText = '⏳ กำลังบีบอัดรูป...';
+      files = await compressFilesTo500KB(files);
       openSOSPreview(files);
       if(fileInput) fileInput.value='';
       if(camInput) camInput.value='';
@@ -7282,8 +7367,10 @@ document.addEventListener('fullscreenchange', ()=>{
       const m = document.getElementById('sosPreviewModal');
       if(m) m.style.display='none';
     }
-    function saveSOSPreviewToGrid(){
+    async function saveSOSPreviewToGrid(){
       if(!window.sosUploadedFiles) window.sosUploadedFiles=[];
+      // ย้ำบีบอัดอีกรอบก่อนลง grid (กันหลุด)
+      window.sosPendingPreviewFiles = await compressFilesTo500KB(window.sosPendingPreviewFiles);
       let totalCount = (window.sosExistingImageUrls?.length||0) + window.sosUploadedFiles.length;
       for(let f of window.sosPendingPreviewFiles){
         if(totalCount < 8){
@@ -7338,9 +7425,13 @@ document.addEventListener('fullscreenchange', ()=>{
       canvas.height = video.videoHeight || 720;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob)=>{
+      canvas.toBlob(async (blob)=>{
         if(!blob) return;
-        const file = new File([blob], `sos-camera-${Date.now()}-${window.sosCameraTempFiles.length+1}.jpg`, {type:'image/jpeg'});
+        let file = new File([blob], `sos-camera-${Date.now()}-${window.sosCameraTempFiles.length+1}.jpg`, {type:'image/jpeg'});
+        // v18.1 บีบอัดทันทีถ้าเกิน 500KB
+        if(file.size > SOS_MAX_BYTES){
+          file = await compressImageFileTo500KB(file);
+        }
         window.sosCameraTempFiles.push(file);
         renderSOSCameraStrip();
         updateSOSCameraBadge();
