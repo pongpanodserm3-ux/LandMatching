@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_2 v3_2_compress_image_sos_floodWarning_message
+  <link rel="shortcut icon" href="#">//Git_Index_2 v3_3_compress_image_sos_floodWarning_message
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI Git_Index_2</title>
@@ -8801,7 +8801,7 @@ function closeFloodPreview(){
   // window.floodPendingPreviewFiles=[];
 }
 
-async async function saveFloodPreviewToGrid(){
+async function saveFloodPreviewToGrid(){
   if(!window.floodUploadedFiles) window.floodUploadedFiles=[];
   window.floodPendingPreviewFiles = await compressFilesTo500KB(window.floodPendingPreviewFiles);
   let totalCount = (window.floodExistingImageUrls?.length||0) + window.floodUploadedFiles.length;
