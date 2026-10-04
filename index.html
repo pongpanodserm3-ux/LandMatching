@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.12
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.13
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -1389,6 +1389,12 @@
 #warningDetailModalOverlay.active { display:flex !important; }
 #fullscreenListOverlay { pointer-events:auto; }
 #fullscreenListOverlay [data-warning-id] { pointer-events:auto; }
+
+
+/* v17.11.11 FIX: fullscreen button bottom-right visibility fix */
+#mapControlBar { pointer-events:auto !important; z-index:1000 !important; }
+#mapControlBar #mapFullscreenBtn { display:flex !important; visibility:visible !important; opacity:1 !important; }
+#sosMapContainer .leaflet-control-attribution { margin-right: 60px !important; } /* avoid overlap */
 
 </style> 
     
@@ -6734,7 +6740,7 @@ function initSOSMap(){
       if(!document.getElementById('mapControlBar')){
         const bar = document.createElement('div');
         bar.id='mapControlBar';
-        bar.style.cssText='position:absolute; bottom:12px; right:12px; z-index:800; display:flex; gap:6px;';  // v17.11.11 FIX: moved fullscreen button to bottom-right
+        bar.style.cssText='position:absolute; bottom:24px; right:12px; z-index:1000; display:flex; gap:6px; pointer-events:auto;'; // v17.11.11 FIX: bottom-right visible above attribution
         bar.innerHTML = `
           <button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">⛶</button>
         `;
