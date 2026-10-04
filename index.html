@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_2_v3_1_compress_image_sos_floodWarning_showmessage
+  <link rel="shortcut icon" href="#">//Git_Index_2_v3_1_compress_image_sos_floodWarning
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
+  <title>Land Matching AI_Git_Index_2</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1727,7 +1727,7 @@ window.highlightBoth = function(idStr, type){
       <div id="sosImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span id="sosUploadStatusText" style="font-size:12px; font-weight:bold; color:#5c3a6b;">อัปโหลดรูปภาพ (0/8)</span>
-          <span style="font-size:10px; color:#16a34a; font-weight:bold;">📦 บีบอัด ≤500KB/รูป</span>
+          <span style="font-size:10px; color:#888;">หลักการ: userid-postid-001.jpg</span>
         </div>
         <input type="file" id="sosFileInput" accept="image/*" multiple style="display:none;" onchange="handleSOSFilesSelected(event)">
         <input type="file" id="sosCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleSOSFilesSelected(event)">
@@ -1762,7 +1762,7 @@ window.highlightBoth = function(idStr, type){
       <div id="sosPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
         <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <b style="font-size:14px;">👁️ SOS พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b><div style="font-size:10px;color:#16a34a;margin-top:2px;">📦 ระบบบีบอัดอัตโนมัติไม่เกิน 500KB/รูป</div>
+            <b style="font-size:14px;">👁️ SOS พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b>
             <button onclick="closeSOSPreview()" style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button>
           </div>
           <div id="sosPreviewGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
@@ -1822,7 +1822,7 @@ window.highlightBoth = function(idStr, type){
       <div id="floodImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span id="floodUploadStatusText" style="font-size:12px; font-weight:bold; color:#5c3a6b;">อัปโหลดรูปภาพ (0/8)</span>
-          <span style="font-size:10px; color:#16a34a; font-weight:bold;">📦 บีบอัด ≤500KB/รูป</span>
+          <span style="font-size:10px; color:#888;">หลักการ: userid-postid-001.jpg</span>
         </div>
         <input type="file" id="floodFileInput" accept="image/*" multiple style="display:none;" onchange="handleFloodFilesSelected(event)">
         <input type="file" id="floodCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFloodFilesSelected(event)">
@@ -1874,7 +1874,7 @@ window.highlightBoth = function(idStr, type){
       <div id="floodPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
         <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <b style="font-size:14px;">👁️ พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b><div style="font-size:10px;color:#16a34a;margin-top:2px;">📦 ระบบบีบอัดอัตโนมัติไม่เกิน 500KB/รูป</div>
+            <b style="font-size:14px;">👁️ พรีวิวก่อนบันทึกลงช่อง (สูงสุด 8)</b>
             <button onclick="closeFloodPreview()" style="border:1px solid #e2e8f0; background:#f8fafc; border-radius:50%; width:28px; height:28px; cursor:pointer;">×</button>
           </div>
           <div id="floodPreviewGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
@@ -7306,38 +7306,9 @@ document.addEventListener('fullscreenchange', ()=>{
     }
     async function compressFilesTo500KB(files){
       const out = [];
-      let hadCompress = false;
-      let totalBefore = 0, totalAfter = 0;
       for(let f of files){
-        totalBefore += f.size;
         const cf = await compressImageFileTo500KB(f);
-        totalAfter += cf.size;
-        if(cf.size < f.size) hadCompress = true;
         out.push(cf);
-      }
-      // แจ้งเตือนแบบเบาๆ ไม่แก้โค้ดเยอะ - ใช้ statusText + console + alert แบบ toast
-      if(hadCompress){
-        const kbBefore = Math.round(totalBefore/1024);
-        const kbAfter = Math.round(totalAfter/1024);
-        // หา status ที่กำลังแสดงอยู่
-        const s1 = document.getElementById('sosUploadStatusText');
-        const s2 = document.getElementById('floodUploadStatusText');
-        // สร้าง toast เล็กๆ
-        let toast = document.getElementById('compressToast');
-        if(!toast){
-          toast = document.createElement('div');
-          toast.id='compressToast';
-          toast.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(22,163,74,0.95); color:white; padding:10px 16px; border-radius:12px; font-size:12px; font-weight:bold; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-          document.body.appendChild(toast);
-        }
-        toast.innerText = `📦 บีบอัดแล้ว ${kbBefore}KB → ${kbAfter}KB (≤500KB/รูป)`;
-        toast.style.display='block';
-        setTimeout(()=>{ toast.style.display='none'; }, 3500);
-        // อัพเดท status text ด้วย
-        setTimeout(()=>{
-          if(s1 && s1.innerText.includes('บีบอัด')) s1.innerText = `อัปโหลดรูปภาพ (${(window.sosExistingImageUrls?.length||0)+(window.sosUploadedFiles?.length||0)}/8) • บีบแล้ว ≤500KB`;
-          if(s2 && s2.innerText.includes('บีบอัด')) s2.innerText = `อัปโหลดรูปภาพ (${(window.floodExistingImageUrls?.length||0)+(window.floodUploadedFiles?.length||0)}/8) • บีบแล้ว ≤500KB`;
-        }, 500);
       }
       return out;
     }
@@ -7466,7 +7437,6 @@ document.addEventListener('fullscreenchange', ()=>{
         window.sosCameraTempFiles.push(file);
         renderSOSCameraStrip();
         updateSOSCameraBadge();
-        if(file.size <= SOS_MAX_BYTES){ let t=document.getElementById('compressToast'); if(!t){ t=document.createElement('div'); t.id='compressToast'; t.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(22,163,74,0.95); color:white; padding:10px 16px; border-radius:12px; font-size:12px; font-weight:bold; z-index:9999;'; document.body.appendChild(t);} t.innerText = `📸 ถ่ายแล้ว บีบอัตโนมัติ ≤500KB (${Math.round(file.size/1024)}KB)`; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
       }, 'image/jpeg', 0.9);
     }
     function renderSOSCameraStrip(){
