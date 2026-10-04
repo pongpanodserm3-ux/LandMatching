@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.1
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -7634,7 +7634,7 @@ window.toggleWarningView = function(){
 var dangerLayer=null; let IS_FLOOD_MODE=true;
 function initDangerLayer(){ return window.initDangerLayer(); }
 
-// v17.12 FIX - ลบ updateSegmentedUI ซ้ำซ้อน (duplicate removed)
+// v17.12 FIX - ลบ updateSegmentedUI ซ้ำซ้อน
 
 function switchSOSSubView(mode){
   if(window.currentViewMode === mode) return;
@@ -7818,7 +7818,7 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
 <script>
 // อัปเดตวันที่เวลาปัจจุบันสำหรับแถบสถานะเหนือฟิลเตอร์ SOS
 
-// v17.12 FIX - ลบ updateSOSDateTime ซ้ำซ้อน (duplicate removed)
+// v17.12 FIX - ลบ updateSOSDateTime ซ้ำซ้อน
 
 document.addEventListener('DOMContentLoaded', function(){
   updateSOSDateTime();
@@ -8781,7 +8781,7 @@ function extractFileNameFromUrl(url){
   }catch(e){ return null; }
 }
 
-async function await deleteFilesFromStorage(imageUrls){
+async function deleteFilesFromStorage(imageUrls){
   if(!imageUrls || imageUrls.length===0) return {ok:true, deleted:0, verified:true};
   if(typeof supabaseClient==='undefined' || !supabaseClient) return {ok:false, verified:false};
   try{
@@ -8814,7 +8814,7 @@ async function await deleteFilesFromStorage(imageUrls){
   }catch(e){ console.warn('[STORAGE-DELETE-100%] exception', e); return {ok:false, error:e, verified:false}; }
 }
 
-async function await deleteSOSImage100Percent(imageUrls, context='manual_edit'){
+async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
   const result = await deleteFilesFromStorage(imageUrls);
   try{
     const logEntry = {
@@ -9249,7 +9249,7 @@ function openSOSDetailModal(id){
 }
 function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
 
-// v17.12 FIX - ลบ closeWarningDetailModal ซ้ำซ้อน (duplicate removed)
+// v17.12 FIX - ลบ closeWarningDetailModal ซ้ำซ้อน
 
  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
 
