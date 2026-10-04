@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.5
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.6
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -8687,11 +8687,22 @@ function getCurrentLocationForFloodWarning(){
   }, null, {enableHighAccuracy:true, timeout:8000});
 }
 
-async function submitFloodWarning(){
+// v17.18 FIX บั๊ก 1 - กันกดเบิ้ล 2 ครั้งแล้วได้ 2 โพสต์ (เฉพาะเตือนท่วมเท่านั้น)
+ window._isSubmittingFlood = window._isSubmittingFlood || false;
+ async function submitFloodWarning(){
+  if(window._isSubmittingFlood){
+    console.log('[v17.18] กำลังบันทึกเตือนท่วมอยู่ กันกดเบิ้ล');
+    return;
+  }
+  window._isSubmittingFlood = true;
+  // Disable ปุ่มบันทึกชั่วคราว
+  const floodSubmitBtn = document.getElementById('floodSubmitBtn') || document.querySelector('#floodWarningModalOverlay button[onclick*="submitFloodWarning"]');
+  if(floodSubmitBtn){ floodSubmitBtn.disabled=true; floodSubmitBtn.innerHTML='⏳ กำลังบันทึก...'; }
   if (typeof currentUserLineProfile !== 'undefined' && !currentUserLineProfile && typeof CURRENT_USER_ID !== 'undefined' && !CURRENT_USER_ID) {
     if(typeof getCurrentUserId === 'function'){
-      const freshId = await getCurrentUserId();
-      if (!freshId && typeof showLineRequiredModal === 'function') { showLineRequiredModal(); return; }
+      getCurrentUserId().then(freshId=>{
+        if (!freshId && typeof showLineRequiredModal === 'function') { showLineRequiredModal(); window._isSubmittingFlood=false; if(floodSubmitBtn){ floodSubmitBtn.disabled=false; floodSubmitBtn.innerHTML='📢 ส่งแจ้งเตือนท่วม'; } }
+      });
     }
   }
   const lat = document.getElementById('floodLat')?.value;
@@ -8806,18 +8817,43 @@ async function submitFloodWarning(){
     }
 
     const result = await resilientInsert(payload);
-    alert('✅ ส่งแจ้งเตือนน้ำท่วมสำเร็จ!');
-    if(typeof closeFloodWarningModal === 'function') closeFloodWarningModal();
-    window.floodUploadedFiles = [];
-    window.floodFiles = [];
-    if(typeof renderFloodUploadGrid === 'function') renderFloodUploadGrid();
-    const locInput = document.getElementById('floodLocationText'); if(locInput) locInput.value='';
-    const detailInput = document.getElementById('floodDetailText'); if(detailInput) detailInput.value='';
-    const levelInput = document.getElementById('floodWaterLevel'); if(levelInput) levelInput.value='';
-    if(typeof loadFloodWarningsList === 'function') loadFloodWarningsList();
+    console.log('[v17.18 FIX บั๊ก 3] บันทึกสำเร็จ เตรียมเพิ่มเข้าแผนที่ทันที', result);
+    // v17.18 FIX บั๊ก 3 - ทำให้โพสต์ปรากฏทันที ไม่ต้องรีเฟรช
+    try{
+      // เพิ่มเข้า cache ทันที
+      if(!window.floodWarningsCache) window.floodWarningsCache=[];
+      if(result && result.id){
+        window.floodWarningsCache.unshift(result);
+      }
+      // ปิด modal
+      if(typeof closeFloodWarningModal === 'function') closeFloodWarningModal();
+      // ล้างไฟล์
+      window.floodUploadedFiles = [];
+      window.floodFiles = [];
+      if(typeof renderFloodUploadGrid === 'function') renderFloodUploadGrid();
+      const locInput = document.getElementById('floodLocationText'); if(locInput) locInput.value='';
+      const detailInput = document.getElementById('floodDetailText'); if(detailInput) detailInput.value='';
+      const levelInput = document.getElementById('floodWaterLevel'); if(levelInput) levelInput.value='';
+      // แสดงลิสต์ใหม่ทันที
+      if(typeof renderFloodWarningsList==='function'){
+        renderFloodWarningsList(window.floodWarningsCache);
+      }
+      // โหลดวงกลมใหม่บนแผนที่ทันที (ไม่ต้องรีเฟรช)
+      if(typeof window.loadFloodWarnings==='function'){
+        setTimeout(()=>{ window.loadFloodWarnings(); }, 500);
+      } else if(typeof loadFloodWarnings==='function'){
+        setTimeout(()=>{ loadFloodWarnings(); }, 500);
+      }
+      alert('✅ ส่งแจ้งเตือนน้ำท่วมสำเร็จ! ขึ้นแผนที่ทันทีแล้ว');
+    }catch(e2){ console.warn('post-render error', e2); }
   }catch(e){
     console.error('[FLOOD SUBMIT] error', e);
     alert('บันทึกไม่สำเร็จ: '+(e.message||e));
+  }finally{
+    // v17.18 FIX บั๊ก 1 - ปลดล็อคปุ่ม ไม่ให้กดค้าง
+    window._isSubmittingFlood=false;
+    let btn = document.getElementById('floodSubmitBtn') || document.querySelector('button[onclick*="submitFloodWarning"]');
+    if(btn){ btn.disabled=false; btn.innerHTML=btn.dataset.origText||'📢 ส่งแจ้งเตือนท่วม'; }
   }
 }
 
@@ -9093,6 +9129,45 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
       window.floodWarningsCache = window.floodWarningsCache.filter(x=>String(x.id)!==String(warningId));
       if(typeof renderFloodWarningsList==='function') renderFloodWarningsList(window.floodWarningsCache);
     }
+    // v17.18 FIX บั๊ก 2 - ลบวงกลมบนแผนที่ที่ตรงกับโพสต์ที่ลบด้วย (เฉพาะเตือนท่วมเท่านั้น)
+    try{
+      let layer = window.dangerLayer || window.initDangerLayer?.();
+      if(!layer && typeof L!=='undefined' && window.sosMap){
+        layer = window.sosMap ? window.dangerLayer : null;
+      }
+      if(layer){
+        console.log('[v17.18 FIX บั๊ก 2] ลบวงกลมเตือนท่วม', warningId, 'ออกจากแผนที่');
+        // วิธีที่ 1: ล้างแล้ววาดใหม่จาก cache ที่เหลือ (ชัวร์สุด)
+        try{
+          layer.clearLayers();
+          const remaining = window.floodWarningsCache || [];
+          remaining.forEach((w)=>{
+            const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
+            if(isNaN(lat)||isNaN(lng)) return;
+            const col = (w.risk_level==='critical'||w.level==='critical')?'#ef4444':'#f97316';
+            const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m||w.radius)||600, fillColor:col, fillOpacity:0.35, stroke:false});
+            circle._warningId = w.id; // เก็บ id ไว้เพื่อลบครั้งต่อไป
+            circle.bindPopup(`<b>${w.title||w.location_text||'เตือนท่วม'}</b>`);
+            circle.on('click', ()=>{ if(typeof onFloodMarkerClicked==='function') onFloodMarkerClicked(w); });
+            layer.addLayer(circle);
+          });
+          console.log('[v17.18] วาดวงกลมใหม่เหลือ', remaining.length, 'วง');
+        }catch(eInner){
+          console.warn('[v17.18] redraw dangerLayer error', eInner);
+          // fallback: reload ทั้งหมด
+          if(typeof window.loadFloodWarnings==='function') window.loadFloodWarnings();
+        }
+      }
+      // ลบ overlay ถ้ามีการกรองอยู่
+      const bar = document.getElementById('circleFilterBar');
+      const bar2 = document.getElementById('circleFilterBarFullscreen');
+      if(window.floodWarningsCache && window.floodWarningsCache.length===0){
+        if(bar) bar.remove();
+        if(bar2) bar2.remove();
+        const ov = document.getElementById('fullscreenListOverlay');
+        if(ov) ov.style.display='none';
+      }
+    }catch(e2){ console.warn('[v17.18 FIX บั๊ก 2] error', e2); }
     return true;
   }catch(e){ console.error(e); alert('ลบเตือนภัยไม่สำเร็จ: '+e.message); return false; }
 }
