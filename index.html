@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_2_2_debug1of3   </title>
+  <title> v4_2_3_debug1of3   </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7695,15 +7695,35 @@ document.addEventListener('fullscreenchange', ()=>{
     // v17.20 FIX คำสั่งที่ 1 - กันกดเบิ้ลเฉพาะ แจ้งขอให้ช่วยเท่านั้น (ไม่แตะเตือนท่วม)
     window._isSubmittingSOS = window._isSubmittingSOS || false;
     window.submitSOS = async function(){
+      // HOTFIX SOS PHONE BUG - ย้าย validation มาก่อนล็อคปุ่ม กันค้าง "กำลังบันทึก..."
       if(window._isSubmittingSOS){ console.log('[v17.20 SOS] กันกดเบิ้ล'); return; }
+
+      // 1. validation ก่อนล็อค
+      const phoneEarly = document.getElementById('sosPhone')?.value.trim() || '';
+      const locTextEarly = document.getElementById('sosLocationText')?.value.trim() || '';
+      const latEarly = document.getElementById('sosLat')?.value || document.getElementById('latInput')?.value || '';
+      const lngEarly = document.getElementById('sosLng')?.value || document.getElementById('lngInput')?.value || '';
+
+      if (typeof selectedSOSTags !== 'undefined' && selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
+      if (!phoneEarly) { alert('กรุณากรอกเบอร์โทร/Line ID'); document.getElementById('sosPhone')?.focus(); return; }
+      if (!locTextEarly && !latEarly) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+      if (typeof selectedSOSTags !== 'undefined' && selectedSOSTags.has('evacuate')) {
+        const evacDestEarly = document.getElementById('sosEvacDestination')?.value.trim() || '';
+        if(!evacDestEarly){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
+      }
+
+      // 2. ผ่าน validation แล้วค่อยล็อคปุ่ม
       window._isSubmittingSOS = true;
       let sosBtn = document.getElementById('sosSubmitBtn') || document.querySelector('#sosModalOverlay button[onclick*="submitSOS"]') || document.querySelector('button[onclick="submitSOS()"]');
-      if(sosBtn){ sosBtn.disabled=true; sosBtn.dataset.origText=sosBtn.innerHTML; sosBtn.innerHTML='⏳ กำลังบันทึก...'; }
-      // v6.7 FIX: ยามเฝ้าประตู - ต้องยืนยันตัวตน LINE จริงเท่านั้น
-      if (!currentUserLineProfile || !CURRENT_USER_ID) {
+      if(sosBtn){ sosBtn.disabled=true; if(!sosBtn.dataset.origText) sosBtn.dataset.origText=sosBtn.innerHTML; sosBtn.innerHTML='⏳ กำลังบันทึก...'; }
+
+      // v6.7 FIX: ยามเฝ้าประตู - ต้องยืนยันตัวตน LINE จริงเท่านั้น (ถ้าไม่ผ่านต้องปลดล็อค)
+      if (typeof currentUserLineProfile !== 'undefined' && typeof CURRENT_USER_ID !== 'undefined' && (!currentUserLineProfile || !CURRENT_USER_ID)) {
         const freshId = await getCurrentUserId();
         if (!freshId) {
           showLineRequiredModal();
+          window._isSubmittingSOS=false;
+          if(sosBtn){ sosBtn.disabled=false; sosBtn.innerHTML=sosBtn.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
           return;
         }
       }
@@ -7713,12 +7733,35 @@ document.addEventListener('fullscreenchange', ()=>{
       const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
       const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
 
-      if (selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
-      if (!phone) { alert('กรุณากรอกเบอร์โทร/Line ID'); return; }
-      if (!locText && !lat) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
+      // re-check เผื่อมีการเปลี่ยนแปลง
+      if (selectedSOSTags.size === 0) { 
+        alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); 
+        window._isSubmittingSOS=false;
+        if(sosBtn){ sosBtn.disabled=false; sosBtn.innerHTML=sosBtn.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
+        return; 
+      }
+      if (!phone) { 
+        alert('กรุณากรอกเบอร์โทร/Line ID'); 
+        window._isSubmittingSOS=false;
+        if(sosBtn){ sosBtn.disabled=false; sosBtn.innerHTML=sosBtn.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
+        document.getElementById('sosPhone')?.focus();
+        return; 
+      }
+      if (!locText && !lat) { 
+        alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); 
+        window._isSubmittingSOS=false;
+        if(sosBtn){ sosBtn.disabled=false; sosBtn.innerHTML=sosBtn.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
+        return; 
+      }
       if (selectedSOSTags.has('evacuate')) {
         const evacDest = document.getElementById('sosEvacDestination')?.value.trim();
-        if(!evacDest){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
+        if(!evacDest){ 
+          alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); 
+          document.getElementById('sosEvacDestination')?.focus(); 
+          window._isSubmittingSOS=false;
+          if(sosBtn){ sosBtn.disabled=false; sosBtn.innerHTML=sosBtn.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
+          return; 
+        }
       }
 
       let userId = null;
@@ -7940,6 +7983,7 @@ document.addEventListener('fullscreenchange', ()=>{
         if(sosBtn2){ sosBtn2.disabled=false; sosBtn2.innerHTML=sosBtn2.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
       }
     };
+    function unlockSOSButton(){ window._isSubmittingSOS=false; let b=document.getElementById('sosSubmitBtn'); if(b){ b.disabled=false; b.innerHTML=b.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; } }
     // ===================== END SOS ENHANCED v6.6 =====================
 
 
