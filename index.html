@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.7
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.8
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -9405,15 +9405,18 @@ function openSOSDetailModal(id){
         <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">📍 ดูบนแผนที่</button>
         <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">💬 ติดต่อช่วยเหลือ</button>
       </div>
-      <!-- v17.20 FIX คำสั่งที่ 2 - เพิ่มปุ่มลบโพสต์นี้ แบบ 100% ลบหมด (เฉพาะแจ้งขอให้ช่วยเท่านั้น) -->
-      <!-- คำนวณมือถือเป็นหลัก: ถ้าจอแคบ ปุ่มจะเต็มบรรทัดล่าง -->
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;">
-        ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="flex:1 1 100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; min-width:140px;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
-        <button id="btnDeleteSOSDetail_${item.id}" onclick="deleteSOSFromDetail('${item.id}')" style="flex:1 1 100%; background:#fff1f2; color:#be123c; border:1.5px solid #fecaca; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; min-width:140px;" title="ลบโพสต์นี้ + ลบวงกลม + ลบรูปทั้งหมด">
-          <span style="font-size:16px;">🗑️</span> ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)
+      ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="width:100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; margin-top:2px;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
+      <!-- v17.21 FIX - เพิ่มปุ่มแก้ไขโพสต์ + ลบโพสต์ (เฉพาะจุดขอให้ช่วยเท่านั้น) ตามรูปที่แนบ -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <!-- ปุ่มแก้ไขอยู่ซ้ายของปุ่มลบ ตามที่ขอ -->
+        <button id="btnEditSOSDetail_${item.id}" onclick="editSOSFromDetail('${item.id}')" style="flex:1 1 48%; background:#eff6ff; color:#1e40af; border:1.5px solid #bfdbfe; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; min-width:120px;" title="แก้ไขโพสต์นี้">
+          <span style="font-size:16px;">✏️</span> แก้ไขโพสต์
+        </button>
+        <button id="btnDeleteSOSDetail_${item.id}" onclick="deleteSOSFromDetail('${item.id}')" style="flex:1 1 48%; background:#fff1f2; color:#be123c; border:1.5px solid #fecaca; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; min-width:120px;" title="ลบโพสต์นี้ + ลบวงกลม + ลบรูปทั้งหมด">
+          <span style="font-size:16px;">🗑️</span> ลบโพสต์นี้
         </button>
       </div>
-      <div style="font-size:10px; color:#94a3b8; text-align:center; margin-top:4px;">⚠️ ลบแล้วจะลบวงกลมบนแผนที่ รูปในคลัง และแชททั้งหมด - กู้คืนไม่ได้</div>
+      <div style="font-size:10px; color:#94a3b8; text-align:center; margin-top:4px;">⚠️ ลบแล้วจะลบวงกลมบนแผนที่ รูปในคลัง และแชททั้งหมด - กู้คืนไม่ได้ • แก้ไขได้เฉพาะโพสต์ตัวเองและ admin</div>
     </div>
   `;
   document.getElementById('sosDetailContent').innerHTML = html;
@@ -9464,6 +9467,37 @@ async function deleteSOSFromDetail(sosId){
     console.error('deleteSOSFromDetail error', e);
     alert('ลบไม่สำเร็จ: '+(e.message||e));
     if(btn){ btn.disabled=false; btn.innerHTML='🗑️ ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)'; }
+  }
+}
+
+// v17.21 FIX - ฟังก์ชันแก้ไขโพสต์จากหน้า detail (เฉพาะจุดขอให้ช่วยเท่านั้น) - ใช้ openSOSModalForEdit ที่มีอยู่แล้ว
+async function editSOSFromDetail(sosId){
+  if(!sosId) return;
+  const item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(sosId));
+  if(!item){
+    alert('ไม่พบโพสต์นี้');
+    return;
+  }
+  // เช็คสิทธิ์ก่อน (ใช้ canDeleteSOS หรือ getCurrentUserRole)
+  try{
+    const allowed = await canDeleteSOS(sosId, item.user_id);
+    if(!allowed){
+      alert('⛔ คุณแก้ไขได้เฉพาะโพสต์ของตัวเองเท่านั้น (admin แก้ไขของคนอื่นได้)');
+      return;
+    }
+  }catch(e){ console.warn('check edit permission warn', e); }
+  // ปิด detail modal ก่อน
+  closeSOSDetailModal();
+  // เรียกใช้ฟังก์ชันแก้ไขที่มีอยู่แล้ว (ไม่ต้องเขียนใหม่)
+  if(typeof openSOSModalForEdit==='function'){
+    await openSOSModalForEdit(item);
+  } else {
+    // fallback ถ้าไม่มี openSOSModalForEdit
+    window.currentSOSPostId = item.id;
+    window.sosExistingImageUrls = [...(item.images||item.image_urls||[])];
+    window.sosUploadedFiles = [];
+    if(typeof renderSOSUploadGrid==='function') renderSOSUploadGrid();
+    document.getElementById('sosModalOverlay').classList.add('active');
   }
 }
 
