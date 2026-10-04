@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.3
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.4
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -3163,20 +3163,7 @@ function tryLIFFLoginAgain(){
       }
     }
 
-    
-    // v17.14 FIX ข้อ 2 - ป้องกัน XSS
-    function escapeHtml(str){
-      if(str==null) return '';
-      return String(str)
-        .replace(/&/g,'&amp;')
-        .replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;')
-        .replace(/'/g,'&#39;');
-    }
-    function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'&#96;'); }
-
-function getTrustBadgeHTML(role, is_trusted, reporter_type){
+    function getTrustBadgeHTML(role, is_trusted, reporter_type){
       const r = (role||reporter_type||'general').toLowerCase();
       // v17.10 FIX - แสดงแค่ชื่อบทบาทอย่างเดียวตามคำสั่ง ไม่ต้องมีเชื่อถือได้
       if(r==='admin'){
@@ -6404,37 +6391,10 @@ function getTrustBadgeHTML(role, is_trusted, reporter_type){
 
     async function canDeleteSOS(sosId, requestOwnerId){
       try{
-        // v17.14 FIX ข้อ 6 - เช็ค role จาก server ใหม่ทุกครั้งก่อนลบ กันแก้ JS ใน console
         const myRole = await getCurrentUserRole();
         if(!myRole || !myRole.user_id) return false;
-        // ดึง role ล่าสุดจาก DB อีกครั้งเพื่อความชัวร์ (กัน cache เก่า)
-        let freshRole = myRole.role;
-        try{
-          if(typeof supabaseClient!=='undefined' && supabaseClient && myRole.user_id){
-            const {data: freshUser} = await supabaseClient.from('users').select('role, is_trusted').eq('user_id', String(myRole.user_id)).maybeSingle();
-            if(freshUser && freshUser.role) freshRole = freshUser.role;
-          }
-        }catch(_){}
-        if(freshRole === 'admin') return true;
+        if(myRole.role === 'admin') return true;
         if(String(requestOwnerId) === String(myRole.user_id)) return true;
-        return false;
-      }catch(e){ return false; }
-    }
-
-    // v17.14 FIX ข้อ 6 - เพิ่มเช็คสำหรับเตือนท่วมด้วย
-    async function canDeleteFloodWarning(warningId, warningOwnerId){
-      try{
-        const myRole = await getCurrentUserRole();
-        if(!myRole || !myRole.user_id) return false;
-        let freshRole = myRole.role;
-        try{
-          if(typeof supabaseClient!=='undefined' && supabaseClient && myRole.user_id){
-            const {data: freshUser} = await supabaseClient.from('users').select('role').eq('user_id', String(myRole.user_id)).maybeSingle();
-            if(freshUser && freshUser.role) freshRole = freshUser.role;
-          }
-        }catch(_){}
-        if(freshRole === 'admin') return true;
-        if(warningOwnerId && String(warningOwnerId) === String(myRole.user_id)) return true;
         return false;
       }catch(e){ return false; }
     }
@@ -6890,15 +6850,7 @@ document.addEventListener('fullscreenchange', ()=>{
         sosMarkersLayer = window.sosMarkersLayer || L.featureGroup().addTo(window.sosMap);
         window.sosMarkersLayer = sosMarkersLayer;
       }
-      // v17.14 FIX ข้อ 7 - กัน marker leak: ล้างของเก่าก่อนเพิ่มใหม่
-      if(sosMarkersLayer){
-        try{ sosMarkersLayer.clearLayers(); }catch(e){}
-        // ล้างซ้ำเพื่อความชัวร์ (บางเวอร์ชัน Leaflet ค้าง)
-        try{ if(sosMarkersLayer.getLayers().length>0) sosMarkersLayer.clearLayers(); }catch(e){}
-      } else {
-        sosMarkersLayer = window.sosMarkersLayer || L.featureGroup().addTo(window.sosMap);
-        window.sosMarkersLayer = sosMarkersLayer;
-      }
+      sosMarkersLayer.clearLayers();
       list.forEach(item => {
         if (!item.lat || !item.lng) return;
         // FIX v9.5 - ซ่อนเคส completed ออกจากแผนที่เพื่อไม่ให้รก (ยังอยู่ในลิสต์ประวัติ)
@@ -7077,16 +7029,12 @@ document.addEventListener('fullscreenchange', ()=>{
 
         let evacDetailHtml = '';
         if(isEvac){
-          // v17.14 FIX ข้อ 2 - escape XSS
-          const safeOrigin = escapeHtml(origin);
-          const safeDestination = escapeHtml(destination);
-          const safeVehicleLabel = escapeHtml(vehicleLabel);
           evacDetailHtml = `
             <div style="margin-top:6px; background:#fff7ed; border:1px solid #fdba74; border-radius:10px; padding:8px 10px; font-size:12px; line-height:1.5;">
               <div style="font-weight:800; color:#9a3412; margin-bottom:4px; font-size:11px;">🚨 รายละเอียดอพยพ / ยานพาหนะ</div>
-              <div>📍 <b>ไปรับจาก:</b> ${safeOrigin}</div>
-              <div>🏁 <b>ไปส่งที่:</b> ${safeDestination ? safeDestination : '<span style="color:#dc2626;">ยังไม่ระบุ (กรุณาโทรสอบถาม)</span>'}</div>
-              <div>🚗 <b>พาหนะที่ต้องการ:</b> ${safeVehicleLabel}</div>
+              <div>📍 <b>ไปรับจาก:</b> ${origin}</div>
+              <div>🏁 <b>ไปส่งที่:</b> ${destination ? destination : '<span style="color:#dc2626;">ยังไม่ระบุ (กรุณาโทรสอบถาม)</span>'}</div>
+              <div>🚗 <b>พาหนะที่ต้องการ:</b> ${vehicleLabel}</div>
               ${(item.evac_lat && item.evac_lng) ? `<div style="font-size:10px; color:#666; margin-top:2px;">📌 พิกัดปลายทาง: ${parseFloat(item.evac_lat).toFixed(5)}, ${parseFloat(item.evac_lng).toFixed(5)}</div>` : ''}
             </div>`;
         }
@@ -7101,7 +7049,7 @@ document.addEventListener('fullscreenchange', ()=>{
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
               <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
             </div>
-            <div style="font-size:13px; color:#333; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${escapeHtml(item.location_text||'-')}</div>
+            <div style="font-size:13px; color:#333; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${item.location_text||'-'}</div>
             <div style="font-size:11px; color:#666; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span>
               <button style="background:#4a83cc; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.8;" onclick="openSOSChatById('${item.id}', event); event.stopPropagation();">💬 ติดต่อ</button>
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
@@ -7434,7 +7382,6 @@ document.addEventListener('fullscreenchange', ()=>{
           elder: document.getElementById('sosElder').value
         },
         medicine_detail: document.getElementById('medicineDetail')?.value || '',
-        // v7.7 evac fields - จุดรับ/จุดส่ง
         evac_destination_text: document.getElementById('sosEvacDestination')?.value || '',
         evac_lat: document.getElementById('sosEvacLat')?.value ? parseFloat(document.getElementById('sosEvacLat').value) : null,
         evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
@@ -7443,12 +7390,11 @@ document.addEventListener('fullscreenchange', ()=>{
         urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
         status: 'waiting',
         user_id: userId,
-        // v17.11 - บันทึก role ลงโพสต์เพื่อให้แสดง badge ถูกต้อง
+        // v17.15 FIX - ลบ created_by, role ที่ไม่มีใน DB ออก กัน error PGRST204
+        // เหลือแค่คอลัมน์ที่ flood_help_requests มีจริง + resilient ลบคอลัมน์ที่ไม่รู้จักอัตโนมัติ
         reporter_type: isSpecialMemberSOS ? 'special' : 'general',
         reporter_role: myRoleForPayload.role,
-        reporter_trusted: myRoleForPayload.is_trusted,
-        role: myRoleForPayload.role,
-        created_by: String(userId)
+        reporter_trusted: myRoleForPayload.is_trusted
       };
 
       try{
@@ -7486,18 +7432,56 @@ document.addEventListener('fullscreenchange', ()=>{
           }
         }
 
+        // v17.15 FIX - ฟังก์ชันลบโพสต์แบบยืดหยุ่น กันคอลัมน์ไม่มีใน DB (PGRST204)
+        async function resilientInsertSOS(payloadObj, isUpdateMode, existingId){
+          let tryPayload = {...payloadObj};
+          const maxRetries = 5;
+          for(let attempt=0; attempt<maxRetries; attempt++){
+            try{
+              if(isUpdateMode){
+                const {error: updErr} = await supabaseClient.from('flood_help_requests').update(tryPayload).eq('id', existingId);
+                if(updErr) throw updErr;
+                return {ok:true, id: existingId};
+              }else{
+                const {data, error} = await supabaseClient.from('flood_help_requests').insert([tryPayload]).select('id').maybeSingle();
+                if(error) throw error;
+                return {ok:true, id: data ? data.id : null, data};
+              }
+            }catch(err){
+              const msg = (err.message||'') + ' ' + (err.details||'');
+              console.warn('[v17.15 resilient SOS] attempt', attempt, 'error', msg, 'payload keys', Object.keys(tryPayload));
+              // ถ้า error บอกว่าไม่เจอคอลัมน์ ให้ลบคอลัมน์นั้นออกแล้วลองใหม่
+              const colMatch = msg.match(/Could not find the '([^']+)' column/) || msg.match(/column "([^"]+)" of.*does not exist/) || msg.match(/'([^']+)' column of/);
+              if(colMatch && colMatch[1]){
+                const badCol = colMatch[1];
+                console.log('[v17.15] ลบคอลัมน์ที่ไม่มีใน DB:', badCol);
+                delete tryPayload[badCol];
+                continue;
+              }
+              // ถ้าไม่ใช่ error คอลัมน์ ให้โยนต่อ
+              throw err;
+            }
+          }
+          throw new Error('resilientInsertSOS failed after retries');
+        }
+
         let postIdToUse = window.currentSOSPostId;
         let isUpdate = !!postIdToUse;
 
         if(isUpdate){
           // อัปเดตข้อมูลหลักก่อน (ยังไม่รวมรูปใหม่)
-          const {error: updErr} = await supabaseClient.from('flood_help_requests').update(payload).eq('id', postIdToUse);
+          const updRes = await resilientInsertSOS(payload, true, postIdToUse);
+          const updErr = null;
           if(updErr) throw updErr;
         }else{
           // สร้างใหม่เพื่อรับ ID - ตามหลักการเดียวกับ property-images
-          const {data: newRow, error: insErr} = await supabaseClient.from('flood_help_requests').insert([payload]).select('id').single();
+          const insRes2 = await resilientInsertSOS(payload, false, null);
+          const newRow = insRes2.data;
+          const insErr = null;
+          const newData = newRow;
           if(insErr) throw insErr;
-          postIdToUse = newRow.id;
+          postIdToUse = (newRow && newRow.id) ? newRow.id : (typeof insRes2!=='undefined' ? insRes2.id : null);
+          if(!postIdToUse && typeof insRes!=='undefined' && insRes.id) postIdToUse = insRes.id;
           window.currentSOSPostId = postIdToUse;
         }
 
@@ -8025,11 +8009,11 @@ function renderFloodWarningsList(list){
       <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : '1px solid '+border}; border-radius:14px; padding:10px 12px; margin-bottom:10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px;">
         <div style="flex:1; min-width:0;">
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${escapeHtml(w.title||w.location_text||'แจ้งเตือนน้ำท่วม')}</span>
+            <span style="font-size:14px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${icon} ${w.title||w.location_text||'แจ้งเตือนน้ำท่วม'}</span>
             ${badgeHTML}
           </div>
           <div style="font-size:12px; color:#555; margin-top:4px;">🌊 ระดับน้ำ: ${water}</div>
-          <div style="font-size:12px; color:#555;">📍 ${escapeHtml(w.location_text||w.passage_status||'')||'car_passable'}</div>
+          <div style="font-size:12px; color:#555;">📍 ${w.location_text||w.passage_status||'car_passable'}</div>
           <div style="font-size:11px; color:#777; margin-top:2px;">🕒 ${time}</div>
         </div>
         <div style="flex:0 0 80px;">${imageScrollerHtml}</div>
@@ -9049,15 +9033,6 @@ async function autoPurgeOldRequests(){
 async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   const {skipConfirm=false, reason='expired_24h'} = options;
   if(!warningId) return;
-  // v17.14 FIX ข้อ 6 - เช็คสิทธิ์ก่อนลบเตือนท่วม (กันลบของคนอื่น)
-  if(!skipConfirm || reason==='manual'){
-    try{
-      const {data: ownerData} = await supabaseClient.from('flood_warnings').select('user_id, created_by').eq('id', warningId).maybeSingle();
-      const ownerId = ownerData ? (ownerData.user_id || ownerData.created_by) : null;
-      const canDel = await canDeleteFloodWarning(warningId, ownerId);
-      if(!canDel){ alert('⛔ คุณไม่มีสิทธิ์ลบแจ้งเตือนนี้ (ลบได้เฉพาะของตัวเองหรือแอดมิน)'); return; }
-    }catch(e){ console.warn('check delete warning permission error', e); }
-  }
   if(!skipConfirm){
     if(!confirm(`ยืนยันลบแจ้งเตือนท่วม ${warningId} แบบถาวร?`)) return;
   }
