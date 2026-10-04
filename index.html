@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.6
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.7
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -7363,7 +7363,13 @@ document.addEventListener('fullscreenchange', ()=>{
     };
 
     // Override submitSOS - รวม logic รูปภาพ 8 รูป + 1 คน 1 โพสต์
+    // v17.20 FIX คำสั่งที่ 1 - กันกดเบิ้ลเฉพาะ แจ้งขอให้ช่วยเท่านั้น (ไม่แตะเตือนท่วม)
+    window._isSubmittingSOS = window._isSubmittingSOS || false;
     window.submitSOS = async function(){
+      if(window._isSubmittingSOS){ console.log('[v17.20 SOS] กันกดเบิ้ล'); return; }
+      window._isSubmittingSOS = true;
+      let sosBtn = document.getElementById('sosSubmitBtn') || document.querySelector('#sosModalOverlay button[onclick*="submitSOS"]') || document.querySelector('button[onclick="submitSOS()"]');
+      if(sosBtn){ sosBtn.disabled=true; sosBtn.dataset.origText=sosBtn.innerHTML; sosBtn.innerHTML='⏳ กำลังบันทึก...'; }
       // v6.7 FIX: ยามเฝ้าประตู - ต้องยืนยันตัวตน LINE จริงเท่านั้น
       if (!currentUserLineProfile || !CURRENT_USER_ID) {
         const freshId = await getCurrentUserId();
@@ -7581,14 +7587,15 @@ document.addEventListener('fullscreenchange', ()=>{
         selectedSOSTags.clear();
         document.querySelectorAll('.sos-tag-btn.selected').forEach(b=>b.classList.remove('selected'));
         if(typeof loadSOSRequests==='function') loadSOSRequests();
+        alert('✅ ส่งคำขอช่วยเหลือสำเร็จ!');
 
       }catch(e){
         console.warn('ใช้โหมด Demo เพราะ:', e);
-        // Demo fallback
         const demoPayload = {...payload, id: window.currentSOSPostId || Date.now(), created_at: new Date().toISOString(), images: []};
         if(window.currentSOSPostId){
           const idx = (window.sosRequestsCache||[]).findIndex(r=>r.id===window.currentSOSPostId);
-          if(idx>=0) window.sosRequestsCache[idx]=demoPayload;
+          if(idx>=0)
+            window.sosRequestsCache[idx]=demoPayload;
         }else{
           if(!window.sosRequestsCache) window.sosRequestsCache=[];
           window.sosRequestsCache.unshift(demoPayload);
@@ -7598,6 +7605,10 @@ document.addEventListener('fullscreenchange', ()=>{
         closeSOSModal();
         selectedSOSTags.clear();
         document.querySelectorAll('.sos-tag-btn.selected').forEach(b=>b.classList.remove('selected'));
+      }finally{
+        window._isSubmittingSOS=false;
+        let sosBtn2 = document.getElementById('sosSubmitBtn') || document.querySelector('#sosModalOverlay button[onclick*="submitSOS"]') || document.querySelector('button[onclick="submitSOS()"]');
+        if(sosBtn2){ sosBtn2.disabled=false; sosBtn2.innerHTML=sosBtn2.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; }
       }
     };
     // ===================== END SOS ENHANCED v6.6 =====================
@@ -9389,17 +9400,97 @@ function openSOSDetailModal(id){
         </div>` : ''}
         ${item.lat && item.lng ? `<div style="font-size:11px; color:#64748b; margin-top:6px;">📌 พิกัด: ${parseFloat(item.lat).toFixed(6)}, ${parseFloat(item.lng).toFixed(6)}</div>` : ''}
       </div>
+      <!-- ปุ่มหลัก: ดูแผนที่ + ติดต่อช่วยเหลือ (2 คอลัมน์) -->
       <div style="display:flex; gap:8px;">
-        <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่</button>
-        <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">💬 ติดต่อช่วยเหลือ</button>
+        <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">📍 ดูบนแผนที่</button>
+        <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">💬 ติดต่อช่วยเหลือ</button>
       </div>
-      ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="width:100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
+      <!-- v17.20 FIX คำสั่งที่ 2 - เพิ่มปุ่มลบโพสต์นี้ แบบ 100% ลบหมด (เฉพาะแจ้งขอให้ช่วยเท่านั้น) -->
+      <!-- คำนวณมือถือเป็นหลัก: ถ้าจอแคบ ปุ่มจะเต็มบรรทัดล่าง -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;">
+        ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="flex:1 1 100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; min-width:140px;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
+        <button id="btnDeleteSOSDetail_${item.id}" onclick="deleteSOSFromDetail('${item.id}')" style="flex:1 1 100%; background:#fff1f2; color:#be123c; border:1.5px solid #fecaca; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; min-width:140px;" title="ลบโพสต์นี้ + ลบวงกลม + ลบรูปทั้งหมด">
+          <span style="font-size:16px;">🗑️</span> ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)
+        </button>
+      </div>
+      <div style="font-size:10px; color:#94a3b8; text-align:center; margin-top:4px;">⚠️ ลบแล้วจะลบวงกลมบนแผนที่ รูปในคลัง และแชททั้งหมด - กู้คืนไม่ได้</div>
     </div>
   `;
   document.getElementById('sosDetailContent').innerHTML = html;
   document.getElementById('sosDetailModalOverlay').classList.add('active');
 }
 function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
+
+// v17.20 FIX คำสั่งที่ 2 - ฟังก์ชันลบโพสต์จากหน้า detail แบบ 100% (เฉพาะแจ้งขอให้ช่วยเท่านั้น)
+async function deleteSOSFromDetail(sosId){
+  if(!sosId) return;
+  const btn = document.getElementById('btnDeleteSOSDetail_'+sosId);
+  if(btn){ btn.disabled=true; btn.innerHTML='⏳ กำลังลบ...'; }
+  try{
+    // เรียกใช้ฟังก์ชันลบ 100% ที่มีอยู่แล้ว (ลบรูป Storage + ลบแชท + ลบโพสต์ + ลบ cache)
+    const ok = await deleteSOSAndAssetsCompletely(sosId, {skipConfirm:false, reason:'manual_detail'});
+    if(!ok){
+      if(btn){ btn.disabled=false; btn.innerHTML='🗑️ ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)'; }
+      return;
+    }
+    // ลบวงกลมบนแผนที่ด้วย (เพิ่มเติมให้ชัวร์ 100%)
+    try{
+      if(window.sosMarkersLayer){
+        // ลบ marker ที่ตรงกับ id นี้
+        const layers = window.sosMarkersLayer.getLayers();
+        layers.forEach(l=>{
+          try{
+            if(l._sosId && String(l._sosId)===String(sosId)){
+              window.sosMarkersLayer.removeLayer(l);
+            } else if(l.options && l.options.sosId && String(l.options.sosId)===String(sosId)){
+              window.sosMarkersLayer.removeLayer(l);
+            }
+          }catch(e){}
+        });
+        console.log('[v17.20 SOS DELETE] ลบวงกลมบนแผนที่', sosId, 'สำเร็จ');
+      }
+      // ถ้าไม่มี _sosId ให้วาดใหม่จาก cache ที่เหลือ
+      if(window.sosRequestsCache && typeof renderSOSList==='function'){
+        // renderSOSList จะเรียก updateSOSMapMarkers ภายในถ้ามี
+        if(typeof updateSOSMapMarkers==='function'){
+          updateSOSMapMarkers(window.sosRequestsCache);
+        }
+      }
+    }catch(eMap){ console.warn('ลบวงกลมแผนที่ error', eMap); }
+    // ปิด modal
+    closeSOSDetailModal();
+    alert('✅ ลบโพสต์สำเร็จ ลบวงกลมบนแผนที่ รูป และแชททั้งหมดแล้ว (DB เบาลง)');
+  }catch(e){
+    console.error('deleteSOSFromDetail error', e);
+    alert('ลบไม่สำเร็จ: '+(e.message||e));
+    if(btn){ btn.disabled=false; btn.innerHTML='🗑️ ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)'; }
+  }
+}
+
+// เก็บ sosId ไว้ใน marker ตอนสร้าง marker เพื่อลบง่าย
+(function(){
+  const origUpdate = window.updateSOSMapMarkers;
+  if(typeof origUpdate==='function' && !origUpdate._v1720_patched){
+    window.updateSOSMapMarkers = function(list){
+      const result = origUpdate.apply(this, arguments);
+      try{
+        if(window.sosMarkersLayer){
+          const layers = window.sosMarkersLayer.getLayers();
+          layers.forEach((l, idx)=>{
+            const item = list[idx] || (window.sosRequestsCache||[])[idx];
+            if(item){
+              l._sosId = item.id;
+              if(l.options) l.options.sosId = item.id;
+            }
+          });
+        }
+      }catch(e){}
+      return result;
+    };
+    window.updateSOSMapMarkers._v1720_patched = true;
+  }
+})();
+
 
 // v17.12 FIX - ลบ closeWarningDetailModal ซ้ำซ้อน
 
