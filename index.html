@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.10
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -7633,18 +7633,9 @@ window.toggleWarningView = function(){
 
 var dangerLayer=null; let IS_FLOOD_MODE=true;
 function initDangerLayer(){ return window.initDangerLayer(); }
-function updateSegmentedUI(mode){
-  const btnReq = document.getElementById('seg-requests');
-  const btnWarn = document.getElementById('seg-warnings');
-  if(!btnReq || !btnWarn) return;
-  if(mode==='warnings'){
-    btnReq.classList.remove('active'); btnReq.setAttribute('aria-selected','false');
-    btnWarn.classList.add('active'); btnWarn.setAttribute('aria-selected','true');
-  } else {
-    btnWarn.classList.remove('active'); btnWarn.setAttribute('aria-selected','false');
-    btnReq.classList.add('active'); btnReq.setAttribute('aria-selected','true');
-  }
-}
+
+// v17.12 FIX - ลบ updateSegmentedUI ซ้ำซ้อน (duplicate removed)
+
 function switchSOSSubView(mode){
   if(window.currentViewMode === mode) return;
   let layer = window.initDangerLayer();
@@ -7826,13 +7817,9 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
 
 <script>
 // อัปเดตวันที่เวลาปัจจุบันสำหรับแถบสถานะเหนือฟิลเตอร์ SOS
-function updateSOSDateTime(){
-  var el=document.getElementById('sosCurrentDateTime');
-  if(!el) return;
-  var now=new Date();
-  var opts={year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'};
-  try{ el.textContent = now.toLocaleString('th-TH', opts); }catch(e){ el.textContent = now.toLocaleString(); }
-}
+
+// v17.12 FIX - ลบ updateSOSDateTime ซ้ำซ้อน (duplicate removed)
+
 document.addEventListener('DOMContentLoaded', function(){
   updateSOSDateTime();
   setInterval(updateSOSDateTime, 60000);
@@ -8794,7 +8781,7 @@ function extractFileNameFromUrl(url){
   }catch(e){ return null; }
 }
 
-async function deleteFilesFromStorage(imageUrls){
+async function await deleteFilesFromStorage(imageUrls){
   if(!imageUrls || imageUrls.length===0) return {ok:true, deleted:0, verified:true};
   if(typeof supabaseClient==='undefined' || !supabaseClient) return {ok:false, verified:false};
   try{
@@ -8827,7 +8814,7 @@ async function deleteFilesFromStorage(imageUrls){
   }catch(e){ console.warn('[STORAGE-DELETE-100%] exception', e); return {ok:false, error:e, verified:false}; }
 }
 
-async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
+async function await deleteSOSImage100Percent(imageUrls, context='manual_edit'){
   const result = await deleteFilesFromStorage(imageUrls);
   try{
     const logEntry = {
@@ -9261,7 +9248,9 @@ function openSOSDetailModal(id){
   document.getElementById('sosDetailModalOverlay').classList.add('active');
 }
 function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
-function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
+
+// v17.12 FIX - ลบ closeWarningDetailModal ซ้ำซ้อน (duplicate removed)
+
  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
 
 function openWarningDetailModal(id){
