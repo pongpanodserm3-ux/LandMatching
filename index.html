@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_2_3_debug1of3   </title>
+  <title> v4_3_1_debug2of3   </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7984,7 +7984,48 @@ document.addEventListener('fullscreenchange', ()=>{
       }
     };
     function unlockSOSButton(){ window._isSubmittingSOS=false; let b=document.getElementById('sosSubmitBtn'); if(b){ b.disabled=false; b.innerHTML=b.dataset.origText||'📢 ส่งขอความช่วยเหลือทันที'; } }
-    // ===================== END SOS ENHANCED v6.6 =====================
+    
+// === Step2.4 OFFLINE QUEUE - กันเน็ตหลุดแล้วข้อมูลหาย ===
+function getFailedFloodQueue(){
+  try{ return JSON.parse(localStorage.getItem('flood_failed_queue')||'[]'); }catch(e){ return []; }
+}
+function showFloodRetryButtonIfNeeded(){
+  const q = getFailedFloodQueue();
+  let bar = document.getElementById('floodRetryBar');
+  if(q.length===0){ if(bar) bar.style.display='none'; return; }
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id='floodRetryBar';
+    bar.style.cssText='position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:#ef4444; color:white; padding:10px 16px; border-radius:20px; z-index:999999; font-size:13px; box-shadow:0 4px 12px rgba(0,0,0,0.3); display:flex; gap:8px; align-items:center;';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = `⚠️ มี ${q.length} รายการส่งไม่สำเร็จ <button onclick="retryFailedFlood()" style="background:white; color:#ef4444; border:none; border-radius:10px; padding:4px 10px; font-weight:bold; cursor:pointer;">ส่งใหม่</button> <button onclick="clearFailedFlood()" style="background:rgba(0,0,0,0.2); color:white; border:none; border-radius:10px; padding:4px 8px; cursor:pointer;">×</button>`;
+  bar.style.display='flex';
+}
+async function retryFailedFlood(){
+  const q = getFailedFloodQueue();
+  if(q.length===0) return;
+  const last = q[q.length-1];
+  if(confirm('ลองส่งรายการล่าสุดที่ค้างไว้ใหม่? ('+ (last.payload?.title||'แจ้งเตือนท่วม') +')')){
+    // เติมค่ากลับเข้าฟอร์มแล้วเรียก submit
+    try{
+      if(last.payload){
+        const latEl = document.getElementById('floodLat'); if(latEl) latEl.value = last.payload.lat||last.payload.lat||'';
+        const lngEl = document.getElementById('floodLng'); if(lngEl) lngEl.value = last.payload.lng||last.payload.lng||'';
+        const locEl = document.getElementById('floodLocationText'); if(locEl) locEl.value = last.payload.title||'';
+        const detEl = document.getElementById('floodDetailText'); if(detEl) detEl.value = last.payload.description||'';
+      }
+      await submitFloodWarning();
+      // ถ้าสำเร็จจะถูกลบใน finally, ถ้าไม่สำเร็จจะยังอยู่
+      setTimeout(showFloodRetryButtonIfNeeded, 1000);
+    }catch(e){ alert('ส่งใหม่ไม่สำเร็จ: '+e.message); }
+  }
+}
+function clearFailedFlood(){ localStorage.removeItem('flood_failed_queue'); localStorage.removeItem('pending_flood_last'); showFloodRetryButtonIfNeeded(); }
+document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(showFloodRetryButtonIfNeeded, 2000); });
+
+
+// ===================== END SOS ENHANCED v6.6 =====================
 
 
 // === v10.5 FIX - dangerLayer ยังไม่พร้อม ===
@@ -8866,9 +8907,15 @@ function openFloodPreview(newFiles){
 function renderFloodPreview(){
   const grid = document.getElementById('floodPreviewGrid');
   if(!grid) return;
+  // Step2.2 FIX iPhone RAM: revoke URL เก่าก่อนสร้างใหม่
+  if(window._floodPreviewObjectUrls){
+    window._floodPreviewObjectUrls.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
+  }
+  window._floodPreviewObjectUrls = [];
   grid.innerHTML='';
   window.floodPendingPreviewFiles.forEach((file, idx)=>{
     const url = URL.createObjectURL(file);
+    window._floodPreviewObjectUrls.push(url);
     const div = document.createElement('div');
     div.style.cssText='position:relative; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; aspect-ratio:1;';
     div.innerHTML=`<img src="${url}" style="width:100%; height:100%; object-fit:cover;"><button onclick="removeFloodPreview(${idx})" style="position:absolute; top:4px; right:4px; background:#ef4444; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">×</button><span style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:white; font-size:10px; text-align:center; padding:2px;">${file.name||'camera-'+(idx+1)}</span>`;
@@ -8876,7 +8923,16 @@ function renderFloodPreview(){
   });
 }
 
+window._floodPreviewObjectUrls = window._floodPreviewObjectUrls || [];
+
 function removeFloodPreview(idx){
+  // Step2.2 FIX: revoke URL ของไฟล์ที่จะลบ
+  try{
+    if(window._floodPreviewObjectUrls && window._floodPreviewObjectUrls[idx]){
+      URL.revokeObjectURL(window._floodPreviewObjectUrls[idx]);
+      window._floodPreviewObjectUrls.splice(idx,1);
+    }
+  }catch(e){}
   window.floodPendingPreviewFiles.splice(idx,1);
   renderFloodPreview();
   if(window.floodPendingPreviewFiles.length===0) closeFloodPreview();
@@ -8885,8 +8941,13 @@ function removeFloodPreview(idx){
 function closeFloodPreview(){
   const m = document.getElementById('floodPreviewModal');
   if(m) m.style.display='none';
-  // ไม่เคลียร์ไฟล์ เพื่อให้กลับมาเปิดใหม่ได้? แต่คำสั่งให้เคลียร์เมื่อยกเลิก
-  // window.floodPendingPreviewFiles=[];
+  // Step2.2 FIX: revoke ทั้งหมดเมื่อปิด modal กันแรมระเบิดบน iPhone
+  try{
+    if(window._floodPreviewObjectUrls){
+      window._floodPreviewObjectUrls.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
+      window._floodPreviewObjectUrls = [];
+    }
+  }catch(e){}
 }
 
 async function saveFloodPreviewToGrid(){
@@ -9134,6 +9195,17 @@ function getCurrentLocationForFloodWarning(){
     alert('กรุณาระบุพิกัดน้ำท่วมก่อนครับ');
     return;
   }
+  // Step2.3 FIX: กันพิกัดหลุดไปกลางทะเล / 0,0 / นอกไทย
+  const latNum = parseFloat(lat);
+  const lngNum = parseFloat(lng);
+  if(isNaN(latNum) || isNaN(lngNum) || (latNum===0 && lngNum===0)){
+    alert('❌ พิกัดไม่ถูกต้อง (0,0) กรุณากดปักหมุดใหม่');
+    return;
+  }
+  if(latNum < 5.5 || latNum > 20.8 || lngNum < 97.0 || lngNum > 105.8){
+    alert('❌ พิกัดนอกประเทศไทย ('+latNum.toFixed(4)+','+lngNum.toFixed(4)+') กรุณาปักหมุดใหม่ในเขตไทย');
+    return;
+  }
   if(typeof supabaseClient === 'undefined'){
     alert('ระบบยังไม่พร้อม (supabaseClient)');
     return;
@@ -9196,8 +9268,18 @@ function getCurrentLocationForFloodWarning(){
       level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
       images: []
     };
-    // อัปโหลดรูป - แก้บั๊กชื่อตัวแปร: ใช้ floodUploadedFiles ให้ตรงกัน
+    // === Step2.1 + 2.4 FIX: อัปโหลดรูป + offline queue ===
+    // 2.4: บันทึก pending ลง localStorage ก่อนส่ง กันเน็ตหลุด
+    let floodPendingKey = 'pending_flood_' + Date.now();
+    try{
+      let pendingPayloadEarly = { lat: parseFloat(lat), lng: parseFloat(lng), title: locationText||'แจ้งเตือนน้ำท่วม', description: detail||'', waterLevel: waterLevel||'', radius: radius };
+      localStorage.setItem('pending_flood_last', JSON.stringify(pendingPayloadEarly));
+      localStorage.setItem(floodPendingKey, JSON.stringify(pendingPayloadEarly));
+    }catch(e){}
+
+    // 2.1: อัปโหลดรูปก่อน แต่เก็บชื่อไฟล์ไว้เพื่อลบถ้า insert พัง
     let finalImageUrls = [];
+    let uploadedFileNames = []; // เก็บชื่อไฟล์จริงใน bucket เพื่อลบถ้าพัง
     const floodFiles = window.floodUploadedFiles || window.floodFiles || [];
     if(floodFiles.length>0){
       console.log(`[FLOOD] อัปโหลดรูป ${floodFiles.length} รูป...`);
@@ -9205,12 +9287,17 @@ function getCurrentLocationForFloodWarning(){
       const postIdToUse = Date.now();
       for(let i=0;i<floodFiles.length;i++){
         const file = floodFiles[i];
+        // Step2: จำกัดขนาด 5MB กัน Storage เต็ม
+        if(file.size > 5*1024*1024){
+          alert(`❌ รูปที่ ${i+1} ใหญ่เกิน 5MB - ข้ามรูปนี้`);
+          continue;
+        }
         const fileExt = file.name.split('.').pop() || 'jpg';
-        const imageIndexStr = String(i+1).padStart(3,'0');
         const fileName = `FLOOD-${userId}-${postIdToUse}-${Date.now()}-${i+1}-${Math.random().toString(36).substring(2,6)}.${fileExt}`;
         try{
           const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, { upsert: false, cacheControl: '3600' });
           if(uploadError){ console.warn(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message); continue; }
+          uploadedFileNames.push(fileName);
           const {data: publicUrlData} = supabaseClient.storage.from('flood-photos').getPublicUrl(fileName);
           if(publicUrlData && publicUrlData.publicUrl) finalImageUrls.push(publicUrlData.publicUrl);
         }catch(e){ console.warn(e); }
@@ -9244,7 +9331,28 @@ function getCurrentLocationForFloodWarning(){
       throw new Error('ลองหลายครั้งไม่สำเร็จ');
     }
 
-    const result = await resilientInsert(payload);
+    let result;
+    try{
+      result = await resilientInsert(payload);
+      // สำเร็จ -> ลบ pending queue
+      try{ localStorage.removeItem('pending_flood_last'); localStorage.removeItem(floodPendingKey); }catch(e){}
+    }catch(insErr){
+      // 2.1: insert พัง -> ลบรูปที่อัปโหลดไปแล้วทันที กันขยะค้าง Storage
+      console.error('[FLOOD] insert ล้มเหลว, เตรียมลบรูปที่ค้าง', uploadedFileNames, insErr);
+      if(uploadedFileNames && uploadedFileNames.length>0){
+        try{
+          await supabaseClient.storage.from('flood-photos').remove(uploadedFileNames);
+          console.log('[FLOOD CLEANUP] ลบรูปขยะสำเร็จ', uploadedFileNames.length);
+        }catch(cleanErr){ console.warn('[FLOOD CLEANUP] ลบรูปขยะไม่สำเร็จ', cleanErr); }
+      }
+      // 2.4: เก็บ payload ไว้ให้กดส่งใหม่ได้
+      try{
+        let failedQueue = JSON.parse(localStorage.getItem('flood_failed_queue')||'[]');
+        failedQueue.push({ payload, uploadedFileNames, error: insErr.message||String(insErr), time: new Date().toISOString() });
+        localStorage.setItem('flood_failed_queue', JSON.stringify(failedQueue.slice(-5))); // เก็บ 5 อันล่าสุด
+      }catch(e){}
+      throw insErr;
+    }
     console.log('[v17.18 FIX บั๊ก 3] บันทึกสำเร็จ เตรียมเพิ่มเข้าแผนที่ทันที', result);
     // v17.18 FIX บั๊ก 3 - ทำให้โพสต์ปรากฏทันที ไม่ต้องรีเฟรช
     try{
