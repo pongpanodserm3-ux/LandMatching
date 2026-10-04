@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.10
+  <link rel="shortcut icon" href="#">//Git_Index_1-4-10 v17.11.11
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Land Matching AI v13.13 - v17.1 SOS Role Limit System</title>
@@ -1752,11 +1752,11 @@ window.highlightBoth = function(idStr, type){
     .flood-level-btn { padding: 10px 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
     .flood-level-btn.selected { background: #f59e0b; color: white; border-color: #d97706; }
     .flood-level-btn.critical.selected { background: #ef4444; border-color: #b91c1c; }
-    .flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; }
+    .flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
     /* v17.11.9 FIX Command2: yellow bright #FFFF00 opacity 50% */
-    .flood-level-btn.watch { background: rgba(255,255,0,0.5); border-color: #FFFF00; }
-    .flood-level-btn.watch.selected { background: rgba(255,255,0,0.85) !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.4); }
-    #floodLevelGrid .flood-level-btn.watch.selected { background: #FFFF00 !important; opacity: 0.85; }
+    .flood-level-btn.watch { background: #ffffff !important; border-color: #e2e8f0 !important; color: #333 !important; }
+    .flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
+    #floodLevelGrid .flood-level-btn.watch.selected { background: #FFFF00 !important; opacity: 1 !important; border-color: #E6E600 !important; color: #333 !important; }
   </style>
   <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
@@ -1781,15 +1781,6 @@ window.highlightBoth = function(idStr, type){
       </div>
       <input type="text" class="flood-input" id="floodLocationText" placeholder="รายละเอียดตำแหน่ง เช่น ปากซอยรามคำแหง 24 น้ำสูง...">
 
-      <label style="font-size:12px; font-weight:bold;">3. ระดับน้ำ (ซม.)</label>
-      <input type="number" class="flood-input" id="floodWaterLevel" placeholder="เช่น 30, 50, 100">
-
-      <label style="font-size:12px; font-weight:bold;">4. รายละเอียดเพิ่มเติม</label>
-      <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."></textarea>
-
-      <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
-      <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 200 เมตร" value="200">
-
       <!-- === v12.6 NEW: โซนอัปโหลดรูปภาพ 8 รูป สำหรับแจ้งเตือนท่วม (คัดลอกหลักการจาก SOS) - PATCHED v13.12.2 === -->
       <div id="floodImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1808,7 +1799,20 @@ window.highlightBoth = function(idStr, type){
       </div>
       <!-- === END v12.6 PATCHED === -->
 
-      <!-- v13.12.2: Modal กล้องถ่ายต่อเนื่อง (คำสั่ง 2) -->
+      
+      <label style="font-size:12px; font-weight:bold;">3. ระดับน้ำ (ซม.)</label>
+      <input type="number" class="flood-input" id="floodWaterLevel" placeholder="เช่น 30, 50, 100">
+
+      <label style="font-size:12px; font-weight:bold;">4. รายละเอียดเพิ่มเติม</label>
+      <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."></textarea>
+
+      <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
+      <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 200 เมตร" value="200">
+
+      
+      <!-- MOVED: upload section relocated before water level per request -->
+
+<!-- v13.12.2: Modal กล้องถ่ายต่อเนื่อง (คำสั่ง 2) -->
       <div id="floodCameraLiveModal" style="display:none; position:fixed; inset:0; z-index:9500; background:#000; flex-direction:column; height:100dvh; max-height:100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); box-sizing:border-box;">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.8); color:white;">
           <span style="font-weight:bold;">📷 กล้อง - ถ่ายต่อเนื่องได้ (สูงสุด 8)</span>
@@ -9964,12 +9968,7 @@ window.renderFloodWarningsList = function(list){
     flex-shrink: 0;
   }
 }
-.flood-level-btn.watch.selected{
-  background: #FFFF00 !important;
-  color: #333 !important;
-  border-color: #CCCC00 !important;
-  opacity: 0.85;
-}
+.flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
 </style>
 
 <script>
