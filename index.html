@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Git_Index_2-v4_1</title>
+  <title> v4_2_debug1of4 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -8096,16 +8096,16 @@ window.loadFloodWarnings = async function(){
   try{
     const res = await supabaseClient.from('flood_warnings').select('*').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at', {ascending:false});
     console.log('[WARNING] Supabase flood_warnings:', res);
-    if(res.error){ alert('DB Error: '+res.error.message); return; }
+    if(res.error){ console.error('DB Error:', res.error.message); try{ if(typeof displayMessageOnUI==='function') displayMessageOnUI('โหลดข้อมูลไม่สำเร็จ: '+res.error.message); }catch(e){} return; }
     const data = res.data||[];
     console.log(`[WARNING] ได้ ${data.length} รายการ`, data);
     layer.clearLayers();
-    if(data.length===0){ alert('ไม่พบเตือนภัย'); return; }
+    if(data.length===0){ console.log('[HOTFIX] ไม่พบเตือนภัยในพื้นที่ - แสดงข้อความว่างแทน alert'); try{ const b=document.getElementById('segCountWarnings'); if(b){ b.textContent='0'; b.style.display='inline-block'; } }catch(e){} if(typeof renderFloodWarningsList==='function') renderFloodWarningsList([]); return; }
     data.forEach((w)=>{
       const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
-      L.circle([lat,lng], {radius: parseInt(w.radius_m)||200, fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
+      L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), // HOTFIX max 600 fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${w.title}</b><br>🌊 ${w.water_level_cm}ซม.<br>${w.passage_status}`).addTo(layer);
       (()=>{ const _c=layer.getLayers().slice(-1)[0]; if(_c) _c.on('click', ()=>{ onFloodMarkerClicked(w); }); })(); // v13.11.3 FIX: ลบหมุดฟ้า, คลิกที่วงกลมแทน
     });
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
@@ -8124,7 +8124,7 @@ window.loadFloodWarnings = async function(){
     console.log(`✅ เตือนภัย ${data.length} จุด: ${data[0]?.title}`);
     try{ var b=document.getElementById('segCountWarnings'); if(b){ b.textContent=data.length; b.style.display=data.length>0?'inline-block':'none'; } }catch(e){}
     updateSegmentedUI(window.currentViewMode);
-  }catch(e){ console.error(e); alert('Exception: '+e.message); }
+  }catch(e){ console.error(e); try{ if(typeof displayMessageOnUI==='function') displayMessageOnUI('เกิดข้อผิดพลาด: '+e.message); }catch(e2){} }
 }
 async function loadFloodWarnings(){ return window.loadFloodWarnings(); }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.initDangerLayer(); console.log('Ready v10.6 - SOS 8 จุดโชว์, WARNING 1 จุดซ่อน'); },1500); });
@@ -8602,7 +8602,7 @@ function updateWarningMapMarkers(list){
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
 
-    const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||200, fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
+    const circle = L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), // HOTFIX max 600 fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
     // v13.11.3 FIX: ลบขอบส้ม (stroke:false) และลบหมุดสีฟ้า (ไม่สร้าง L.marker แล้ว)
     // v13.12: ตัด bindPopup ออก เพื่อไม่ให้ popup เล็กซ้อนกับ highlight logic
 
@@ -9048,6 +9048,13 @@ function getCurrentLocationForFloodWarning(){
 // v17.18 FIX บั๊ก 1 - กันกดเบิ้ล 2 ครั้งแล้วได้ 2 โพสต์ (เฉพาะเตือนท่วมเท่านั้น)
  window._isSubmittingFlood = window._isSubmittingFlood || false;
  async function submitFloodWarning(){
+  // HOTFIX Step1.3 - validate coordinates BEFORE locking
+  const latEarly = document.getElementById('floodLat')?.value;
+  const lngEarly = document.getElementById('floodLng')?.value;
+  if(!latEarly || !lngEarly){
+    alert('กรุณาระบุพิกัดน้ำท่วมก่อนครับ - กดปุ่มระบุตำแหน่งปัจจุบัน');
+    return;
+  }
   if(window._isSubmittingFlood){
     console.log('[v17.18] กำลังบันทึกเตือนท่วมอยู่ กันกดเบิ้ล');
     return;
@@ -9055,20 +9062,19 @@ function getCurrentLocationForFloodWarning(){
   window._isSubmittingFlood = true;
   // Disable ปุ่มบันทึกชั่วคราว
   const floodSubmitBtn = document.getElementById('floodSubmitBtn') || document.querySelector('#floodWarningModalOverlay button[onclick*="submitFloodWarning"]');
-  if(floodSubmitBtn){ floodSubmitBtn.disabled=true; floodSubmitBtn.innerHTML='⏳ กำลังบันทึก...'; }
-  if (typeof currentUserLineProfile !== 'undefined' && !currentUserLineProfile && typeof CURRENT_USER_ID !== 'undefined' && !CURRENT_USER_ID) {
-    if(typeof getCurrentUserId === 'function'){
-      getCurrentUserId().then(freshId=>{
-        if (!freshId && typeof showLineRequiredModal === 'function') { showLineRequiredModal(); window._isSubmittingFlood=false; if(floodSubmitBtn){ floodSubmitBtn.disabled=false; floodSubmitBtn.innerHTML='📢 ส่งแจ้งเตือนท่วม'; } }
-      });
-    }
+  if(floodSubmitBtn){ 
+    if(!floodSubmitBtn.dataset.origText) floodSubmitBtn.dataset.origText = floodSubmitBtn.innerHTML;
+    floodSubmitBtn.disabled=true; floodSubmitBtn.innerHTML='⏳ กำลังบันทึก...'; 
   }
-  const lat = document.getElementById('floodLat')?.value;
+  // HOTFIX Step1: removed non-await LINE check, handled below with await
+  const lat =
+ document.getElementById('floodLat')?.value;
   const lng = document.getElementById('floodLng')?.value;
   const waterLevel = document.getElementById('floodWaterLevel')?.value;
   const detail = document.getElementById('floodDetailText')?.value;
   const locationText = document.getElementById('floodLocationText')?.value;
-  const radius = document.getElementById('floodRadius')?.value || 200;
+  const radiusRaw = document.getElementById('floodRadius')?.value || 200;
+  const radius = Math.min(Math.max(parseInt(radiusRaw)||200, 50), 600); // HOTFIX Step1.4 max 600m
 
   if(!lat || !lng){
     alert('กรุณาระบุพิกัดน้ำท่วมก่อนครับ');
@@ -9083,7 +9089,17 @@ function getCurrentLocationForFloodWarning(){
 
     // ===== v17: เช็คสิทธิ์ general vs special (2 คอลัมน์) - START =====
     const myRoleInfo = await getCurrentUserRole();
-    const myUserIdForCheck = myRoleInfo.user_id || await getCurrentUserId();
+    let myUserIdForCheck = myRoleInfo.user_id;
+    if(!myUserIdForCheck){
+      myUserIdForCheck = await getCurrentUserId();
+    }
+    if(!myUserIdForCheck){
+      if(typeof showLineRequiredModal === 'function') showLineRequiredModal();
+      alert('กรุณาเข้าสู่ระบบ LINE ก่อนแจ้งเตือนครับ');
+      window._isSubmittingFlood=false;
+      if(floodSubmitBtn){ floodSubmitBtn.disabled=false; floodSubmitBtn.innerHTML='📢 ส่งแจ้งเตือนท่วม'; }
+      return;
+    }
     const isSpecialMember = myRoleInfo.role === 'special' || myRoleInfo.role === 'admin' || myRoleInfo.is_trusted === true;
     console.log('[v17] Role check:', myRoleInfo, 'isSpecialMember:', isSpecialMember);
 
@@ -9112,7 +9128,7 @@ function getCurrentLocationForFloodWarning(){
       description: detail || '',
       is_active: true,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now()+ 24*60*60*1000).toISOString(),
+      expires_at: new Date(Date.now()+ 72*60*60*1000).toISOString(),
       user_id: String(myUserIdForCheck), // DB flood_warnings.user_id เป็น text (จากรูป)
       reporter_type: isSpecialMember ? 'special' : 'general',
       reporter_role: myRoleInfo.role,
@@ -9121,7 +9137,7 @@ function getCurrentLocationForFloodWarning(){
     };
     let optionalFields = {
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
-      radius_m: parseInt(radius),
+      radius_m: Math.min(Math.max(parseInt(radius)||200, 50), 600), // HOTFIX Step1.4
       risk_level: (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'medium'),
       level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
       images: []
@@ -9584,6 +9600,8 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
 // ตามคำขอ: แก้เฉพาะหน้าเตือนท่วมเท่านั้น ส่วนอื่นห้ามแก้ไขเด็ดขาด
 
 async function autoWarningStep1_HideFromMap_1Day(){
+  console.log('[HOTFIX Step1] autoWarningStep1 disabled for flood crisis - keep pins 72h'); return; // HOTFIX disabled
+
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
     const oneDayAgo = new Date(Date.now() - 1*24*60*60*1000).toISOString();
