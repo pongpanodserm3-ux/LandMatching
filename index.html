@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v4_4_2_debug3of3   </title>
+  <title> v5_1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3192,8 +3192,8 @@ function tryLIFFLoginAgain(){
         if(e3) console.warn('[v17 limit] check near error', e3);
         if(near && near.length>0){
           for(let w of near){
-            const wLat = parseFloat(w.lat||w.latitude);
-            const wLng = parseFloat(w.lng||w.longitude);
+            const wLat = parseFloat(w.lat);
+            const wLng = parseFloat(w.lng);
             if(isNaN(wLat)||isNaN(wLng)) continue;
             const dist = getDistanceMeters(parseFloat(lat), parseFloat(lng), wLat, wLng);
             if(dist < 100){
@@ -8187,7 +8187,7 @@ window.loadFloodWarnings = async function(){
     layer.clearLayers();
     if(data.length===0){ console.log('[HOTFIX] ไม่พบเตือนภัยในพื้นที่ - แสดงข้อความว่างแทน alert'); try{ const b=document.getElementById('segCountWarnings'); if(b){ b.textContent='0'; b.style.display='inline-block'; } }catch(e){} if(typeof renderFloodWarningsList==='function') renderFloodWarningsList([]); return; }
     data.forEach((w)=>{
-      const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
+      const lat = parseFloat(w.lat); const lng = parseFloat(w.lng);
       if(isNaN(lat)||isNaN(lng)) return;
       const col = w.risk_level==='critical'?'#ef4444':'#f97316';
       L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).bindPopup(`<b>${escapeHtml(w.title)}</b><br>🌊 ${escapeHtml(w.water_level_cm)}ซม.<br>${escapeHtml(w.passage_status)}`).addTo(layer);
@@ -8457,7 +8457,7 @@ function renderFloodWarningsList(list){
   }
   const selectedId = window._selectedFloodWarningId ? String(window._selectedFloodWarningId) : null;
   container.innerHTML = list.map(w=>{
-    const lat = w.lat||w.latitude; const lng = w.lng||w.longitude;
+    const lat = w.lat; const lng = w.lng;
     const lvl = (w.risk_level||w.level||'').toLowerCase();
     let levelType = 'watch';
     if(lvl.includes('critical') || lvl.includes('danger') || lvl.includes('อันตราย')) levelType='critical';
@@ -8514,7 +8514,7 @@ function onFloodMarkerClicked(w){
   try{
     let targetMap = ensureSOSMapReady ? ensureSOSMapReady() : (window.sosMap || null);
     if(targetMap){
-      const lat = parseFloat(w.lat||w.latitude), lng = parseFloat(w.lng||w.longitude);
+      const lat = parseFloat(w.lat), lng = parseFloat(w.lng);
       if(!isNaN(lat) && !isNaN(lng)){
         if(typeof targetMap.flyTo === 'function'){
           targetMap.flyTo([lat,lng], 14, {duration:0.8, easeLinearity:0.2}); // v15.4 FIX zoom 16->14
@@ -8547,7 +8547,7 @@ function onFloodMarkerClicked(w){
     }
     filteredList = base.filter(item=>{
       if(String(item.id)===String(w.id)) return true;
-      const lat=parseFloat(item.lat||item.latitude), lng=parseFloat(item.lng||item.longitude);
+      const lat=parseFloat(item.lat), lng=parseFloat(item.lng);
       if(isNaN(lat)||isNaN(lng)) return false;
       const dist=getDistance(centerLat,centerLng,lat,lng);
       return dist <= radiusM;
@@ -8690,7 +8690,7 @@ function updateWarningMapMarkers(list){
   if(!layer || !targetMap) return;
   layer.clearLayers();
   list.forEach((w)=>{
-    const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
+    const lat = parseFloat(w.lat); const lng = parseFloat(w.lng);
     if(isNaN(lat)||isNaN(lng)) return;
     const _lvl = (w.risk_level||w.level||'').toLowerCase();
     let col = '#FFFF00';
@@ -9693,7 +9693,7 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
           layer.clearLayers();
           const remaining = window.floodWarningsCache || [];
           remaining.forEach((w)=>{
-            const lat = parseFloat(w.lat||w.latitude); const lng = parseFloat(w.lng||w.longitude);
+            const lat = parseFloat(w.lat); const lng = parseFloat(w.lng);
             if(isNaN(lat)||isNaN(lng)) return;
             const col = (w.risk_level==='critical'||w.level==='critical')?'#ef4444':'#f97316';
             const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m||w.radius)||600, fillColor:col, fillOpacity:0.35, stroke:false});
@@ -10108,7 +10108,7 @@ function openWarningDetailModal(id){
       </div>
       ${images.length>0 ? `<div class="detail-image-scroller">${images.map(img=>`<img src="${img}" class="detail-image-item" loading="lazy">`).join('')}</div>` : ''}
       <div style="display:flex; gap:8px;"><button onclick="deleteFloodWarningFromDetail('${item.id}');" style="flex:1; background:#fee2e2; border:1.5px solid #ef4444; color:#b91c1c; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer;">🗑️ ลบเตือนภัยนี้ถาวร</button></div>
-      <button onclick="focusWarningOnMap(${item.lat||item.latitude}, ${item.lng||item.longitude}); closeWarningDetailModal();" style="width:100%; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่และนำทาง</button>
+      <button onclick="focusWarningOnMap(${item.lat}, ${item.lng}); closeWarningDetailModal();" style="width:100%; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer;">📍 ดูบนแผนที่และนำทาง</button>
     </div>
   `;
   document.getElementById('warningDetailContent').innerHTML = html;
