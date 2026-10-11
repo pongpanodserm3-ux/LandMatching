@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_1  </title>
+  <title> v6_2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3144,10 +3144,10 @@ function tryLIFFLoginAgain(){
           badge.title = 'ผู้ดูแลระบบ - ลบได้ทุกโพสต์ | user_id:'+roleInfo.user_id;
         }else if(role==='special'){
           badge.innerHTML = '⭐ special';
-          badge.title = 'จิตอาสา - 9 โพสต์ | user_id:'+roleInfo.user_id;
+          badge.title = 'จิตอาสา - 20 โพสต์ | user_id:'+roleInfo.user_id;
         }else{
           badge.innerHTML = '👤 general';
-          badge.title = 'บุคคลทั่วไป - 1 โพสต์ | user_id:'+roleInfo.user_id;
+          badge.title = 'บุคคลทั่วไป - 5 โพสต์ | user_id:'+roleInfo.user_id;
         }
         window.CURRENT_USER_ROLE = roleInfo;
         window.CURRENT_USER_ROLE_CACHE = roleInfo;
@@ -3164,6 +3164,50 @@ function tryLIFFLoginAgain(){
       setTimeout(()=>{ updateRoleBadge(); }, 2000);
       setInterval(()=>{ updateRoleBadge(); }, 10000);
     });
+
+    // === CONFIG ROLE LIMIT - NEW v6.2 (general=5, special=20, admin=unlimited) ===
+    // เพิ่มตามคำสั่ง ไม่ได้ลบฟังก์ชันเดิม
+    const ROLE_LIMIT = {
+      general: 5,
+      special: 20,
+      admin: Infinity // unlimited
+    };
+
+    async function checkPostLimit(userId){
+      const { data: user, error } = await supabaseClient
+        .from('users').select('role').eq('user_id', userId).single();
+      
+      if(error || !user) return { ok:false, msg:'ไม่พบผู้ใช้' };
+      
+      // admin ผ่านตลอด
+      if(user.role === 'admin') return { ok:true, role: user.role };
+
+      const limit = ROLE_LIMIT[user.role] || 5;
+
+      const { count } = await supabaseClient
+        .from('properties')
+        .select('property_id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if(count >= limit){
+        return { 
+          ok:false, 
+          msg:`Role ${user.role} ลงได้สูงสุด ${limit} โพสต์ (คุณลงไปแล้ว ${count})` 
+        };
+      }
+      return { ok:true, role: user.role, count, limit };
+    }
+
+    async function canDeleteProperty(propertyOwnerId){
+      const { data: me } = await supabaseClient
+        .from('users').select('role').eq('user_id', CURRENT_USER_ID).single();
+      
+      // admin ลบได้หมด, คนทั่วไปลบได้เฉพาะของตัวเอง
+      if(me && me.role === 'admin') return true;
+      return String(propertyOwnerId) === String(CURRENT_USER_ID);
+    }
+    // === END NEW ROLE LIMIT ===
+
 
 
     async function canPostWarning(userId, lat, lng){
@@ -4474,19 +4518,14 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         // -------------------------------------------------------------
         // กรณีที่ 1 : ตรวจสอบจำนวนประกาศปัจจุบันของ user_id ในตาราง properties
         // -------------------------------------------------------------
-        const { count, error: countError } = await supabaseClient
-          .from('properties')
-          .select('property_id', { count: 'exact', head: true })
-          .eq('user_id', userId);
-    
-        if (countError) {
-          console.error("เกิดข้อผิดพลาดในการตรวจสอบจำนวนประกาศ:", countError.message);
-        }
-    
-        if (count !== null && count >= 9) {
-          alert("ไม่สามารถลงได้ เพราะเต็มโควต้า หากต้องการลงเพิ่มจะต้อง ลบประกาศเก่าที่ไม่ใช่ออก");
+        // === NEW: เช็คโควต้าตาม role general=5, special=20, admin=unlimited ===
+        // แทนที่ของเดิมที่ล็อค 9 โพสต์ตายตัว
+        const limitCheck = await checkPostLimit(userId);
+        if(!limitCheck.ok){
+          alert(limitCheck.msg);
           return;
         }
+        // === END NEW CHECK ===
     
         // -------------------------------------------------------------
         // กรณีที่ 2 : หากยังไม่ถึง 9 ชิ้น ให้ดำเนินการบันทึกข้อมูล
