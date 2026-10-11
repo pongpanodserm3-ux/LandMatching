@@ -8196,13 +8196,13 @@ window.loadFloodWarnings = async function(){
     console.log(`[WARNING] วาดเสร็จ ${layer.getLayers().length} layer`);
     if(layer.getLayers && layer.getLayers().length>0 && targetMap){
       try{
-        let bounds; try{ bounds = layer.getBounds(); }catch(e){ console.warn("getBounds fail, use first point", e); const first=data[0]; bounds = L.latLngBounds([[parseFloat(first.lat||first.latitude), parseFloat(first.lng||first.longitude)]]); }
+        let bounds; try{ bounds = layer.getBounds(); }catch(e){ console.warn("getBounds fail, use first point", e); const first=data[0]; bounds = L.latLngBounds([[parseFloat(first.lat), parseFloat(first.lng)]]); }
         console.log('fitBounds to', bounds);
         // 3.3 FIX แผนที่กระตุก - เลือกอย่างใดอย่างหนึ่งพอ ไม่เรียกซ้ำ
         if(bounds && bounds.isValid && bounds.isValid()){
           targetMap.fitBounds(bounds, {padding:[80,80], maxZoom:16});
         } else {
-          targetMap.setView([parseFloat(data[0].lat||data[0].latitude), parseFloat(data[0].lng||data[0].longitude)], 15);
+          targetMap.setView([parseFloat(data[0].lat), parseFloat(data[0].lng)], 15);
         }
         // ลบ setTimeout setView ซ้ำที่ทำให้กระตุก
       }catch(e){ console.warn('fitBounds error', e); }
@@ -8469,7 +8469,7 @@ function renderFloodWarningsList(list){
     if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; }
     else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; }
     else { icon='🟡'; bg='#fefce8'; border='#fde68a'; }
-    const water = w.water_level_cm ? `${escapeHtml(w.water_level_cm)} ซม.` : (w.water_level||'-');
+    const water = w.water_level_cm ? `${escapeHtml(w.water_level_cm)} ซม.` : '-';
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
     const imgs = (Array.isArray(rawImgs) ? rawImgs : [rawImgs]).filter(Boolean).flat().filter(Boolean);
@@ -8534,8 +8534,8 @@ function onFloodMarkerClicked(w){
   // === v15.6 NEW: ถ้าอยู่ในโหมดเต็มจอ ให้กรองเฉพาะรายการในวงกลม ===
   let filteredList = base;
   if(isFullscreen){
-    const centerLat = parseFloat(w.lat||w.latitude);
-    const centerLng = parseFloat(w.lng||w.longitude);
+    const centerLat = parseFloat(w.lat);
+    const centerLng = parseFloat(w.lng);
     const radiusM = parseInt(w.radius_m)||600;
     // หาระยะห่างด้วย Haversine
     function getDistance(lat1,lon1,lat2,lon2){
@@ -9696,7 +9696,7 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
             const lat = parseFloat(w.lat); const lng = parseFloat(w.lng);
             if(isNaN(lat)||isNaN(lng)) return;
             const col = (w.risk_level==='critical'||w.level==='critical')?'#ef4444':'#f97316';
-            const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m||w.radius)||600, fillColor:col, fillOpacity:0.35, stroke:false});
+            const circle = L.circle([lat,lng], {radius: parseInt(w.radius_m)||600, fillColor:col, fillOpacity:0.35, stroke:false});
             circle._warningId = w.id; // เก็บ id ไว้เพื่อลบครั้งต่อไป
             circle.bindPopup(`<b>${escapeHtml(w.title||w.location_text||'เตือนท่วม')}</b>`);
             circle.on('click', ()=>{ if(typeof onFloodMarkerClicked==='function') onFloodMarkerClicked(w); });
@@ -10088,7 +10088,7 @@ function openWarningDetailModal(id){
   const cardBadge = getTrustBadgeHTML(item.reporter_role||item.reporter_type, item.reporter_trusted, item.reporter_type);
   const timeStr = item.created_at ? new Date(item.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
   const badgeHTML = getTrustBadgeHTML(item.reporter_role||item.reporter_type, item.reporter_trusted, item.reporter_type);
-  const water = item.water_level_cm ? `${item.water_level_cm} ซม.` : (item.water_level||'-');
+  const water = item.water_level_cm ? `${item.water_level_cm} ซม.` : '-';
   const images = item.images || item.photos || [];
   let html = `
     <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
