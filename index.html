@@ -2871,7 +2871,7 @@ window.highlightBoth = function(idStr, type){
           email: fakeEmail,
           password_hash: 'LINE_OAUTH_NO_PASSWORD', // FIX: ใส่ placeholder เพราะคอลัมน์นี้ห้ามว่าง
           phone_number: '0000000000', // FIX: ใส่ placeholder เพราะคอลัมน์นี้ห้ามว่าง
-          role: 'buyer', // FIX: buyer = คนขอความช่วยเหลือ, seller = คนขายที่
+          role: 'general', // general, special, admin
           // created_at, updated_at ปล่อยให้ DB gen เอง หรือใส่ now()
         };
         // หมายเหตุ: ถ้าตารางคุณมีคอลัมน์ display_name, picture_url จะไม่ใส่ก็ได้เพราะ nullable
