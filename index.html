@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_5  </title>
+  <title> v6_6  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1789,11 +1789,11 @@ window.highlightBoth = function(idStr, type){
     .flood-level-btn { padding: 10px 6px; border: 1.5px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
     .flood-level-btn.selected { background: #f59e0b; color: white; border-color: #d97706; }
     .flood-level-btn.critical.selected { background: #ef4444; border-color: #b91c1c; }
-    .flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
-    /* v17.11.9 FIX Command2: yellow bright #FFFF00 opacity 50% */
+    .flood-level-btn.watch.selected { background: #15803d !important; border-color: #14532d !important; color: #fff !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(21,128,61,0.35); } // FIX เขียวเข้ม
+    /* v17.11.9 FIX Command2: yellow bright #15803d opacity 50% */
     .flood-level-btn.watch { background: #ffffff !important; border-color: #e2e8f0 !important; color: #333 !important; }
-    .flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
-    #floodLevelGrid .flood-level-btn.watch.selected { background: #FFFF00 !important; opacity: 1 !important; border-color: #E6E600 !important; color: #333 !important; }
+    .flood-level-btn.watch.selected { background: #15803d !important; border-color: #14532d !important; color: #fff !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(21,128,61,0.35); } // FIX เขียวเข้ม
+    #floodLevelGrid .flood-level-btn.watch.selected { background: #15803d !important; opacity: 1 !important; border-color: #14532d !important; color: #fff !important; }
   </style>
   <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
@@ -1802,7 +1802,7 @@ window.highlightBoth = function(idStr, type){
       
       <label style="font-size:12px; font-weight:bold;">1. ระดับความรุนแรง</label>
       <div class="flood-level-grid" id="floodLevelGrid">
-        <button class="flood-level-btn watch" data-val="watch" onclick="toggleFloodLevel(this)">🟡 เฝ้าระวัง</button>
+        <button class="flood-level-btn watch" data-val="watch" onclick="toggleFloodLevel(this)">🟢 เฝ้าระวัง</button>
         <button class="flood-level-btn" data-val="warning" onclick="toggleFloodLevel(this)">🟠 เตือนภัย</button>
         <button class="flood-level-btn critical" data-val="critical" onclick="toggleFloodLevel(this)">🔴 อันตราย</button>
       </div>
@@ -8443,7 +8443,7 @@ function updateSOSUIForMode(mode){
   const dateTimeHTML = dateTimeSpan ? dateTimeSpan.outerHTML : `<span id="sosCurrentDateTime" style="margin-left:auto; font-weight:normal; color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:10px; border:1px solid #e2e8f0;"></span>`;
   if(mode === 'warnings'){
     if(statusEl){
-      statusEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; background:#ef4444; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #ef4444; display:inline-block;"></span> อันตราย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#d97706; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #d97706; display:inline-block;"></span> เตือนภัย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#fef9c3; border-radius:50%; border:2px solid #eab308; box-shadow:0 0 0 1px #fde68a; display:inline-block;"></span> เฝ้าระวัง</span>` + dateTimeHTML;
+      statusEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; background:#ef4444; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #ef4444; display:inline-block;"></span> อันตราย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#d97706; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #d97706; display:inline-block;"></span> เตือนภัย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#dcfce7; border-radius:50%; border:2px solid #15803d; box-shadow:0 0 0 1px #86efac; display:inline-block;"></span> เฝ้าระวัง</span>` + dateTimeHTML;
       statusEl.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fef9c3 100%)';
       statusEl.style.borderRadius = '10px';
       statusEl.style.border = '1px solid #fecaca';
@@ -8454,7 +8454,7 @@ function updateSOSUIForMode(mode){
         <button class="filter-btn sos-chip warning-chip" data-warn="all" onclick="filterFloodWarnings('all')" style="flex-shrink:0;">🌊 เตือนทั้งหมด <span id="count-warn-all">0</span></button>
         <button class="filter-btn sos-chip warning-chip" data-warn="critical" onclick="filterFloodWarnings('critical')" style="flex-shrink:0; background:#fef2f2; border-color:#ef4444; color:#b91c1c;"><span style="width:10px; height:10px; background:#ef4444; border-radius:50%; display:inline-block; margin-right:4px;"></span>อันตราย <span id="count-warn-critical">0</span></button>
         <button class="filter-btn sos-chip warning-chip" data-warn="warning" onclick="filterFloodWarnings('warning')" style="flex-shrink:0; background:#fff7ed; border-color:#d97706; color:#9a3412;"><span style="width:10px; height:10px; background:#d97706; border-radius:50%; display:inline-block; margin-right:4px;"></span>เตือนภัย <span id="count-warn-warning">0</span></button>
-        <button class="filter-btn sos-chip warning-chip" data-warn="watch" onclick="filterFloodWarnings('watch')" style="flex-shrink:0; background:#fefce8; border-color:#fde68a; color:#854d0e;"><span style="width:10px; height:10px; background:#fef9c3; border:1px solid #eab308; border-radius:50%; display:inline-block; margin-right:4px;"></span>เฝ้าระวัง <span id="count-warn-watch">0</span></button>
+        <button class="filter-btn sos-chip warning-chip" data-warn="watch" onclick="filterFloodWarnings('watch')" style="flex-shrink:0; background:#fefce8; border-color:#fde68a; color:#854d0e;"><span style="width:10px; height:10px; background:#dcfce7; border:1px solid #15803d; border-radius:50%; display:inline-block; margin-right:4px;"></span>เฝ้าระวัง <span id="count-warn-watch">0</span></button>
       `;
     }
     updateSOSDateTime();
@@ -8505,10 +8505,10 @@ function renderFloodWarningsList(list){
     else levelType='watch';
     const isCritical = levelType==='critical';
     const isWarning = levelType==='warning';
-    let icon = '🟡', bg = '#fefce8', border = '#fde68a';
+    let icon = '🟢', bg = '#f0fdf4', border = '#86efac'; // FIX เขียวเข้ม
     if(isCritical){ icon='🔴'; bg='#fef2f2'; border='#fecaca'; }
     else if(isWarning){ icon='🟠'; bg='#fff7ed'; border='#fed7aa'; }
-    else { icon='🟡'; bg='#fefce8'; border='#fde68a'; }
+    else { icon='🟢'; bg='#f0fdf4'; border='#86efac'; }
     const water = w.water_level_cm ? `${escapeHtml(w.water_level_cm)} ซม.` : '-';
     const time = w.created_at ? new Date(w.created_at).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '';
     const rawImgs = w.images || w.image_urls || w.photos || (w.image_url ? [w.image_url] : []);
@@ -8733,9 +8733,9 @@ function updateWarningMapMarkers(list){
     const lat = parseFloat(w.lat); const lng = parseFloat(w.lng);
     if(isNaN(lat)||isNaN(lng)) return;
     const _lvl = (w.risk_level||w.level||'').toLowerCase();
-    let col = '#FFFF00';
+    let col = '#15803d'; // FIX: เฝ้าระวัง เปลี่ยนจากเหลืองเป็นเขียวเข้ม
     let fillOp = 0.5;
-    if(_lvl.includes('watch') || _lvl.includes('เฝ้าระวัง')){ col='#FFFF00'; fillOp=0.5; }
+    if(_lvl.includes('watch') || _lvl.includes('เฝ้าระวัง')){ col='#15803d'; fillOp=0.55; } // FIX เขียวเข้ม
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
 
@@ -10120,7 +10120,7 @@ function openWarningDetailModal(id){
   }
   if(!item){ console.warn('warning not found',id); return; }
   const lvl = (item.risk_level||item.level||'').toLowerCase();
-  let levelLabel='เฝ้าระวัง', levelColor='#fefce8', icon='🟡';
+  let levelLabel='เฝ้าระวัง', levelColor='#f0fdf4', icon='🟢'; // FIX เขียวเข้ม
   if(lvl.includes('critical')||lvl.includes('danger')||lvl.includes('อันตราย')){ levelLabel='อันตราย'; levelColor='#fef2f2'; icon='🔴'; }
   else if(lvl.includes('warning')||lvl.includes('เตือนภัย')){ levelLabel='เตือนภัย'; levelColor='#fff7ed'; icon='🟠'; }
   const cardBadge = getTrustBadgeHTML(item.reporter_role||item.reporter_type, item.reporter_trusted, item.reporter_type);
@@ -10525,7 +10525,7 @@ window.renderFloodWarningsList = function(list){
     flex-shrink: 0;
   }
 }
-.flood-level-btn.watch.selected { background: #FFFF00 !important; border-color: #E6E600 !important; color: #333 !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(255,255,0,0.35); }
+.flood-level-btn.watch.selected { background: #15803d !important; border-color: #14532d !important; color: #fff !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(21,128,61,0.35); } // FIX เขียวเข้ม
 </style>
 
 <script>
