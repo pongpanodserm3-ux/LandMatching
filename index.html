@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_2  </title>
+  <title> v6_3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9319,8 +9319,8 @@ function getCurrentLocationForFloodWarning(){
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
       radius_m: Math.min(Math.max(parseInt(radius)||200, 50), 600), // HOTFIX Step1.4
       risk_level: (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'medium'),
-      level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
-      images: []
+      flood_level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
+      image_urls: []
     };
     // === Step2.1 + 2.4 FIX: อัปโหลดรูป + offline queue ===
     // 2.4: บันทึก pending ลง localStorage ก่อนส่ง กันเน็ตหลุด
@@ -9356,7 +9356,7 @@ function getCurrentLocationForFloodWarning(){
           if(publicUrlData && publicUrlData.publicUrl) finalImageUrls.push(publicUrlData.publicUrl);
         }catch(e){ console.warn(e); }
       }
-      optionalFields.images = finalImageUrls;
+      optionalFields.image_urls = finalImageUrls;
     }
     let payload = {...basePayload, ...optionalFields};
     console.log('[FLOOD SUBMIT FIXED] payload:', payload);
@@ -9606,7 +9606,6 @@ async function autoStep1_DeleteImages_3hr(){
       const imgs = item.images || item.image_urls || [];
       if(imgs.length>0) await deleteFilesFromStorage(imgs);
       const {error} = await supabaseClient.from('flood_help_requests').update({
-        images: [],
         image_urls: [],
         image_cleaned_at: new Date().toISOString()
       }).eq('id', item.id);
@@ -9705,8 +9704,8 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   }
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
-    const {data: oldData} = await supabaseClient.from('flood_warnings').select('images, image_urls').eq('id', warningId).maybeSingle();
-    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
+    const {data: oldData} = await supabaseClient.from('flood_warnings').select('image_urls').eq('id', warningId).maybeSingle();
+    const imgs = (oldData && oldData.image_urls) || [];
     console.log(`[DELETE-WARNING-100%] ลบเตือนท่วม ${warningId} พร้อมรูป ${imgs.length} รูป`);
     const delImgResult = await deleteSOSImage100Percent(imgs, 'delete_full_warning_'+warningId);
     if(!delImgResult.ok){
@@ -9783,7 +9782,7 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
   }catch(e){ console.warn('[v17.1 delete check] warn', e); }
   // ===== v17.1 RLS client-side check - END =====
 
-    const {data: oldData} = await supabaseClient.from('flood_help_requests').select('images, image_urls').eq('id', sosId).maybeSingle();
+    const {data: oldData} = await supabaseClient.from('flood_help_requests').select('image_urls').eq('id', sosId).maybeSingle();
     const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
     console.log(`[DELETE-POST-100%] ลบโพสต์ ${sosId} พร้อมรูป ${imgs.length} รูป`);
     const delImgResult = await deleteSOSImage100Percent(imgs, 'delete_full_post_'+sosId);
@@ -9851,7 +9850,7 @@ async function autoWarningStep2_DeleteImages_3Days(){
     const threeDaysAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วันตาม expire
     console.log('[WARNING-FLOW-STEP2] เช็ค 2วันลบรูป (ตาม expire 2 วัน):', threeDaysAgo);
     const {data: toClean, error} = await supabaseClient.from('flood_warnings')
-      .select('id, images, image_urls, created_at')
+      .select('id, image_urls, created_at')
       .lt('created_at', threeDaysAgo)
       .limit(30);
     if(error){ console.warn('[WARNING-STEP2] query error', error); return; }
@@ -9869,7 +9868,6 @@ async function autoWarningStep2_DeleteImages_3Days(){
         }
       }
       const {error: upErr} = await supabaseClient.from('flood_warnings').update({
-        images: [],
         image_urls: []
       }).eq('id', item.id);
       if(upErr) console.error('[WARNING-STEP2] อัปเดต DB ไม่ได้', upErr);
@@ -9885,7 +9883,7 @@ async function autoWarningStep3_DeletePermanently_7Days(){
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     console.log('[WARNING-FLOW-STEP3] เช็ค 7วันลบถาวร:', sevenDaysAgo);
     const {data: toDelete, error} = await supabaseClient.from('flood_warnings')
-      .select('id, images, image_urls, created_at')
+      .select('id, image_urls, created_at')
       .lt('created_at', sevenDaysAgo)
       .limit(30);
     if(error){ console.warn('[WARNING-STEP3] query error', error); return; }
