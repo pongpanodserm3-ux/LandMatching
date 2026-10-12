@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_9  </title>
+  <title> v6_10  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -6476,7 +6476,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         if(!userId || typeof supabaseClient==='undefined' || !supabaseClient) return [];
         const {data, error} = await supabaseClient
           .from('flood_help_requests')
-          .select('id, user_id, detail, lat, lng, need_types, images, image_urls, people_count, phone, created_at, status')
+          .select('id, user_id, detail, lat, lng, need_types, image_urls, people_count, phone, created_at, status')
           .eq('user_id', String(userId))
           .neq('status','completed')
           .neq('status','expired')
@@ -7977,7 +7977,7 @@ document.addEventListener('fullscreenchange', ()=>{
         // v17.7 FIX: อัปเดต images เสมอ แม้ลบหมดเหลือ 0
         try{
           const cleanUrls = finalImageUrls.map(u=>u.split('?')[0]);
-          const {error: imgUpdErr} = await supabaseClient.from('flood_help_requests').update({images: cleanUrls}).eq('id', postIdToUse);
+          const {error: imgUpdErr} = await supabaseClient.from('flood_help_requests').update({image_urls: cleanUrls}).eq('id', postIdToUse);
           if(imgUpdErr) console.warn('อัปเดต images ไม่สำเร็จ', imgUpdErr);
           
           if(window.sosImagesToDelete && window.sosImagesToDelete.length>0){
