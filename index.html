@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_4  </title>
+  <title> v6_5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9983,7 +9983,7 @@ function openSOSDetailModal(id){
       </div>
       <!-- ปุ่มหลัก: ดูแผนที่ + ติดต่อช่วยเหลือ (2 คอลัมน์) -->
       <div style="display:flex; gap:8px;">
-        <button onclick="if(window.sosMap){ window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">📍 ดูบนแผนที่</button>
+        <button onclick="if(window.sosMap){ window._lastHighlightedSOSId='${item.id}'; if(typeof window.highlightBoth==='function') window.highlightBoth('${item.id}','sos'); window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 16); closeSOSDetailModal(); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'}); setTimeout(()=>{ if(typeof applyPersistedHighlight==='function') applyPersistedHighlight(); const el=document.getElementById('sos-card-${item.id}'); if(el){ document.querySelectorAll('.sos-card-highlight').forEach(e=>e.classList.remove('sos-card-highlight')); el.classList.add('sos-card-highlight'); } }, 350); }" style="flex:1; background:white; border:1.5px solid #cbd5e1; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">📍 ดูบนแผนที่</button>
         <button onclick="openSOSChatById('${item.id}'); closeSOSDetailModal();" style="flex:1; background:#4a83cc; color:white; border:none; border-radius:12px; padding:10px; font-weight:bold; cursor:pointer; font-size:13px;">💬 ติดต่อช่วยเหลือ</button>
       </div>
       ${item.status==='going' ? `<button onclick="completeSOSFromList('${item.id}'); closeSOSDetailModal();" style="width:100%; background:#0f172a; color:white; border:none; border-radius:12px; padding:12px; font-weight:bold; cursor:pointer; margin-top:2px;">🏁 กดยืนยันว่าเสร็จแล้ว</button>` : ''}
