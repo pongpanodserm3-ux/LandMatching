@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_7  </title>
+  <title> v6_8  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9283,6 +9283,9 @@ function getCurrentLocationForFloodWarning(){
         alert('📸 บุคคลทั่วไปต้องแนบรูปถ่ายจุดน้ำท่วมอย่างน้อย 1 รูปครับ (เพื่อกันแจ้งมั่ว)');
         return;
       }
+    } else if(myRoleInfo.role === 'admin') {
+      // FIX: admin ไม่ต้องรอ 5 นาที บายพาสหมด
+      console.log('✅ ADMIN ('+myRoleInfo.role+') : บายพาสทุกการจำกัด - โพสต์ได้ไม่จำกัด');
     } else {
       // 3.2 FIX กันสแปมแม้ special: จำกัด 1 ครั้ง / 5 นาที กันยิง 1000 จุด
       console.log('✅ สมาชิกพิเศษ ('+myRoleInfo.role+' / trusted='+myRoleInfo.is_trusted+') : ข้ามกรอบทั่วไป แต่ยังจำกัด 5 นาที');
