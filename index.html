@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_3  </title>
+  <title> v6_4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7005,6 +7005,7 @@ document.addEventListener('fullscreenchange', ()=>{
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         });
+        if (!item.lat || !item.lng || isNaN(parseFloat(item.lat)) || isNaN(parseFloat(item.lng))) return; // FIX: ไม่มีพิกัดข้าม marker ไม่ให้แผนที่พัง
         const marker = L.marker([parseFloat(item.lat), parseFloat(item.lng)], {icon})
           .bindPopup(`<div style="font-family:sans-serif; min-width:190px;"><div style="font-weight:bold; color:${color};">${(item.need_types||[]).join(', ')}</div><div style="font-size:12px; margin-top:4px;">📍 ${typeof escapeHtml!=='undefined' ? escapeHtml(item.location_text||'-') : (item.location_text||'-')}</div><div style="font-size:11px; color:#666;">👥 ${item.people_count||1} คน</div><div style="margin-top:8px; text-align:center;"><span style="background:#ff3b30; color:white; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:bold;">แตะเพื่อดูรายละเอียด</span></div></div>`);
         marker.sosId = item.id;
@@ -9583,7 +9584,7 @@ async function autoStep1_DeleteImages_3hr(){
 
     // สำเร็จ: ใช้ is() แทน or(eq("")) ที่พัง
     const {data: completedToClean, error: err1} = await supabaseClient.from('flood_help_requests')
-      .select('id, images, image_urls, image_cleaned_at, status, created_at')
+      .select('id, image_urls, image_cleaned_at, status, created_at')
       .eq('status','completed')
       .is('image_cleaned_at', null)
       .lt('created_at', threeHoursAgo)
@@ -9591,7 +9592,7 @@ async function autoStep1_DeleteImages_3hr(){
     if(err1) console.warn('[FLOW-STEP1] completed query error', err1);
 
     const {data: silentToClean, error: err2} = await supabaseClient.from('flood_help_requests')
-      .select('id, images, image_urls, image_cleaned_at, status, created_at')
+      .select('id, image_urls, image_cleaned_at, status, created_at')
       .in('status',['waiting','going'])
       .is('image_cleaned_at', null)
       .lt('created_at', threeDaysAgo)
@@ -9603,7 +9604,7 @@ async function autoStep1_DeleteImages_3hr(){
     if(list.length===0) return;
 
     for(let item of list){
-      const imgs = item.images || item.image_urls || [];
+      const imgs = item.image_urls || item.images || [];
       if(imgs.length>0) await deleteFilesFromStorage(imgs);
       const {error} = await supabaseClient.from('flood_help_requests').update({
         image_urls: [],
@@ -9613,7 +9614,7 @@ async function autoStep1_DeleteImages_3hr(){
       else console.log('[FLOW-STEP1] ลบรูปสำเร็จ DB', item.id);
       if(window.sosRequestsCache){
         const c = window.sosRequestsCache.find(x=>String(x.id)===String(item.id));
-        if(c){ c.images=[]; c.image_urls=[]; }
+        if(c){ c.image_urls=[]; if(c.images) c.images=[]; }
       }
       await new Promise(r=>setTimeout(r, 300));
     }
@@ -9672,14 +9673,14 @@ async function autoStep3_DeleteArchivePermanently(){
   try{
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     const {data: archiveOld} = await supabaseClient.from('flood_help_requests')
-      .select('id, images, image_urls')
+      .select('id, image_urls')
       .not('archived_at','is', null)
       .lt('archived_at', sevenDaysAgo)
       .limit(20);
     if(!archiveOld || archiveOld.length===0) return;
     console.log(`[FLOW-STEP3] เจอ ${archiveOld.length} เคสเกิน 7 วัน ลบถาวร`);
     for(let item of archiveOld){
-      const imgs = item.images || item.image_urls || [];
+      const imgs = item.image_urls || item.images || [];
       if(imgs.length>0) await deleteFilesFromStorage(imgs);
       await deleteChatsBySOSId(item.id);
       await supabaseClient.from('flood_help_requests').delete().eq('id', item.id);
@@ -9783,7 +9784,7 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
   // ===== v17.1 RLS client-side check - END =====
 
     const {data: oldData} = await supabaseClient.from('flood_help_requests').select('image_urls').eq('id', sosId).maybeSingle();
-    const imgs = (oldData && (oldData.images || oldData.image_urls)) || [];
+    const imgs = (oldData && (oldData.image_urls || oldData.images)) || [];
     console.log(`[DELETE-POST-100%] ลบโพสต์ ${sosId} พร้อมรูป ${imgs.length} รูป`);
     const delImgResult = await deleteSOSImage100Percent(imgs, 'delete_full_post_'+sosId);
     if(!delImgResult.ok){
@@ -9859,7 +9860,7 @@ async function autoWarningStep2_DeleteImages_3Days(){
     console.log(`[WARNING-STEP2] เจอ ${withImages.length} เตือนต้องลบรูป (3วัน)`, withImages);
     if(withImages.length===0) return;
     for(let item of withImages){
-      const imgs = item.images || item.image_urls || [];
+      const imgs = item.image_urls || item.images || [];
       if(imgs.length>0){
         console.log('[WARNING-STEP2-100%] เตรียมลบรูปเตือนท่วม:', item.id, imgs.length);
         const delResult = await deleteSOSImage100Percent(imgs, 'warning_auto_3day_'+item.id);
@@ -9890,7 +9891,7 @@ async function autoWarningStep3_DeletePermanently_7Days(){
     console.log(`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`, toDelete);
     if(!toDelete || toDelete.length===0) return;
     for(let item of toDelete){
-      const imgs = item.images || item.image_urls || [];
+      const imgs = item.image_urls || item.images || [];
       if(imgs && imgs.length>0){
         console.log('[WARNING-STEP3-100%] ลบรูปถาวรเตือนท่วม:', item.id);
         await deleteSOSImage100Percent(imgs, 'warning_auto_7day_'+item.id);
