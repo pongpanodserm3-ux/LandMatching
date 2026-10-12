@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_6  </title>
+  <title> v6_7  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7845,7 +7845,8 @@ document.addEventListener('fullscreenchange', ()=>{
         user_id: userId,
         // v17.15 FIX - ลบ created_by, role ที่ไม่มีใน DB ออก กัน error PGRST204
         // เหลือแค่คอลัมน์ที่ flood_help_requests มีจริง + resilient ลบคอลัมน์ที่ไม่รู้จักอัตโนมัติ
-        reporter_type: isSpecialMemberSOS ? 'special' : 'general',
+        // reporter_type removed - ใช้ reporter_role อย่างเดียว
+      reporter_role: myRoleForPayload.role,
         reporter_role: myRoleForPayload.role,
         reporter_trusted: myRoleForPayload.is_trusted
       };
@@ -9311,8 +9312,7 @@ function getCurrentLocationForFloodWarning(){
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now()+ 48*60*60*1000).toISOString(),
       user_id: String(myUserIdForCheck), // DB flood_warnings.user_id เป็น text (จากรูป)
-      reporter_type: isSpecialMember ? 'special' : 'general',
-      reporter_role: myRoleInfo.role,
+      reporter_role: myRoleInfo.role, // FIX: ใช้ reporter_role อย่างเดียว ไม่แยก type
       reporter_trusted: myRoleInfo.is_trusted,
       created_by: String(myUserIdForCheck) // เผื่อคอลัมน์ created_by ที่เป็น text
     };
