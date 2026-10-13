@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_12  </title>
+  <title> v6_13  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9321,9 +9321,11 @@ function getCurrentLocationForFloodWarning(){
     };
     // === FIX v6-11: risk_level = watch/warning/critical (3 ค่า), flood_level = subcategory / risk_level ===
     let normalizedLevel = (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'warning');
-    if (normalizedLevel==='danger') normalizedLevel='critical';
+    // FIX FINAL V13: enforce 3 values only watch/warning/critical, map legacy
+    if (normalizedLevel==='danger' || normalizedLevel==='high') normalizedLevel='critical';
     if (normalizedLevel==='medium') normalizedLevel='warning';
     if (normalizedLevel==='low') normalizedLevel='watch';
+    if (!['watch','warning','critical'].includes(normalizedLevel)) normalizedLevel='warning';
     let optionalFields = {
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
       radius_m: Math.min(Math.max(parseInt(radius)||200, 50), 600),
