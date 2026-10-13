@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v6_10  </title>
+  <title> v6_11  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -9319,11 +9319,16 @@ function getCurrentLocationForFloodWarning(){
       reporter_trusted: myRoleInfo.is_trusted,
       created_by: String(myUserIdForCheck) // เผื่อคอลัมน์ created_by ที่เป็น text
     };
+    // === FIX v6-11: risk_level = watch/warning/critical (3 ค่า), flood_level = subcategory / risk_level ===
+    let normalizedLevel = (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'warning');
+    if (normalizedLevel==='danger') normalizedLevel='critical';
+    if (normalizedLevel==='medium') normalizedLevel='warning';
+    if (normalizedLevel==='low') normalizedLevel='watch';
     let optionalFields = {
       water_level_cm: waterLevel ? parseInt(waterLevel) : null,
-      radius_m: Math.min(Math.max(parseInt(radius)||200, 50), 600), // HOTFIX Step1.4
-      risk_level: (typeof selectedFloodLevel !== 'undefined' ? selectedFloodLevel : 'medium'),
-      flood_level: (typeof selectedFloodLevel !== 'undefined' ? (selectedFloodLevel === 'critical' ? 'danger' : selectedFloodLevel) : 'medium'),
+      radius_m: Math.min(Math.max(parseInt(radius)||200, 50), 600),
+      risk_level: normalizedLevel,
+      flood_level: normalizedLevel,
       image_urls: []
     };
     // === Step2.1 + 2.4 FIX: อัปโหลดรูป + offline queue ===
