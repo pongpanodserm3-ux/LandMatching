@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-1  </title>
+  <title> v7-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7841,7 +7841,7 @@ document.addEventListener('fullscreenchange', ()=>{
         evac_lng: document.getElementById('sosEvacLng')?.value ? parseFloat(document.getElementById('sosEvacLng').value) : null,
         evac_vehicle_type: document.getElementById('sosEvacVehicle')?.value || '',
         origin_text: document.getElementById('sosLocationText')?.value || '',
-        urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'high',
+        urgency: selectedSOSTags.has('evacuate') ? 'critical' : 'warning',
         status: 'waiting',
         user_id: userId,
         // v17.15 FIX - ลบ created_by, role ที่ไม่มีใน DB ออก กัน error PGRST204
