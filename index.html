@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7  </title>
+  <title> v7-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4554,7 +4554,8 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
         // สร้างตัวแปรแปลงวันที่ปัจจุบันให้อยู่ในรูปแบบ DD-MM-YYYY
         const today = new Date();
-        const currentDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+        //--SS--const currentDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+        const currentDate = today.toISOString();
         const postPayload = {
           user_id: userId,
           price_type: getPostDropdownValue('ขาย/เช่า'),
