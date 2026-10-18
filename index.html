@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-6  </title>
+  <title> v7-7  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -10633,113 +10633,221 @@ window.renderFloodWarningsList = function(list){
 
 
 <script>
-// === v7-5 PATCH v2 FINAL: แก้แผนที่หาย - ต้องขยายลงมา ไม่ใช่หาย ===
-console.log('[v7-5 PATCH v2] loading viewOnMap helpers - expand map correctly');
-function _ensureMapExpandedAndVisible(){
+// === v7-5 PATCH v4 FINAL: แก้เปิดปั๊บปิดปุ๊บ - บังคับขยายค้าง + กัน auto-collapse ===
+console.log('[v7-5 PATCH v4] loading - fix auto-collapse');
+window._lastManualExpandAt = 0;
+window._manualExpandLock = false;
+
+function _forceExpandMapDown(){
   try{
     const container = document.getElementById('sosMapContainer');
     const preview = document.getElementById('sosMapPreview');
-    if(container){
-      container.style.display='block';
-      container.style.visibility='visible';
-      container.style.opacity='1';
-      // ลบ class fullscreen ที่อาจทำให้หาย
-      container.classList.remove('map-fullscreen-fallback');
-      // ถ้ากำลัง fullscreen อยู่ ให้ออกก่อน
-      if(document.fullscreenElement){
-        try{ if(document.exitFullscreen) document.exitFullscreen(); }catch(e){}
-      }
-      // ขยายลงมาแบบปกติ 60vh (ตามพฤติกรรมเดิมของเตือนท่วม)
-      container.style.height='60vh';
-      container.style.minHeight='380px';
-    }
+    if(!container){ console.warn('no container'); return; }
+    // ออกจาก fullscreen
+    try{
+      if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+      if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }catch(e){}
+    container.classList.remove('map-fullscreen-fallback');
+    container.classList.add('map-expanded'); // กัน logic อื่นมาย่อ
+    window.isSOSMapExpanded = true;
+    window._lastManualExpandAt = Date.now();
+    window._manualExpandLock = true;
+    // ลบ overlay บัง
+    const overlay = document.getElementById('fullscreenListOverlay');
+    if(overlay){ overlay.style.display='none'; overlay.style.visibility='hidden'; }
+    // บังคับขยายแบบ !important ค้างไว้
+    container.style.display='block';
+    container.style.visibility='visible';
+    container.style.opacity='1';
+    container.style.setProperty('height','62vh','important');
+    container.style.setProperty('min-height','450px','important');
+    container.style.setProperty('max-height','70vh','important');
+    container.style.setProperty('transition','none','important'); // กันแอนิเมชันย่อกลับ
     if(preview){
       preview.style.display='block';
       preview.style.visibility='visible';
-      preview.style.height='100%';
-      preview.style.minHeight='380px';
+      preview.style.setProperty('height','100%','important');
+      preview.style.setProperty('min-height','450px','important');
     }
-    // ซ่อน overlay fullscreen ที่บังแผนที่ ถ้ามี
-    const overlay = document.getElementById('fullscreenListOverlay');
-    if(overlay) overlay.style.display='none';
-    // invalidate size 2 รอบ กันกระพริบ
-    setTimeout(function(){ 
-      try{ 
+    const aiSec = document.getElementById('ai-section');
+    if(aiSec) aiSec.classList.remove('collapsed');
+    
+    const doInvalidate = function(){
+      try{
         const m = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-        if(m) m.invalidateSize(); 
-      }catch(e){} 
-    }, 200);
-    setTimeout(function(){ 
-      try{ 
-        const m = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-        if(m) m.invalidateSize(); 
-      }catch(e){} 
-    }, 500);
-  }catch(e){ console.warn('_ensureMapExpandedAndVisible error', e); }
+        if(m){ m.invalidateSize(); }
+      }catch(e){}
+    };
+    setTimeout(doInvalidate, 100);
+    setTimeout(doInvalidate, 400);
+    setTimeout(doInvalidate, 900);
+    // ปลดล็อค transition หลัง 1 วิ และปลดล็อค auto-collapse หลัง 3 วิ ให้กดเก็บเองได้
+    setTimeout(function(){
+      try{ container.style.removeProperty('transition'); }catch(e){}
+    }, 1100);
+    setTimeout(function(){
+      window._manualExpandLock = false;
+      console.log('[v4] manual expand lock released - ตอนนี้เก็บเองได้');
+    }, 3000);
+    console.log('[v4] forced expand to 62vh + lock 3s');
+  }catch(e){ console.error('_forceExpandMapDown error', e); }
 }
+
+// กันฟังก์ชันอื่นมาย่อแผนที่ระหว่าง lock
+(function(){
+  const _origEnsureVisible = window.ensureSOSMapVisible;
+  if(typeof _origEnsureVisible==='function' && !_origEnsureVisible._v4patched){
+    window.ensureSOSMapVisible = function(){
+      const res = _origEnsureVisible.apply(this, arguments);
+      if(window._manualExpandLock && Date.now() - window._lastManualExpandAt < 3000){
+        console.log('[v4] block ensureSOSMapVisible from shrinking during lock');
+        _forceExpandMapDown();
+      }
+      return res;
+    };
+    window.ensureSOSMapVisible._v4patched = true;
+  }
+})();
 
 window.viewWarningOnMapFromList = function(lat,lng,id){
   try{
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
     if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
-    // 1. สลับโหมดถ้ายังไม่ใช่ warnings
-    if(window.currentViewMode!=='warnings' && typeof window.switchSOSSubView==='function'){
+    console.log('[v4] viewWarning click', mLat, mLng, id);
+    const needSwitch = window.currentViewMode!=='warnings';
+    if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('warnings');
+      setTimeout(function(){
+        _forceExpandMapDown();
+        const c = document.getElementById('sosMapContainer');
+        if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
+        setTimeout(function(){
+          const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+          if(!targetMap) return;
+          if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+          else targetMap.setView([mLat, mLng], 16, {animate:true});
+          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
+          try{
+            if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
+            window._tempViewMapMarkerLayer.clearLayers();
+            const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 5px rgba(239,68,68,0.35);"></div>', iconSize:[26,26], iconAnchor:[13,13]});
+            L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม (flood_warnings)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
+          }catch(e){}
+        }, 500);
+      }, 650);
+    } else {
+      _forceExpandMapDown();
+      const c = document.getElementById('sosMapContainer');
+      if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
+      setTimeout(function(){
+        const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+        if(!targetMap) return;
+        if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+        else targetMap.setView([mLat, mLng], 16, {animate:true});
+        if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
+        try{
+          if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
+          window._tempViewMapMarkerLayer.clearLayers();
+          const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
+          L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
+        }catch(e){}
+      }, 450);
     }
-    // 2. ขยายแผนที่ลงมา ไม่ให้หาย
-    _ensureMapExpandedAndVisible();
-    const container = document.getElementById('sosMapContainer');
-    if(container) container.scrollIntoView({behavior:'smooth', block:'start'});
-    // 3. ซูมไปพิกัด
-    setTimeout(function(){
-      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-      if(!targetMap){ console.warn('map not ready'); return; }
-      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-      else targetMap.setView([mLat, mLng], 16, {animate:true});
-      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
-      try{
-        if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
-        window._tempViewMapMarkerLayer.clearLayers();
-        const icon = L.divIcon({html:'<div style="background:#ef4444; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(239,68,68,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
-        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer);
-        mk.bindPopup('📍 ตำแหน่งเตือนท่วม (flood_warnings)<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
-        setTimeout(function(){ try{ window._tempViewMapMarkerLayer.clearLayers(); }catch(e){} }, 10000);
-      }catch(e){}
-      setTimeout(function(){ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
-    }, 400);
-  }catch(e){ console.error('viewWarningOnMap error', e); }
+  }catch(e){ console.error(e); }
 };
 
 window.viewSOSOnMapFromList = function(lat,lng,id){
   try{
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
-    if(window.currentViewMode!=='requests' && typeof window.switchSOSSubView==='function'){
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); return; }
+    console.log('[v4] viewSOS click', mLat, mLng, id);
+    const needSwitch = window.currentViewMode!=='requests';
+    if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('requests');
+      setTimeout(function(){
+        _forceExpandMapDown();
+        const c = document.getElementById('sosMapContainer');
+        if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
+        setTimeout(function(){
+          const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+          if(!targetMap) return;
+          if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+          else targetMap.setView([mLat, mLng], 16, {animate:true});
+          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
+          try{
+            if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
+            window._tempViewMapMarkerLayerSOS.clearLayers();
+            const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
+            L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย (flood_help_requests)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
+          }catch(e){}
+        }, 500);
+      }, 650);
+    } else {
+      _forceExpandMapDown();
+      const c = document.getElementById('sosMapContainer');
+      if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
+      setTimeout(function(){
+        const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+        if(!targetMap) return;
+        if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+        else targetMap.setView([mLat, mLng], 16, {animate:true});
+        if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
+        try{
+          if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
+          window._tempViewMapMarkerLayerSOS.clearLayers();
+          const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
+          L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
+        }catch(e){}
+      }, 450);
     }
-    _ensureMapExpandedAndVisible();
-    const container = document.getElementById('sosMapContainer');
-    if(container) container.scrollIntoView({behavior:'smooth', block:'start'});
-    setTimeout(function(){
-      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-      if(!targetMap) return;
-      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-      else targetMap.setView([mLat, mLng], 16, {animate:true});
-      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
-      try{
-        if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
-        window._tempViewMapMarkerLayerSOS.clearLayers();
-        const icon = L.divIcon({html:'<div style="background:#22c55e; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(34,197,94,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
-        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS);
-        mk.bindPopup('📍 จุดขอให้ช่วย (flood_help_requests)<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
-        setTimeout(function(){ try{ window._tempViewMapMarkerLayerSOS.clearLayers(); }catch(e){} }, 10000);
-      }catch(e){}
-      setTimeout(function(){ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
-    }, 400);
-  }catch(e){ console.error('viewSOSOnMap error', e); }
+  }catch(e){ console.error(e); }
 };
-console.log('[v7-5 PATCH v2] helpers ready - map will expand down');
+
+// ปุ่มเก็บแผนที่เองยังใช้งานได้ - เพิ่มปุ่มย่อเองถ้ายังไม่มี
+(function(){
+  setTimeout(function(){
+    const container = document.getElementById('sosMapContainer');
+    if(!container) return;
+    if(document.getElementById('mapCollapseManualBtn')) return;
+    const btn = document.createElement('button');
+    btn.id='mapCollapseManualBtn';
+    btn.innerHTML='⬆️ เก็บแผนที่';
+    btn.style.cssText='position:absolute; bottom:8px; right:8px; z-index:850; background:rgba(255,255,255,0.95); border:1px solid #cbd5e1; border-radius:20px; padding:6px 12px; font-size:12px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15); display:none;';
+    btn.onclick=function(){
+      const c = document.getElementById('sosMapContainer');
+      if(!c) return;
+      c.classList.remove('map-expanded');
+      c.style.setProperty('height','320px','important');
+      c.style.setProperty('min-height','320px','important');
+      window.isSOSMapExpanded=false;
+      window._manualExpandLock=false;
+      setTimeout(function(){ try{ const m=(typeof ensureSOSMapReady==='function')?ensureSOSMapReady():window.sosMap; if(m) m.invalidateSize(); }catch(e){} }, 300);
+      btn.style.display='none';
+    };
+    container.appendChild(btn);
+    // โชว์ปุ่มเก็บเมื่อมีการขยาย manual
+    const observer = new MutationObserver(function(){
+      const c = document.getElementById('sosMapContainer');
+      if(!c) return;
+      const h = parseInt(c.style.height||'0');
+      const btnEl = document.getElementById('mapCollapseManualBtn');
+      if(!btnEl) return;
+      if(h>400 || c.classList.contains('map-expanded')){
+        btnEl.style.display='block';
+      } else {
+        // ถ้า lock หมดแล้วค่อยซ่อน
+        if(!window._manualExpandLock) btnEl.style.display='none';
+      }
+    });
+    observer.observe(container, {attributes:true, attributeFilter:['style','class']});
+  }, 1500);
+})();
+
+console.log('[v7-5 PATCH v4] ready - anti auto-collapse + manual collapse button');
 </script>
+
+
 
 </body>
 </html>
