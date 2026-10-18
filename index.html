@@ -7207,7 +7207,7 @@ document.addEventListener('fullscreenchange', ()=>{
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
               ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; margin-left:2px;" onclick="completeSOSFromList('${item.id}', event); event.stopPropagation();">🏁 เสร็จแล้ว</button>` : ''}
               ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:8px; font-size:9px;">✅ เสร็จแล้ว</span>` : ''}
-              ${(()=>{ const _fb = (item.fb_url||item.facebook_url||item.fbUrl||'').toString().trim(); if(!_fb) return `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:700; white-space:nowrap;">ไม่มีที่มา</span>`; const _esc = _fb.replace(/'/g, '%27').replace(/"/g, '&quot;'); return `<button style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6;" onclick="event.stopPropagation(); window.open('${_esc}', '_blank', 'noopener');">🔗 ดูที่มาโพสต์</button>`; })()}<button style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:2px;" onclick="event.stopPropagation(); viewSOSOnMapFromList(${item.lat}, ${item.lng}, '${item.id}');">📍 ดูบนแผนที่</button>
+              ${(()=>{ const _fb = (item.fb_url||item.facebook_url||item.fbUrl||'').toString().trim(); if(!_fb) return `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:700; white-space:nowrap;">ไม่มีที่มา</span>`; const _esc = _fb.replace(/'/g, '%27').replace(/"/g, '&quot;'); return `<button style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6;" onclick="event.stopPropagation(); window.open('${_esc}', '_blank', 'noopener');">🔗 ดูที่มาโพสต์</button>`; })()}<button style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:2px;" onclick="event.stopPropagation(); window.viewSOSOnMapFromList(${item.lat}, ${item.lng}, '${item.id}');">📍 ดูบนแผนที่</button>
             </div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
@@ -8573,7 +8573,7 @@ function renderFloodWarningsList(list){
     const sourceBtnHtmlW = fbUrlW
       ? `<button onclick="event.stopPropagation(); window.open('${fbUrlEscW}', '_blank', 'noopener');" style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.8;">🔗 ดูที่มาโพสต์</button>`
       : `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; white-space:nowrap; line-height:1.8;">ไม่มีที่มา</span>`;
-    const viewOnMapBtnHtmlW = `<button onclick="event.stopPropagation(); viewWarningOnMapFromList(${lat}, ${lng}, '${w.id}');" style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.8; margin-left:4px;">📍 ดูบนแผนที่</button>`;
+    const viewOnMapBtnHtmlW = `<button onclick="event.stopPropagation(); window.viewWarningOnMapFromList(${lat}, ${lng}, '${w.id}');" style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.8; margin-left:4px;">📍 ดูบนแผนที่</button>`;
     return `
       <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : '1px solid '+border}; border-radius:14px; padding:10px 12px; margin-bottom:10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px;">
         <div style="flex:1; min-width:0;">
@@ -8735,74 +8735,6 @@ function focusWarningOnMap(lat,lng){
     } else {
       window.highlightBoth(String(it.id),'warning');
     }
-
-// === v7-5 PATCH: ปุ่ม ดูบนแผนที่ ต่อจาก ดูที่มาโพสต์ - flood_warnings + flood_help_requests (ห้ามลบของเดิม) ===
-window.viewWarningOnMapFromList = function(lat,lng,id){
-  try{
-    const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
-    if(window.currentViewMode!=='warnings' && typeof window.switchSOSSubView==='function'){
-      window.switchSOSSubView('warnings');
-    }
-    const container = document.getElementById('sosMapContainer');
-    if(container){
-      // ขยายแมปขึ้นมาปกติ (ตามพฤติกรรมเดิม 60vh)
-      if(!container.classList.contains('map-expanded')) container.style.height='60vh';
-      container.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-    setTimeout(()=>{
-      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-      if(!targetMap) return;
-      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-      else targetMap.setView([mLat, mLng], 16, {animate:true});
-      // ปักหมุดแสดงตำแหน่งพิกัด (ชั่วคราว) - ใช้ highlightBoth เพื่อไฮไลท์การ์ดเดิม + วงกลม
-      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
-      // เพิ่มหมุดชั่วคราวสีแดงเด้งๆ เพื่อให้เห็นชัดว่ามาจากปุ่มนี้ (ดึงจาก flood_warnings.lat,lng)
-      try{
-        if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
-        window._tempViewMapMarkerLayer.clearLayers();
-        const icon = L.divIcon({html:'<div style="background:#ef4444; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(239,68,68,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
-        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer);
-        mk.bindPopup('📍 ตำแหน่งเตือนท่วม<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
-        setTimeout(()=>{ try{ window._tempViewMapMarkerLayer.clearLayers(); }catch(e){} }, 8000);
-      }catch(e){}
-      setTimeout(()=>{ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
-    }, 350);
-  }catch(e){ console.error('viewWarningOnMap error', e); }
-};
-
-window.viewSOSOnMapFromList = function(lat,lng,id){
-  try{
-    const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
-    if(window.currentViewMode!=='requests' && typeof window.switchSOSSubView==='function'){
-      window.switchSOSSubView('requests');
-    }
-    const container = document.getElementById('sosMapContainer');
-    if(container){
-      if(!container.classList.contains('map-expanded')) container.style.height='60vh';
-      container.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-    setTimeout(()=>{
-      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-      if(!targetMap) return;
-      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-      else targetMap.setView([mLat, mLng], 16, {animate:true});
-      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
-      try{
-        if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
-        window._tempViewMapMarkerLayerSOS.clearLayers();
-        const icon = L.divIcon({html:'<div style="background:#22c55e; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(34,197,94,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
-        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS);
-        mk.bindPopup('📍 จุดขอให้ช่วย<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
-        setTimeout(()=>{ try{ window._tempViewMapMarkerLayerSOS.clearLayers(); }catch(e){} }, 8000);
-      }catch(e){}
-      setTimeout(()=>{ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
-    }, 350);
-  }catch(e){ console.error('viewSOSOnMap error', e); }
-};
-// === END v7-5 PATCH ===
-
   }
 }
 
@@ -10697,6 +10629,74 @@ window.renderFloodWarningsList = function(list){
     setTimeout(()=>{ if(!window._autoStartDone) autoStartWarningMode(); }, 800);
   });
 })();
+</script>
+
+
+<script>
+// === v7-5 PATCH FINAL FIX: ปุ่ม ดูบนแผนที่ ต่อจาก ดูที่มาโพสต์ - แก้ error not defined ===
+console.log('[v7-5 PATCH] loading viewOnMap helpers...');
+window.viewWarningOnMapFromList = function(lat,lng,id){
+  try{
+    const mLat = parseFloat(lat), mLng = parseFloat(lng);
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
+    if(window.currentViewMode!=='warnings' && typeof window.switchSOSSubView==='function'){
+      window.switchSOSSubView('warnings');
+    }
+    const container = document.getElementById('sosMapContainer');
+    if(container){
+      if(!container.classList.contains('map-expanded')) container.style.height='60vh';
+      container.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    setTimeout(function(){
+      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+      if(!targetMap) return;
+      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+      else targetMap.setView([mLat, mLng], 16, {animate:true});
+      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
+      try{
+        if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
+        window._tempViewMapMarkerLayer.clearLayers();
+        const icon = L.divIcon({html:'<div style="background:#ef4444; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(239,68,68,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
+        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer);
+        mk.bindPopup('📍 ตำแหน่งเตือนท่วม<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
+        setTimeout(function(){ try{ window._tempViewMapMarkerLayer.clearLayers(); }catch(e){} }, 8000);
+      }catch(e){}
+      setTimeout(function(){ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
+    }, 350);
+  }catch(e){ console.error('viewWarningOnMap error', e); }
+};
+
+window.viewSOSOnMapFromList = function(lat,lng,id){
+  try{
+    const mLat = parseFloat(lat), mLng = parseFloat(lng);
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
+    if(window.currentViewMode!=='requests' && typeof window.switchSOSSubView==='function'){
+      window.switchSOSSubView('requests');
+    }
+    const container = document.getElementById('sosMapContainer');
+    if(container){
+      if(!container.classList.contains('map-expanded')) container.style.height='60vh';
+      container.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    setTimeout(function(){
+      const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+      if(!targetMap) return;
+      if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
+      else targetMap.setView([mLat, mLng], 16, {animate:true});
+      if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
+      try{
+        if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
+        window._tempViewMapMarkerLayerSOS.clearLayers();
+        const icon = L.divIcon({html:'<div style="background:#22c55e; width:22px; height:22px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 4px rgba(34,197,94,0.35);"></div>', iconSize:[22,22], iconAnchor:[11,11]});
+        const mk = L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS);
+        mk.bindPopup('📍 จุดขอให้ช่วย<br>Lat: '+mLat.toFixed(5)+'<br>Lng: '+mLng.toFixed(5)).openPopup();
+        setTimeout(function(){ try{ window._tempViewMapMarkerLayerSOS.clearLayers(); }catch(e){} }, 8000);
+      }catch(e){}
+      setTimeout(function(){ try{ targetMap.invalidateSize(); }catch(e){} }, 400);
+    }, 350);
+  }catch(e){ console.error('viewSOSOnMap error', e); }
+};
+console.log('[v7-5 PATCH] helpers ready: viewWarningOnMapFromList, viewSOSOnMapFromList');
 </script>
 
 </body>
