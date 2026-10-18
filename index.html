@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-2  </title>
+  <title> v7-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7199,6 +7199,7 @@ document.addEventListener('fullscreenchange', ()=>{
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
               ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; margin-left:2px;" onclick="completeSOSFromList('${item.id}', event); event.stopPropagation();">🏁 เสร็จแล้ว</button>` : ''}
               ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:8px; font-size:9px;">✅ เสร็จแล้ว</span>` : ''}
+              ${(()=>{ const _fb = (item.fb_url||item.facebook_url||item.fbUrl||'').toString().trim(); if(!_fb) return `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:700; white-space:nowrap;">ไม่มีที่มา</span>`; const _esc = _fb.replace(/'/g, '%27').replace(/"/g, '&quot;'); return `<button style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6;" onclick="event.stopPropagation(); window.open('${_esc}', '_blank', 'noopener');">🔗 ดูที่มาโพสต์</button>`; })()}
             </div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
@@ -8525,6 +8526,13 @@ function renderFloodWarningsList(list){
         <div class="fw-no-image">📷 ไม่มีรูป</div>
       </div>
     `;
+    // v17.23 ADD - ปุ่มดูที่มาโพสต์ fb_url
+    const fbUrlRawW = w.fb_url || w.facebook_url || w.fbUrl || '';
+    const fbUrlW = (typeof fbUrlRawW === 'string' ? fbUrlRawW.trim() : '');
+    const fbUrlEscW = fbUrlW.replace(/'/g, "%27").replace(/"/g, "&quot;");
+    const sourceBtnHtmlW = fbUrlW
+      ? `<button onclick="event.stopPropagation(); window.open('${fbUrlEscW}', '_blank', 'noopener');" style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.8;">🔗 ดูที่มาโพสต์</button>`
+      : `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; white-space:nowrap; line-height:1.8;">ไม่มีที่มา</span>`;
     return `
       <div data-warning-id="${w.id}" onclick="openWarningDetailModal('${w.id}')" style="background:${bg}; border:${selectedId && String(w.id)===selectedId ? '2.5px solid #3b82f6' : '1px solid '+border}; border-radius:14px; padding:10px 12px; margin-bottom:10px; cursor:pointer; display:flex; justify-content:space-between; gap:8px;">
         <div style="flex:1; min-width:0;">
@@ -8536,6 +8544,7 @@ function renderFloodWarningsList(list){
           </div>
           <div style="font-size:12px; color:#555; margin-top:4px;">🌊 ระดับน้ำ: ${water}</div>
           <div style="font-size:12px; color:#555;">📍 ${w.location_text||w.passage_status||'car_passable'}</div>
+          <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">${sourceBtnHtmlW}</div>
         </div>
         <div style="flex:0 0 80px;">${imageScrollerHtml}</div>
       </div>
