@@ -10633,11 +10633,12 @@ window.renderFloodWarningsList = function(list){
 
 
 <script>
-// === v7-7 PATCH v5: เปิดค้าง - ปิดเมื่อ scroll down ดูโพสต์ล่าง ===
-console.log('[v7-7 PATCH v5] load - stay open until scroll down');
+// === v7-7 PATCH v6: เปิดค้าง - ปิดเมื่อ scroll ลงดูโพสต์ล่างจริงๆ เท่านั้น ===
+console.log('[v7-7 PATCH v6] load - stay open, close on real scroll down');
 window._lastManualExpandAt = 0;
 window._manualExpandLock = false;
 window._mapStayOpen = false;
+window._scrollDownCollapseSetup = false;
 
 function _forceExpandMapDown(){
   try{
@@ -10660,17 +10661,15 @@ function _forceExpandMapDown(){
     container.style.visibility='visible';
     container.style.opacity='1';
     container.style.setProperty('height','62vh','important');
-    container.style.setProperty('min-height','450px','important');
+    container.style.setProperty('min-height','480px','important');
     container.style.setProperty('max-height','70vh','important');
     container.style.setProperty('transition','height 0.35s ease','important');
     if(preview){
       preview.style.display='block';
       preview.style.visibility='visible';
       preview.style.setProperty('height','100%','important');
-      preview.style.setProperty('min-height','450px','important');
+      preview.style.setProperty('min-height','480px','important');
     }
-    const aiSec = document.getElementById('ai-section');
-    if(aiSec) aiSec.classList.remove('collapsed');
     const doInvalidate = function(){
       try{
         const m = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
@@ -10680,13 +10679,18 @@ function _forceExpandMapDown(){
     setTimeout(doInvalidate, 120);
     setTimeout(doInvalidate, 400);
     setTimeout(doInvalidate, 900);
-    // ปลด lock เล็กน้อยหลัง 1.5วิ แต่ยัง stay open จนกว่า scroll down
+    // ปลด lock การย่อจากโค้ดอื่นหลัง 1.8 วิ แต่ยัง stay open
     setTimeout(function(){
       window._manualExpandLock = false;
-      console.log('[v5] expand lock released - stay open until scroll down');
-    }, 1500);
+      console.log('[v6] lock released - map stay open until real scroll down');
+      // รีเซ็ต baseline scroll หลังขยายเสร็จ
+      const lc = document.getElementById('list-container');
+      if(lc){
+        window._baselineScrollTop = lc.scrollTop;
+        console.log('[v6] baseline scrollTop', window._baselineScrollTop);
+      }
+    }, 1800);
     _setupScrollDownCollapse();
-    console.log('[v5] forced expand 62vh - will collapse on scroll down');
   }catch(e){ console.error(e); }
 }
 
@@ -10695,9 +10699,11 @@ function _collapseMapOnScrollDown(){
     const container = document.getElementById('sosMapContainer');
     if(!container) return;
     if(!window._mapStayOpen) return;
-    // ถ้าเพิ่งเปิดมาไม่ถึง 1.2 วิ ไม่ให้ปิดทันที กันเปิดปั๊บปิดปุ๊บ
-    if(Date.now() - window._lastManualExpandAt < 1200) return;
-    console.log('[v5] scroll down detected - collapsing map');
+    if(Date.now() - window._lastManualExpandAt < 2000) {
+      console.log('[v6] ignore collapse - too soon after expand');
+      return;
+    }
+    console.log('[v6] real scroll down -> collapsing map');
     container.classList.remove('map-expanded');
     container.style.setProperty('height','320px','important');
     container.style.setProperty('min-height','320px','important');
@@ -10717,102 +10723,59 @@ function _collapseMapOnScrollDown(){
 }
 
 function _setupScrollDownCollapse(){
-  // ติดตั้งครั้งเดียว
   if(window._scrollDownCollapseSetup) return;
   window._scrollDownCollapseSetup = true;
+  window._baselineScrollTop = 0;
   try{
     const listContainer = document.getElementById('list-container');
-    const mainContent = document.getElementById('main-content') || document.querySelector('.main-content') || document.body;
-    let lastScrollTop = 0;
+    if(!listContainer){ console.warn('no list-container'); return; }
+    let lastTop = listContainer.scrollTop;
+    window._baselineScrollTop = lastTop;
     let ticking = false;
-    const handleScroll = function(currentTop){
+    listContainer.addEventListener('scroll', function(){
       if(!window._mapStayOpen) return;
-      if(Date.now() - window._lastManualExpandAt < 1200) return;
-      // เลื่อนลงเกิน 120px ถึงจะเก็บ
-      if(currentTop - lastScrollTop > 15 && currentTop > 120){
-        _collapseMapOnScrollDown();
-      }
-      lastScrollTop = currentTop;
-    };
-    if(listContainer){
-      listContainer.addEventListener('scroll', function(){
-        if(ticking) return;
-        ticking = true;
-        requestAnimationFrame(function(){
-          handleScroll(listContainer.scrollTop);
-          ticking = false;
-        });
-      }, {passive:true});
-      console.log('[v5] scroll listener attached to #list-container');
-    }
-    // กันกรณี scroll ที่ window / body
-    window.addEventListener('scroll', function(){
-      if(!window._mapStayOpen) return;
-      const st = window.scrollY || document.documentElement.scrollTop;
-      handleScroll(st);
-    }, {passive:true});
-    // เพิ่ม touchmove สำหรับมือถือ
-    let startY = 0;
-    document.addEventListener('touchstart', function(e){
-      if(e.touches && e.touches[0]) startY = e.touches[0].clientY;
-    }, {passive:true});
-    document.addEventListener('touchmove', function(e){
-      if(!window._mapStayOpen) return;
-      if(Date.now() - window._lastManualExpandAt < 1200) return;
-      if(!e.touches || !e.touches[0]) return;
-      const diff = startY - e.touches[0].clientY;
-      // เลื่อนนิ้วขึ้น = scroll down
-      if(diff > 60){
-        const lc = document.getElementById('list-container');
-        if(lc && lc.scrollTop > 80){
+      if(window._manualExpandLock) return;
+      if(Date.now() - window._lastManualExpandAt < 2000) return;
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        const cur = listContainer.scrollTop;
+        const delta = cur - lastTop;
+        const fromBaseline = cur - (window._baselineScrollTop||0);
+        // ต้องเลื่อนลงจริงๆ เกิน 250px จากจุดที่เปิดแผนที่ และเลื่อนลงต่อเนื่อง
+        if(delta > 10 && fromBaseline > 250 && cur > 180){
+          console.log('[v6] scroll down detected delta', delta, 'fromBaseline', fromBaseline, 'cur', cur);
           _collapseMapOnScrollDown();
         }
-      }
+        lastTop = cur;
+        ticking = false;
+      });
     }, {passive:true});
-  }catch(e){ console.error('setup scroll fail', e); }
+    console.log('[v6] scroll listener attached - need 250px down from baseline to collapse');
+  }catch(e){ console.error(e); }
 }
 
-// กันฟังก์ชันอื่นมาย่อระหว่าง lock
+// กัน ensureSOSMapVisible มาย่อระหว่าง lock
 (function(){
-  const _origEnsureVisible = window.ensureSOSMapVisible;
-  if(typeof _origEnsureVisible==='function' && !_origEnsureVisible._v5patched){
+  const _orig = window.ensureSOSMapVisible;
+  if(typeof _orig==='function' && !_orig._v6patched){
     window.ensureSOSMapVisible = function(){
-      const res = _origEnsureVisible.apply(this, arguments);
-      if(window._manualExpandLock && Date.now() - window._lastManualExpandAt < 1500){
+      const res = _orig.apply(this, arguments);
+      if(window._manualExpandLock && Date.now() - window._lastManualExpandAt < 1800){
         _forceExpandMapDown();
       }
       return res;
     };
-    window.ensureSOSMapVisible._v5patched = true;
+    window.ensureSOSMapVisible._v6patched = true;
   }
 })();
 
 window.viewWarningOnMapFromList = function(lat,lng,id){
   try{
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); return; }
     const needSwitch = window.currentViewMode!=='warnings';
-    if(needSwitch && typeof window.switchSOSSubView==='function'){
-      window.switchSOSSubView('warnings');
-      setTimeout(function(){
-        _forceExpandMapDown();
-        const c = document.getElementById('sosMapContainer');
-        if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
-        setTimeout(function(){
-          const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-          if(!targetMap) return;
-          if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-          else targetMap.setView([mLat, mLng], 16, {animate:true});
-          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
-          try{
-            if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
-            window._tempViewMapMarkerLayer.clearLayers();
-            const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 5px rgba(239,68,68,0.35);"></div>', iconSize:[26,26], iconAnchor:[13,13]});
-            L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม (flood_warnings)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
-          }catch(e){}
-        }, 500);
-      }, 650);
-    } else {
+    const doExpandAndFocus = function(){
       _forceExpandMapDown();
       const c = document.getElementById('sosMapContainer');
       if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
@@ -10825,10 +10788,16 @@ window.viewWarningOnMapFromList = function(lat,lng,id){
         try{
           if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
           window._tempViewMapMarkerLayer.clearLayers();
-          const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
+          const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 5px rgba(239,68,68,0.35);"></div>', iconSize:[26,26], iconAnchor:[13,13]});
           L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
         }catch(e){}
-      }, 450);
+      }, 550);
+    };
+    if(needSwitch && typeof window.switchSOSSubView==='function'){
+      window.switchSOSSubView('warnings');
+      setTimeout(doExpandAndFocus, 700);
+    } else {
+      doExpandAndFocus();
     }
   }catch(e){ console.error(e); }
 };
@@ -10838,27 +10807,7 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
     if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); return; }
     const needSwitch = window.currentViewMode!=='requests';
-    if(needSwitch && typeof window.switchSOSSubView==='function'){
-      window.switchSOSSubView('requests');
-      setTimeout(function(){
-        _forceExpandMapDown();
-        const c = document.getElementById('sosMapContainer');
-        if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
-        setTimeout(function(){
-          const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-          if(!targetMap) return;
-          if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
-          else targetMap.setView([mLat, mLng], 16, {animate:true});
-          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
-          try{
-            if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
-            window._tempViewMapMarkerLayerSOS.clearLayers();
-            const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
-            L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย (flood_help_requests)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
-          }catch(e){}
-        }, 500);
-      }, 650);
-    } else {
+    const doExpandAndFocus = function(){
       _forceExpandMapDown();
       const c = document.getElementById('sosMapContainer');
       if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
@@ -10874,12 +10823,17 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
           const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
           L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
         }catch(e){}
-      }, 450);
+      }, 550);
+    };
+    if(needSwitch && typeof window.switchSOSSubView==='function'){
+      window.switchSOSSubView('requests');
+      setTimeout(doExpandAndFocus, 700);
+    } else {
+      doExpandAndFocus();
     }
   }catch(e){ console.error(e); }
 };
 
-// ปุ่มเก็บเองยังใช้ได้
 (function(){
   setTimeout(function(){
     const container = document.getElementById('sosMapContainer');
@@ -10894,21 +10848,22 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
     const observer = new MutationObserver(function(){
       const c = document.getElementById('sosMapContainer');
       if(!c) return;
-      const h = parseInt(c.style.height||'0');
       const btnEl = document.getElementById('mapCollapseManualBtn');
       if(!btnEl) return;
-      if(window._mapStayOpen && (h>400 || c.classList.contains('map-expanded'))){
+      if(window._mapStayOpen){
         btnEl.style.display='block';
       } else {
-        if(!window._mapStayOpen) btnEl.style.display='none';
+        btnEl.style.display='none';
       }
     });
     observer.observe(container, {attributes:true, attributeFilter:['style','class']});
   }, 1500);
 })();
 
-console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
+console.log('[v7-7 PATCH v6] ready - stay open until real scroll down 250px');
 </script>
+
+
 
 
 
