@@ -10633,37 +10633,36 @@ window.renderFloodWarningsList = function(list){
 
 
 <script>
-// === v7-5 PATCH v4 FINAL: แก้เปิดปั๊บปิดปุ๊บ - บังคับขยายค้าง + กัน auto-collapse ===
-console.log('[v7-5 PATCH v4] loading - fix auto-collapse');
+// === v7-7 PATCH v5: เปิดค้าง - ปิดเมื่อ scroll down ดูโพสต์ล่าง ===
+console.log('[v7-7 PATCH v5] load - stay open until scroll down');
 window._lastManualExpandAt = 0;
 window._manualExpandLock = false;
+window._mapStayOpen = false;
 
 function _forceExpandMapDown(){
   try{
     const container = document.getElementById('sosMapContainer');
     const preview = document.getElementById('sosMapPreview');
-    if(!container){ console.warn('no container'); return; }
-    // ออกจาก fullscreen
+    if(!container) return;
     try{
       if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
       if(document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
     }catch(e){}
     container.classList.remove('map-fullscreen-fallback');
-    container.classList.add('map-expanded'); // กัน logic อื่นมาย่อ
+    container.classList.add('map-expanded');
     window.isSOSMapExpanded = true;
     window._lastManualExpandAt = Date.now();
     window._manualExpandLock = true;
-    // ลบ overlay บัง
+    window._mapStayOpen = true;
     const overlay = document.getElementById('fullscreenListOverlay');
     if(overlay){ overlay.style.display='none'; overlay.style.visibility='hidden'; }
-    // บังคับขยายแบบ !important ค้างไว้
     container.style.display='block';
     container.style.visibility='visible';
     container.style.opacity='1';
     container.style.setProperty('height','62vh','important');
     container.style.setProperty('min-height','450px','important');
     container.style.setProperty('max-height','70vh','important');
-    container.style.setProperty('transition','none','important'); // กันแอนิเมชันย่อกลับ
+    container.style.setProperty('transition','height 0.35s ease','important');
     if(preview){
       preview.style.display='block';
       preview.style.visibility='visible';
@@ -10672,41 +10671,119 @@ function _forceExpandMapDown(){
     }
     const aiSec = document.getElementById('ai-section');
     if(aiSec) aiSec.classList.remove('collapsed');
-    
     const doInvalidate = function(){
       try{
         const m = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-        if(m){ m.invalidateSize(); }
+        if(m) m.invalidateSize();
       }catch(e){}
     };
-    setTimeout(doInvalidate, 100);
+    setTimeout(doInvalidate, 120);
     setTimeout(doInvalidate, 400);
     setTimeout(doInvalidate, 900);
-    // ปลดล็อค transition หลัง 1 วิ และปลดล็อค auto-collapse หลัง 3 วิ ให้กดเก็บเองได้
-    setTimeout(function(){
-      try{ container.style.removeProperty('transition'); }catch(e){}
-    }, 1100);
+    // ปลด lock เล็กน้อยหลัง 1.5วิ แต่ยัง stay open จนกว่า scroll down
     setTimeout(function(){
       window._manualExpandLock = false;
-      console.log('[v4] manual expand lock released - ตอนนี้เก็บเองได้');
-    }, 3000);
-    console.log('[v4] forced expand to 62vh + lock 3s');
-  }catch(e){ console.error('_forceExpandMapDown error', e); }
+      console.log('[v5] expand lock released - stay open until scroll down');
+    }, 1500);
+    _setupScrollDownCollapse();
+    console.log('[v5] forced expand 62vh - will collapse on scroll down');
+  }catch(e){ console.error(e); }
 }
 
-// กันฟังก์ชันอื่นมาย่อแผนที่ระหว่าง lock
+function _collapseMapOnScrollDown(){
+  try{
+    const container = document.getElementById('sosMapContainer');
+    if(!container) return;
+    if(!window._mapStayOpen) return;
+    // ถ้าเพิ่งเปิดมาไม่ถึง 1.2 วิ ไม่ให้ปิดทันที กันเปิดปั๊บปิดปุ๊บ
+    if(Date.now() - window._lastManualExpandAt < 1200) return;
+    console.log('[v5] scroll down detected - collapsing map');
+    container.classList.remove('map-expanded');
+    container.style.setProperty('height','320px','important');
+    container.style.setProperty('min-height','320px','important');
+    container.style.setProperty('max-height','45vh','important');
+    window.isSOSMapExpanded = false;
+    window._mapStayOpen = false;
+    window._manualExpandLock = false;
+    setTimeout(function(){
+      try{
+        const m = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
+        if(m) m.invalidateSize();
+      }catch(e){}
+    }, 350);
+    const btn = document.getElementById('mapCollapseManualBtn');
+    if(btn) btn.style.display='none';
+  }catch(e){ console.error(e); }
+}
+
+function _setupScrollDownCollapse(){
+  // ติดตั้งครั้งเดียว
+  if(window._scrollDownCollapseSetup) return;
+  window._scrollDownCollapseSetup = true;
+  try{
+    const listContainer = document.getElementById('list-container');
+    const mainContent = document.getElementById('main-content') || document.querySelector('.main-content') || document.body;
+    let lastScrollTop = 0;
+    let ticking = false;
+    const handleScroll = function(currentTop){
+      if(!window._mapStayOpen) return;
+      if(Date.now() - window._lastManualExpandAt < 1200) return;
+      // เลื่อนลงเกิน 120px ถึงจะเก็บ
+      if(currentTop - lastScrollTop > 15 && currentTop > 120){
+        _collapseMapOnScrollDown();
+      }
+      lastScrollTop = currentTop;
+    };
+    if(listContainer){
+      listContainer.addEventListener('scroll', function(){
+        if(ticking) return;
+        ticking = true;
+        requestAnimationFrame(function(){
+          handleScroll(listContainer.scrollTop);
+          ticking = false;
+        });
+      }, {passive:true});
+      console.log('[v5] scroll listener attached to #list-container');
+    }
+    // กันกรณี scroll ที่ window / body
+    window.addEventListener('scroll', function(){
+      if(!window._mapStayOpen) return;
+      const st = window.scrollY || document.documentElement.scrollTop;
+      handleScroll(st);
+    }, {passive:true});
+    // เพิ่ม touchmove สำหรับมือถือ
+    let startY = 0;
+    document.addEventListener('touchstart', function(e){
+      if(e.touches && e.touches[0]) startY = e.touches[0].clientY;
+    }, {passive:true});
+    document.addEventListener('touchmove', function(e){
+      if(!window._mapStayOpen) return;
+      if(Date.now() - window._lastManualExpandAt < 1200) return;
+      if(!e.touches || !e.touches[0]) return;
+      const diff = startY - e.touches[0].clientY;
+      // เลื่อนนิ้วขึ้น = scroll down
+      if(diff > 60){
+        const lc = document.getElementById('list-container');
+        if(lc && lc.scrollTop > 80){
+          _collapseMapOnScrollDown();
+        }
+      }
+    }, {passive:true});
+  }catch(e){ console.error('setup scroll fail', e); }
+}
+
+// กันฟังก์ชันอื่นมาย่อระหว่าง lock
 (function(){
   const _origEnsureVisible = window.ensureSOSMapVisible;
-  if(typeof _origEnsureVisible==='function' && !_origEnsureVisible._v4patched){
+  if(typeof _origEnsureVisible==='function' && !_origEnsureVisible._v5patched){
     window.ensureSOSMapVisible = function(){
       const res = _origEnsureVisible.apply(this, arguments);
-      if(window._manualExpandLock && Date.now() - window._lastManualExpandAt < 3000){
-        console.log('[v4] block ensureSOSMapVisible from shrinking during lock');
+      if(window._manualExpandLock && Date.now() - window._lastManualExpandAt < 1500){
         _forceExpandMapDown();
       }
       return res;
     };
-    window.ensureSOSMapVisible._v4patched = true;
+    window.ensureSOSMapVisible._v5patched = true;
   }
 })();
 
@@ -10714,7 +10791,6 @@ window.viewWarningOnMapFromList = function(lat,lng,id){
   try{
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
     if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
-    console.log('[v4] viewWarning click', mLat, mLng, id);
     const needSwitch = window.currentViewMode!=='warnings';
     if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('warnings');
@@ -10761,7 +10837,6 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
   try{
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
     if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); return; }
-    console.log('[v4] viewSOS click', mLat, mLng, id);
     const needSwitch = window.currentViewMode!=='requests';
     if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('requests');
@@ -10804,7 +10879,7 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
   }catch(e){ console.error(e); }
 };
 
-// ปุ่มเก็บแผนที่เองยังใช้งานได้ - เพิ่มปุ่มย่อเองถ้ายังไม่มี
+// ปุ่มเก็บเองยังใช้ได้
 (function(){
   setTimeout(function(){
     const container = document.getElementById('sosMapContainer');
@@ -10814,38 +10889,27 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
     btn.id='mapCollapseManualBtn';
     btn.innerHTML='⬆️ เก็บแผนที่';
     btn.style.cssText='position:absolute; bottom:8px; right:8px; z-index:850; background:rgba(255,255,255,0.95); border:1px solid #cbd5e1; border-radius:20px; padding:6px 12px; font-size:12px; font-weight:bold; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.15); display:none;';
-    btn.onclick=function(){
-      const c = document.getElementById('sosMapContainer');
-      if(!c) return;
-      c.classList.remove('map-expanded');
-      c.style.setProperty('height','320px','important');
-      c.style.setProperty('min-height','320px','important');
-      window.isSOSMapExpanded=false;
-      window._manualExpandLock=false;
-      setTimeout(function(){ try{ const m=(typeof ensureSOSMapReady==='function')?ensureSOSMapReady():window.sosMap; if(m) m.invalidateSize(); }catch(e){} }, 300);
-      btn.style.display='none';
-    };
+    btn.onclick=function(){ _collapseMapOnScrollDown(); };
     container.appendChild(btn);
-    // โชว์ปุ่มเก็บเมื่อมีการขยาย manual
     const observer = new MutationObserver(function(){
       const c = document.getElementById('sosMapContainer');
       if(!c) return;
       const h = parseInt(c.style.height||'0');
       const btnEl = document.getElementById('mapCollapseManualBtn');
       if(!btnEl) return;
-      if(h>400 || c.classList.contains('map-expanded')){
+      if(window._mapStayOpen && (h>400 || c.classList.contains('map-expanded'))){
         btnEl.style.display='block';
       } else {
-        // ถ้า lock หมดแล้วค่อยซ่อน
-        if(!window._manualExpandLock) btnEl.style.display='none';
+        if(!window._mapStayOpen) btnEl.style.display='none';
       }
     });
     observer.observe(container, {attributes:true, attributeFilter:['style','class']});
   }, 1500);
 })();
 
-console.log('[v7-5 PATCH v4] ready - anti auto-collapse + manual collapse button');
+console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
 </script>
+
 
 
 
