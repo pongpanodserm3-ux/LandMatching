@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-7-3  </title>
+  <title> v7-7-4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7199,8 +7199,8 @@ document.addEventListener('fullscreenchange', ()=>{
               ${sosRoleBadge}
               ${statusText ? `<span style="font-size:10px; background:white; border:1px solid ${borderColor}; padding:2px 6px; border-radius:8px;">${statusText}</span>` : ``}
               ${timeAgo ? `<span style="font-size:10px; color:#888;">${timeAgo}</span>` : ''}
-              <!-- FIX MINIMAL AI SUMMARY AFTER TIME: เอา AI summary มาต่อหลังวันที่-เวลา ตามรูป -->
-              ${item.ai_summary ? `<span style="font-size:11px; color:#444; background:#fffbe6; border:1px solid #fde68a; border-radius:8px; padding:2px 6px; margin-left:4px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle;" title="${typeof escapeHtml!=='undefined' ? escapeHtml(item.ai_summary) : item.ai_summary}">📝 ${typeof escapeHtml!=='undefined' ? escapeHtml(item.ai_summary) : item.ai_summary}</span>` : (item.detail ? `<span style="font-size:11px; color:#666; margin-left:4px;">${typeof escapeHtml!=='undefined' ? escapeHtml(item.detail.slice(0,80)) : item.detail.slice(0,80)}</span>` : '')}
+              <!-- FIX V7-7-4 FULL AI SUMMARY: แสดงเต็ม ไม่ตัด -->
+              ${item.ai_summary ? `<span style="font-size:11px; color:#444; background:#fffbe6; border:1px solid #fde68a; border-radius:8px; padding:3px 8px; margin-left:6px; display:inline; line-height:1.4; word-break:break-word; white-space:normal;" title="${typeof escapeHtml!=='undefined' ? escapeHtml(item.ai_summary) : item.ai_summary}">📝 ${typeof escapeHtml!=='undefined' ? escapeHtml(item.ai_summary) : item.ai_summary}</span>` : (item.detail && item.detail!=='-' ? `<span style="font-size:11px; color:#666; margin-left:6px; display:inline; line-height:1.4;">${typeof escapeHtml!=='undefined' ? escapeHtml(item.detail) : item.detail}</span>` : '')}
               <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${typeof escapeHtml!=='undefined' ? escapeHtml(item.location_text||'-') : (item.location_text||'-')}</div>
