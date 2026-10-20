@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-7  </title>
+  <title> v7-7-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -10638,6 +10638,7 @@ console.log('[v7-7 PATCH v5] load - stay open until scroll down');
 window._lastManualExpandAt = 0;
 window._manualExpandLock = false;
 window._mapStayOpen = false;
+window._isProgrammaticScroll = false; // FIX v7-7-1: กันพับจาก scroll โค้ด
 
 function _forceExpandMapDown(){
   try{
@@ -10727,6 +10728,7 @@ function _setupScrollDownCollapse(){
     let ticking = false;
     const handleScroll = function(currentTop){
       if(!window._mapStayOpen) return;
+      if(window._isProgrammaticScroll) return; // FIX v7-7-1: ข้ามถ้าเป็น scroll จากโค้ด
       if(Date.now() - window._lastManualExpandAt < 4200) return;
       // เลื่อนลงเกิน 120px ถึงจะเก็บ
       if(currentTop - lastScrollTop > 15 && currentTop > 120){
@@ -10758,6 +10760,7 @@ function _setupScrollDownCollapse(){
     }, {passive:true});
     document.addEventListener('touchmove', function(e){
       if(!window._mapStayOpen) return;
+      if(window._isProgrammaticScroll) return; // FIX v7-7-1
       if(Date.now() - window._lastManualExpandAt < 4200) return;
       if(!e.touches || !e.touches[0]) return;
       const diff = startY - e.touches[0].clientY;
@@ -10789,8 +10792,10 @@ function _setupScrollDownCollapse(){
 
 window.viewWarningOnMapFromList = function(lat,lng,id){
   try{
+    window._isProgrammaticScroll = true; // FIX v7-7-1
+    window._lastManualExpandAt = Date.now(); // FIX v7-7-1: ตั้งเวลาครั้งเดียว กันทับ
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); return; }
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัดตำแหน่ง'); window._isProgrammaticScroll=false; return; }
     const needSwitch = window.currentViewMode!=='warnings';
     if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('warnings');
@@ -10800,16 +10805,22 @@ window.viewWarningOnMapFromList = function(lat,lng,id){
         if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
         setTimeout(function(){
           const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-          if(!targetMap) return;
+          if(!targetMap){ window._isProgrammaticScroll=false; return; }
           if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
           else targetMap.setView([mLat, mLng], 16, {animate:true});
-          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
+          if(id && typeof window.highlightBoth==='function'){
+            const _origScrollHL = window.scrollHL;
+            window.scrollHL = function(){}; // FIX v7-7-1: ปิด scroll ลงตอน highlight
+            window.highlightBoth(String(id),'warning');
+            window.scrollHL = _origScrollHL;
+          }
           try{
             if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
             window._tempViewMapMarkerLayer.clearLayers();
             const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 5px rgba(239,68,68,0.35);"></div>', iconSize:[26,26], iconAnchor:[13,13]});
             L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม (flood_warnings)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
           }catch(e){}
+          setTimeout(function(){ window._isProgrammaticScroll = false; }, 1000); // FIX v7-7-1
         }, 500);
       }, 650);
     } else {
@@ -10818,25 +10829,33 @@ window.viewWarningOnMapFromList = function(lat,lng,id){
       if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
       setTimeout(function(){
         const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-        if(!targetMap) return;
+        if(!targetMap){ window._isProgrammaticScroll=false; return; }
         if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
         else targetMap.setView([mLat, mLng], 16, {animate:true});
-        if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'warning');
+        if(id && typeof window.highlightBoth==='function'){
+          const _origScrollHL = window.scrollHL;
+          window.scrollHL = function(){};
+          window.highlightBoth(String(id),'warning');
+          window.scrollHL = _origScrollHL;
+        }
         try{
           if(!window._tempViewMapMarkerLayer) window._tempViewMapMarkerLayer = L.featureGroup().addTo(targetMap);
           window._tempViewMapMarkerLayer.clearLayers();
           const icon = L.divIcon({html:'<div style="background:#ef4444; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
           L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayer).bindPopup('📍 เตือนท่วม<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
         }catch(e){}
+        setTimeout(function(){ window._isProgrammaticScroll = false; }, 1000);
       }, 450);
     }
-  }catch(e){ console.error(e); }
+  }catch(e){ console.error(e); window._isProgrammaticScroll=false; }
 };
 
 window.viewSOSOnMapFromList = function(lat,lng,id){
   try{
+    window._isProgrammaticScroll = true; // FIX v7-7-1
+    window._lastManualExpandAt = Date.now(); // FIX v7-7-1
     const mLat = parseFloat(lat), mLng = parseFloat(lng);
-    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); return; }
+    if(isNaN(mLat)||isNaN(mLng)){ alert('ไม่มีพิกัด'); window._isProgrammaticScroll=false; return; }
     const needSwitch = window.currentViewMode!=='requests';
     if(needSwitch && typeof window.switchSOSSubView==='function'){
       window.switchSOSSubView('requests');
@@ -10846,16 +10865,22 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
         if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
         setTimeout(function(){
           const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-          if(!targetMap) return;
+          if(!targetMap){ window._isProgrammaticScroll=false; return; }
           if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
           else targetMap.setView([mLat, mLng], 16, {animate:true});
-          if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
+          if(id && typeof window.highlightBoth==='function'){
+            const _origScrollHL = window.scrollHL;
+            window.scrollHL = function(){};
+            window.highlightBoth(String(id),'sos');
+            window.scrollHL = _origScrollHL;
+          }
           try{
             if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
             window._tempViewMapMarkerLayerSOS.clearLayers();
             const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
             L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย (flood_help_requests)<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
           }catch(e){}
+          setTimeout(function(){ window._isProgrammaticScroll = false; }, 1000);
         }, 500);
       }, 650);
     } else {
@@ -10864,19 +10889,25 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
       if(c) c.scrollIntoView({behavior:'smooth', block:'start'});
       setTimeout(function(){
         const targetMap = (typeof ensureSOSMapReady==='function') ? ensureSOSMapReady() : window.sosMap;
-        if(!targetMap) return;
+        if(!targetMap){ window._isProgrammaticScroll=false; return; }
         if(typeof stableSetView==='function') stableSetView(targetMap, mLat, mLng, 16);
         else targetMap.setView([mLat, mLng], 16, {animate:true});
-        if(id && typeof window.highlightBoth==='function') window.highlightBoth(String(id),'sos');
+        if(id && typeof window.highlightBoth==='function'){
+          const _origScrollHL = window.scrollHL;
+          window.scrollHL = function(){};
+          window.highlightBoth(String(id),'sos');
+          window.scrollHL = _origScrollHL;
+        }
         try{
           if(!window._tempViewMapMarkerLayerSOS) window._tempViewMapMarkerLayerSOS = L.featureGroup().addTo(targetMap);
           window._tempViewMapMarkerLayerSOS.clearLayers();
           const icon = L.divIcon({html:'<div style="background:#22c55e; width:26px; height:26px; border-radius:50%; border:3px solid white;"></div>', iconSize:[26,26], iconAnchor:[13,13]});
           L.marker([mLat,mLng], {icon:icon}).addTo(window._tempViewMapMarkerLayerSOS).bindPopup('📍 จุดขอให้ช่วย<br>'+mLat.toFixed(5)+', '+mLng.toFixed(5)).openPopup();
         }catch(e){}
+        setTimeout(function(){ window._isProgrammaticScroll = false; }, 1000);
       }, 450);
     }
-  }catch(e){ console.error(e); }
+  }catch(e){ console.error(e); window._isProgrammaticScroll=false; }
 };
 
 // ปุ่มเก็บเองยังใช้ได้
