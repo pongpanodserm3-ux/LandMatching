@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-7-4  </title>
+  <title> v7-8-0  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1972,37 +1972,40 @@ window.highlightBoth = function(idStr, type){
     </div>
   </div>
 
-  <!-- Location Map Modal -->
-  <div class="modal-overlay" id="locationModalOverlay" style="z-index: 10010; align-items: center; justify-content: center;">
-    <div class="detail-modal" style="height: 90vh;">
-      <span class="close-modal" onclick="closeLocationModal()">&times;</span>
-      <h3 style="margin-top:0; color: var(--text-main); font-size: 18px;">📍 ปักหมุดเลือกพิกัดค้นหา</h3>
-      <div style="position: relative; margin-bottom: 10px;">
-        <input type="text" id="placeSearchInput" placeholder="พิมพ์ชื่อสถานที่ ซอย ถนน หมู่บ้าน..." oninput="handlePlaceSearchInput(this.value)" style="width: 100%; padding: 10px; border: 1px solid var(--btn-blue); border-radius: 10px; box-sizing: border-box; font-size: 14px;">
-        <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 10px rgba(0,0,0,0.15);"></div>
+  <!-- Location Map Modal - v7-8-0 COMPACT HALF SCREEN - แก้ตามคำสั่งเคร่งครัด: ครึ่งบน 50vh + ฟีดล่าง -->
+  <div class="modal-overlay" id="locationModalOverlay" style="z-index: 10010; align-items: flex-start; justify-content: center; background: transparent; position:fixed; top:0; left:0; width:100%; height:50vh; pointer-events:none;">
+    <div class="detail-modal" style="height: 50vh; width: 100%; max-width: 100%; border-radius: 0 0 20px 20px; pointer-events:auto; padding: 8px 8px 6px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.25);">
+      <!-- แถว X ปิด - คงไว้ตามคำสั่ง -->
+      <div style="display:flex; justify-content: flex-end; align-items:center; height: 18px; flex-shrink:0;">
+        <span class="close-modal" onclick="closeLocationModal()" style="font-size:22px; line-height:18px; cursor:pointer; padding:0 4px;">×</span>
       </div>
-      <div id="locationMap" style="width: 100%; height: 260px; border-radius: 15px; margin-bottom: 10px;"></div>
-      <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-        <input type="text" id="latInput" placeholder="Latitude" style="flex:1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;" onchange="updateMapFromInputs()">
-        <input type="text" id="lngInput" placeholder="Longitude" style="flex:1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;" onchange="updateMapFromInputs()">
-        <select id="radiusSelect" onchange="updateRadiusCircle()" style="padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px;">
-          <option value="1">1 กม.</option>
-          <option value="3">3 กม.</option>
-          <option value="5">5 กม.</option>
-          <option value="10">10 กม.</option>
-          <option value="20">20 กม.</option>
+      <!-- แถวที่ 1: ค้นหา + lat + lng + กม. บรรทัดเดียว -->
+      <div style="display:flex; gap:4px; align-items:center; flex-shrink:0; position:relative;">
+        <div style="flex: 0 0 40%; position: relative;">
+          <input type="text" id="placeSearchInput" placeholder="🔍 ค้นหาที่..." oninput="handlePlaceSearchInput(this.value)" style="width: 100%; padding: 6px 8px; border: 1px solid var(--btn-blue); border-radius: 8px; box-sizing: border-box; font-size: 12px; height: 30px;">
+          <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 160px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size:12px;"></div>
+        </div>
+        <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 4px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
+        <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 4px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
+        <select id="radiusSelect" onchange="updateRadiusCircle()" style="flex:0 0 62px; padding: 4px 2px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;">
+          <option value="1">1กม.</option>
+          <option value="3">3กม.</option>
+          <option value="5">5กม.</option>
+          <option value="10">10กม.</option>
+          <option value="20">20กม.</option>
         </select>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 6px;">
-        <button onclick="getCurrentUserLocation()" style="background: #e2e8f0; color: #333; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px;">📍 ใช้ตำแหน่งปัจจุบันของฉัน</button>
-        <div style="display: flex; gap: 6px;">
-          <button onclick="confirmLocation()" style="flex: 1; background: #159947; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">✅ ยืนยันพิกัด</button>
-          <button onclick="openGoogleMaps()" style="flex: 1; background: var(--btn-blue); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;">🗺️ เปิด Google Maps</button>
-        </div>
-        <button onclick="clearLocationFilter()" style="background: #ff4b2b; color: white; border: none; padding: 8px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 12px; margin-top: 4px;">🗑️ ล้างพิกัด</button>
+      <!-- แถวที่ 2: แผนที่ล้วน -->
+      <div id="locationMap" style="width: 100%; flex:1; min-height:0; border-radius: 10px;"></div>
+      <!-- แถวที่ 3: ปุ่ม 1 แถว (แตก 2 แถวถ้าจอแคบ) -->
+      <div style="display:flex; gap:4px; flex-shrink:0; flex-wrap:wrap;">
+        <button onclick="getCurrentUserLocation()" style="flex:1 1 22%; background: #e2e8f0; color: #333; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ปัจจุบัน</button>
+        <button onclick="confirmLocation()" style="flex:1 1 28%; background: #159947; color: white; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ยืนยัน</button>
+        <button onclick="openGoogleMaps()" style="flex:1 1 28%; background: var(--btn-blue); color: white; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">🗺️ Google Maps</button>
+        <button onclick="clearLocationFilter()" style="flex:0 0 40px; background: #eee; color: #d00; border: 1px solid #ddd; padding: 6px 2px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px;">🗑️</button>
       </div>
     </div>
-  </div>
+  </div>>
   <!-- ================= โซน Multi-level Flyout Menus (ดรอปดาวน์หลายชั้น) ================= -->
   <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
 
