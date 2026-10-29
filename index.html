@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-2  </title>
+  <title> v7-8-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4771,17 +4771,27 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
     }
     function renderPropertyMarkersOnMap(properties){
-      if(!leafletMap) return;
-      if(!propertyMarkersCluster){
+      if(!leafletMap) {
+        console.log('renderPropertyMarkers: leafletMap not ready');
+        return;
+      }
+      // สร้าง cluster ถ้ายังไม่มี
+      if(!propertyMarkersCluster && !propertyMarkersLayer){
         try{
           propertyMarkersCluster = L.markerClusterGroup({ showCoverageOnHover:false, maxClusterRadius:50, spiderfyOnMaxZoom:true, disableClusteringAtZoom:17 });
           leafletMap.addLayer(propertyMarkersCluster);
+          console.log('propertyMarkersCluster created');
         }catch(e){
+          console.log('markerCluster fail, fallback layerGroup', e);
           propertyMarkersLayer = L.layerGroup().addTo(leafletMap);
         }
       }
       clearPropertyMarkers();
-      if(!properties || !properties.length) return;
+      if(!properties || !properties.length){
+        console.log('renderPropertyMarkers: no properties', properties);
+        return;
+      }
+      console.log('renderPropertyMarkers: total', properties.length, 'isMapModeActive', isMapModeActive);
       // v7-8-2 FIX: เรียงตามโลเคชันใกล้สุด ไม่ใช่ราคาถูกไปแพง - ใช้ Haversine จากจุดค้นหา
       function getDist(lat1,lng1,lat2,lng2){
         const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLng=(lng2-lng1)*Math.PI/180;
@@ -4807,9 +4817,22 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         });
       }
       // ฟีดไม่เรียงราคา ให้คงลำดับ relevance จาก backend (ตรงเงื่อนไขมากสุดอยู่บน)
+      let shown = 0;
       sorted.forEach(item=>{
-        let lat = parseFloat(item.latitude || item.lat || item.use_lat || item.use || item.use2 || '');
-        let lng = parseFloat(item.longitude || item.lng || item.use2_lng || item.use2 || item.lon || '');
+        // Backend Git_Server_1-2 ส่งมาเป็น latitude = row.latitude || row.lat || row.use_lat || row.use, longitude = row.longitude || row.lng || row.use2_lng || row.use2
+        let latRaw = item.latitude || item.lat || item.use_lat || item.use || item.lat_input || item.y || '';
+        let lngRaw = item.longitude || item.lng || item.use2_lng || item.use2 || item.lng_input || item.x || '';
+        let lat = parseFloat(latRaw);
+        let lng = parseFloat(lngRaw);
+        // fallback ลองดึงจาก details ถ้ามี
+        if(isNaN(lat) || isNaN(lng)){
+          // บาง record อาจมี use_lat/use2_lng โดยตรง
+          const altLat = parseFloat(item.use_lat || item.use || '');
+          const altLng = parseFloat(item.use2_lng || item.use2 || '');
+          if(!isNaN(altLat) && !isNaN(altLng)){
+            lat = altLat; lng = altLng;
+          }
+        }
         if(isNaN(lat) || isNaN(lng)) return;
         // filter by current map bounds ถ้าเป็นโหมดแผนที่
         if(isMapModeActive && leafletMap.getBounds){
@@ -4828,7 +4851,13 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         } else if(propertyMarkersLayer){
           propertyMarkersLayer.addLayer(marker);
         }
+        shown++;
       });
+      console.log('renderPropertyMarkers: shown markers', shown, 'from', properties.length);
+      // ถ้าไม่มีหมุดเลย แต่มี properties แสดงว่ามีปัญหา lat/lng
+      if(shown===0 && properties.length>0){
+        console.warn('No markers shown - sample property:', properties[0]);
+      }
     }
     function loadMarkersByMapBounds(){
       if(!leafletMap) return;
@@ -4892,14 +4921,27 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
               mapMarker.setLatLng([lat, lng]);
               setCoordinates(lat, lng);
               updateRadiusCircle();
-            }, () => {});
+              // v7-8-3 FIX: โหลดหมุดตามโลเคชันปัจจุบันเมื่อเปิดแผนที่ครั้งแรก
+              setTimeout(()=>{ 
+                isMapModeActive = true;
+                renderPropertyMarkersOnMap(AppState.data.properties || []);
+              }, 300);
+            }, () => {
+              setTimeout(()=>{ renderPropertyMarkersOnMap(AppState.data.properties || []); }, 300);
+            });
           } else if (selectedLat && selectedLng) {
             updateRadiusCircle();
+            setTimeout(()=>{ renderPropertyMarkersOnMap(AppState.data.properties || []); }, 300);
+          } else {
+            setTimeout(()=>{ renderPropertyMarkersOnMap(AppState.data.properties || []); }, 500);
           }
         }, 200);
       } else {
         setTimeout(() => {
-          if(leafletMap){ leafletMap.invalidateSize(); setTimeout(()=>leafletMap.invalidateSize(), 200); }
+          if(leafletMap){ 
+            leafletMap.invalidateSize(); 
+            setTimeout(()=>{ leafletMap.invalidateSize(); renderPropertyMarkersOnMap(AppState.data.properties || []); }, 200); 
+          }
           if (selectedLat && selectedLng) {
             const latLng = [selectedLat, selectedLng];
             mapMarker.setLatLng(latLng);
