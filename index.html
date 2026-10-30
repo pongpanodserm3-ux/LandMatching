@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-7  </title>
+  <title> v7-8-9  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5004,11 +5004,16 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         radiusSelect.value = String(selectedRadius || 1);
       }
       
-      if (!AppState.voice.isActive || !AppState.voice.ws) {
-        startVoiceSession().then(() => triggerLocationAIGreeting());
-      } else {
-        triggerLocationAIGreeting();
+      // FIX v7-8-8: เคารพสถานะ Voice - ถ้าปิดอยู่ไม่ต้องเปิดเอง
+      if (AppState.voice.isActive) {
+        // ถ้า Voice เปิดอยู่ก่อนแล้ว -> รีเซ็ตกันหลุด/error ให้ต่อเนื่อง
+        if (!AppState.voice.ws || AppState.voice.ws.readyState !== WebSocket.OPEN || !AppState.voice.isSetupReady) {
+          startVoiceSession().then(() => triggerLocationAIGreeting());
+        } else {
+          triggerLocationAIGreeting();
+        }
       }
+      // ถ้า Voice ปิดอยู่ -> เปิดแผนที่เฉยๆ ไม่เปิด Voice
     }
   
     function triggerLocationAIGreeting() {
