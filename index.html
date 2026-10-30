@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-4  </title>
+  <title> v7-8-5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1420,7 +1420,26 @@
       z-index: 10 !important;
     }
 
-    </style> 
+    
+    /* --- PATCH v7-8-4 -> v7-8-5: คำสั่งที่ 1+2 admin --- */
+    #userRoleBadge, .role-badge, .role-badge-plain {
+      background: none !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #333 !important;
+      font-size: 1px !important; /* เล็กที่สุดเท่าที่มองเห็น */
+      line-height: 1 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      display: none !important; /* คำสั่งที่สอง: ลบออกจากหน้าแอป ตามรูปที่ 3 */
+    }
+
+</style> 
     
 
 
@@ -1484,7 +1503,7 @@ window.highlightBoth = function(idStr, type){
       <!-- กลุ่ม ปิด + admin แบบซ้อนตามรูปที่ 1 -->
       <div id="statusAdminStack" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto;">
         <div id="statusText" class="ai-status-plain">ปิด</div>
-        <div id="userRoleBadge" class="role-badge-plain">admin</div>
+        <div id="userRoleBadge" style="display:none !important;"></div>
       </div>
 
       <div class="ai-avatar" id="avatarCircle" style="flex:0 0 auto;">🤖</div>
