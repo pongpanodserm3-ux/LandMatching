@@ -1394,20 +1394,31 @@
 #fullscreenListOverlay [data-warning-id] { pointer-events:auto; }
 
 
-    /* --- FIX ตามคำสั่งที่ 1+2: จัดเรียงใหม่ + ข้อความ ปิด/admin แบบตัวอักษรล้วน --- */
+    /* --- FIX ตามคำสั่งที่ 1+2: จัดเรียงใหม่ + ข้อความ ปิด/admin แบบตัวอักษรล้วน - แก้ไขตามคำสั่งใหม่ ลบพื้นแดง ลดขนาด 1/3 --- */
     .ai-status-plain, .role-badge-plain {
       background: none !important;
+      background-color: transparent !important;
       border: none !important;
       box-shadow: none !important;
       padding: 0 !important;
       margin: 0 !important;
       border-radius: 0 !important;
       backdrop-filter: none !important;
-      font-size: 13px;
+      font-size: 8.7px !important; /* ลดจาก 13px ลง 1/3 = เหลือ 2/3 */
       font-weight: bold;
       color: #333;
       white-space: nowrap;
       line-height: 1.1;
+    }
+    /* บังคับลบพื้นแดงของ role-badge admin ที่อาจถูกใส่จาก JS */
+    .role-badge.admin, .role-badge.general, .role-badge.special, #userRoleBadge {
+      background: none !important;
+      background-color: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    #userRoleBadge.role-badge-plain {
+      font-size: 8.7px !important;
     }
     #statusAdminStack {
       line-height: 1;
@@ -1420,26 +1431,7 @@
       z-index: 10 !important;
     }
 
-    
-    /* PATCH v7-8-4 -> v7-8-6: คำสั่ง1 admin ลบพื้นแดง+ลดขนาด1/3, คำสั่ง2 ลบ stray text */
-    #userRoleBadge {
-      background: none !important;
-      background-color: transparent !important;
-      background-image: none !important;
-      border: none !important;
-      box-shadow: none !important;
-      font-size: 8px !important; /* เดิม ~12px ลด 1/3 เหลือ ~8px */
-      padding: 1px 4px !important;
-      transform: scale(0.666) !important;
-      transform-origin: left center !important;
-      display: inline-block !important;
-    }
-    #userRoleBadge.role-badge-plain {
-      font-size: 8px !important;
-      background: none !important;
-    }
-
-</style> 
+    </style> 
     
 
 
@@ -1503,7 +1495,7 @@ window.highlightBoth = function(idStr, type){
       <!-- กลุ่ม ปิด + admin แบบซ้อนตามรูปที่ 1 -->
       <div id="statusAdminStack" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto;">
         <div id="statusText" class="ai-status-plain">ปิด</div>
-        <div id="userRoleBadge" class="role-badge-plain">admin</div>
+        <div id="userRoleBadge" class="role-badge-plain" style="background:none !important; background-color:transparent !important; font-size:8.7px !important; border:none !important;">admin</div>
       </div>
 
       <div class="ai-avatar" id="avatarCircle" style="flex:0 0 auto;">🤖</div>
@@ -1550,7 +1542,7 @@ window.highlightBoth = function(idStr, type){
       <div id="sosResults" style="display:none;"></div>
     </div>
 
-    <div class="tab-content" id="tab-content-realestate" style="display: none;">
+    <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." style="flex:1;">
       </div>
@@ -3195,15 +3187,19 @@ function tryLIFFLoginAgain(){
         const roleInfo = await getCurrentUserRole();
         const role = (roleInfo.role||'general').toLowerCase();
         badge.style.display = 'inline-block';
-        badge.className = 'role-badge ' + role;
+        badge.className = 'role-badge-plain';
+        badge.style.background = 'none';
+        badge.style.backgroundColor = 'transparent';
+        badge.style.border = 'none';
+        badge.style.boxShadow = 'none';
         if(role==='admin'){
-          badge.innerHTML = '👑 admin';
+          badge.innerHTML = 'admin';
           badge.title = 'ผู้ดูแลระบบ - ลบได้ทุกโพสต์ | user_id:'+roleInfo.user_id;
         }else if(role==='special'){
-          badge.innerHTML = '⭐ special';
+          badge.innerHTML = 'special';
           badge.title = 'จิตอาสา - 20 โพสต์ | user_id:'+roleInfo.user_id;
         }else{
-          badge.innerHTML = '👤 general';
+          badge.innerHTML = 'general';
           badge.title = 'บุคคลทั่วไป - 5 โพสต์ | user_id:'+roleInfo.user_id;
         }
         window.CURRENT_USER_ROLE = roleInfo;
