@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-5  </title>
+  <title> v7-8-6  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2036,6 +2036,7 @@ window.highlightBoth = function(idStr, type){
           <option value="5">5กม.</option>
           <option value="10">10กม.</option>
           <option value="20">20กม.</option>
+          <option value="50">50กม.</option>
         </select>
       </div>
       <!-- แถวที่ 2: แผนที่ล้วน -->
@@ -5304,8 +5305,17 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       }
       
-      closeLocationModal();
+      // FIX คำสั่งที่ 1: ไม่ให้แผนที่หายหลังกดยืนยัน - คง modal ไว้ แค่อัปเดทวงกลมและรายการ
+      updateRadiusCircle();
+      if(typeof renderPropertyMarkersOnMap === 'function'){
+        renderPropertyMarkersOnMap(AppState.data.properties || []);
+      }
+      if(leafletMap){
+        setTimeout(()=>{ leafletMap.invalidateSize(); }, 100);
+      }
+      // ยังคงเรียก testShowList เพื่ออัปเดทรายการด้านล่าง แต่ไม่ปิดแผนที่
       testShowList();
+      // ไม่เรียก closeLocationModal() เพื่อให้แผนที่ค้างอยู่ตามคำสั่ง
     }
 
 
