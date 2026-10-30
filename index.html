@@ -1421,22 +1421,22 @@
     }
 
     
-    /* --- PATCH v7-8-4 -> v7-8-5: คำสั่งที่ 1+2 admin --- */
-    #userRoleBadge, .role-badge, .role-badge-plain {
+    /* PATCH v7-8-4 -> v7-8-6: คำสั่ง1 admin ลบพื้นแดง+ลดขนาด1/3, คำสั่ง2 ลบ stray text */
+    #userRoleBadge {
       background: none !important;
       background-color: transparent !important;
       background-image: none !important;
       border: none !important;
       box-shadow: none !important;
-      color: #333 !important;
-      font-size: 1px !important; /* เล็กที่สุดเท่าที่มองเห็น */
-      line-height: 1 !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      width: 1px !important;
-      height: 1px !important;
-      overflow: hidden !important;
-      display: none !important; /* คำสั่งที่สอง: ลบออกจากหน้าแอป ตามรูปที่ 3 */
+      font-size: 8px !important; /* เดิม ~12px ลด 1/3 เหลือ ~8px */
+      padding: 1px 4px !important;
+      transform: scale(0.666) !important;
+      transform-origin: left center !important;
+      display: inline-block !important;
+    }
+    #userRoleBadge.role-badge-plain {
+      font-size: 8px !important;
+      background: none !important;
     }
 
 </style> 
@@ -1503,7 +1503,7 @@ window.highlightBoth = function(idStr, type){
       <!-- กลุ่ม ปิด + admin แบบซ้อนตามรูปที่ 1 -->
       <div id="statusAdminStack" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto;">
         <div id="statusText" class="ai-status-plain">ปิด</div>
-        <div id="userRoleBadge" style="display:none !important;"></div>
+        <div id="userRoleBadge" class="role-badge-plain">admin</div>
       </div>
 
       <div class="ai-avatar" id="avatarCircle" style="flex:0 0 auto;">🤖</div>
@@ -1550,7 +1550,7 @@ window.highlightBoth = function(idStr, type){
       <div id="sosResults" style="display:none;"></div>
     </div>
 
-    <div class="tab-content" id="tab-content-realestate">style="display: none;">
+    <div class="tab-content" id="tab-content-realestate" style="display: none;">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." style="flex:1;">
       </div>
