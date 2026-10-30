@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-4  </title>
+  <title> v7-8-5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4874,27 +4874,48 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         renderPropertyMarkersOnMap(all);
       }
     }
-    // v7-8-4 NEW: ดึง properties ตามโลเคชันเมื่อยังไม่มี cache
+    // v7-8-5 FIX: ดึง properties ตามโลเคชันเมื่อยังไม่มี cache + fallback ถ้า 0 ผลลัพธ์
     async function fetchPropertiesByLocation(lat,lng,radius){
       if(!lat || !lng) return;
+      const tryRadii = [radius||10, 20, 50]; // ลองรัศมีใหญ่ขึ้นถ้า 1กม. ไม่มีบ้าน
+      for(let r of tryRadii){
+        try{
+          const criteria = { lat: lat, lng: lng, radius: r };
+          const payload = { action: "searchAll", offset: 0, limit: 50, userData: {}, criteria: criteria, searchText: "" };
+          console.log(`Auto fetch properties by location: ${lat}, ${lng} radius ${r}km`);
+          const res = await fetch(CONFIG.RENDER_API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          if(!res.ok) throw new Error('fetch failed');
+          const data = await res.json();
+          console.log(`Fetched by location ${r}km:`, data.results ? data.results.length : 0);
+          if(data.status==='success' && data.results && data.results.length>0){
+            AppState.data.properties = [...(AppState.data.properties||[]), ...data.results];
+            renderPropertyMarkersOnMap(AppState.data.properties);
+            const container = document.getElementById('resultsContainer');
+            if(container && container.innerHTML.trim()==='' ){
+              renderProperties(data.results);
+            }
+            return; // เจอแล้วหยุด
+          }
+        }catch(e){ console.error('fetchPropertiesByLocation error radius', r, e); }
+      }
+      // Fallback สุดท้าย: ถ้าลองรัศมี 50กม. แล้วยังไม่มี ให้ดึงรายการล่าสุดโดยไม่กรองพิกัดเลย เพื่อให้แมพไม่ว่าง
       try{
-        const criteria = { lat: lat, lng: lng, radius: radius||5 };
-        const payload = { action: "searchAll", offset: 0, limit: 50, userData: {}, criteria: criteria, searchText: "" };
+        console.log('Fallback fetch latest properties without location filter');
+        const payload = { action: "searchAll", offset: 0, limit: 50, userData: {}, criteria: {}, searchText: "" };
         const res = await fetch(CONFIG.RENDER_API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        if(!res.ok) throw new Error('fetch failed');
         const data = await res.json();
-        if(data.status==='success' && data.results){
-          console.log('Fetched by location:', data.results.length);
-          // เก็บเข้า cache
+        if(data.status==='success' && data.results && data.results.length>0){
+          console.log('Fallback fetched:', data.results.length);
           AppState.data.properties = [...(AppState.data.properties||[]), ...data.results];
           renderPropertyMarkersOnMap(AppState.data.properties);
-          // ถ้าฟีดว่าง ให้ render ฟีดด้วย
           const container = document.getElementById('resultsContainer');
           if(container && container.innerHTML.trim()==='' ){
             renderProperties(data.results);
           }
+        } else {
+          console.warn('No properties at all from backend, check DB latitude fields');
         }
-      }catch(e){ console.error('fetchPropertiesByLocation error', e); }
+      }catch(e){ console.error('Fallback fetch error', e); }
     }
     function loadMarkersByCurrentFeed(){
       isMapModeActive = false;
