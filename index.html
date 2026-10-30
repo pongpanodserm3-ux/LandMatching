@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-3  </title>
+  <title> v7-8-4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1393,7 +1393,34 @@
 #fullscreenListOverlay { pointer-events:auto; }
 #fullscreenListOverlay [data-warning-id] { pointer-events:auto; }
 
-</style> 
+
+    /* --- FIX ตามคำสั่งที่ 1+2: จัดเรียงใหม่ + ข้อความ ปิด/admin แบบตัวอักษรล้วน --- */
+    .ai-status-plain, .role-badge-plain {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      backdrop-filter: none !important;
+      font-size: 13px;
+      font-weight: bold;
+      color: #333;
+      white-space: nowrap;
+      line-height: 1.1;
+    }
+    #statusAdminStack {
+      line-height: 1;
+    }
+    /* ลบ fixed ของ voice-btn เมื่ออยู่ในแถบบนสุด */
+    #ai-section .voice-btn {
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
+      z-index: 10 !important;
+    }
+
+    </style> 
     
 
 
@@ -1450,19 +1477,21 @@ window.highlightBoth = function(idStr, type){
 </head>
 
 <body>
-  <button class="voice-btn" id="toggleBtn" onclick="toggleVoiceSession()">🎙️คุยกับAI</button>
-
   <div id="ai-section">
-    <div class="ai-controls-row">
+    <div class="ai-controls-row" style="justify-content: flex-start; gap: 10px; flex-wrap: nowrap; overflow-x: auto;">
       <button id="locationFilterBtn" onclick="openLocationModal()">📍 พิกัด ▾</button>
-      <div class="header-center-logos">
-        <!-- ย้ายสถานะ AI voice มาซ้ายหุ่นยนต์ แบบสั้น -->
-        <div id="statusText" class="ai-status-compact">💤 รอ</div>
-        <div class="ai-avatar" id="avatarCircle">🤖</div>
-        <div id="userRoleBadge" class="role-badge" style="font-size:10px; font-weight:bold; padding:2px 6px; border-radius:8px; background:rgba(255,255,255,0.9); border:1px solid #e2e8f0; margin-left:4px; white-space:nowrap; display:none;">⏳</div>
-        <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🔔</button>
+      
+      <!-- กลุ่ม ปิด + admin แบบซ้อนตามรูปที่ 1 -->
+      <div id="statusAdminStack" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; flex:0 0 auto;">
+        <div id="statusText" class="ai-status-plain">ปิด</div>
+        <div id="userRoleBadge" class="role-badge-plain">admin</div>
       </div>
-      <div style="width: 80px;"></div>
+
+      <div class="ai-avatar" id="avatarCircle" style="flex:0 0 auto;">🤖</div>
+      
+      <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex:0 0 auto;">🔔</button>
+
+      <button class="voice-btn" id="toggleBtn" onclick="toggleVoiceSession()" style="position:relative !important; top:auto !important; right:auto !important; flex:0 0 auto;">🎙️คุยกับAI</button>
     </div>
 
     <!-- แถบระบบนำทาง 5 แท็บ - SOS เป็นแท็บแรกสุด (เลื่อนซ้ายขวาได้) -->
