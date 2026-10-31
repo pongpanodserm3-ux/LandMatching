@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-9  </title>
+  <title> v7-8-10  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1333,6 +1333,23 @@
     #locationModalOverlay.active{ display:flex !important; }
     #locationModalOverlay .detail-modal{ z-index:10011; max-height:92vh; height:auto; }
     #locationMap{ z-index:1; }
+    /* คำสั่งที่ 3: ปุ่มขยายเต็มจอ ใต้ปุ่มลบ */
+    .leaflet-control-fullscreen-btn{
+      width:30px; height:30px; line-height:30px; text-align:center;
+      background:white; border:1px solid #ccc; border-top:none;
+      cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+      border-radius:0 0 4px 4px;
+    }
+    .leaflet-control-fullscreen-btn:hover{ background:#f4f4f4; }
+    #locationModalOverlay.fullscreen-mode{
+      height:100vh !important; height:100dvh !important;
+    }
+    #locationModalOverlay.fullscreen-mode .detail-modal{
+      height:100vh !important; height:100dvh !important; max-height:100vh !important; border-radius:0 !important;
+    }
+    #locationModalOverlay.fullscreen-mode #locationMap{
+      flex:1 !important; min-height:0 !important;
+    }
 
 .hl-blue{border:3.5px solid #2563eb !important; background:#eff6ff !important; box-shadow:0 0 0 4px rgba(37,99,235,0.28), 0 10px 28px rgba(37,99,235,0.4) !important; transform:scale(1.02) !important;}
 .hl-orange{border:3.5px solid #ea580c !important; background:#fff7ed !important; box-shadow:0 0 0 4px rgba(234,88,12,0.28) !important; transform:scale(1.02) !important;}
@@ -2035,6 +2052,7 @@ window.highlightBoth = function(idStr, type){
           <option value="10">10กม.</option>
           <option value="20">20กม.</option>
           <option value="50">50กม.</option>
+          <option value="100">100กม.</option>
         </select>
         <button onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ยืนยัน</button>
         <button onclick="openGoogleMaps()" style="flex:0 0 auto; background: var(--btn-blue); color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">Google Maps</button>
@@ -2043,8 +2061,8 @@ window.highlightBoth = function(idStr, type){
       <div id="locationMap" style="width: 100%; flex:1; min-height:0; border-radius: 10px;"></div>
       <!-- แถวที่ 3: Lat + Lng + ปัจจุบัน + ถังขยะ (ตามรูป n1) -->
       <div style="display:flex; gap:4px; flex-shrink:0; align-items:center;">
-        <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
-        <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
+        <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
+        <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
         <button onclick="getCurrentUserLocation()" style="flex:0 0 auto; background: #e2e8f0; color: #333; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ปัจจุบัน</button>
         <button onclick="clearLocationFilter()" style="flex:0 0 40px; background: #eee; color: #d00; border: 1px solid #ddd; padding: 6px 2px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px;">🗑️</button>
       </div>
@@ -4943,6 +4961,54 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             attribution: '© OpenStreetMap'
           }).addTo(leafletMap);
 
+          // คำสั่งที่ 3: เพิ่มปุ่มขยายเต็มจอ ใต้ปุ่มลบ
+          try{
+            if(!leafletMap._fullscreenBtnAdded){
+              var FullscreenControl = L.Control.extend({
+                options:{position:'topleft'},
+                onAdd:function(map){
+                  var container = L.DomUtil.create('div','leaflet-control-zoom leaflet-bar leaflet-control');
+                  container.style.marginTop='6px';
+                  var btn = L.DomUtil.create('a','leaflet-control-fullscreen-btn',container);
+                  btn.innerHTML='⛶';
+                  btn.title='ขยายเต็มจอ';
+                  btn.href='#';
+                  btn.style.width='30px'; btn.style.height='30px'; btn.style.lineHeight='30px';
+                  btn.style.display='flex'; btn.style.alignItems='center'; btn.style.justifyContent='center';
+                  btn.style.background='white'; btn.style.textDecoration='none'; btn.style.color='black'; btn.style.fontSize='18px';
+                  L.DomEvent.on(btn,'click', function(e){
+                    L.DomEvent.stop(e);
+                    if(typeof window.toggleLocationMapFullscreen==='function') window.toggleLocationMapFullscreen();
+                  });
+                  return container;
+                }
+              });
+              // สร้างปุ่มแยกใต้ zoom control โดยแนบใต้ existing zoom
+              var zoomCtrl = document.querySelector('#locationMap .leaflet-control-zoom');
+              if(zoomCtrl){
+                var customDiv = document.createElement('div');
+                customDiv.className='leaflet-control-zoom leaflet-bar leaflet-control';
+                customDiv.style.marginTop='5px';
+                var a = document.createElement('a');
+                a.href='#';
+                a.className='leaflet-control-fullscreen-btn';
+                a.innerHTML='⛶';
+                a.title='ขยายเต็มจอ';
+                a.style.width='30px'; a.style.height='30px'; a.style.lineHeight='30px';
+                a.style.display='flex'; a.style.alignItems='center'; a.style.justifyContent='center';
+                a.style.background='white'; a.style.textDecoration='none'; a.style.color='black'; a.style.fontSize='18px';
+                a.onclick=function(e){ e.preventDefault(); if(window.toggleLocationMapFullscreen) window.toggleLocationMapFullscreen(); return false; };
+                customDiv.appendChild(a);
+                // แทรกหลัง zoom control
+                zoomCtrl.parentNode.insertBefore(customDiv, zoomCtrl.nextSibling);
+                leafletMap._fullscreenBtnAdded=true;
+              } else {
+                leafletMap.addControl(new FullscreenControl());
+                leafletMap._fullscreenBtnAdded=true;
+              }
+            }
+          }catch(e){ console.log('fullscreen btn err',e); }
+
           mapMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(leafletMap);
 
           if(!leafletMap._hasMoveEnd){ leafletMap.on('moveend', function(){ if(isMapModeActive){ loadMarkersByMapBounds(); } }); leafletMap._hasMoveEnd=true; }
@@ -5186,7 +5252,13 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
     }
 
-    function closeLocationModal() {
+    window.toggleLocationMapFullscreen = function(){
+      var overlay = document.getElementById('locationModalOverlay');
+      if(!overlay) return;
+      overlay.classList.toggle('fullscreen-mode');
+      setTimeout(function(){ if(window.leafletMap) leafletMap.invalidateSize(); if(window.leafletMap) leafletMap.invalidateSize(); }, 250);
+    };
+function closeLocationModal() {
       stopAIVoiceSpeech();
       const resultsDiv = document.getElementById('placeSearchResults');
       if (resultsDiv) resultsDiv.style.display = 'none';
