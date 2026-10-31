@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-11  </title>
+  <title> v7-9 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1524,7 +1524,7 @@ window.highlightBoth = function(idStr, type){
 
     <!-- แถบระบบนำทาง 5 แท็บ - SOS เป็นแท็บแรกสุด (เลื่อนซ้ายขวาได้) -->
     <div class="tabs-nav" id="mainTabsNav">
-      <button class="tab-btn emergency-tab active" id="tab-btn-sos" onclick="switchTab('sos')">🚨 วิกฤตน้ำท่วม</button>
+      <button id="crisisTab" class="tab-btn emergency-tab active" id="tab-btn-sos" onclick="switchTab('sos')">🚨 วิกฤตน้ำท่วม</button>
       <button class="tab-btn" id="tab-btn-realestate" onclick="switchTab('realestate')">🏡 อสังหาฯ</button>
       <button class="tab-btn" id="tab-btn-decor" onclick="switchTab('decor')">🛋️ สินค้าทั่วไป</button>
       <button class="tab-btn" id="tab-btn-lifestyle" onclick="switchTab('lifestyle')">☕ ไลฟ์สไตล์&เที่ยว</button>
@@ -4954,7 +4954,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
 
       if (!leafletMap) {
         setTimeout(() => {
-          leafletMap = L.map('locationMap').setView([defaultLat, defaultLng], 12);
+          leafletMap = ensureLocationMapReady(defaultLat, defaultLng);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -7148,6 +7148,60 @@ function closeLocationModal() {
 
 
     let isSOSMapExpanded = false;
+
+    // ===== v7-8-12 Unified Map Factory - แก้ซ้ำซ้อนแผนที่ =====
+    function createBaseMap(domId, opts={}){
+      try{
+        const el = document.getElementById(domId);
+        if(!el) return null;
+        const m = L.map(domId, {zoomControl:true, ...opts}).setView([13.7563, 100.5018], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
+        return m;
+      }catch(e){ console.error('createBaseMap fail', domId, e); return null; }
+    }
+    function ensureSOSMapReady(){
+      if(window.sosMap && typeof window.sosMap.setView === 'function') return window.sosMap;
+      window.sosMap = createBaseMap('sosMapPreview');
+      return window.sosMap;
+    }
+    function ensureLocationMapReady(lat, lng){
+      const _lat = parseFloat(lat)||13.7563, _lng = parseFloat(lng)||100.5018;
+      if(window.leafletMap && typeof window.leafletMap.setView === 'function'){
+        try{ window.leafletMap.setView([_lat,_lng], 14); }catch(e){}
+        return window.leafletMap;
+      }
+      window.leafletMap = createBaseMap('locationMap');
+      if(window.leafletMap) try{ window.leafletMap.setView([_lat,_lng], 14); }catch(e){}
+      return window.leafletMap;
+    }
+    // ===== END v7-8-12 Factory =====
+    // auto check crisis on start
+    document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ checkCrisisMode(); }catch(e){} }, 800); });
+
+    // v7-8-12 Crisis Mode - เปิด/ปิดแท็บวิกฤตน้ำท่วมตาม app_settings
+    async function checkCrisisMode(){
+      try{
+        if(!window.supabaseClient) return true;
+        const {data, error} = await window.supabaseClient.from('app_settings').select('value').eq('key','flood_crisis_active').single();
+        if(error){
+          // ถ้าไม่มี key ให้ถือว่าไม่มีวิกฤต แต่ไม่ซ่อนแท็บเพื่อไม่ให้พัง
+          console.log('checkCrisisMode: no key', error.message);
+          return true;
+        }
+        const isCrisis = data?.value === true;
+        const crisisTab = document.getElementById('crisisTab');
+        if(crisisTab){
+          crisisTab.style.display = isCrisis ? '' : 'none';
+          if(!isCrisis && crisisTab.classList.contains('active')){
+            // ถ้ากำลังดูแท็บวิกฤตอยู่แล้ววิกฤตปิด ให้สลับไปอสังหา
+            const estateTab = document.querySelector('[data-tab="estate"]') || document.getElementById('estateTab');
+            if(estateTab) estateTab.click();
+          }
+        }
+        return isCrisis;
+      }catch(e){ console.warn('checkCrisisMode error', e); return true; }
+    }
+
     function toggleSOSMapSize() {
       const mapContainer = document.getElementById('sosMapContainer');
       const btn = document.getElementById('sosMapToggleBtn');
@@ -7180,7 +7234,7 @@ function initSOSMap(){
   if(!mapEl) return;
   if(window.sosMap){ try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){} return; }
   try{
-    window.sosMap = L.map('sosMapPreview', {zoomControl:true}).setView([13.7563, 100.5018], 11);
+    window.sosMap = ensureSOSMapReady();
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
     window.sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
     window.userLocationLayer = L.featureGroup().addTo(window.sosMap);
@@ -7332,7 +7386,7 @@ document.addEventListener('fullscreenchange', ()=>{
       if (!mapEl) return;
       if (window.sosMap) return;
       try {
-        window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
+        window.sosMap = ensureSOSMapReady();
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
         sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
         window.sosMarkersLayer = sosMarkersLayer;
