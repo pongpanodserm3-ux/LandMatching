@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14-3-del  </title>
+  <title> v7-8-14-3-del-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1363,6 +1363,18 @@
     #locationModalOverlay.active{ display:flex !important; }
     #locationModalOverlay .detail-modal{ z-index:10011; max-height:92vh; height:auto; }
     #locationMap{ z-index:1; }
+    /* คำสั่งใหม่: ย้ายปุ่ม +/- จากซ้ายบน ไปขวา ต่ำลง 100px */
+    .leaflet-top.leaflet-left{
+      top: 100px !important;
+      left: auto !important;
+      right: 8px !important;
+      bottom: auto !important;
+    }
+    .leaflet-top.leaflet-left .leaflet-control-zoom{
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+    }
+
     /* คำสั่งที่ 3: ปุ่มขยายเต็มจอ ใต้ปุ่มลบ */
     .leaflet-control-fullscreen-btn{
       width:30px; height:30px; line-height:30px; text-align:center;
