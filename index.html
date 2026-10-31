@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14  </title>
+  <title> v7-8-14-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -197,15 +197,22 @@
       display:flex;
       flex-direction:row;
       align-items:center;
+      justify-content:flex-start;
       gap:6px;
-      width:100%;
-      margin-bottom:8px;
+      width:auto;
+      max-width:max-content;
+      margin-bottom:0;
+      margin-right:auto;
       flex-wrap:nowrap;
+      height:26px;
+      min-height:26px;
     }
     .sos-segmented-control.compact{
       display:flex;
-      flex:1 1 auto;
+      flex:0 0 auto;
+      width:auto;
       min-width:0;
+      max-width:max-content;
       background: rgba(255,255,255,0.9);
       border-radius: 999px;
       padding: 2px;
@@ -214,15 +221,17 @@
       backdrop-filter: blur(10px);
     }
     .sos-segmented-control.compact .seg-btn{
-      flex:1 1 0;
+      flex:0 0 auto;
+      width:auto;
       min-width:0;
+      max-width:max-content;
       border:none;
       background:transparent;
-      padding:4px 6px; /* เตี้ยที่สุด */
-      height:26px; /* ล็อกความสูง */
+      padding:4px 5px;
+      height:26px;
       line-height:1;
       border-radius:999px;
-      font-size:13px; /* คงขนาดข้อความเท่าเดิม */
+      font-size:13px;
       font-weight:700;
       cursor:pointer;
       transition: all 0.2s ease;
@@ -230,10 +239,8 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:3px;
+      gap:2px;
       white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
     }
     .sos-segmented-control.compact .seg-btn.active{
       box-shadow: 0 1px 6px rgba(0,0,0,0.15);
@@ -263,13 +270,16 @@
     .seg-btn.active .seg-badge{ background: rgba(255,255,255,0.3); }
     .btn-notify-compact{
       flex:0 0 auto;
-      height:26px; /* เท่ากับ seg */
-      padding:4px 10px;
+      width:auto;
+      min-width:0;
+      max-width:max-content;
+      height:26px;
+      padding:4px 6px;
       border-radius:999px;
       border:1.5px solid #a80000;
       background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%);
       color:white;
-      font-size:13px; /* คงขนาดข้อความ */
+      font-size:13px;
       font-weight:700;
       cursor:pointer;
       white-space:nowrap;
@@ -1536,7 +1546,7 @@ window.highlightBoth = function(idStr, type){
 
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
-      <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #fff1f1 0%, #ffe4e6 50%, #f0fdf4 100%); padding: 6px 0 8px 0; margin: -4px -4px 0 -4px; padding-left:4px; padding-right:4px; border-radius: 12px;">
+      <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, rgba(255,241,241,0.5) 0%, rgba(255,228,230,0.5) 50%, rgba(240,253,244,0.5) 100%); padding: 0 4px; margin: -4px -4px 0 -4px; border-radius: 12px; height: 26px; min-height: 26px; max-height: 26px; display:flex; align-items:center; opacity: 1;">
         
         <div class="sos-top-single-row">
           <div class="sos-segmented-control compact" role="tablist" aria-label="สลับมุมมองวิกฤต">
