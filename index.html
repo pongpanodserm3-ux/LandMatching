@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14-3-del-2  </title>
+  <title> v7-8-14-3-del-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1556,7 +1556,7 @@ window.highlightBoth = function(idStr, type){
             <button role="tab" id="seg-warnings" class="seg-btn" onclick="switchSOSSubView('warnings')" aria-selected="false">เตือนภัย</button>
             <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">จุด SOS</button>
           </div>
-          <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">ลงประกาศเตือน</button>
+          <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">ลงประกาศเตือนภัย</button>
           <button id="tabFullscreenBtn" title="ขยายเต็มจอ" onclick="toggleSOSMapFullscreen()">⛶</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
@@ -8851,7 +8851,7 @@ window.switchSOSSubView = function(mode){
     // --- คำสั่งที่ 2: เปลี่ยนปุ่ม แจ้งขอให้ช่วย -> แจ้งเตือนท่วม ---
     const mainBtn = document.getElementById('sosMainActionBtn');
     if(mainBtn){
-      mainBtn.innerHTML = 'ลงประกาศเตือน';
+      mainBtn.innerHTML = 'ลงประกาศเตือนภัย';
       mainBtn.setAttribute('onclick','openFloodWarningModal()');
       mainBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)';
       mainBtn.style.borderColor = '#c2410c';
@@ -8865,7 +8865,7 @@ window.switchSOSSubView = function(mode){
     // --- คำสั่งที่ 2: เปลี่ยนปุ่มกลับเป็น แจ้งขอให้ช่วย ---
     const mainBtn = document.getElementById('sosMainActionBtn');
     if(mainBtn){
-      mainBtn.innerHTML = 'ลงประกาศเตือน';
+      mainBtn.innerHTML = 'ลงประกาศSOS(ขอความช่วยเหลือ )';
       mainBtn.setAttribute('onclick','openSOSModal()');
       mainBtn.style.background = 'linear-gradient(135deg, #ff3b30 0%, #d70000 100%)';
       mainBtn.style.borderColor = '#a80000';
