@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14  </title>
+  <title> v7-8-15  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1328,7 +1328,94 @@
     #sosMapPreview { display:block !important; height:100% !important; min-height:320px; }
 
 
-    /* FIX v13.4 - Flood pin modal must be on top */
+    
+/* ===== v7-8-14 FIX: จัดใหม่ตามรูป 2 - กรอบบังแผนที่หายไป ปุ่มเล็กลง ลอยบนแผนที่ ===== */
+.sos-top-single-row{
+      position: absolute !important;
+      top: 8px !important;
+      left: 8px !important;
+      right: auto !important;
+      width: auto !important;
+      max-width: 65% !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      z-index: 500 !important;
+      pointer-events: auto !important;
+    }
+    #sosMapContainer{
+      position: relative !important;
+    }
+    .sos-segmented-control.compact{
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      padding: 0 !important;
+      gap: 6px !important;
+      flex: 0 0 auto !important;
+    }
+    .sos-segmented-control.compact .seg-btn{
+      height: 28px !important;
+      padding: 0 12px !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(0,0,0,0.08) !important;
+      background: white !important;
+      color: #334155 !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12) !important;
+      white-space: nowrap !important;
+      min-width: auto !important;
+      flex: 0 0 auto !important;
+    }
+    .sos-segmented-control.compact .seg-btn.active{
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    }
+    .sos-segmented-control.compact #seg-warnings.active{
+      background: #f97316 !important;
+      background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+      color: white !important;
+      border-color: #ea580c !important;
+    }
+    .sos-segmented-control.compact #seg-requests{
+      background: #ffffff !important;
+      color: #64748b !important;
+    }
+    .sos-segmented-control.compact #seg-requests.active{
+      background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%) !important;
+      color: white !important;
+    }
+    .btn-notify-compact{
+      position: absolute !important;
+      bottom: 12px !important;
+      left: 10px !important;
+      top: auto !important;
+      right: auto !important;
+      height: 30px !important;
+      padding: 0 14px !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      border-radius: 999px !important;
+      background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+      border: 1px solid #ea580c !important;
+      color: white !important;
+      box-shadow: 0 2px 8px rgba(234,88,12,0.35) !important;
+      z-index: 510 !important;
+    }
+    /* ลบพื้นหลังขาวของ container ที่หุ้ม map เดิมให้โปร่งใสขึ้น */
+    #crisisContainer, #sosSectionContainer{
+      background: transparent !important;
+    }
+    /* ซ่อน gap เดิม */
+    .sos-top-single-row .sos-segmented-control.compact + .btn-notify-compact{
+      /* เดิมอยู่ติดกัน ตอนนี้แยกตำแหน่งแล้ว */
+    }
+/* ===== END FIX v7-8-14 ===== */
+
+/* FIX v13.4 - Flood pin modal must be on top */
     #locationModalOverlay{ z-index:10010 !important; }
     #locationModalOverlay.active{ display:flex !important; }
     #locationModalOverlay .detail-modal{ z-index:10011; max-height:92vh; height:auto; }
