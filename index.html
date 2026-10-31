@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-16-2  </title>
+  <title> v7-8-16  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1329,179 +1329,118 @@
 
 
     
-
-
-
-/* ===== v7-8-16 FINAL FIX: ตำแหน่งปุ่มตามภาพอ้างอิง image_fb093c.png เป๊ะ ทั้งโหมดย่อและขยาย ===== */
-#sosMapContainer{
-  position: relative !important;
-  overflow: hidden !important;
-}
-#sosMapPreview{
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-/* 1. บนซ้าย: ปุ่มเตือนท่วม + จุดขอให้ช่วย - ชิดขอบบนซ้าย */
+/* ===== v7-8-14 FIX: จัดใหม่ตามรูป 2 - กรอบบังแผนที่หายไป ปุ่มเล็กลง ลอยบนแผนที่ ===== */
 .sos-top-single-row{
-  position: absolute !important;
-  top: 8px !important;
-  left: 8px !important;
-  right: auto !important;
-  bottom: auto !important;
-  width: auto !important;
-  max-width: calc(100% - 20px) !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 400 !important;
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 6px !important;
-  pointer-events: none !important;
-}
-.sos-top-single-row .sos-segmented-control.compact{
-  background: rgba(255,255,255,0.92) !important;
-  border-radius: 8px !important;
-  padding: 2px !important;
-  border: 1px solid rgba(0,0,0,0.08) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-  backdrop-filter: blur(4px) !important;
-  gap: 4px !important;
-  display: flex !important;
-  pointer-events: auto !important;
-}
-.sos-top-single-row .sos-segmented-control.compact .seg-btn{
-  height: 30px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  border-radius: 6px !important;
-  white-space: nowrap !important;
-}
-.sos-top-single-row .sos-segmented-control.compact #seg-warnings{
-  background: #f97316 !important;
-  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
-  color: white !important;
-  border: none !important;
-}
-.sos-top-single-row .sos-segmented-control.compact #seg-warnings.active{
-  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
-  color: white !important;
-}
-.sos-top-single-row .sos-segmented-control.compact #seg-requests{
-  background: white !important;
-  color: #334155 !important;
-  border: 1px solid #e2e8f0 !important;
-}
-.sos-top-single-row .sos-segmented-control.compact #seg-requests.active{
-  background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%) !important;
-  color: white !important;
-}
+      position: absolute !important;
+      top: 8px !important;
+      left: 8px !important;
+      right: auto !important;
+      width: auto !important;
+      max-width: 65% !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      z-index: 500 !important;
+      pointer-events: auto !important;
+    }
+    #sosMapContainer{
+      position: relative !important;
+    }
+    .sos-segmented-control.compact{
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      padding: 0 !important;
+      gap: 6px !important;
+      flex: 0 0 auto !important;
+    }
+    .sos-segmented-control.compact .seg-btn{
+      height: 28px !important;
+      padding: 0 12px !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+      border-radius: 8px !important;
+      border: 1px solid rgba(0,0,0,0.08) !important;
+      background: white !important;
+      color: #334155 !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12) !important;
+      white-space: nowrap !important;
+      min-width: auto !important;
+      flex: 0 0 auto !important;
+    }
+    .sos-segmented-control.compact .seg-btn.active{
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    }
+    .sos-segmented-control.compact #seg-warnings.active{
+      background: #f97316 !important;
+      background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+      color: white !important;
+      border-color: #ea580c !important;
+    }
+    .sos-segmented-control.compact #seg-requests{
+      background: #ffffff !important;
+      color: #64748b !important;
+    }
+    .sos-segmented-control.compact #seg-requests.active{
+      background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%) !important;
+      color: white !important;
+    }
+    
+    .btn-notify-compact{
+      position: absolute !important;
+      bottom: 14px !important;
+      left: 10px !important;
+      top: auto !important;
+      right: auto !important;
+      height: 30px !important;
+      padding: 0 14px !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      border-radius: 999px !important;
+      background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
+      border: 1px solid #ea580c !important;
+      color: white !important;
+      box-shadow: 0 2px 8px rgba(234,88,12,0.35) !important;
+      z-index: 510 !important;
+    }
+    /* v7-8-15 FIX: ย้ายปุ่ม + - ลงมากลางจอ ชิดซ้าย */
+    #sosMapPreview .leaflet-top.leaflet-left{
+      top: 50% !important;
+      bottom: auto !important;
+      transform: translateY(-50%) !important;
+      left: 6px !important;
+      right: auto !important;
+    }
+    #sosMapPreview .leaflet-control-zoom{
+      margin: 0 !important;
+      border-radius: 6px !important;
+      overflow: hidden !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    }
+    #sosMapPreview .leaflet-control-zoom a{
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 32px !important;
+      font-size: 18px !important;
+    }
+    /* ย้ายปุ่มขยายเต็มจอไปมุมขวาบนตามรูป 2 */
+    #sosMapPreview .leaflet-top.leaflet-right{
+      top: 8px !important;
+      right: 8px !important;
+    }
 
-/* 2. ซ้ายกลาง: ปุ่ม + - และขยายหน้าจอ เรียงแนวตั้ง ชิดขอบซ้าย อยู่ใต้ปุ่มบน */
-#sosMapPreview .leaflet-control-container .leaflet-top.leaflet-left{
-  top: 52px !important;
-  bottom: auto !important;
-  left: 8px !important;
-  right: auto !important;
-  transform: none !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
-  z-index: 350 !important;
-}
-#sosMapPreview .leaflet-control-zoom{
-  margin: 0 !important;
-  border-radius: 8px !important;
-  overflow: hidden !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.22) !important;
-  border: 1px solid rgba(0,0,0,0.12) !important;
-  width: 36px !important;
-}
-#sosMapPreview .leaflet-control-zoom a{
-  width: 36px !important;
-  height: 36px !important;
-  line-height: 36px !important;
-  font-size: 20px !important;
-  background: white !important;
-  color: #111 !important;
-  font-weight: bold !important;
-  text-align: center !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-#sosMapPreview .leaflet-control-zoom a:hover{
-  background: #f8fafc !important;
-}
-/* ปุ่มขยายหน้าจอ ⛶ อยู่ใต้ปุ่ม - ต่อกันเป็นคอลัมน์ซ้าย */
-#sosMapPreview .leaflet-control-fullscreen-btn,
-#sosMapPreview .leaflet-control-container .leaflet-control-zoom.leaflet-bar.leaflet-control:has(.leaflet-control-fullscreen-btn){
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.22) !important;
-  border: 1px solid rgba(0,0,0,0.12) !important;
-  background: white !important;
-  margin: 0 !important;
-}
-#sosMapPreview .leaflet-control-fullscreen-btn{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 18px !important;
-  line-height: 36px !important;
-  text-decoration: none !important;
-  color: #111 !important;
-}
-/* ซ่อน container ขวาบน ไม่ใช้แล้ว เพราะย้ายขยายมาอยู่ซ้าย */
-#sosMapPreview .leaflet-control-container .leaflet-top.leaflet-right{
-  display: none !important;
-}
-
-/* 3. ล่างซ้าย: ปุ่มแจ้งเตือนท่วม ชิดขอบล่างซ้าย */
-.btn-notify-compact, #sosMainActionBtn{
-  position: absolute !important;
-  bottom: 12px !important;
-  left: 8px !important;
-  top: auto !important;
-  right: auto !important;
-  height: 34px !important;
-  padding: 0 16px !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  border-radius: 999px !important;
-  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%) !important;
-  border: 1px solid #ea580c !important;
-  color: white !important;
-  box-shadow: 0 3px 12px rgba(234,88,12,0.4) !important;
-  z-index: 410 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  pointer-events: auto !important;
-  white-space: nowrap !important;
-}
-/* โหมดขยายเต็มจอ - ตำแหน่งเดียวกัน ชิดขอบบน/ล่างเหมือนเดิม */
-#sosMapContainer.fullscreen .sos-top-single-row,
-#sosMapContainer:fullscreen .sos-top-single-row{
-  top: 12px !important;
-  left: 12px !important;
-}
-#sosMapContainer.fullscreen .leaflet-top.leaflet-left,
-#sosMapContainer:fullscreen .leaflet-top.leaflet-left{
-  top: 58px !important;
-  left: 12px !important;
-}
-#sosMapContainer.fullscreen .btn-notify-compact,
-#sosMapContainer:fullscreen .btn-notify-compact{
-  bottom: 16px !important;
-  left: 12px !important;
-}
-/* ===== END FINAL FIX v7-8-16 ===== */
+    /* ลบพื้นหลังขาวของ container ที่หุ้ม map เดิมให้โปร่งใสขึ้น */
+    #crisisContainer, #sosSectionContainer{
+      background: transparent !important;
+    }
+    /* ซ่อน gap เดิม */
+    .sos-top-single-row .sos-segmented-control.compact + .btn-notify-compact{
+      /* เดิมอยู่ติดกัน ตอนนี้แยกตำแหน่งแล้ว */
+    }
+/* ===== END FIX v7-8-14 ===== */
 
 /* FIX v13.4 - Flood pin modal must be on top */
     #locationModalOverlay{ z-index:10010 !important; }
@@ -11608,64 +11547,6 @@ console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
       return r;
     };
   }
-})();
-</script>
-
-
-<script>
-// v7-8-16 FINAL FIX: จัดปุ่มตามภาพอ้างอิง ไม่หลุดกรอบ ทั้งย่อและขยาย
-(function(){
-  function fixButtons(){
-    try{
-      var mapContainer = document.getElementById('sosMapContainer');
-      var preview = document.getElementById('sosMapPreview');
-      var btn = document.getElementById('sosMainActionBtn');
-      if(mapContainer && btn && btn.parentElement !== mapContainer){
-        mapContainer.appendChild(btn);
-      }
-      if(preview){
-        var container = preview.querySelector('.leaflet-control-container');
-        if(container){
-          var topLeft = container.querySelector('.leaflet-top.leaflet-left');
-          var topRight = container.querySelector('.leaflet-top.leaflet-right');
-          // ย้ายปุ่มขยายจากขวาไปซ้ายถ้าหลุดไปขวา
-          if(topRight){
-            var fsWrappers = topRight.querySelectorAll('.leaflet-control');
-            fsWrappers.forEach(function(w){
-              if(topLeft) topLeft.appendChild(w);
-            });
-            // ซ่อน right container
-            topRight.style.display = 'none';
-          }
-          if(topLeft){
-            topLeft.style.top = '52px';
-            topLeft.style.left = '8px';
-            topLeft.style.transform = 'none';
-            topLeft.style.display = 'flex';
-            topLeft.style.flexDirection = 'column';
-            topLeft.style.gap = '6px';
-          }
-        }
-      }
-      if(mapContainer && btn){
-        btn.style.bottom = '12px';
-        btn.style.left = '8px';
-        btn.style.top = 'auto';
-      }
-    }catch(e){ console.warn('fixButtons final error', e); }
-  }
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(fixButtons, 200); setTimeout(fixButtons, 800); });
-  window.addEventListener('load', function(){ setTimeout(fixButtons, 400); setTimeout(fixButtons, 1200); });
-  var origSwitch = window.switchSOSSubView;
-  if(origSwitch){
-    window.switchSOSSubView = function(m){
-      var r = origSwitch.apply(this, arguments);
-      setTimeout(fixButtons, 150); setTimeout(fixButtons, 500);
-      return r;
-    };
-  }
-  document.addEventListener('fullscreenchange', function(){ setTimeout(fixButtons, 200); });
-  window.addEventListener('resize', function(){ setTimeout(fixButtons, 200); });
 })();
 </script>
 
