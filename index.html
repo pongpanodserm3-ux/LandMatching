@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-3 MAP ONLY </title>
+  <title> v7-8-11  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4954,7 +4954,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
 
       if (!leafletMap) {
         setTimeout(() => {
-          leafletMap = createBaseMap_MAPONLY('locationMap'); if(leafletMap){ leafletMap.setView([defaultLat, defaultLng], 12); }
+          leafletMap = L.map('locationMap').setView([defaultLat, defaultLng], 12);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -7174,81 +7174,37 @@ function ensureSOSMapVisible(){
   if(c){ c.style.display='block'; c.style.visibility='visible'; if(!c.style.height||c.style.height==='0px') c.style.height='320px'; }
   if(p){ p.style.display='block'; if(!p.style.height||p.style.height==='0px') p.style.height='100%'; }
 }
-
-    // v7-8-12 MAP-ONLY - แก้เฉพาะแผนที่ ไม่ยุ่ง DB
-    function createBaseMap_MAPONLY(domId){
-      const el=document.getElementById(domId);
-      if(!el){ console.warn('[MAPONLY] no element',domId); return null; }
-      try{
-        const m=L.map(domId,{zoomControl:true}).setView([13.7563,100.5018],11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(m);
-        return m;
-      }catch(e){ console.error('[MAPONLY] create fail',domId,e); return null; }
-    }
-    function ensureDangerLayer_MAPONLY(){
-      try{
-        if(window.dangerLayer) return window.dangerLayer;
-        if(!window.sosMap) return null;
-        window.dangerLayer=L.featureGroup().addTo(window.sosMap);
-        return window.dangerLayer;
-      }catch(e){ return null; }
-    }
-    function ensureUserLocationLayer_MAPONLY(m){
-      try{
-        if(window.userLocationLayer) return window.userLocationLayer;
-        const target=m||window.sosMap;
-        if(!target) return null;
-        window.userLocationLayer=L.featureGroup().addTo(target);
-        return window.userLocationLayer;
-      }catch(e){ return null; }
-    }
-    function ensureSOSMapReady_MAPONLY(){
-      if(window.sosMap && typeof window.sosMap.setView==='function') return window.sosMap;
-      return null;
-    }
-    // END MAPONLY Factory
-
-    // Compatibility alias - ให้โค้ดเก่าเรียกได้ ไม่พัง
-    function ensureSOSMapReady(){ return ensureSOSMapReady_MAPONLY() || window.sosMap; }
-    function ensureDangerLayer(){ return ensureDangerLayer_MAPONLY(); }
-    function ensureUserLocationLayer(m){ return ensureUserLocationLayer_MAPONLY(m); }
-    function ensureLocationMapReady(lat,lng){ 
-      const _lat=parseFloat(lat)||13.7563, _lng=parseFloat(lng)||100.5018;
-      if(window.leafletMap && typeof window.leafletMap.setView==='function'){ try{ window.leafletMap.setView([_lat,_lng],14);}catch(e){} return window.leafletMap; }
-      const mm=createBaseMap_MAPONLY('locationMap'); if(mm){ mm.setView([_lat,_lng],14); window.leafletMap=mm; } return window.leafletMap;
-    }
-
-
 function initSOSMap(){
+  ensureSOSMapVisible();
+  const mapEl=document.getElementById('sosMapPreview');
+  if(!mapEl) return;
+  if(window.sosMap){ try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){} return; }
   try{
-    const c=document.getElementById('sosMapContainer');
-    const p=document.getElementById('sosMapPreview');
-    if(c){ c.style.display='block'; c.style.visibility='visible'; }
-    if(!p){ console.warn('initSOSMap: no preview'); return; }
-    if(window.sosMap && typeof window.sosMap.setView==='function'){
-      try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){}
-      return;
-    }
-    // ใช้ Factory เดียวกัน
-    const map = createBaseMap_MAPONLY('sosMapPreview');
-    if(!map){ console.warn('initSOSMap: factory fail'); return; }
-    window.sosMap = map;
+    window.sosMap = L.map('sosMapPreview', {zoomControl:true}).setView([13.7563, 100.5018], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
     window.sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
     window.userLocationLayer = L.featureGroup().addTo(window.sosMap);
-    try{ window.dangerLayer = L.featureGroup().addTo(window.sosMap); }catch(e){}
-    window.sosMap.whenReady(()=>{ setTimeout(()=>{ try{ window.sosMap.invalidateSize(); }catch(e){} }, 400); });
-    // ปุ่มเต็มจอ
-    const containerEl=document.getElementById('sosMapContainer');
-    if(containerEl && !document.getElementById('mapControlBar')){
-      const bar=document.createElement('div');
-      bar.id='mapControlBar';
-      bar.style.cssText='position:absolute; top:8px; right:8px; z-index:800; display:flex; gap:6px;';
-      bar.innerHTML=`<button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;cursor:pointer;">⛶</button>`;
-      containerEl.appendChild(bar);
-      const btn=document.getElementById('mapFullscreenBtn');
-      if(btn) btn.onclick=()=>{ if(typeof toggleSOSMapFullscreen==='function') toggleSOSMapFullscreen(); };
+    window.sosMap.whenReady(()=>{ setTimeout(()=>{ try{ if(!window._lastInvalidateTs || Date.now()-window._lastInvalidateTs>800){ window._lastInvalidateTs=Date.now(); window.sosMap.invalidateSize(); } }catch(e){} }, 400); });
+    // === v15.4 RECOMMENDED: ปุ่มขยายเต็มจอ + ปุ่มขยายพื้นที่แผนที่เต็มมือถือ ===
+    const containerEl = document.getElementById('sosMapContainer');
+    if(containerEl){
+      // === v15.5 CLEAN: เหลือแค่ปุ่มเต็มจอ ไม่เอาปุ่ม ↕️ แล้ว ===
+      if(!document.getElementById('mapControlBar')){
+        const bar = document.createElement('div');
+        bar.id='mapControlBar';
+        bar.style.cssText='position:absolute; top:8px; right:8px; z-index:800; display:flex; gap:6px;';
+        bar.innerHTML = `
+          <button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">⛶</button>
+        `;
+        containerEl.appendChild(bar);
+        document.getElementById('mapFullscreenBtn').onclick=()=>toggleSOSMapFullscreen();
+      }
     }
-    console.log('[MAPONLY] initSOSMap OK');
+    // ปรับความสูงอัตโนมัติเมื่ออยู่ในโหมด warnings
+    if(window.currentViewMode==='warnings'){
+      const c=document.getElementById('sosMapContainer');
+      if(c && !c.classList.contains('map-expanded')) c.style.height='60vh';
+    }
   }catch(e){ console.warn('initSOSMap failed', e); }
 }
 let _isMapExpanded=false; // v15.5 ลบฟังก์ชันขยายแล้วซ่อนฟีดออก ไม่ใช้งานแล้ว
