@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-10  </title>
+  <title> v7-8-11  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2063,7 +2063,6 @@ window.highlightBoth = function(idStr, type){
       <div style="display:flex; gap:4px; flex-shrink:0; align-items:center;">
         <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
         <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
-        <button onclick="getCurrentUserLocation()" style="flex:0 0 auto; background: #e2e8f0; color: #333; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ปัจจุบัน</button>
         <button onclick="clearLocationFilter()" style="flex:0 0 40px; background: #eee; color: #d00; border: 1px solid #ddd; padding: 6px 2px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px;">🗑️</button>
       </div>
     </div>
@@ -4986,6 +4985,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
               // สร้างปุ่มแยกใต้ zoom control โดยแนบใต้ existing zoom
               var zoomCtrl = document.querySelector('#locationMap .leaflet-control-zoom');
               if(zoomCtrl){
+                // ปุ่มขยายเต็มจอ
                 var customDiv = document.createElement('div');
                 customDiv.className='leaflet-control-zoom leaflet-bar leaflet-control';
                 customDiv.style.marginTop='5px';
@@ -4999,11 +4999,44 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
                 a.style.background='white'; a.style.textDecoration='none'; a.style.color='black'; a.style.fontSize='18px';
                 a.onclick=function(e){ e.preventDefault(); if(window.toggleLocationMapFullscreen) window.toggleLocationMapFullscreen(); return false; };
                 customDiv.appendChild(a);
-                // แทรกหลัง zoom control
                 zoomCtrl.parentNode.insertBefore(customDiv, zoomCtrl.nextSibling);
+
+                // คำสั่งที่ 1 ใหม่: ปุ่มหาพิกัดปัจจุบัน วางใต้ปุ่มขยาย
+                var curDiv = document.createElement('div');
+                curDiv.className='leaflet-control-zoom leaflet-bar leaflet-control';
+                curDiv.style.marginTop='5px';
+                var b = document.createElement('a');
+                b.href='#';
+                b.innerHTML='📍';
+                b.title='หาพิกัดปัจจุบัน';
+                b.style.width='30px'; b.style.height='30px'; b.style.lineHeight='30px';
+                b.style.display='flex'; b.style.alignItems='center'; b.style.justifyContent='center';
+                b.style.background='white'; b.style.textDecoration='none'; b.style.color='black'; b.style.fontSize='16px';
+                b.onclick=function(e){ e.preventDefault(); if(typeof getCurrentUserLocation==='function') getCurrentUserLocation(); return false; };
+                curDiv.appendChild(b);
+                customDiv.parentNode.insertBefore(curDiv, customDiv.nextSibling);
+
                 leafletMap._fullscreenBtnAdded=true;
               } else {
                 leafletMap.addControl(new FullscreenControl());
+                // fallback เพิ่มปุ่มปัจจุบันด้วย
+                try{
+                  var CurControl = L.Control.extend({
+                    options:{position:'topleft'},
+                    onAdd:function(map){
+                      var container = L.DomUtil.create('div','leaflet-control-zoom leaflet-bar leaflet-control');
+                      container.style.marginTop='5px';
+                      var btn = L.DomUtil.create('a','',container);
+                      btn.innerHTML='📍'; btn.title='หาพิกัดปัจจุบัน'; btn.href='#';
+                      btn.style.width='30px'; btn.style.height='30px'; btn.style.lineHeight='30px';
+                      btn.style.display='flex'; btn.style.alignItems='center'; btn.style.justifyContent='center';
+                      btn.style.background='white'; btn.style.textDecoration='none'; btn.style.color='black';
+                      L.DomEvent.on(btn,'click', function(e){ L.DomEvent.stop(e); if(typeof getCurrentUserLocation==='function') getCurrentUserLocation(); });
+                      return container;
+                    }
+                  });
+                  leafletMap.addControl(new CurControl());
+                }catch(e){}
                 leafletMap._fullscreenBtnAdded=true;
               }
             }
