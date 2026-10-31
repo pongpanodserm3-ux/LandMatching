@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14-1  </title>
+  <title> v7-8-14-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -199,10 +199,9 @@
       align-items:center;
       justify-content:flex-start;
       gap:6px;
-      width:auto;
-      max-width:max-content;
+      width:100%;
+      max-width:100%;
       margin-bottom:0;
-      margin-right:auto;
       flex-wrap:nowrap;
       height:26px;
       min-height:26px;
@@ -290,6 +289,28 @@
       transition: transform 0.15s ease;
     }
     .btn-notify-compact:active{ transform: scale(0.96); }
+    /* NEW: ปุ่มขยายเต็มจอในแท็บ ขวาสุด */
+    #tabFullscreenBtn{
+      margin-left:auto;
+      width:26px;
+      height:26px;
+      min-width:26px;
+      background:rgba(255,255,255,0.95);
+      border:1px solid #cbd5e1;
+      border-radius:6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:bold;
+      box-shadow:0 1px 3px rgba(0,0,0,0.15);
+      flex:0 0 auto;
+    }
+    #tabFullscreenBtn:hover{ background:#f1f5f9; }
+    /* ซ่อนปุ่มเก่าบนแผนที่ เพราะย้ายมาอยู่ในแท็บแล้ว */
+    #mapControlBar{ display:none !important; }
+
     /* ถ้าจอแคบมาก ให้ย่อข้อความอีก */
     @media (max-width: 360px){
       .sos-segmented-control.compact .seg-btn{ font-size:12px; padding:4px 5px; }
@@ -1558,6 +1579,7 @@ window.highlightBoth = function(idStr, type){
             </button>
           </div>
           <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">📍 แจ้งขอให้ช่วย</button>
+          <button id="tabFullscreenBtn" title="ขยายเต็มจอ" onclick="toggleSOSMapFullscreen()">⛶</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
         <button id="btnWarningTop" style="display:none;" onclick="toggleWarningView()"></button>
