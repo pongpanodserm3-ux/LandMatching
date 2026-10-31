@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14-3-del-1  </title>
+  <title> v7-8-14-3-del-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -20,7 +20,6 @@
       --btn-green: #bcece0;
       --btn-blue: #4a83cc;
     }
-
     body {
       font-family: 'Arial', sans-serif;
       margin: 0;
@@ -32,7 +31,6 @@
       height: 100vh;
       overflow: hidden;
     }
-
     /* --- ปุ่ม คุยกับ AI (Global / Topmost Layer / Floating Top-Right) --- */
     .voice-btn {
       position: fixed !important;
@@ -66,7 +64,6 @@
       background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
       box-shadow: 0 0 15px rgba(255, 65, 108, 0.6);
     }
-
     /* --- ส่วนบน: AI Voice & Tabs Container --- */
     #ai-section {
       height: auto;
@@ -84,12 +81,10 @@
       flex-shrink: 0;
       transition: min-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     #ai-section.collapsed {
       min-height: 0 !important;
       padding-bottom: 10px;
     }
-
     /* --- บรรทัดที่ 1: ส่วนหัว --- */
     .ai-controls-row {
       display: flex;
@@ -101,7 +96,6 @@
       margin-bottom: 12px;
       position: relative;
     }
-
     
     .ai-status-compact {
       font-size: 11px;
@@ -119,7 +113,6 @@
       border: 1px solid rgba(92,58,107,0.15);
       backdrop-filter: blur(4px);
     }
-
     .header-center-logos {
       display: flex;
       flex-direction: row;
@@ -130,7 +123,6 @@
       left: 50%;
       transform: translateX(-50%);
     }
-
     #locationFilterBtn {
       flex: 0 0 auto;
       height: 44px;
@@ -159,7 +151,6 @@
       transform: translateY(0);
       background-color: #0a522a;
     }
-
     .mascot-img { 
       height: 48px;
       object-fit: contain; 
@@ -189,9 +180,7 @@
       70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 107, 129, 0); }
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 129, 0); }
     }
-
     /* --- แถบระบบนำทาง 5 แท็บ (รวม SOS เป็นแท็บแรก) - v10 SOS Edition --- */
-
     /* --- v11.3 Compact Single-Line SOS Controls - ย่อสุด บรรทัดเดียว --- */
     .sos-top-single-row{
       display:flex;
@@ -308,14 +297,82 @@
       flex:0 0 auto;
     }
     #tabFullscreenBtn:hover{ background:#f1f5f9; }
+    /* === FIX คำสั่งที่ 1 - ลบแถบเหลือง อันตราย เตือนภัย เฝ้าระวัง + วันที่เวลา === */
+    #sosStatusAboveFilter{
+      display:none !important;
+      background:transparent !important;
+      border:none !important;
+      padding:0 !important;
+      margin:0 !important;
+      height:0 !important;
+      min-height:0 !important;
+      overflow:hidden !important;
+    }
+    #sosCurrentDateTime{ display:none !important; }
+    #floodCenterLiveUpdate{ display:none !important; }
+    #floodCenterTime{ display:none !important; }
+    /* === FIX คำสั่งที่ 2 - ปุ่มบวก ลบ ย่อครึ่ง ชิดขวาสุด ต่ำจากบน 100px === */
+    .leaflet-top.leaflet-right{
+      top: 100px !important;
+      right: 0 !important;
+    }
+    .leaflet-control-zoom{
+      margin-right: 2px !important;
+      margin-left: 0 !important;
+      margin-top: 0 !important;
+      position: relative;
+      right: 0 !important;
+      top: 0 !important;
+    }
+    .leaflet-control-zoom.leaflet-bar a{
+      width: 15px !important;
+      height: 15px !important;
+      line-height: 15px !important;
+      font-size: 11px !important;
+    }
+    .leaflet-control-zoom a.leaflet-control-zoom-in,
+    .leaflet-control-zoom a.leaflet-control-zoom-out{
+      width: 15px !important;
+      height: 15px !important;
+      line-height: 15px !important;
+    }
+    /* === FIX คำสั่งที่ 4 - ปุ่มขยายแผนที่ ชิดขวาสุด ต่ำจากบน 60px === */
+    #sosMapContainer{ position:relative !important; }
+    #tabFullscreenBtn{
+      position: absolute !important;
+      right: 2px !important;
+      top: 60px !important;
+      margin-left: 0 !important;
+      z-index: 850 !important;
+      width: 26px !important;
+      height: 26px !important;
+      background: rgba(255,255,255,0.95) !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+    }
+    /* === FIX คำสั่งที่ 3 - ไม่มีโลโก้ ไม่มีตัวเลข ใน 3 ปุ่ม === */
+    #seg-warnings .seg-badge,
+    #seg-requests .seg-badge,
+    #segCountWarnings,
+    #count-warn-latest,
+    #count-warn-all,
+    #count-warn-critical,
+    #count-warn-warning,
+    #count-warn-watch,
+    .sos-segmented-control .seg-badge{
+      display:none !important;
+    }
+    .sos-segmented-control.compact .seg-btn,
+    .btn-notify-compact{
+      font-size: 13px !important;
+    }
     /* DELETED: #mapControlBar ถูกลบออกจาก JS แล้ว ไม่ต้องซ่อน */
-
     /* ถ้าจอแคบมาก ให้ย่อข้อความอีก */
     @media (max-width: 360px){
       .sos-segmented-control.compact .seg-btn{ font-size:12px; padding:4px 5px; }
       .btn-notify-compact{ font-size:12px; padding:4px 8px; }
     }
-
     .tabs-nav {
       display: flex;
       flex-direction: row;
@@ -336,7 +393,6 @@
       -webkit-overflow-scrolling: touch;
     }
     .tabs-nav::-webkit-scrollbar { display: none; }
-
     .tab-btn {
       flex: 0 0 auto;
       min-width: 110px;
@@ -355,7 +411,6 @@
       position: relative;
       outline: none;
     }
-
     /* แท็บ SOS - แท็บแรกสุด เด่นชัด ไม่รก */
     .tab-btn.emergency-tab {
       background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%) !important;
@@ -376,19 +431,16 @@
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,59,48,0); }
     }
     .tab-btn.emergency-tab.active::after { display: none; }
-
     .tab-btn:hover {
       color: var(--text-main);
       background: rgba(255, 255, 255, 0.4);
     }
-
     .tab-btn.active {
       background: #ffffff;
       color: var(--btn-blue);
       font-weight: 800;
       box-shadow: 0 3px 10px rgba(74, 131, 204, 0.22), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
-
     .tab-btn.active::after {
       content: '';
       position: absolute;
@@ -399,7 +451,6 @@
       background: var(--btn-blue);
       border-radius: 3px;
     }
-
     .tab-content {
       width: 100%;
       max-height: 400px;
@@ -407,13 +458,11 @@
       overflow: hidden;
       transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     #ai-section.collapsed .tab-content {
       max-height: 0;
       opacity: 0;
       margin: 0;
     }
-
     /* --- โครงสร้างเนื้อหาภายในแท็บ --- */
     .input-status-row {
       display: flex;
@@ -434,7 +483,6 @@
       background: #ffffff;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
-
     #statusText { 
       font-size: 12px; 
       color: #555; 
@@ -443,7 +491,6 @@
       text-align: right; 
       line-height: 1.2;
     }
-
     .loading-pulse {
       animation: loadingAnim 1.5s infinite ease-in-out;
       color: var(--btn-blue) !important;
@@ -453,7 +500,6 @@
       50% { opacity: 1; transform: scale(1.02); }
       100% { opacity: 0.4; transform: scale(0.98); }
     }
-
     .filter-scroll-row {
       display: flex;
       flex-direction: row;
@@ -481,7 +527,6 @@
       transition: all 0.2s;
     }
     .filter-btn:active { background: var(--btn-blue); color: #fff; }
-
     .action-show-list-btn {
       background: #ffdfba;
       border: 1px solid #f7c99b;
@@ -500,7 +545,6 @@
       transform: scale(0.98);
       background: #f7c99b;
     }
-
     .empty-tab-box {
       background: rgba(255, 255, 255, 0.7);
       border-radius: 16px;
@@ -511,7 +555,6 @@
       border: 1px dashed var(--btn-blue);
       margin-top: 5px;
     }
-
     /* --- ส่วนล่าง: List View --- */
     #list-section {
       flex: 1;
@@ -519,7 +562,6 @@
       padding: 20px;
       background-color: #ffffff;
     }
-
     /* --- Modal --- */
     .modal-overlay {
       position: fixed;
@@ -567,7 +609,6 @@
       outline: none;
       box-shadow: 0 0 5px rgba(74, 131, 204, 0.5);
     }
-
     .dropdown-options-container {
       display: flex;
       flex-direction: column; gap: 6px;
@@ -580,14 +621,12 @@
       cursor: pointer; transition: background 0.2s;
     }
     .dropdown-option-btn:active { background: #d0e0f0; }
-
     .close-modal {
       position: absolute; top: 15px; right: 20px;
       font-size: 20px;
       color: #888; cursor: pointer; font-weight: bold;
       line-height: 1;
     }
-
     .image-slider {
       display: flex;
       overflow-x: auto; scroll-snap-type: x mandatory;
@@ -647,8 +686,6 @@
       background: rgba(255,255,255,0.15); width: 40px; height: 40px;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
-
-
     .detail-content { flex: 1; overflow-y: auto; margin-top: 8px; }
     .detail-title { font-size: 22px; font-weight: bold; color: var(--text-main); }
     .detail-price { font-size: 20px; font-weight: bold; color: #d9534f; }
@@ -658,10 +695,8 @@
       border-radius: 15px; padding: 15px;
       margin-top: 8px; display: flex; align-items: center; gap: 10px;
     }
-
     #modalDesc::-webkit-scrollbar { width: 6px; }
     #modalDesc::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-
     /* --- Infinite Scroll & Fallback UI --- */
     .infinite-loader {
       text-align: center;
@@ -689,7 +724,6 @@
       cursor: pointer;
       margin-top: 8px;
     }
-
     /* --- Floating User Chat Button --- */
     .user-chat-float-btn {
       position: fixed;
@@ -727,18 +761,15 @@
       font-size: 20px;
       margin-bottom: 2px;
     }
-
     /* --- สไตล์เมื่อมีข้อความใหม่เข้ามา --- */
     .chat-item-card.has-new-msg {
       background-color: #f3e8ff !important;
       border-color: #c084fc !important;
     }
-
     .user-chat-float-btn.has-new-msg {
       background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 100%) !important;
       animation: pulse-purple 1.5s infinite !important;
     }
-
     @keyframes pulse-purple {
       0% {
         transform: scale(1);
@@ -766,7 +797,6 @@
       z-index: 99999;
     }
     .chat-modal-overlay.active { display: flex !important; }
-
     .chat-container-card {
       background: #ffffff;
       width: 95vw;
@@ -779,7 +809,6 @@
       position: relative;
       overflow: hidden;
     }
-
     .chat-header-bar {
       display: flex;
       justify-content: space-between;
@@ -791,7 +820,6 @@
       font-size: 16px;
       flex-shrink: 0;
     }
-
     .close-chat-modal {
       font-size: 24px;
       cursor: pointer;
@@ -801,7 +829,6 @@
       transition: opacity 0.2s;
     }
     .close-chat-modal:hover { opacity: 0.8; }
-
     /* --- Split Dual-Pane View --- */
     .chat-dual-split-body {
       display: flex;
@@ -813,7 +840,6 @@
       background: #f4f6f9;
       position: relative;
     }
-
     .chat-zone-list {
       flex: 1;
       width: 50%;
@@ -826,7 +852,6 @@
       box-sizing: border-box;
       user-select: none;
     }
-
     .chat-zone-room {
       flex: 1;
       width: 50%;
@@ -838,12 +863,10 @@
       box-sizing: border-box;
       user-select: none;
     }
-
     .chat-zone-list.expanded { flex: 2 !important; }
     .chat-zone-room.shrunk { flex: 1 !important; }
     .chat-zone-room.expanded { flex: 2 !important; }
     .chat-zone-list.shrunk { flex: 1 !important; }
-
     .chat-list-header {
       padding: 12px 15px;
       background: #f8f9fa;
@@ -856,13 +879,11 @@
       gap: 6px;
       flex-shrink: 0;
     }
-
     .chat-list-items {
       flex: 1;
       overflow-y: auto;
       padding: 10px;
     }
-
     .chat-item-card {
       display: flex;
       align-items: center;
@@ -879,7 +900,6 @@
       background: #eef5ff;
       border-color: var(--btn-blue);
     }
-
     .chat-item-avatar {
       width: 40px;
       height: 40px;
@@ -891,7 +911,6 @@
       font-size: 18px;
       flex-shrink: 0;
     }
-
     .chat-item-info { flex: 1; min-width: 0; }
     .chat-item-title {
       font-size: 13px;
@@ -908,7 +927,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
     .chat-room-header {
       padding: 12px 15px;
       background: #ffffff;
@@ -918,13 +936,11 @@
       justify-content: space-between;
       flex-shrink: 0;
     }
-
     .chat-room-title {
       font-size: 15px;
       font-weight: bold;
       color: var(--text-main);
     }
-
     .chat-messages-container {
       flex: 1;
       padding: 15px;
@@ -934,7 +950,6 @@
       gap: 10px;
       background: #f4f6f9;
     }
-
     .chat-bubble {
       max-width: 75%;
       padding: 10px 14px;
@@ -943,14 +958,12 @@
       line-height: 1.4;
       word-wrap: break-word;
     }
-
     .chat-bubble.sent {
       align-self: flex-end;
       background: #4a83cc;
       color: #ffffff;
       border-bottom-right-radius: 4px;
     }
-
     .chat-bubble.received {
       align-self: flex-start;
       background: #ffffff;
@@ -958,7 +971,6 @@
       border: 1px solid #e0e0e0;
       border-bottom-left-radius: 4px;
     }
-
     .chat-input-row {
       display: flex;
       padding: 10px 15px;
@@ -967,7 +979,6 @@
       gap: 8px;
       align-items: center;
     }
-
     .chat-input-field {
       flex: 1;
       padding: 10px 14px;
@@ -976,7 +987,6 @@
       outline: none;
       font-size: 14px;
     }
-
     .chat-send-btn {
       background: var(--btn-blue);
       color: white;
@@ -988,7 +998,6 @@
       transition: background 0.2s;
     }
     .chat-send-btn:hover { background: #3b6fb0; }
-
     /* ปุ่มคุยกับเจ้าของ(chat) */
     .chat-owner-btn {
       background: linear-gradient(135deg, #abecd6 0%, #46cd93 100%);
@@ -1010,7 +1019,6 @@
       box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
     }
     .chat-owner-btn:active { transform: translateY(0); }
-
 /* --- สไตล์การ์ดรายการบ้านแบบแนวนอน และสไลเดอร์ภาพทางขวา --- */
     .property-card {
       background: #ffffff;
@@ -1026,12 +1034,10 @@
       justify-content: space-between;
       gap: 10px;
     }
-
     .card-left-info {
       flex: 1;
       min-width: 0;
     }
-
     .card-center-action {
       display: flex;
       align-items: flex-end;
@@ -1040,7 +1046,6 @@
       flex-shrink: 0;
       padding-bottom: 2px;
     }
-
     .card-right-slider {
       width: 110px;
       height: 100px;
@@ -1053,16 +1058,13 @@
       flex-shrink: 0;
       -webkit-overflow-scrolling: touch;
     }
-
     .card-right-slider::-webkit-scrollbar {
       height: 4px;
     }
-
     .card-right-slider::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 4px;
     }
-
     .card-right-slider img {
       width: 110px;
       height: 100px;
@@ -1119,7 +1121,6 @@
       background: rgba(0,0,0,0.1); z-index: 99990; display: none;
     }
     .flyout-overlay.active { display: block; }
-
     .flyout-menu {
       position: absolute; background: #ffffff; border-radius: 12px;
       box-shadow: 0 8px 25px rgba(0,0,0,0.2); width: 250px;
@@ -1127,11 +1128,9 @@
       max-height: 60vh; overflow-y: auto; border: 1px solid var(--btn-blue);
     }
     .flyout-menu.active { display: block; }
-
     
     .flyout-group { border-bottom: 1px solid #f0f0f0; }
     .flyout-group:last-child { border-bottom: none; }
-
     .flyout-item {
       padding: 0; font-size: 14px; color: #333; 
       display: flex; justify-content: space-between; align-items: stretch;
@@ -1241,9 +1240,7 @@
     .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
     .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
-
 .hidden{display:none!important;}
-
     /* === v13 POPUP DETAIL MODAL - การ์ดล่างกดแล้วเด้งรายละเอียด === */
     .detail-modal-overlay {
       position: fixed; inset: 0;
@@ -1356,8 +1353,6 @@
     .sos-card { scroll-margin-top: 90px; }
     #sosMapContainer { display:block !important; visibility:visible !important; min-height:380px; height:52vh !important; }
     #sosMapPreview { display:block !important; height:100% !important; min-height:320px; }
-
-
     /* FIX v13.4 - Flood pin modal must be on top */
     #locationModalOverlay{ z-index:10010 !important; }
     #locationModalOverlay.active{ display:flex !important; }
@@ -1374,7 +1369,6 @@
       margin-right: 0 !important;
       margin-left: 0 !important;
     }
-
     /* คำสั่งที่ 3: ปุ่มขยายเต็มจอ ใต้ปุ่มลบ */
     .leaflet-control-fullscreen-btn{
       width:30px; height:30px; line-height:30px; text-align:center;
@@ -1392,11 +1386,8 @@
     #locationModalOverlay.fullscreen-mode #locationMap{
       flex:1 !important; min-height:0 !important;
     }
-
 .hl-blue{border:3.5px solid #2563eb !important; background:#eff6ff !important; box-shadow:0 0 0 4px rgba(37,99,235,0.28), 0 10px 28px rgba(37,99,235,0.4) !important; transform:scale(1.02) !important;}
 .hl-orange{border:3.5px solid #ea580c !important; background:#fff7ed !important; box-shadow:0 0 0 4px rgba(234,88,12,0.28) !important; transform:scale(1.02) !important;}
-
-
 /* === v14 NEW CARD: ลบ badge เฝ้าระวัง/ดูเพิ่มเติม + เพิ่มรูปเลื่อนได้ด้านขวา === */
 .fw-image-scroller{
   display:flex;
@@ -1425,8 +1416,6 @@
   background:#f1f5f9; border-radius:10px; font-size:11px; color:#94a3b8; border:1px dashed #cbd5e1;
 }
 .detail-badge-more{ display:none !important; }
-
-
 /* v17.24 FIX FLICKER - ล็อคความสูง กันเด้ง */
 #sosMapContainer { transition: none !important; height:52vh !important; min-height:380px !important; }
 /* v15.5 removed map-expanded hide-feed rule */
@@ -1438,21 +1427,15 @@
   #sosMapContainer { height:52vh !important; min-height:380px !important; }
   #sosMapContainer.map-expanded { height:85vh !important; }
 }
-
-
 /* v15.7 fullscreen list overlay */
 #fullscreenListOverlay .property-card { margin-bottom:8px; }
 #fullscreenListOverlay::-webkit-scrollbar { width:6px; }
 #fullscreenListOverlay::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:6px; }
-
-
 /* v15.10 ensure detail modal on top even after fullscreen */
 .detail-modal-overlay { z-index: 9999999 !important; }
 #warningDetailModalOverlay.active { display:flex !important; }
 #fullscreenListOverlay { pointer-events:auto; }
 #fullscreenListOverlay [data-warning-id] { pointer-events:auto; }
-
-
     /* --- FIX ตามคำสั่งที่ 1+2: จัดเรียงใหม่ + ข้อความ ปิด/admin แบบตัวอักษรล้วน - แก้ไขตามคำสั่งใหม่ ลบพื้นแดง ลดขนาด 1/3 --- */
     .ai-status-plain, .role-badge-plain {
       background: none !important;
@@ -1489,15 +1472,8 @@
       right: auto !important;
       z-index: 10 !important;
     }
-
     </style> 
     
-
-
-
-
-
-
 <script>
 // === v14.10 + v13.12 CLEAN - BOTH MARKERS ONLY HIGHLIGHT + AUTO SCROLL (NO MODAL ON PIN) ===
 window._lastHL = null;
@@ -1545,7 +1521,6 @@ window.highlightBoth = function(idStr, type){
 };
 </script>
 </head>
-
 <body>
   <div id="ai-section">
     <div class="ai-controls-row" style="justify-content: flex-start; gap: 10px; flex-wrap: nowrap; overflow-x: auto;">
@@ -1556,14 +1531,11 @@ window.highlightBoth = function(idStr, type){
         <div id="statusText" class="ai-status-plain">ปิด</div>
         <div id="userRoleBadge" class="role-badge-plain" style="background:none !important; background-color:transparent !important; font-size:8.7px !important; border:none !important;">admin</div>
       </div>
-
       <div class="ai-avatar" id="avatarCircle" style="flex:0 0 auto;">🤖</div>
       
       <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex:0 0 auto;">🔔</button>
-
       <button id="locationFilterBtn" onclick="openLocationModal('filter')" style="position:relative !important; top:auto !important; right:auto !important; flex:0 0 auto;">📍 พิกัด ▾</button>
     </div>
-
     <!-- แถบระบบนำทาง 5 แท็บ - SOS เป็นแท็บแรกสุด (เลื่อนซ้ายขวาได้) -->
     <div class="tabs-nav" id="mainTabsNav">
       <button class="tab-btn emergency-tab active" id="tab-btn-sos" onclick="switchTab('sos')">🚨 วิกฤตน้ำท่วม</button>
@@ -1575,21 +1547,16 @@ window.highlightBoth = function(idStr, type){
     <div id="crisisToggle" style="display:none; text-align:center; margin-bottom:8px;">
       <label style="font-size:12px; background: #fff3f3; padding: 4px 10px; border-radius: 12px; border: 1px solid #ff3b30;"><input type="checkbox" id="crisisModeCheckbox" checked onchange="toggleCrisisMode(this.checked)"> เปิดโหมด SOS (แตะโลโก้ 5 ครั้งเพื่อเปิด/ปิด)</label>
     </div>
-
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
       <div id="sosStickyHeader" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, rgba(255,241,241,0.5) 0%, rgba(255,228,230,0.5) 50%, rgba(240,253,244,0.5) 100%); padding: 0 4px; margin: -4px -4px 0 -4px; border-radius: 12px; height: 26px; min-height: 26px; max-height: 26px; display:flex; align-items:center; opacity: 1;">
         
         <div class="sos-top-single-row">
           <div class="sos-segmented-control compact" role="tablist" aria-label="สลับมุมมองวิกฤต">
-            <button role="tab" id="seg-warnings" class="seg-btn" onclick="switchSOSSubView('warnings')" aria-selected="false">
-              🌊 เตือนท่วม <span id="segCountWarnings" class="seg-badge">1</span>
-            </button>
-            <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">
-              🆘 จุดขอให้ช่วย
-            </button>
+            <button role="tab" id="seg-warnings" class="seg-btn" onclick="switchSOSSubView('warnings')" aria-selected="false">เตือนภัย</button>
+            <button role="tab" id="seg-requests" class="seg-btn active" onclick="switchSOSSubView('requests')" aria-selected="true">จุด SOS</button>
           </div>
-          <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">📍 แจ้งขอให้ช่วย</button>
+          <button class="btn-notify-compact" id="sosMainActionBtn" onclick="openSOSModal()">ลงประกาศเตือน</button>
           <button id="tabFullscreenBtn" title="ขยายเต็มจอ" onclick="toggleSOSMapFullscreen()">⛶</button>
         </div>
         <!-- เก็บปุ่มเดิมซ่อนไว้เพื่อ backward compatibility -->
@@ -1601,7 +1568,6 @@ window.highlightBoth = function(idStr, type){
       </div>
       <div id="sosResults" style="display:none;"></div>
     </div>
-
     <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
         <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." style="flex:1;">
@@ -1622,14 +1588,12 @@ window.highlightBoth = function(idStr, type){
         <button class="filter-btn" id="re_nearbyBtn" data-default="สถานที่ใกล้เคียง ▾" onclick="openMultiFlyout(event, 're_nearbyFlyout')">สถานที่ใกล้เคียง ▾</button>
         <button class="filter-btn" id="re_facilityBtn" data-default="สาธารณูปโภคพิเศษ ▾" onclick="openMultiFlyout(event, 're_facilityFlyout')">สาธารณูปโภคพิเศษ ▾</button>
       </div>
-
       <div style="display: flex; gap: 6px; margin-top: 4px;">
         <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px;" onclick="testShowList()">🔍 ค้นหารายการบ้าน</button>
         <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #bcece0; border-color: #a0d8c8;" onclick="openPostModal()">📝 ลงประกาศ</button>
         <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFilters()">🔄 ล้างค่า</button>
       </div>
     </div>
-
     <!-- เนื้อหาแท็บ 2: สินค้าทั่วไปและแต่งบ้าน -->
     <div class="tab-content" id="tab-content-decor" style="display: none;">
       <div class="input-status-row" id="decor-top-row">
@@ -1654,7 +1618,6 @@ window.highlightBoth = function(idStr, type){
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat9Flyout')">9. กีฬา และของสะสม ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat10Flyout')">10. สินค้าอุตสาหกรรม และร้านค้า ▾</button>
       </div>
-
       <!-- ปุ่มกด 3 ปุ่ม คล้ายในแท็บอสังหา -->
       <div style="display: flex; gap: 6px; margin-top: 4px;">
         <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px;" onclick="testShowList()">🔍 ค้นหาสินค้า</button>
@@ -1662,7 +1625,6 @@ window.highlightBoth = function(idStr, type){
         <button class="action-show-list-btn" style="flex: 1; padding: 10px 5px; font-size: 13px; background: #e2e8f0; border-color: #cbd5e1;" onclick="resetAllFiltersDecor()">🔄 ล้างค่า</button>
       </div>
     </div>
-
     <!-- เนื้อหาแท็บ 3: ไลฟ์สไตล์และท่องเที่ยว -->
     <div class="tab-content" id="tab-content-lifestyle" style="display: none;">
       <div class="input-status-row">
@@ -1672,7 +1634,6 @@ window.highlightBoth = function(idStr, type){
         ☕ หมวดหมู่ไลฟ์สไตล์และท่องเที่ยว<br><span style="font-size: 12px; color: #999;">ค้นหาร้านอาหาร แหล่งท่องเที่ยว หรือคาเฟ่ใกล้คุณ</span>
       </div>
     </div>
-
     <!-- เนื้อหาแท็บ 4: ช่างและบริการ -->
     <div class="tab-content" id="tab-content-others" style="display: none;">
       <div class="input-status-row">
@@ -1683,7 +1644,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- ส่วนแสดงรายการอสังหาฯ -->
   <div id="list-section" style="margin-top:10px;">
     <div id="sosFilterInListContainer" style="display:block;">
@@ -1705,7 +1665,6 @@ window.highlightBoth = function(idStr, type){
     <div id="list-container"></div>
     <div id="no-results" style="display:none; text-align:center; padding:20px; color:#888;">ไม่พบรายการที่ตรงกับเงื่อนไข</div>
   </div>
-
   <!-- SOS Emergency Modal - ฟอร์มขอความช่วยเหลือฉุกเฉิน (Non-Intrusive Modal) -->
   <style>
     .sos-tag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
@@ -1748,7 +1707,6 @@ window.highlightBoth = function(idStr, type){
     .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
     .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
-
 </style>
   <div class="modal-overlay" id="sosModalOverlay" style="z-index: 9000; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="sosDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
@@ -1767,7 +1725,6 @@ window.highlightBoth = function(idStr, type){
       <div id="medicineExtra" style="display:none;">
         <input type="text" class="sos-input" id="medicineDetail" placeholder="ระบุโรคประจำตัว / ยาที่ต้องการ เช่น ยาความดัน, อินซูลิน">
       </div>
-
       <label style="font-size:12px; font-weight:bold;">2. ปักหมุดพิกัดฉุกเฉิน (Geolocation Pinpoint)</label>
       <div style="display:flex; gap:6px; margin-bottom:8px;">
         <button class="filter-btn" style="flex:1;" onclick="if(typeof openLocationModal==='function') openLocationModal(true)">📍 ปักหมุดพิกัด</button>
@@ -1779,7 +1736,6 @@ window.highlightBoth = function(idStr, type){
         <input type="text" class="sos-input" id="sosLng" placeholder="Lng" style="flex:1;">
       </div>
       <input type="text" class="sos-input" id="sosLocationText" placeholder="รายละเอียดเพิ่ม เช่น ติดชั้น2 คอนโด... น้ำระดับอก ซอย...">
-
       <!-- v7.7 NEW: จุดรับ-จุดส่ง สำหรับ ยานพาหนะ/อพยพ -->
       <div id="evacDestinationGroup" style="display:none; background:#fff7ed; border:1.5px solid #fb923c; border-radius:12px; padding:10px; margin-bottom:8px;">
         <div style="font-size:12px; font-weight:bold; color:#9a3412; margin-bottom:6px;">🏁 จุดส่ง / ปลายทางอพยพ (เฉพาะหมวด ยานพาหนะ/อพยพ)</div>
@@ -1807,14 +1763,12 @@ window.highlightBoth = function(idStr, type){
           <option value="any">อะไรก็ได้ ขอออกก่อน</option>
         </select>
       </div>
-
       <div id="evacHintBox" style="display:none; background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:8px; margin-bottom:8px; font-size:11px; color:#991b1b; line-height:1.4;">
         ⚠️ <b>สำหรับขออพยพ/รถขนย้าย กรุณาระบุ:</b><br>
         1. <b>ไปไหน:</b> ชื่อศูนย์/วัด/รพ. หรือ "บ้านญาติ ซอย..."<br>
         2. <b>ทำไมไปไม่ได้เอง:</b> น้ำสูงเท่าไหร่ รถเข้าไม่ได้<br>
         3. <b>ต้องการรถอะไร:</b> เรือ / รถยกสูง / รถเก๋ง
       </div>
-
       <label style="font-size:12px; font-weight:bold;">3. ช่องทางติดต่อ & จำนวนสมาชิก</label>
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
         <input type="text" class="sos-input" id="sosPhone" placeholder="เบอร์โทร / Line ID*" style="margin-bottom:0;">
@@ -1825,7 +1779,6 @@ window.highlightBoth = function(idStr, type){
         <input type="number" class="sos-input" id="sosChild" placeholder="เด็ก">
         <input type="number" class="sos-input" id="sosElder" placeholder="ผู้สูงอายุ/ผู้ป่วย">
       </div>
-
       <!-- คำสั่งที่3: ฟังก์ชันใส่รูป 8 รูป หลักการเดียวกับ property-images - PATCHED v14.1 คำสั่งที่ 1 & 2 -->
       <div id="sosImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1860,7 +1813,6 @@ window.highlightBoth = function(idStr, type){
           <button onclick="confirmSOSCameraCaptures()" style="flex:1; background:linear-gradient(135deg,#ff3b30 0%,#d70000 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer; min-height:48px;">✅ ใช้รูปที่ถ่าย</button>
         </div>
       </div>
-
       <!-- v18 SOS: Modal พรีวิวก่อนบันทึกลงช่อง 8 ช่อง -->
       <div id="sosPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
         <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
@@ -1875,16 +1827,12 @@ window.highlightBoth = function(idStr, type){
           </div>
         </div>
       </div>
-
       <div id="sosExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
-
       <button style="margin-top:12px; width:100%; background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; font-size:15px; cursor:pointer;" onclick="submitSOS()">🚨 ส่งขอความช่วยเหลือทันที</button>
       <div style="font-size:10px; color:#999; text-align:center; margin-top:6px;">ข้อมูลจะแสดงบนแผนที่สาธารณะแบบ Realtime • โทร 191 หากวิกฤตถึงชีวิต</div>
     </div>
   </div>
-
-
   <!-- NEW: Flood Warning Modal - หน้าแจ้งเตือนท่วม (แยกจากหน้าขอให้ช่วย) -->
   <style>
     .flood-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; box-sizing: border-box; margin-bottom: 8px; }
@@ -1901,7 +1849,7 @@ window.highlightBoth = function(idStr, type){
   <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
       <span class="close-modal" onclick="closeFloodWarningModal()">&times;</span>
-      <h3 style="margin-top:0; color: #d97706; font-size: 18px; text-align: center;">🌊 แจ้งเตือนท่วม</h3>
+      <h3 style="margin-top:0; color: #d97706; font-size: 18px; text-align: center;">ลงประกาศเตือน</h3>
       
       <label style="font-size:12px; font-weight:bold;">1. ระดับความรุนแรง</label>
       <div class="flood-level-grid" id="floodLevelGrid">
@@ -1909,7 +1857,6 @@ window.highlightBoth = function(idStr, type){
         <button class="flood-level-btn" data-val="warning" onclick="toggleFloodLevel(this)">🟠 เตือนภัย</button>
         <button class="flood-level-btn critical" data-val="critical" onclick="toggleFloodLevel(this)">🔴 อันตราย</button>
       </div>
-
       <label style="font-size:12px; font-weight:bold;">2. ปักหมุดพิกัดที่พบน้ำท่วม</label>
       <div style="display:flex; gap:6px; margin-bottom:8px;">
         <button class="filter-btn" style="flex:1;" onclick="if(typeof openLocationModal==='function') openLocationModal(true)">📍 ปักหมุดพิกัด</button>
@@ -1920,7 +1867,6 @@ window.highlightBoth = function(idStr, type){
         <input type="text" class="flood-input" id="floodLng" placeholder="Lng" style="flex:1;">
       </div>
       <input type="text" class="flood-input" id="floodLocationText" placeholder="รายละเอียดตำแหน่ง เช่น ปากซอยรามคำแหง 24 น้ำสูง...">
-
       <!-- === v12.6 NEW: โซนอัปโหลดรูปภาพ 8 รูป สำหรับแจ้งเตือนท่วม (คัดลอกหลักการจาก SOS) - PATCHED v13.12.2 === -->
       <div id="floodImageUploadSection" style="margin-top:12px; border-top:1px solid #eee; padding-top:10px;">
         <div class="upload-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1938,20 +1884,15 @@ window.highlightBoth = function(idStr, type){
         <div id="floodExistingImages" style="margin-top:8px; font-size:11px; color:#666;"></div>
       </div>
       <!-- === END v12.6 PATCHED === -->
-
       
       <label style="font-size:12px; font-weight:bold;">3. ระดับน้ำ (ซม.)</label>
       <input type="number" class="flood-input" id="floodWaterLevel" placeholder="เช่น 30, 50, 100">
-
       <label style="font-size:12px; font-weight:bold;">4. รายละเอียดเพิ่มเติม</label>
       <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."></textarea>
-
       <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
       <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 200 เมตร" value="200">
-
       
       <!-- MOVED: upload section relocated before water level per request -->
-
 <!-- v13.12.2: Modal กล้องถ่ายต่อเนื่อง (คำสั่ง 2) -->
       <div id="floodCameraLiveModal" style="display:none; position:fixed; inset:0; z-index:9500; background:#000; flex-direction:column; height:100dvh; max-height:100dvh; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); box-sizing:border-box;">
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.8); color:white;">
@@ -1972,7 +1913,6 @@ window.highlightBoth = function(idStr, type){
           <button onclick="confirmFloodCameraCaptures()" style="flex:1; background:linear-gradient(135deg,#4a83cc 0%,#2b5893 100%); color:white; border:none; padding:14px; border-radius:12px; font-weight:bold; cursor:pointer; min-height:48px;">✅ ใช้รูปที่ถ่าย</button>
         </div>
       </div>
-
       <!-- v13.12.2: Modal พรีวิวก่อนบันทึกลงช่อง (คำสั่ง 3) -->
       <div id="floodPreviewModal" style="display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:16px;">
         <div style="background:white; border-radius:16px; width:100%; max-width:420px; max-height:85vh; overflow:auto; padding:14px;">
@@ -1987,15 +1927,12 @@ window.highlightBoth = function(idStr, type){
           </div>
         </div>
       </div>
-
       <div style="display:flex; gap:8px; margin-top:12px;">
         <button style="flex:1; background:#e2e8f0; color:#333; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="closeFloodWarningModal()">ยกเลิก</button>
         <button style="flex:1; background:linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="submitFloodWarning()">🌊 ส่งแจ้งเตือนท่วม</button>
       </div>
     </div>
   </div>
-
-
   <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
@@ -2015,7 +1952,6 @@ window.highlightBoth = function(idStr, type){
     <span class="close-lightbox" onclick="closeImageLightbox()">&times;</span>
     <img id="lightboxImg" src="" alt="full view">
   </div>
-
   <!-- Post Modal (หน้าต่างลงประกาศ) -->
     <div class="modal-overlay" id="postModalOverlay" style="z-index: 8500; align-items: center;">
       <div class="dropdown-modal" style="width: 95%; max-width: 420px; padding: 15px;">
@@ -2040,10 +1976,8 @@ window.highlightBoth = function(idStr, type){
           <input type="text" id="DetailEdit" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="รายละเอียดเพิ่มเติม">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ลิงก์หรือเว็บไซต์">
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
-
         </div>
         
-
         
         <!-- เริ่ม: โซนอัปโหลดรูปภาพ (ย้ายเข้ามาอยู่ในโมเดลให้ถูกต้อง) -->
         <div id="imageUploadSection" style="margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
@@ -2059,7 +1993,6 @@ window.highlightBoth = function(idStr, type){
           <div class="upload-grid" id="uploadGrid"></div>
         </div>
         <!-- จบ: โซนอัปโหลดรูปภาพ -->
-
         <!-- ปุ่มลงประกาศ (แทนปุ่มปิดหน้าต่างเดิม) -->
         <button style="margin-top: 15px; width: 100%; background: #159947; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="submitPost()">ลงประกาศ</button>      
       </div>
@@ -2074,7 +2007,6 @@ window.highlightBoth = function(idStr, type){
       <div class="dropdown-options-container" id="dropdownOptions"></div>
     </div>
   </div>
-
   <!-- Location Map Modal - v7-8-0 COMPACT HALF SCREEN - แก้ตามคำสั่งเคร่งครัด: ครึ่งบน 50vh + ฟีดล่าง -->
   <div class="modal-overlay" id="locationModalOverlay" style="z-index: 10010; align-items: flex-start; justify-content: center; background: transparent; position:fixed; top:0; left:0; width:100%; height:50vh; pointer-events:none;">
     <div class="detail-modal" style="height: 50vh; width: 100%; max-width: 100%; border-radius: 0 0 20px 20px; pointer-events:auto; padding: 8px 8px 6px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; background: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.25);">
@@ -2113,9 +2045,7 @@ window.highlightBoth = function(idStr, type){
   </div>>
   <!-- ================= โซน Multi-level Flyout Menus (ดรอปดาวน์หลายชั้น) ================= -->
   <div class="flyout-overlay" id="multiFlyoutOverlay" onclick="closeMultiFlyout()"></div>
-
   
-
   <!-- ปุ่ม พิกัด ใหม่ - แถวบน decor -->
   <div class="flyout-menu" id="coordFlyout" style="width: 280px;">
     <div class="flyout-group" id="provinceGroup">
@@ -2150,8 +2080,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
-
   <!-- ===== Real Estate Flyout Menus (แบบหล่นลงใต้ปุ่มเหมือนแท็บสินค้าทั่วไป) ===== -->
   <div class="flyout-menu" id="re_saleFlyout">
     <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา ขาย/เช่า..." oninput="filterFlyoutOptions(this, 're_saleFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
@@ -2266,7 +2194,6 @@ window.highlightBoth = function(idStr, type){
     <div class="flyout-sub-item" data-value="ที่จอดรถ" onclick="selectFlyoutValue(event, 'ที่จอดรถ')">ที่จอดรถ</div>
     <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_facilityBtn', 'สาธารณูปโภคพิเศษ ▾')">❌ ล้างค่า สาธารณูปโภคพิเศษ</div>
   </div>
-
   <!-- ปุ่มพิเศษ ขาย/เช่า - แถวบน ไม่เกี่ยวกับแถวล่าง -->
   <div class="flyout-menu sale-flyout" id="saleTypeFlyout" style="width: 320px; max-width: 90vw;">
     <div class="sale-item-group" data-type="ขาย">
@@ -2334,8 +2261,6 @@ window.highlightBoth = function(idStr, type){
       <button onclick="confirmSaleType()" style="flex:1; padding:8px; font-size:12px; border:none; background:var(--btn-blue); color:#fff; border-radius:8px; cursor:pointer; font-weight:bold;">ยืนยัน</button>
     </div>
   </div>
-
-
   <!-- หมวดที่ 1. เฟอร์นิเจอร์ แต่งบ้าน -->
   <div class="flyout-menu" id="cat1Flyout">
     <div class="flyout-group">
@@ -2388,7 +2313,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 2. โคมไฟ และระบบแสงสว่าง -->
   <div class="flyout-menu" id="cat2Flyout">
     <div class="flyout-group">
@@ -2419,7 +2343,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน -->
   <div class="flyout-menu" id="cat3Flyout">
     <div class="flyout-group">
@@ -2460,7 +2383,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ -->
   <div class="flyout-menu" id="cat4Flyout">
     <div class="flyout-group">
@@ -2509,7 +2431,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 5. ยานพาหนะ และอะไหล่ -->
   <div class="flyout-menu" id="cat5Flyout">
     <div class="flyout-group">
@@ -2549,7 +2470,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 6. เครื่องใช้ไฟฟ้าภายในบ้าน -->
   <div class="flyout-menu" id="cat6Flyout">
     <div class="flyout-group">
@@ -2581,7 +2501,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 7. แฟชั่น เครื่องแต่งกาย -->
   <div class="flyout-menu" id="cat7Flyout">
     <div class="flyout-group">
@@ -2611,7 +2530,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 8. แม่และเด็ก / สัตว์เลี้ยง -->
   <div class="flyout-menu" id="cat8Flyout">
     <div class="flyout-group">
@@ -2633,7 +2551,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 9. กีฬา และของสะสม -->
   <div class="flyout-menu" id="cat9Flyout">
     <div class="flyout-group">
@@ -2671,7 +2588,6 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- หมวดที่ 10. สินค้าอุตสาหกรรม และร้านค้า -->
   <div class="flyout-menu" id="cat10Flyout">
     <div class="flyout-group">
@@ -2693,14 +2609,12 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-
   <!-- ================= จบโซน Multi-level Flyout Menus ================= -->
   <!-- Floating User Chat Button -->
   <div class="user-chat-float-btn" onclick="openUserChatModal()">
     <div class="chat-icon">💬</div>
     <div>แชท</div>
   </div>
-
   <!-- User Chat Modal (Dual-Pane) -->
   <div class="chat-modal-overlay" id="userChatModalOverlay">
     <div class="chat-container-card">
@@ -2737,7 +2651,6 @@ window.highlightBoth = function(idStr, type){
               <div style="font-size:10px; color:#666; margin-top:4px; text-align:center;">เบอร์จะเห็นเฉพาะคู่ที่ยอมรับแล้วเท่านั้น</div>
             </div>
           </div>
-
           <div class="chat-messages-container" id="chatMessagesContainer"></div>
           <div class="chat-input-row">
             <input type="text" class="chat-input-field" id="chatMessageInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="if(event.key==='Enter') sendChatMessage()">
@@ -2772,7 +2685,6 @@ window.highlightBoth = function(idStr, type){
       'เบอร์', 'line id', 'date', 'use', 'use2', 'soi', 'use4', 'url',
       'post ID', 'บันทึกรายละเอียดในโพสต์ (ไม่เกิน 400 คำ)', 'ลักษณะกิจการ', 'use5'
     ];
-
     let leafletMap = null;
     let mapMarker = null;
     let radiusCircle = null;
@@ -2783,7 +2695,6 @@ window.highlightBoth = function(idStr, type){
     let propertyMarkersCluster = null;
     let propertyMarkersLayer = null;
     let isMapModeActive = false; // true = user ใช้แผนที่เป็นหลัก ไม่ได้ search
-
     // ==========================================
     // 2. CENTRALIZED APPLICATION STATE
     // ==========================================
@@ -2820,12 +2731,10 @@ window.highlightBoth = function(idStr, type){
         dropdownOptions: []
       }
     };
-
     // === SOS CRISIS TOGGLE - แยกขาดจาก property ===
     // true = เปิดโหมดวิกฤตน้ำท่วม / false = ปิดทันที เหลือแค่ อสังหา
     const ENABLE_SOS_CRISIS = true;
     window.ENABLE_SOS_CRISIS = ENABLE_SOS_CRISIS;
-
     // === FIX: กัน Error message channel closed จาก Extension / LIFF ===
     window.addEventListener('unhandledrejection', function(e){
       if(e.reason && e.reason.message && e.reason.message.includes('message channel closed')){
@@ -2849,7 +2758,6 @@ window.highlightBoth = function(idStr, type){
     const SUPABASE_URL = 'https://eywnasnyumqmlezjginj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_851g6ybUEz9OWjZjenqRMQ_5jC-7OLy';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     function playNotificationSound() {
       if (!isNotificationSoundEnabled) return;
       try {
@@ -2868,7 +2776,6 @@ window.highlightBoth = function(idStr, type){
         console.error("Audio playback error:", e);
       }
     }
-
     function toggleNotificationSound() {
       isNotificationSoundEnabled = !isNotificationSoundEnabled;
       const bellBtn = document.getElementById('notificationBellBtn');
@@ -2882,7 +2789,6 @@ window.highlightBoth = function(idStr, type){
     let CURRENT_USER_ID = null; // v6.7 FIX: เปลี่ยนจาก 1 เป็น null เพื่อกัน anonymous มั่ว
     let currentUserLineProfile = null;
     let activeRealtimeChannel = null;
-
     // ==========================================
     // LINE LIFF SDK Initialization & Supabase users table sync
     // ==========================================
@@ -2921,7 +2827,6 @@ window.highlightBoth = function(idStr, type){
         currentUserLineProfile = null;
       }
     }
-
         // v6.8 FIX: บันทึกลง table users ตามภาพ - line_id มาจาก LINE, user_id เป็น PK Auto
     async function saveUserLineIdToSupabase(lineIdOrProfile) {
       try {
@@ -2945,18 +2850,14 @@ window.highlightBoth = function(idStr, type){
             profileData.line_picture_url = currentUserLineProfile.pictureUrl || null;
           }
         }
-
         if (!lineId) return null;
-
         // 1. เช็คว่ามี line_id นี้ใน table users แล้วหรือยัง
         const { data: existingUser, error: findErr } = await supabaseClient
           .from('users')
           .select('user_id, line_id')
           .eq('line_id', String(lineId))
           .maybeSingle();
-
         if (findErr) console.warn("find user error", findErr);
-
                 if (existingUser && existingUser.user_id) {
           // มีแล้ว -> ใช้ user_id เดิมเลย ไม่ต้องอัปเดตเยอะเพื่อไม่ให้ทับ email/password
           try {
@@ -2967,7 +2868,6 @@ window.highlightBoth = function(idStr, type){
           } catch(e) { /* ข้ามถ้า error */ }
           return existingUser.user_id;
         }
-
         // 2. ยังไม่มี -> INSERT ใหม่ ให้ DB gen user_id (PK) ให้เอง - ห้ามใส่ user_id
         // v6.12 FIX: จากรูป pgAdmin ตาราง users มี NOT NULL หลายคอลัมน์
         // ต้องใส่ให้ครบ: email, password_hash, phone_number, role
@@ -2987,14 +2887,11 @@ window.highlightBoth = function(idStr, type){
         };
         // หมายเหตุ: ถ้าตารางคุณมีคอลัมน์ display_name, picture_url จะไม่ใส่ก็ได้เพราะ nullable
         
-
-
         const { data: newUser, error: insErr } = await supabaseClient
           .from('users')
           .insert([insertPayload])
           .select('user_id')
           .single();
-
         if (insErr) {
           // กรณี race condition - มีคน insert ไปแล้ว ให้ลองหาอีกครั้ง
           if (insErr.code === '23505') { // unique violation
@@ -3012,18 +2909,15 @@ window.highlightBoth = function(idStr, type){
           }
           return null;
         }
-
         console.log("✅ สร้าง user ใหม่ใน table users:", newUser.user_id, "line_id:", lineId);
         // บันทึกสำเร็จ -> เก็บลง localStorage ด้วย
         try{ localStorage.setItem('app_user_id', String(newUser.user_id)); }catch(e){}
         return newUser ? newUser.user_id : null;
-
       } catch (e) {
         console.error("Exception in saveUserLineIdToSupabase:", e);
         return null;
       }
     }
-
     
 // v6.9 - ฟังก์ชันเปิดใน LINE
 function getLINE_LIFF_URL(){
@@ -3031,7 +2925,6 @@ function getLINE_LIFF_URL(){
   // ใช้ LIFF URL ตรง - LINE จะเปิดในแอปอัตโนมัติถ้ามี LINE
   return 'https://liff.line.me/' + liffId;
 }
-
 function showLineRequiredModal(){
   const overlay = document.getElementById('lineRequiredModalOverlay');
   const urlDisplay = document.getElementById('lineUrlDisplay');
@@ -3039,21 +2932,17 @@ function showLineRequiredModal(){
   if(urlDisplay) urlDisplay.innerText = liffUrl;
   if(overlay) overlay.classList.add('active');
 }
-
 function closeLineRequiredModal(){
   const overlay = document.getElementById('lineRequiredModalOverlay');
   if(overlay) overlay.classList.remove('active');
 }
-
 function openInLINEApp(){
   const liffId = (typeof CONFIG !== 'undefined' && CONFIG.LIFF_ID) ? CONFIG.LIFF_ID : '2011006139-Wn6PhY6D';
   const liffUrl = getLINE_LIFF_URL(); // https://liff.line.me/2011006139-Wn6PhY6D
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const btn = document.querySelector('.line-modal-btn-primary');
   if(btn){ btn.innerText = '⏳ กำลังเปิด LINE...'; btn.disabled = true; }
-
   console.log('Opening LINE:', liffUrl, 'isMobile:', isMobile);
-
   try {
     if(isMobile){
       // มือถือ: ลองยิงเข้าแอป LINE ก่อนด้วย scheme
@@ -3091,13 +2980,11 @@ function openInLINEApp(){
     window.open(liffUrl, '_blank');
     prompt('คัดลอกลิงก์นี้ไปเปิดใน LINE:', liffUrl);
   }
-
   // ปลดล็อคปุ่มคืนหลัง 3 วิ
   setTimeout(() => {
     if(btn){ btn.innerText = '📲 เปิดใน LINE ทันที'; btn.disabled = false; }
   }, 3000);
 }
-
 function copyLINEUrl(){
   const liffUrl = getLINE_LIFF_URL();
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -3108,7 +2995,6 @@ function copyLINEUrl(){
     prompt('คัดลอกลิงก์นี้ไปเปิดใน LINE:', liffUrl);
   }
 }
-
 function tryLIFFLoginAgain(){
   closeLineRequiredModal();
   if(typeof liff !== 'undefined'){
@@ -3133,7 +3019,6 @@ function tryLIFFLoginAgain(){
     window.location.href = getLINE_LIFF_URL();
   }
 }
-
     // v6.8 Helper: การันตีว่าได้ user_id ที่ตรงกับ table users (PK Auto)
     async function getOrCreateUserIdFromLINE() {
       if (!currentUserLineProfile || !currentUserLineProfile.userId) {
@@ -3148,8 +3033,6 @@ function tryLIFFLoginAgain(){
       }
       return userIdFromUsersTable;
     }
-
-
     
     async function ensureUserExists(userId) {
       if (!userId) userId = 1;
@@ -3185,7 +3068,6 @@ function tryLIFFLoginAgain(){
         return isNumeric ? numId : userId;
       }
     }  
-
     async function getCurrentUserId() {
       // v6.7 FIX: ต้องมี LINE profile จริงเท่านั้น
       if (currentUserLineProfile && currentUserLineProfile.userId) {
@@ -3206,7 +3088,6 @@ function tryLIFFLoginAgain(){
       // ไม่มีตัวตนจริง -> return null เพื่อให้ submitSOS บล็อก
       return null;
     }
-
     // ==========================================
     // v17 - ระบบ 2 คอลัมน์ role + is_trusted (general vs special) - START
     // ==========================================
@@ -3220,7 +3101,6 @@ function tryLIFFLoginAgain(){
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
-
     async function getCurrentUserRole(){
       try{
         const uid = await getCurrentUserId();
@@ -3240,7 +3120,6 @@ function tryLIFFLoginAgain(){
         return {role:'general', is_trusted:false, user_id:null};
       }
     }
-
     
     async function updateRoleBadge(){
       try{
@@ -3279,7 +3158,6 @@ function tryLIFFLoginAgain(){
       setTimeout(()=>{ updateRoleBadge(); }, 2000);
       setInterval(()=>{ updateRoleBadge(); }, 10000);
     });
-
     // === CONFIG ROLE LIMIT - NEW v6.2 (general=5, special=20, admin=unlimited) ===
     // เพิ่มตามคำสั่ง ไม่ได้ลบฟังก์ชันเดิม
     const ROLE_LIMIT = {
@@ -3287,7 +3165,6 @@ function tryLIFFLoginAgain(){
       special: 20,
       admin: Infinity // unlimited
     };
-
     async function checkPostLimit(userId){
       const { data: user, error } = await supabaseClient
         .from('users').select('role').eq('user_id', userId).single();
@@ -3296,14 +3173,11 @@ function tryLIFFLoginAgain(){
       
       // admin ผ่านตลอด
       if(user.role === 'admin') return { ok:true, role: user.role };
-
       const limit = ROLE_LIMIT[user.role] || 5;
-
       const { count } = await supabaseClient
         .from('properties')
         .select('property_id', { count: 'exact', head: true })
         .eq('user_id', userId);
-
       if(count >= limit){
         return { 
           ok:false, 
@@ -3312,7 +3186,6 @@ function tryLIFFLoginAgain(){
       }
       return { ok:true, role: user.role, count, limit };
     }
-
     async function canDeleteProperty(propertyOwnerId){
       const { data: me } = await supabaseClient
         .from('users').select('role').eq('user_id', CURRENT_USER_ID).single();
@@ -3322,9 +3195,6 @@ function tryLIFFLoginAgain(){
       return String(propertyOwnerId) === String(CURRENT_USER_ID);
     }
     // === END NEW ROLE LIMIT ===
-
-
-
     async function canPostWarning(userId, lat, lng){
       try{
         if(!userId) return {ok:false, msg:'ไม่พบตัวตนผู้ใช้ กรุณาเข้าใหม่ผ่าน LINE'};
@@ -3366,7 +3236,6 @@ function tryLIFFLoginAgain(){
         return {ok:true}; // ถ้าเช็คพลาด ให้ผ่านไปก่อน อย่าบล็อกมั่ว
       }
     }
-
     function getTrustBadgeHTML(role, is_trusted, reporter_type){
       const r = (role||reporter_type||'general').toLowerCase();
       // v17.10 FIX - แสดงแค่ชื่อบทบาทอย่างเดียวตามคำสั่ง ไม่ต้องมีเชื่อถือได้
@@ -3378,7 +3247,6 @@ function tryLIFFLoginAgain(){
       }
       return '<span class="trust-badge general" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; font-weight:800;"><span class="icon">👤</span> GENERAL</span>';
     }
-
     // v17.9 NEW - Badge สำหรับ SOS โดยเฉพาะ แสดงแค่ชื่อ role ตามตัวอย่าง ADMIN
     
     // v17.17 FIX - เพิ่ม escapeHtml กัน XSS ขั้นสูงสุด (ไม่ลบฟังก์ชันเดิม)
@@ -3392,7 +3260,6 @@ function tryLIFFLoginAgain(){
         .replace(/'/g,'&#39;');
     }
     function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'&#96;'); }
-
 function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       const r = (role||reporter_type||'general').toLowerCase();
       // ตามคำขอ: แสดงแค่ชื่อบทบาทอย่างเดียว เช่น แอดมิน
@@ -3404,12 +3271,9 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
       return '<span class="trust-badge general" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#334155;"><span class="icon">👤</span> GENERAL</span>';
     }
-
-
     // ==========================================
     // v17 - ระบบ 2 คอลัมน์ role + is_trusted - END
     // ==========================================
-
     // ==========================================
     // ตรรกะระบบแชทเมื่อกดปุ่ม "(chat)" (เช็กตาราง chat_rooms)
     // ==========================================
@@ -3421,7 +3285,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if(s.length <= 7) return s.slice(0,2)+'***';
       return s.slice(0,3)+'xxxx'+s.slice(-3);
     }
-
     async function openOwnerChat(item, event) {
       if (event) event.stopPropagation();
       stopAIVoiceSpeech();
@@ -3531,7 +3394,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         initRealtimeForRoom(CURRENT_ROOM_ID);
       }
     }
-
     function displayMessageOnUI(msg) {
       const container = document.getElementById('chatMessagesContainer');
       if (!container) return;
@@ -3542,7 +3404,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       container.appendChild(bubble);
       container.scrollTop = container.scrollHeight;
     }
-
     async function loadChatHistoryForRoom(roomId) {
       const container = document.getElementById('chatMessagesContainer');
       if (container) container.innerHTML = ''; 
@@ -3552,12 +3413,10 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         .select('*')
         .eq('room_id', roomId)
         .order('created_at', { ascending: true });
-
       if (messages && !error) {
         messages.forEach(msg => displayMessageOnUI(msg));
       }
     }
-
     // ---------------------------------------------------------
     // 1. ฟังก์ชันเปิดหน้าต่างแชท (เมื่อกดปุ่มสีชมพูขวาล่าง)
     // ---------------------------------------------------------
@@ -3571,14 +3430,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       await loadUserChatRooms();
       await checkAndHighlightUnreadMessages();
     }
-
     // ---------------------------------------------------------
     // 2. ฟังก์ชันดึงรายการห้องแชทที่ตัวเองมีส่วนร่วม (เวอร์ชันแก้ไข Error 400)
     // ---------------------------------------------------------
     
     
         
-
     // ===== v9.4 - Mission Complete 2-way =====
     async function loadSOSCompleteState(roomId){
       const bar = document.getElementById('sosConsentBar');
@@ -3596,17 +3453,14 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           completeArea.style.borderTop = '1px dashed #fdba74';
           document.getElementById('sosConsentBar').appendChild(completeArea);
         }
-
         const buyerComp = !!room.buyer_completed;
         const sellerComp = !!room.seller_completed;
         const bothComp = buyerComp && sellerComp;
         const bothAccepted = !!room.buyer_accepted && !!room.seller_accepted;
-
         if(!bothAccepted){
           completeArea.style.display='none';
           return;
         }
-
         if(bothComp){
           completeArea.innerHTML = `
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px; text-align:center;">
@@ -3619,10 +3473,8 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           completeArea.style.display='block';
           return;
         }
-
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
         const iHaveCompleted = isBuyer ? buyerComp : sellerComp;
-
         completeArea.style.display='block';
         completeArea.innerHTML = `
           <div style="font-weight:700; font-size:12px; color:#9a3412; margin-bottom:4px;">🏁 เสร็จภารกิจหรือยัง?</div>
@@ -3634,7 +3486,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         `;
       }catch(e){ console.error('loadSOSCompleteState', e); }
     }
-
     async function completeSOSMission(){
       if(!CURRENT_ROOM_ID) return;
       if(!confirm('ยืนยันว่าภารกิจนี้ช่วยเหลือเสร็จสิ้นแล้วใช่ไหม?\n\nเมื่อทั้ง 2 ฝ่ายกดยืนยัน หมุดจะเปลี่ยนเป็นสีเทาและเคสจะปิด')) return;
@@ -3644,23 +3495,19 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
         const upd = isBuyer ? {buyer_completed:true} : {seller_completed:true};
         await supabaseClient.from('chat_rooms').update(upd).eq('room_id', CURRENT_ROOM_ID);
-
         const { data: updatedRoom } = await supabaseClient.from('chat_rooms').select('*').eq('room_id', CURRENT_ROOM_ID).maybeSingle();
         const bothDone = updatedRoom && updatedRoom.buyer_completed && updatedRoom.seller_completed;
-
         await supabaseClient.from('chat_messages').insert([{
           room_id: CURRENT_ROOM_ID,
           sender_id: CURRENT_USER_ID,
           content: `${isBuyer?'ผู้เข้าไปช่วย':'ผู้ขอความช่วยเหลือ'} ยืนยันว่าภารกิจสำเร็จแล้ว 🏁 ${bothDone ? '(ครบ 2 ฝ่าย ปิดเคส)' : '(รออีกฝ่ายยืนยัน)'}`
         }]);
-
         if(bothDone){
           const sosId = room.sos_request_id || room.property_id;
           try{
             await supabaseClient.from('flood_help_requests').update({status:'completed'}).eq('id', sosId);
           }catch(e){}
         }
-
         await loadSOSCompleteState(CURRENT_ROOM_ID);
         await loadChatHistoryForRoom(CURRENT_ROOM_ID);
         await loadUserChatRooms();
@@ -3669,14 +3516,11 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           const cache = window.sosRequestsCache || [];
           updateSOSMapMarkers(cache);
         }
-
         if(bothDone){
           alert('🎉 ภารกิจสำเร็จครบ 2 ฝ่าย! ขอบคุณมากครับ เคสนี้จะถูกปิด');
         }
-
       }catch(e){ console.error(e); alert('ยืนยันไม่สำเร็จ: '+e.message); }
     }
-
     // ปุ่มใน List - เรียกจากนอกห้องแชท
     async function completeSOSFromList(sosId, event){
       if(event){ event.stopPropagation(); }
@@ -3699,10 +3543,8 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }catch(e){ console.error(e); alert('ทำไม่สำเร็จ'); }
     }
     // ===== END v9.4 =====
-
     // ===== v9.2 SOS CHAT SYSTEM - FIX item is not defined + Mutual Consent =====
     let CURRENT_SOS_DATA = null;
-
     async function openSOSChatById(sosId, event){
       if(event){ event.stopPropagation(); event.preventDefault(); }
       const cache = window.sosRequestsCache || [];
@@ -3716,7 +3558,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if(!sosItem){ alert('ไม่พบข้อมูลเคสนี้ (id:'+sosId+')'); return; }
       return openSOSChat(sosItem, event);
     }
-
     async function openSOSChat(sosItem, event){
       if(event){ event.stopPropagation(); }
       if(typeof stopAIVoiceSpeech==='function') stopAIVoiceSpeech();
@@ -3725,15 +3566,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         buyerId = await ensureUserExists(buyerId);
         let rawSeller = sosItem.user_id || sosItem.helper_id || 1;
         let sellerId = await ensureUserExists(rawSeller);
-
         if(String(buyerId)===String(sellerId)){
           alert('นี่คือเคสของคุณเอง ไม่สามารถแชทกับตัวเองได้');
           return;
         }
-
         const sosId = sosItem.id;
         let targetRoomId = null;
-
         // ค้นหาห้องเดิม - sos_request_id ใน DB คุณเป็น bigint แต่ flood_help_requests.id เป็น uuid
         // เลยต้องค้นหาด้วย property_id ด้วยเพื่อรองรับ uuid (เก็บเป็น text ในบางเคส)
         const { data: existingRooms } = await supabaseClient
@@ -3742,7 +3580,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           .or(`sos_request_id.eq.${sosId},property_id.eq.${sosId}`)
           .or(`and(buyer_id.eq.${buyerId},seller_id.eq.${sellerId}),and(buyer_id.eq.${sellerId},seller_id.eq.${buyerId})`)
           .limit(1);
-
         // ถ้าไม่เจอด้วย query ซับซ้อน ลองหาแบบง่าย
         let roomFound = null;
         if(existingRooms && existingRooms.length>0){
@@ -3753,7 +3590,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             roomFound = allRooms.find(r => String(r.sos_request_id)===String(sosId) || String(r.property_id)===String(sosId));
           }
         }
-
         if(roomFound){
           targetRoomId = roomFound.room_id;
         }else{
@@ -3772,13 +3608,11 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           if(error){ console.error(error); targetRoomId = nextId; }
           else{ targetRoomId = inserted[0].room_id; }
         }
-
         CURRENT_ROOM_ID = targetRoomId;
         CURRENT_USER_ID = buyerId;
         const needLabel = (sosItem.need_types||[]).map(t=>({evacuate:'🚗 อพยพ', food:'🍞 อาหาร', medicine:'💊 ยา', clothes:'👕 ของใช้', power:'⚡ ช่าง', shelter:'🏠 ที่พัก'}[t]||t)).join(', ');
         const titleEl = document.getElementById('chatActiveTitle');
         if(titleEl) titleEl.innerText = `💬 ${needLabel} - ${sosItem.location_text||''}`;
-
         document.getElementById('userChatModalOverlay').classList.add('active');
         if(typeof expandChatZone==='function') expandChatZone('room');
         await loadUserChatRooms();
@@ -3786,20 +3620,17 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         await loadSOSConsentState(CURRENT_ROOM_ID);
         await loadSOSCompleteState(CURRENT_ROOM_ID);
         if(typeof initRealtimeForRoom==='function') initRealtimeForRoom(CURRENT_ROOM_ID);
-
         // ส่งข้อความอัตโนมัติถ้าห้องว่าง
         const { data: msgs } = await supabaseClient.from('chat_messages').select('message_id').eq('room_id', targetRoomId).limit(1);
         if(!msgs || msgs.length===0){
           await supabaseClient.from('chat_messages').insert([{ room_id: targetRoomId, sender_id: buyerId, content: `สวัสดีครับ ผมเห็นเคส ${needLabel} ที่ ${sosItem.location_text||''} ขอเข้าไปช่วยเหลือครับ` }]);
           await loadChatHistoryForRoom(targetRoomId);
         }
-
       }catch(err){
         console.error('openSOSChat error', err);
         alert('เปิดแชทไม่สำเร็จ: '+err.message);
       }
     }
-
     async function loadSOSConsentState(roomId){
       const bar = document.getElementById('sosConsentBar');
       if(!bar) return;
@@ -3810,12 +3641,10 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         const sosId = room.sos_request_id || room.property_id;
         const { data: sos } = await supabaseClient.from('flood_help_requests').select('*').eq('id', sosId).maybeSingle();
         CURRENT_SOS_DATA = sos;
-
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
         const buyerAcc = !!room.buyer_accepted;
         const sellerAcc = !!room.seller_accepted;
         const both = buyerAcc && sellerAcc;
-
         document.getElementById('sosConsentChecks').innerHTML = `
           ${buyerAcc?'✅':'⏳'} ผู้เข้าไปช่วย: ${buyerAcc?'ยอมรับแล้ว':'รอรับ'}<br>
           ${sellerAcc?'✅':'⏳'} ผู้ขอความช่วยเหลือ: ${sellerAcc?'ยอมรับแล้ว':'รอรับ'}
@@ -3823,7 +3652,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         const btn = document.getElementById('sosAcceptBtn');
         const callArea = document.getElementById('sosCallArea');
         const txt = document.getElementById('sosConsentText');
-
         if( (isBuyer && buyerAcc) || (!isBuyer && sellerAcc) ){
           btn.style.display='none';
           txt.innerText = both ? '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว - โทรหากันได้เลย' : 'คุณยอมรับแล้ว รออีกฝ่ายกดยอมรับ';
@@ -3831,7 +3659,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           btn.style.display='block';
           txt.innerText = 'กดยอมรับเพื่อยืนยันการช่วยเหลือครั้งนี้';
         }
-
         if(both){
           callArea.style.display='block';
           const requesterPhone = sos?.contact_phone || '';
@@ -3846,7 +3673,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
               CURRENT_SOS_DATA.helperUser = helperUser;
             }catch(e){}
           }
-
           const fullPhoneEl = document.getElementById('sosFullPhone');
           const callLink = document.getElementById('sosCallLink');
           const extraAreaId = 'sosCallArea2';
@@ -3857,7 +3683,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             extraArea.style.marginTop = '8px';
             callArea.parentNode.insertBefore(extraArea, callArea.nextSibling);
           }
-
           if(isBuyer){
             // ผมคือคนช่วย -> โชว์เบอร์คนขอ
             document.getElementById('sosConsentText').innerHTML = '🎉 ทั้ง 2 ฝ่ายยอมรับแล้ว<br>คุณคือ <b>ผู้เข้าไปช่วย</b>';
@@ -3873,7 +3698,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             callLink.innerHTML = `<button class="sos-consent-btn call" style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%)">📞 โทรหาผู้ช่วยเหลือ<br><span style="font-size:13px">${helperPhone||'กำลังโหลด...'}</span></button>`;
             extraArea.innerHTML = `<div style="margin-top:6px;"><a href="tel:${requesterPhone}" style="text-decoration:none;"><button class="sos-consent-btn call" style="background:#f3f4f6; color:#333; border:1px solid #ddd;">📋 เบอร์ของคุณ (ที่ให้ไว้): ${requesterPhone}</button></a></div>`;
           }
-
           try{ await supabaseClient.from('flood_help_requests').update({status:'going'}).eq('id', sosId); }catch(e){}
         }else{
           callArea.style.display='none';
@@ -3882,7 +3706,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       }catch(e){ console.error(e); }
     }
-
     async function acceptSOSHelp(){
       if(!CURRENT_ROOM_ID) return;
       try{
@@ -3890,7 +3713,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         if(!room) return;
         const isBuyer = String(room.buyer_id) === String(CURRENT_USER_ID);
         const sosId = room.sos_request_id || room.property_id;
-
         // === 2-WAY: ถ้าเป็นคนช่วย ให้ขอเบอร์ก่อน ===
         if(isBuyer){
           let helperPhone = null;
@@ -3911,7 +3733,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             await supabaseClient.from('flood_help_requests').update({helper_phone: helperPhone, helper_id: CURRENT_USER_ID}).eq('id', sosId);
           }catch(e){ console.warn('update helper_phone failed', e); }
         }
-
         const upd = isBuyer ? {buyer_accepted:true} : {seller_accepted:true};
         await supabaseClient.from('chat_rooms').update(upd).eq('room_id', CURRENT_ROOM_ID);
         await supabaseClient.from('chat_messages').insert([{ room_id: CURRENT_ROOM_ID, sender_id: CURRENT_USER_ID, content: `${isBuyer?'ผู้เข้าไปช่วย':'ผู้ขอความช่วยเหลือ'} กดยอมรับการช่วยเหลือแล้ว ✅` }]);
@@ -3922,7 +3743,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }catch(e){ alert('ยอมรับไม่สำเร็จ'); console.error(e); }
     }
     // ===== END v9.2 =====
-
     async function loadUserChatRooms() {
       const listContainer = document.getElementById('chatListItems');
       listContainer.innerHTML = '<div style="padding: 10px; text-align: center;">⏳ กำลังโหลดห้องแชท...</div>';
@@ -4051,7 +3871,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         listContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: red;">❌ โหลดข้อมูลล้มเหลว</div>';
       }
     }
-
     async function checkAndHighlightUnreadMessages() {
       try {
         const currentUserId = await getCurrentUserId();
@@ -4102,13 +3921,10 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       await loadChatHistoryForRoom(roomId);
       CURRENT_ROOM_ID = roomId;
       try{ await loadSOSConsentState(roomId); await loadSOSCompleteState(roomId); }catch(e){}
-
       CURRENT_ROOM_ID = roomId;
       await loadSOSConsentState(roomId);
-
       initRealtimeForRoom(roomId);
     }
-
     // ---------------------------------------------------------
     // 4. ฟังก์ชันรับข้อความแบบ Real-time
     // ---------------------------------------------------------
@@ -4133,14 +3949,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         )
         .subscribe();
     }
-
     function highlightChatRoomItem(roomId) {
       const card = document.querySelector(`.chat-item-card[data-room-id="${roomId}"]`);
       if (card) {
         card.classList.add('has-new-msg');
       }
     }
-
     function initGlobalChatRealtime() {
       supabaseClient
         .channel('global_chat_notifications')
@@ -4155,7 +3969,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
               if (String(msg.sender_id) !== String(currentUserId)) {
                 const floatBtn = document.querySelector('.user-chat-float-btn');
                 if (floatBtn) floatBtn.classList.add('has-new-msg');
-
                 highlightChatRoomItem(msg.room_id);
                 playNotificationSound();
               }
@@ -4164,7 +3977,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         )
         .subscribe();
     }
-
     // ---------------------------------------------------------
     // 5. ฟังก์ชันส่งข้อความ
     // ---------------------------------------------------------
@@ -4180,7 +3992,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         alert("กรุณาเลือกคู่สนทนาก่อนส่งข้อความ");
         return;
       }
-
       let senderId = await getCurrentUserId();
       senderId = await ensureUserExists(senderId);
       CURRENT_USER_ID = senderId;
@@ -4214,7 +4025,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
       return defaultVal;
     }
-
     // ==========================================
     // UI, TABS & INTERACTION HANDLERS
     // ==========================================
@@ -4270,11 +4080,9 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       }
     }
-
     async function checkAndDisplayMemberStatus() {
       const urlParams = new URLSearchParams(window.location.search);
       let lineId = urlParams.get('lineId') || localStorage.getItem('line_user_id');
-
       if (!lineId && typeof liff !== 'undefined') {
         try {
           if (!liff.isLoggedIn()) {
@@ -4292,7 +4100,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           console.error("LIFF Profile Error:", e);
         }
       }
-
       let isMember = false;
       if (lineId) {
         try {
@@ -4301,13 +4108,11 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             .select('*')
             .eq('line_id', lineId)
             .maybeSingle();
-
           if (data) isMember = true;
         } catch (err) {
           console.error("Error checking membership:", err);
         }
       }
-
       const container = document.getElementById('resultsContainer');
       if (container) {
         const memberLabel = isMember ? " (สมาชิก)" : " (ยังไม่เป็นสมาชิก)";
@@ -4330,19 +4135,16 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         checkAndDisplayMemberStatus();
         initGlobalChatRealtime();
       });
-
       setTimeout(() => {
         if (!AppState.voice.isActive && !AppState.voice.ws) {
           startVoiceSession();
         }
       }, 1000);
-
       const listSection = document.getElementById('list-section');
       const aiSection = document.getElementById('ai-section');
       let lastScrollTop = 0;
       window._lastScrollToggleTs = window._lastScrollToggleTs || 0;
       window._lastLoadNextTs = window._lastLoadNextTs || 0;
-
       if (listSection) {
         listSection.addEventListener('scroll', () => {
           let currentScroll = listSection.scrollTop;
@@ -4358,7 +4160,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             }
           }
           lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
-
           if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
           
           const remainingScroll = listSection.scrollHeight - (currentScroll + listSection.clientHeight);
@@ -4369,7 +4170,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           }
         });
       }
-
       document.addEventListener('click', (e) => {
         const resultsDiv = document.getElementById('placeSearchResults');
         const searchInput = document.getElementById('placeSearchInput');
@@ -4378,11 +4178,9 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       });
     });
-
     function triggerSearchReset() {
       testShowList();
     }
-
     function resetAllFilters() {
       console.log('🔄 ล้างค่าทั้งหมด - อสังหา');
       // ล้าง edit ทั้งหมด
@@ -4390,7 +4188,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if (editBox) editBox.value = '';
       const editBoxDecor = document.getElementById('customEditBoxDecor');
       if (editBoxDecor) editBoxDecor.value = '';
-
       // ล้าง dropdown ทั้งหมดในแท็บอสังหา - ใช้ data-default ถ้ามี ไม่งั้นใช้ค่าเดิม
       const realEstateBtns = document.querySelectorAll('#tab-content-realestate .filter-btn');
       realEstateBtns.forEach(btn => {
@@ -4425,7 +4222,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
         btn.classList.remove('active-sale');
       });
-
       // ล้างปุ่มพิเศษ ขาย/เช่า และ พิกัด (รวมทั้งปุ่มพิกัดด้วยตามคำสั่ง)
       const saleBtn = document.getElementById('saleTypeBtn');
       if (saleBtn) {
@@ -4444,7 +4240,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if (locBtn && locBtn.dataset.default) {
         // ไม่ต้อง เพราะปุ่มนี้เป็นพิกัดหลัก
       }
-
       // ล้าง state ทั้งหมด
       if (window.coordFilterData) window.coordFilterData = null;
       if (window.saleFilterData) window.saleFilterData = null;
@@ -4462,7 +4257,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       document.querySelectorAll('#provinceSubmenu .flyout-sub-item, #districtSubmenu .flyout-sub-item').forEach(el=>{
         el.style.background=''; el.style.fontWeight=''; el.style.color='';
       });
-
       clearLocationFilter();
       // ล้าง edit ของ decor ด้วยเพื่อให้ตรงคำสั่ง ทุก edit
       if (typeof clearSaleType === 'function') {
@@ -4473,7 +4267,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
       testShowList();
     }
-
     function getDropdownOptionsForTopic(topic) {
       if (topic === 'ขาย/เช่า') return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ร้านค้า", "ตลาด"];
@@ -4485,14 +4278,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
       return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
     }
-
     function getAllValidDropdownOptions() {
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       let allOptions = [];
       topics.forEach(t => { allOptions = allOptions.concat(getDropdownOptionsForTopic(t)); });
       return [...new Set(allOptions)];
     }
-
     function openDropdownModal(topic) {
       stopAIVoiceSpeech();
       AppState.ui.dropdownTopic = topic;
@@ -4504,7 +4295,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       renderDropdownOptions(AppState.ui.dropdownOptions);
       document.getElementById('dropdownModalOverlay').classList.add('active');
     }
-
     function renderDropdownOptions(optionsToRender) {
       const optionsContainer = document.getElementById('dropdownOptions');
       optionsContainer.innerHTML = '';
@@ -4517,7 +4307,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         optionsContainer.innerHTML += `<button class="dropdown-option-btn" onclick="selectDropdownOption('${AppState.ui.dropdownTopic}', '${opt}')">${opt}</button>`;
       });
     }
-
     function filterDropdownOptions() {
       const searchText = document.getElementById('dropdownSearchInput').value.toLowerCase();
       const filteredOptions = AppState.ui.dropdownOptions.filter(opt => 
@@ -4525,25 +4314,20 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       );
       renderDropdownOptions(filteredOptions);
     }
-
     function closeDropdownModal() {
       stopAIVoiceSpeech();
       document.getElementById('dropdownModalOverlay').classList.remove('active');
     }
-
     // ==========================================
     // ตัวแปรและฟังก์ชันจัดการการอัปโหลดรูปภาพ (8 ช่อง)
     // ==========================================
     window.uploadedFiles = window.uploadedFiles || [];
-
     function handleFilesSelected(event) {
       const fileInput = document.getElementById('fileInput');
       // ดึงไฟล์จากช่องรับภาพ
       const files = (fileInput && fileInput.files) ? Array.from(fileInput.files) : [];
       if (files.length === 0) return;
-
       if (!window.uploadedFiles) window.uploadedFiles = [];
-
       for (let file of files) {
         if (window.uploadedFiles.length < 8) {
           window.uploadedFiles.push(file); // นำรูปไปเก็บในหน่วยความจำ
@@ -4558,20 +4342,15 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       
       renderUploadGrid();
     }
-
   function renderUploadGrid() {
       const grid = document.getElementById('uploadGrid');
       const statusText = document.getElementById('uploadStatusText');
       if (!grid) return;
-
       if (!window.uploadedFiles) window.uploadedFiles = [];
-
       if (statusText) {
         statusText.innerText = `อัปโหลดรูปภาพ (${window.uploadedFiles.length}/8)`;
       }
-
       grid.innerHTML = '';
-
       // 1. แสดงช่องรูปภาพที่อัปโหลดแล้ว
       window.uploadedFiles.forEach((file, index) => {
         const box = document.createElement('div');
@@ -4585,7 +4364,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         `;
         grid.appendChild(box);
       });
-
       // 2. แสดงช่องว่างส่วนที่เหลือให้ครบ 8 ช่อง
       const remainingSlots = 8 - window.uploadedFiles.length;
       for (let i = 0; i < remainingSlots; i++) {
@@ -4599,13 +4377,11 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         grid.appendChild(emptyBox);
       }
     }
-
     function deleteImage(index) {
       if (!window.uploadedFiles) window.uploadedFiles = [];
       window.uploadedFiles.splice(index, 1);
       renderUploadGrid();
     }
-
   // ฟังก์ชันเปิดหน้าต่างลงประกาศ
   // ฟังก์ชันเปิดหน้าต่างลงประกาศ
     function openPostModal() {
@@ -4617,12 +4393,10 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       document.getElementById('postModalOverlay').classList.add('active');
       renderUploadGrid(); // วาดช่อง 8 ช่องใหม่ทันทีที่เปิดหน้าต่าง
     }
-
     // ฟังก์ชันปิดหน้าต่างลงประกาศ
     function closePostModal() {
       document.getElementById('postModalOverlay').classList.remove('active');
     }  
-
     // ==========================================
     // ฟังก์ชันทำงานเมื่อกดปุ่ม "ลงประกาศ"
     // ==========================================
@@ -4834,10 +4608,8 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           radius: radiusInMeters
         }).addTo(leafletMap);
       }
-
       leafletMap.fitBounds(radiusCircle.getBounds());
     }
-
     
     // ==================== v7-8-1 PROPERTY MARKERS CLUSTER + PRICE DOT ====================
     function parsePriceToShort(raw){
@@ -4983,8 +4755,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if(found) showDetailModal(found);
     }
     // ==================== END v7-8-1 ====================
-
-
     function openLocationModal(isFromFloodOrMode){
       // รองรับโหมดใหม่: 'posting' = จากหน้าลงประกาศ, 'filter' = จากปุ่มพิกัดกรอง
       let isFromFlood = false;
@@ -4999,14 +4769,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
       // เก็บโหมดไว้ global
       window._locationModalMode = locationMode;
-
       stopAIVoiceSpeech();
       const locOverlay = document.getElementById('locationModalOverlay');
       locOverlay.classList.add('active');
       // FIX v13.4: force to front above flood modal (9001) and detail modals (9999)
       locOverlay.style.zIndex = '10010';
       locOverlay.style.display = 'flex';
-
       // ===== คำสั่งใหม่: เบลอปุ่มค้นหาถ้าเปิดจากหน้าลงประกาศ =====
       const searchBtn = document.getElementById('locationSearchBtn');
       if (searchBtn) {
@@ -5024,11 +4792,9 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           searchBtn.style.cursor = 'pointer';
         }
       }
-
       
       const defaultLat = selectedLat || 13.7563;
       const defaultLng = selectedLng || 100.5018;
-
       if (!leafletMap) {
         setTimeout(() => {
           leafletMap = L.map('locationMap').setView([defaultLat, defaultLng], 12);
@@ -5036,7 +4802,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
             maxZoom: 19,
             attribution: '© OpenStreetMap'
           }).addTo(leafletMap);
-
           // คำสั่งที่ 3: เพิ่มปุ่มขยายเต็มจอ ใต้ปุ่มลบ
           try{
             if(!leafletMap._fullscreenBtnAdded){
@@ -5077,7 +4842,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
                 a.onclick=function(e){ e.preventDefault(); if(window.toggleLocationMapFullscreen) window.toggleLocationMapFullscreen(); return false; };
                 customDiv.appendChild(a);
                 zoomCtrl.parentNode.insertBefore(customDiv, zoomCtrl.nextSibling);
-
                 // คำสั่งที่ 1 ใหม่: ปุ่มหาพิกัดปัจจุบัน วางใต้ปุ่มขยาย
                 var curDiv = document.createElement('div');
                 curDiv.className='leaflet-control-zoom leaflet-bar leaflet-control';
@@ -5092,7 +4856,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
                 b.onclick=function(e){ e.preventDefault(); if(typeof getCurrentUserLocation==='function') getCurrentUserLocation(); return false; };
                 curDiv.appendChild(b);
                 customDiv.parentNode.insertBefore(curDiv, customDiv.nextSibling);
-
                 leafletMap._fullscreenBtnAdded=true;
               } else {
                 leafletMap.addControl(new FullscreenControl());
@@ -5118,22 +4881,18 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
               }
             }
           }catch(e){ console.log('fullscreen btn err',e); }
-
           mapMarker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(leafletMap);
-
           if(!leafletMap._hasMoveEnd){ leafletMap.on('moveend', function(){ if(isMapModeActive){ loadMarkersByMapBounds(); } }); leafletMap._hasMoveEnd=true; }
           mapMarker.on('dragend', function (e) {
             const pos = mapMarker.getLatLng();
             setCoordinates(pos.lat, pos.lng);
             updateRadiusCircle();
           });
-
           leafletMap.on('click', function (e) {
             mapMarker.setLatLng(e.latlng);
             setCoordinates(e.latlng.lat, e.latlng.lng);
             updateRadiusCircle();
           });
-
           if (!selectedLat && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
               const lat = pos.coords.latitude;
@@ -5170,7 +4929,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           }
         }, 200);
       }
-
       if (selectedLat && selectedLng) {
         document.getElementById('latInput').value = selectedLat;
         document.getElementById('lngInput').value = selectedLng;
@@ -5202,7 +4960,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }, 500);
       setTimeout(() => clearInterval(checkReady), 10000);
     }
-
     function triggerInitialAIGreeting() {
       const curTab = AppState.voice.currentTab || 'sos';
       let prompt = "";
@@ -5214,7 +4971,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
       sendTextToAI(prompt);
     }
-
     function sendTextToAI(text) {
       AppState.voice.silenced = false;
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
@@ -5229,7 +4985,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }));
       }
     }
-
     function handlePlaceSearchInput(query) {
       clearTimeout(placeSearchDebounceTimer);
       const resultsDiv = document.getElementById('placeSearchResults');
@@ -5265,7 +5020,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
                 });
               }
             });
-
             if (combined.length > 0) {
               combined.slice(0, 6).forEach(item => {
                 const itemDiv = document.createElement('div');
@@ -5290,7 +5044,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           });
       }, 400);
     }
-
     function selectPlaceResult(lat, lon, displayName) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lon);
@@ -5305,7 +5058,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         updateRadiusCircle(); 
       }
     }
-
     function setCoordinates(lat, lng) {
       selectedLat = parseFloat(lat).toFixed(6);
       selectedLng = parseFloat(lng).toFixed(6);
@@ -5327,7 +5079,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if (floodLat2) floodLat2.value = selectedLat;
       if (floodLng2) floodLng2.value = selectedLng;
     }
-
     function updateMapFromInputs() {
       const lat = parseFloat(document.getElementById('latInput').value);
       const lng = parseFloat(document.getElementById('lngInput').value);
@@ -5341,7 +5092,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       }
     }
-
     function getCurrentUserLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -5361,7 +5111,6 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         alert("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
       }
     }
-
     window.toggleLocationMapFullscreen = function(){
       var overlay = document.getElementById('locationModalOverlay');
       if(!overlay) return;
@@ -5377,7 +5126,6 @@ function closeLocationModal() {
       ov.style.display = 'none';
       setTimeout(()=>{ if(!ov.classList.contains('active')) ov.style.display=''; }, 300);
     }
-
     function clearLocationFilter() {
       selectedLat = null;
       selectedLng = null;
@@ -5387,7 +5135,6 @@ function closeLocationModal() {
         leafletMap.removeLayer(radiusCircle);
         radiusCircle = null;
       }
-
       document.getElementById('latInput').value = '';
       document.getElementById('lngInput').value = '';
       document.getElementById('placeSearchInput').value = '';
@@ -5407,18 +5154,15 @@ function closeLocationModal() {
       if (postLocationBtn) {
         postLocationBtn.innerText = '📍 ปักหมุดพิกัด';
       }
-
       closeLocationModal();
       testShowList();
     }
-
     function openGoogleMaps() {
       stopAIVoiceSpeech();
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const placeSearchInput = document.getElementById('placeSearchInput');
       const placeName = placeSearchInput ? placeSearchInput.value.trim() : '';
-
       if (lat && lng) {
         let queryUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
         if (placeName) {
@@ -5438,7 +5182,6 @@ function closeLocationModal() {
         alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
     }
-
     function confirmLocation() {
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
@@ -5446,7 +5189,6 @@ function closeLocationModal() {
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
       
       const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
-
       if (lat && lng) {
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
@@ -5457,29 +5199,24 @@ function closeLocationModal() {
         if (postLocationBtn) {
           postLocationBtn.innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)}`;
         }
-
         // SOS
         const sosLatEl = document.getElementById('sosLat');
         const sosLngEl = document.getElementById('sosLng');
         if (sosLatEl) sosLatEl.value = selectedLat.toFixed(6);
         if (sosLngEl) sosLngEl.value = selectedLng.toFixed(6);
-
         // FIX v13.4 - FLOOD: sync lat/lng to flood form
         const fLat = document.getElementById('floodLat');
         const fLng = document.getElementById('floodLng');
         if (fLat) fLat.value = selectedLat.toFixed(6);
         if (fLng) fLng.value = selectedLng.toFixed(6);
-
         // Also try alternative ids
         const fLatAlt = document.getElementById('floodLatitude');
         const fLngAlt = document.getElementById('floodLongitude');
         if (fLatAlt) fLatAlt.value = selectedLat.toFixed(6);
         if (fLngAlt) fLngAlt.value = selectedLng.toFixed(6);
-
         // Update detail text if flood form has location detail input
         const floodLocationInput = document.getElementById('floodLocationText') || document.getElementById('floodDetail');
         // keep existing
-
       } else {
         selectedLat = null;
         selectedLng = null;
@@ -5504,7 +5241,6 @@ function closeLocationModal() {
       testShowList();
       // ไม่เรียก closeLocationModal() เพื่อให้แผนที่ค้างอยู่ตามคำสั่ง
     }
-
     // ===== คำสั่งที่ 2: ปุ่มยืนยันพิกัด - ส่ง lat/lng ไปใช้ตอนลงประกาศ และปิดแผนที่ =====
     function confirmPostingLocation() {
       const latEl = document.getElementById('latInput');
@@ -5549,16 +5285,11 @@ function closeLocationModal() {
       if (locationFilterBtn) locationFilterBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
       const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
       if (postLocationBtn) postLocationBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)}`;
-
       // หลังส่งค่าเสร็จ ปิดหน้าต่างแผนที่ทันทีตามคำสั่งที่ 2
       if (typeof closeLocationModal === 'function') {
         closeLocationModal();
       }
     }
-
-
-
-
     // ===================== SOS AI VOICE HELPER FUNCTIONS - v6 FLOOD EDITION =====================
     function buildFloodContextForAI() {
       const cache = window.sosRequestsCache || sosRequestsCache || [];
@@ -5578,7 +5309,6 @@ function closeLocationModal() {
       const topAreas = Object.entries(areaMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}เคส)`).join(', ');
       return `สรุป SOS น้ำท่วม: ทั้งหมด ${counts.all} เคส , อพยพ เคลื่อนย้าย ${counts.evacuate}, อาหาร ${counts.food}, ยา ${counts.medicine}, เสื้อผ้า ${counts.clothes}, ไฟ/ช่าง ${counts.power} }`;
     }
-
     function generateFloodAnalysisAndAdvice(focusArea='all', adviseType='all') {
       const cache = window.sosRequestsCache || sosRequestsCache || [];
       const context = buildFloodContextForAI();
@@ -5588,9 +5318,7 @@ function closeLocationModal() {
       const advice = "หน้าที่ของเราคือช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้นครับ สำหรับเรื่องวิกฤตและการอพยพ ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ";
       return { context, prediction, advice, total: cache.length, critical: criticalCount };
     }
-
     // ==========================================
-
     
     // ==========================================
     // 5. AI VOICE SESSION HANDLERS
@@ -5612,7 +5340,6 @@ function closeLocationModal() {
         }
       }
     }
-
     async function toggleVoiceSession() {
       if (!AppState.voice.isActive) await startVoiceSession();
       else await stopVoiceSession();
@@ -5621,7 +5348,6 @@ function closeLocationModal() {
     function sendToolResponse(callId, name, outputData) {
       // ยกเลิกการปิดเสียง (Mute) เพื่อให้ AI สามารถพูดตอบโต้ต่อได้หลังจากกดปุ่มสำเร็จ
       AppState.voice.silenced = false; 
-
       if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && callId) {
         AppState.voice.ws.send(JSON.stringify({
           toolResponse: {
@@ -5638,11 +5364,9 @@ function closeLocationModal() {
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
       const statusText = document.getElementById('statusText');
-
       if (AppState.voice.ws || AppState.voice.isActive) {
         await stopVoiceSession();
       }
-
       try {
         AppState.voice.isActive = true;
         AppState.voice.isSetupReady = false;
@@ -5653,12 +5377,9 @@ function closeLocationModal() {
           statusText.innerText = "⏳ ต่อ...";
           statusText.classList.add('loading-pulse'); 
         }
-
         AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
-
         AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
-
         AppState.voice.ws.onopen = () => {
           if (AppState.voice.ws.readyState === WebSocket.OPEN) {
             const validDropdowns = getAllValidDropdownOptions().join(', ');
@@ -5712,9 +5433,7 @@ function closeLocationModal() {
                         - หากผู้ใช้สั่ง "เปิด Google Maps" (เช่น "เปิดแมพ") เรียกใช้ฟังก์ชัน 'open_google_maps_action' 
                     `
                   }]
-
                 },
-
                 tools: [
                   {
                     functionDeclarations: [
@@ -5733,7 +5452,6 @@ function closeLocationModal() {
                         description: "กดปุ่ม 'เปิด Google Maps' บนหน้าต่างแผนที่ทันที เมื่อผู้ใช้สั่งยืนยัน ตกลง หรือ เปิด Google Maps ",
                         parameters: { type: "OBJECT", properties: {} }
                       },
-
                       {
                         name: "switch_tab_category",
                         description: "เลือกแท็บตามหัวข้อที่ผู้ใช้เลือก พร้อมพิมพ์ข้อความค้นหาลงในแท็บนั้นๆ",
@@ -5818,7 +5536,6 @@ function closeLocationModal() {
             };
             AppState.voice.ws.send(JSON.stringify(setupData));
           }
-
           btn.innerHTML = "⏹️หยุดคุยกับAI";
           btn.classList.add('active');
           avatar.classList.add('pulse-animation');
@@ -5935,13 +5652,11 @@ function closeLocationModal() {
               }
               return;
             }
-
             if (response.serverContent?.interrupted) {
               if (AppState.voice.audioOutCtx) {
                 AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
               }
             }
-
             const parts = response.serverContent?.modelTurn?.parts || response.realtimeOutput?.pubsubParts;
             if (parts) {
               for (let part of parts) {
@@ -5952,7 +5667,6 @@ function closeLocationModal() {
             }
           } catch (e) {}
         };
-
         AppState.voice.ws.onclose = () => stopVoiceSession();
       } catch (err) {
         if (statusText) {
@@ -5961,7 +5675,6 @@ function closeLocationModal() {
         }
       }
     }
-
     async function initMicrophone() {
       AppState.voice.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
@@ -5969,7 +5682,6 @@ function closeLocationModal() {
       AppState.voice.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
       const source = AppState.voice.audioCtx.createMediaStreamSource(AppState.voice.mediaStream);
       AppState.voice.processor = AppState.voice.audioCtx.createScriptProcessor(4096, 1, 1);
-
       source.connect(AppState.voice.processor);
       AppState.voice.processor.connect(AppState.voice.audioCtx.destination);
       AppState.voice.processor.onaudioprocess = (e) => {
@@ -5978,7 +5690,6 @@ function closeLocationModal() {
         const inputData = e.inputBuffer.getChannelData(0);
         const pcm16 = convertFloat32ToPCM16(inputData);
         const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
-
         AppState.voice.ws.send(JSON.stringify({
           realtimeInput: {
             audio: { mimeType: "audio/pcm;rate=16000", data: base64Audio }
@@ -5986,14 +5697,12 @@ function closeLocationModal() {
         }));
       };
     }
-
     function convertFloat32ToPCM16(buffer) {
       let l = buffer.length;
       let buf = new Int16Array(l);
       while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
       return buf;
     }
-
     function playPCMData(base64Audio) {
       if (AppState.voice.silenced) return;
       if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
@@ -6003,21 +5712,17 @@ function closeLocationModal() {
       const int16 = new Int16Array(bytes.buffer);
       const float32 = new Float32Array(int16.length);
       for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768.0;
-
       const buffer = AppState.voice.audioOutCtx.createBuffer(1, float32.length, 24000);
       buffer.getChannelData(0).set(float32);
-
       const source = AppState.voice.audioOutCtx.createBufferSource();
       source.buffer = buffer;
       source.connect(AppState.voice.audioOutCtx.destination);
-
       if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
       }
       source.start(AppState.voice.nextPlayTime);
       AppState.voice.nextPlayTime += buffer.duration;
     }
-
     async function stopVoiceSession() {
       AppState.voice.isActive = false;
       AppState.voice.isSetupReady = false;
@@ -6040,7 +5745,6 @@ function closeLocationModal() {
       if (AppState.voice.audioOutCtx && AppState.voice.audioOutCtx.state !== 'closed') {
         try { await AppState.voice.audioOutCtx.close(); } catch (e) {}
       }
-
       const btn = document.getElementById('toggleBtn');
       const avatar = document.getElementById('avatarCircle');
       const statusText = document.getElementById('statusText');
@@ -6054,7 +5758,6 @@ function closeLocationModal() {
         statusText.innerText = "💤 ปิด";
       }
     }
-
     // ==========================================
     // 6. DATABASE & SEARCH FETCHING
     // ==========================================
@@ -6084,7 +5787,6 @@ function closeLocationModal() {
         
         const onclick = btn.getAttribute('onclick') || '';
         const id = btn.id || '';
-
         // รองรับทั้งระบบเก่า (ดูจาก onclick) และระบบใหม่ (ดูจาก id)
         if (onclick.includes('ขาย/เช่า') || id.includes('re_saleBtn')) criteria.priceType = val;
         else if (onclick.includes('คอนโด/บ้าน') || id.includes('re_typeBtn')) criteria.propertyType = val;
@@ -6100,7 +5802,6 @@ function closeLocationModal() {
         else if (id.includes('re_nearbyBtn')) criteria.nearby = val;
         else if (id.includes('re_facilityBtn')) criteria.facility = val;
       });
-
       // ดึงค่าพิกัดจากระบบใหม่ด้วย
       if (window.coordFilterData) {
         if (window.coordFilterData.province) criteria.province = window.coordFilterData.province;
@@ -6114,7 +5815,6 @@ function closeLocationModal() {
       if (window.saleFilterData) {
         criteria.decorSaleType = window.saleFilterData.type;
       }
-
       if (selectedLat && selectedLng) {
         criteria.lat = selectedLat;
         criteria.lng = selectedLng;
@@ -6123,7 +5823,6 @@ function closeLocationModal() {
       console.log('getSelectedCriteria:', criteria);
       return criteria;
     }
-
     function testShowList() {
       AppState.pagination.offset = 0;
       AppState.pagination.hasMore = true;
@@ -6133,7 +5832,6 @@ function closeLocationModal() {
       const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
       fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
-
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
       if (AppState.pagination.isLoading) return;
       AppState.pagination.isLoading = true;
@@ -6142,13 +5840,11 @@ function closeLocationModal() {
       const fallback = document.getElementById('fallbackRetryCard');
       if (loader) loader.style.display = 'block';
       if (fallback) fallback.style.display = 'none';
-
       if (isNewSearch) {
         AppState.pagination.offset = 0;
         AppState.pagination.hasMore = true;
         document.getElementById('resultsContainer').innerHTML = '';
       }
-
       try {
         const payload = {
           action: "searchAll",
@@ -6158,16 +5854,13 @@ function closeLocationModal() {
           criteria: criteria,
           searchText: searchText
         };
-
         const response = await fetch(CONFIG.RENDER_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-
         if (data.status === 'success') {
           renderProperties(data.results);
           AppState.pagination.offset = data.nextOffset;
@@ -6183,7 +5876,6 @@ function closeLocationModal() {
         if (loader) loader.style.display = 'none';
       }
     }
-
     function renderProperties(properties) {
       // v7-8-1 sync properties cache for map markers
       if(properties && properties.length){
@@ -6200,7 +5892,6 @@ function closeLocationModal() {
           if(!isMapModeActive) renderPropertyMarkersOnMap(AppState.data.properties);
         }
       }
-
       const activeTabBtn = document.querySelector('.tab-btn.active');
       if (activeTabBtn && activeTabBtn.id === 'tab-btn-sos') { return; }
       const container = document.getElementById('resultsContainer');
@@ -6256,7 +5947,6 @@ function closeLocationModal() {
     
           <!-- 2. ตรงกลาง: ว่าง ใส่เพิ่มได้ SS -->
           <div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-
           </div>
     
           <!-- 3. ฝั่งขวา: ภาพบ้านสไลด์ซ้าย-ขวาได้ 8 ภาพ (ดึงจาก Database) -->
@@ -6276,7 +5966,6 @@ function closeLocationModal() {
         container.appendChild(card);
       });
     }
-
     function showDetailModal(item) {
       stopAIVoiceSpeech(); 
       document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
@@ -6323,11 +6012,9 @@ function closeLocationModal() {
       
       document.getElementById('detailModalOverlay').classList.add('active');
     }
-
     function closeDetailModal() {
       document.getElementById('detailModalOverlay').classList.remove('active');
     }
-
     // === Lightbox สำหรับดูภาพบ้านแนวตั้ง/แนวนอนแบบเต็มสัดส่วน ===
     function openImageLightbox(src) {
       const lightbox = document.getElementById('imageLightbox');
@@ -6349,21 +6036,16 @@ function closeLocationModal() {
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape') closeImageLightbox();
     });
-
-
     function loadNextPage() {
       if (AppState.pagination.isLoading || !AppState.pagination.hasMore) return;
       fetchDatabase({}, getSelectedCriteria(), false, AppState.pagination.lastSearchText || "");
     }
-
     function retryNextPage() {
       loadNextPage();
     }
-
     function closeUserChatModal() {
       document.getElementById('userChatModalOverlay').classList.remove('active');
     }
-
     function expandChatZone(zone) {
       const listZone = document.getElementById('chatZoneList');
       const roomZone = document.getElementById('chatZoneRoom');
@@ -6412,12 +6094,10 @@ function closeLocationModal() {
         renderUploadGrid();
       }
     }
-
     // ==========================================
     // ระบบ Multi-level Flyout Dropdown (เฉพาะแท็บสินค้าทั่วไป)
     // ==========================================
     let currentFlyoutBtn = null;
-
     // 1. ฟังก์ชันกางเมนูออกมาใต้ปุ่มที่กด
     function openMultiFlyout(event, menuId) {
       currentFlyoutBtn = event.currentTarget;
@@ -6442,14 +6122,12 @@ function closeLocationModal() {
         }
       }
     }
-
     // 2. ฟังก์ชันปิดเมนู
     function closeMultiFlyout() {
       const overlay = document.getElementById('multiFlyoutOverlay');
       if(overlay) overlay.classList.remove('active');
       document.querySelectorAll('.flyout-menu').forEach(m => m.classList.remove('active'));
     }
-
     // 3. ฟังก์ชันกางเมนูย่อย (Accordion) - แยกคลิกชัดเจน
     function toggleSubFlyout(e, arrowBtn) {
       if (e) { e.stopPropagation(); e.preventDefault(); }
@@ -6467,7 +6145,6 @@ function closeLocationModal() {
       if(item) item.classList.toggle('expanded', !isActive);
       console.log('toggle submenu:', group, !isActive);
     }
-
     // 4. ฟังก์ชันเมื่อผู้ใช้กดเลือกสินค้าเรียบร้อย - รองรับเลือกได้ทุกชั้น + รีเซ็ตแถวเดียวกัน
     function selectFlyoutValue(e, value) {
       if (typeof e === 'string' && value === undefined) {
@@ -6487,7 +6164,6 @@ function closeLocationModal() {
         testShowList();
       }
     }
-
     // สำหรับแท็บอสังหา - ถ้ามีการเลือกจาก modal เดิม ให้รีเซ็ตแถวเดียวกันด้วย
     // เก็บปุ่มปัจจุบันที่เปิด modal ไว้ใน currentFlyoutBtn เหมือนกัน เพื่อให้ logic เดียวกันทำงาน
     const originalOpenDropdownModal = window.openDropdownModal;
@@ -6509,7 +6185,6 @@ function closeLocationModal() {
       }
     }
     
-
     // เก็บค่า default ของ dropdown ทั้งหมดตอนโหลด
     function initDefaultValues() {
       document.querySelectorAll('.filter-btn, .decor-btn').forEach(btn => {
@@ -6522,7 +6197,6 @@ function closeLocationModal() {
     document.addEventListener('DOMContentLoaded', initDefaultValues);
     // กันพลาดถ้า script อยู่ท้ายไฟล์แล้ว
     if (document.readyState !== 'loading') initDefaultValues();
-
     // ฟังก์ชันรีเซ็ตเฉพาะแถวเดียวกันเท่านั้น!
     function resetOtherDropdownsInSameRow(currentBtn) {
       if (!currentBtn) return;
@@ -6546,8 +6220,6 @@ function closeLocationModal() {
       });
       console.log('reset same row:', parentRow, 'except', currentBtn.innerText);
     }
-
-
     // === Helper สำหรับ Real Estate Flyout ===
     function filterFlyoutOptions(inputEl, menuId) {
       const term = inputEl.value.toLowerCase();
@@ -6569,13 +6241,10 @@ function closeLocationModal() {
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
     }
-
-
     // === ระบบ พิกัด ใหม่ - ต่อท้าย ขาย/เช่า ===
     let selectedProvince = null;
     let selectedDistrict = null;
     let selectedLatLng = null;
-
     const provinceList = [
       "กทม.", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
       "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด",
@@ -6589,7 +6258,6 @@ function closeLocationModal() {
       "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง",
       "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
     ];
-
     const districtMap = {
       "กทม.": ["เขตพระนคร", "เขตดุสิต", "เขตหนองจอก", "เขตบางรัก", "เขตบางเขน", "เขตบางกะปิ", "เขตปทุมวัน", "เขตป้อมปราบศัตรูพ่าย", "เขตพระโขนง", "เขตมีนบุรี", "เขตลาดกระบัง", "เขตยานนาวา", "เขตสัมพันธวงศ์", "เขตพญาไท", "เขตธนบุรี", "เขตบางกอกใหญ่", "เขตห้วยขวาง", "เขตคลองสาน", "เขตตลิ่งชัน", "เขตบางกอกน้อย", "เขตบางขุนเทียน", "เขตภาษีเจริญ", "เขตหนองแขม", "เขตราษฎร์บูรณะ", "เขตบางพลัด", "เขตดินแดง", "เขตบึงกุ่ม", "เขตสาทร", "เขตบางซื่อ", "เขตจตุจักร", "เขตบางคอแหลม", "เขตประเวศ", "เขตคลองเตย", "เขตสวนหลวง", "เขตจอมทอง", "เขตดอนเมือง", "เขตราชเทวี", "เขตลาดพร้าว", "เขตวัฒนา", "เขตบางแค", "เขตหลักสี่", "เขตสายไหม", "เขตคันนายาว", "เขตสะพานสูง", "เขตวังทองหลาง", "เขตคลองสามวา", "เขตบางนา", "เขตทวีวัฒนา", "เขตทุ่งครุ", "เขตบางบอน"],
       "นนทบุรี": ["เมืองนนทบุรี", "บางกรวย", "บางใหญ่", "บางบัวทอง", "ไทรน้อย", "ปากเกร็ด"],
@@ -6601,7 +6269,6 @@ function closeLocationModal() {
       "ขอนแก่น": ["เมืองขอนแก่น", "บ้านฝาง", "พระยืน", "หนองเรือ", "ชุมแพ"],
       "default": ["เมือง", "อำเภอ 1", "อำเภอ 2", "อำเภอ 3"]
     };
-
     function initCoordFlyout() {
       const submenu = document.getElementById('provinceSubmenu');
       if(!submenu) return;
@@ -6614,7 +6281,6 @@ function closeLocationModal() {
         submenu.appendChild(div);
       });
     }
-
     function selectProvince(e, prov) {
       if(e){ e.stopPropagation(); e.preventDefault(); }
       selectedProvince = prov;
@@ -6634,7 +6300,6 @@ function closeLocationModal() {
         districtGroup.querySelector('.flyout-item')?.classList.add('expanded');
       }
     }
-
     function loadDistrictsForProvince(prov) {
       const submenu = document.getElementById('districtSubmenu');
       if(!submenu) return;
@@ -6648,7 +6313,6 @@ function closeLocationModal() {
         submenu.appendChild(div);
       });
     }
-
     function selectDistrict(e, dist) {
       if(e){ e.stopPropagation(); e.preventDefault(); }
       selectedDistrict = dist;
@@ -6659,7 +6323,6 @@ function closeLocationModal() {
       });
       updateCoordSummary();
     }
-
     function selectCoordMain(e, type) {
       if(e){ e.stopPropagation(); e.preventDefault(); }
       // ถ้ากดที่คำว่า จังหวัด/เขต ให้ toggle อย่างเดียว
@@ -6669,7 +6332,6 @@ function closeLocationModal() {
         group.querySelector('.flyout-item')?.classList.toggle('expanded');
       }
     }
-
     function openCoordMapFromFlyout(e) {
       if(e){ e.stopPropagation(); e.preventDefault(); }
       closeMultiFlyout();
@@ -6678,7 +6340,6 @@ function closeLocationModal() {
         openLocationModal();
       }
     }
-
     // รับค่าจาก modal พิกัดเดิมมา
     function setCoordFromMap(lat, lng) {
       selectedLatLng = {lat, lng};
@@ -6691,7 +6352,6 @@ function closeLocationModal() {
         btn.style.color = '#0e6b38';
       }
     }
-
     function updateCoordSummary() {
       const el = document.getElementById('coordSummary');
       if(!el) return;
@@ -6707,7 +6367,6 @@ function closeLocationModal() {
         btn.classList.add('active-sale');
       }
     }
-
     function confirmCoordFilter() {
       window.coordFilterData = {
         province: selectedProvince,
@@ -6718,7 +6377,6 @@ function closeLocationModal() {
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
     }
-
     function clearCoordFilter() {
       selectedProvince = null;
       selectedDistrict = null;
@@ -6738,11 +6396,9 @@ function closeLocationModal() {
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
     }
-
     // init เมื่อโหลด
     document.addEventListener('DOMContentLoaded', initCoordFlyout);
     if(document.readyState !== 'loading') initCoordFlyout();
-
     // Hook ตอน confirmLocation เดิม ให้ส่งค่ามาที่ coord filter ด้วย
     const origConfirmLocation = window.confirmLocation;
     if(typeof origConfirmLocation === 'function'){
@@ -6755,11 +6411,8 @@ function closeLocationModal() {
         return origConfirmLocation.apply(this, arguments);
       }
     }
-
-
     // === ระบบ ขาย/เช่า แถวบน (แยกอิสระจากแถวล่าง) ===
     let activeSaleType = null;
-
     function validateNumberOnly(input) {
       // บังคับตัวเลขเท่านั้น ห้ามตัวอักษร คอมมา หน่วย
       let v = input.value;
@@ -6776,7 +6429,6 @@ function closeLocationModal() {
       // อัพเดทปุ่มทันทีถ้ามีการกรอก
       updateSaleBtnText();
     }
-
     function setActiveSaleType(type) {
       activeSaleType = type;
       document.querySelectorAll('#saleTypeFlyout .sale-item-group').forEach(g => {
@@ -6784,7 +6436,6 @@ function closeLocationModal() {
       });
       updateSaleBtnText();
     }
-
     function selectSaleType(e, headerEl, type) {
       if(e){ e.stopPropagation(); e.preventDefault(); }
       setActiveSaleType(type);
@@ -6793,7 +6444,6 @@ function closeLocationModal() {
       const firstInput = group.querySelector('.sale-input');
       if(firstInput) setTimeout(()=>firstInput.focus(), 100);
     }
-
     function updateSaleBtnText() {
       const btn = document.getElementById('saleTypeBtn');
       if(!btn || !activeSaleType) return;
@@ -6821,7 +6471,6 @@ function closeLocationModal() {
       btn.classList.add('active-sale');
       btn.dataset.selectedValue = activeSaleType;
     }
-
     function confirmSaleType() {
       updateSaleBtnText();
       // เก็บค่าลง state เพื่อส่งไปค้นหา
@@ -6841,7 +6490,6 @@ function closeLocationModal() {
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
     }
-
     function clearSaleType() {
       activeSaleType = null;
       document.querySelectorAll('#saleTypeFlyout .sale-input').forEach(i=>i.value='');
@@ -6856,7 +6504,6 @@ function closeLocationModal() {
       closeMultiFlyout();
       if (typeof testShowList === 'function') testShowList();
     }
-
     // กันไม่ให้ saleTypeBtn โดน resetOtherDropdownsInSameRow เพราะอยู่คนละ row อยู่แล้ว แต่ย้ำอีกชั้น
     // 5. ฟังก์ชันสำหรับปุ่ม "ล้างค่า" ในหน้าสินค้าทั่วไป
     function resetAllFiltersDecor() {
@@ -6898,7 +6545,6 @@ function closeLocationModal() {
       if (coordSummary) coordSummary.innerText = 'ยังไม่ได้เลือกพิกัด';
       const districtSubmenu = document.getElementById('districtSubmenu');
       if (districtSubmenu) districtSubmenu.innerHTML = '<div style="padding:10px 16px; font-size:12px; color:#888; text-align:center;">กรุณาเลือกจังหวัดก่อน</div>';
-
       // ล้างอสังหาด้วยตามคำสั่ง ทุก dropdown
       const reBtns = document.querySelectorAll('#tab-content-realestate .filter-btn');
       reBtns.forEach(btn => {
@@ -6910,14 +6556,10 @@ function closeLocationModal() {
       if (typeof testShowList === 'function') testShowList();
     }
   
-
-
-
     // ===================== SOS EMERGENCY HUB - 5 Tabs System (FINAL v10.1) =====================
     let crisisModeEnabled = true;
     let selectedSOSTags = new Set();
     let sosRequestsCache = [];
-
     function toggleCrisisMode(enabled) {
       crisisModeEnabled = enabled;
       const sosBtn = document.getElementById('tab-btn-sos');
@@ -6931,7 +6573,6 @@ function closeLocationModal() {
       }
       localStorage.setItem('crisis_mode', enabled ? '1' : '0');
     }
-
     document.addEventListener('DOMContentLoaded', () => {
       const logo = document.querySelector('.mascot-img') || document.querySelector('.ai-avatar');
       if (logo) {
@@ -6957,10 +6598,8 @@ function closeLocationModal() {
       }
       loadSOSRequests();
     });
-
     /* === v17.1 SOS Role Limit System - START - แก้เฉพาะจุดขอให้ช่วยเท่านั้น === */
     const SOS_LIMITS = { general: 1, special: 9, admin: 999 };
-
     async function getMySOSCountAndPosts(userId){
       try{
         if(!userId || typeof supabaseClient==='undefined' || !supabaseClient) return [];
@@ -6975,7 +6614,6 @@ function closeLocationModal() {
         return data || [];
       }catch(e){ console.warn('[v17.1 SOS count] exception', e); return []; }
     }
-
     async function canDeleteSOS(sosId, requestOwnerId){
       try{
         const myRole = await getCurrentUserRole();
@@ -6985,7 +6623,6 @@ function closeLocationModal() {
         return false;
       }catch(e){ return false; }
     }
-
     // v17.17 FIX - เพิ่มเช็คสิทธิ์ลบเตือนท่วม (ไม่ลบของเก่า)
     async function canDeleteFloodWarning(warningId, warningOwnerId){
       try{
@@ -7003,16 +6640,13 @@ function closeLocationModal() {
         return false;
       }catch(e){ return false; }
     }
-
     // [REMOVED old openSOSModalForEdit - replaced v17.22]
-
     // === FIX v17.22 - แมปตรง DB schema 31 columns ===
     function setSOSSubmitButtonText(isEdit){
       const txt = isEdit ? '💾 บันทึกการแก้ไข' : '🚨 ส่งขอความช่วยเหลือทันที';
       const sels = ['#sosSubmitBtn','#sosModalOverlay button[onclick="submitSOS()"]','#sosModalOverlay button[onclick*="submitSOS"]','#sosDropdownModal button[onclick="submitSOS()"]','#sosDropdownModal button[onclick*="submitSOS"]','button[onclick="submitSOS()"]'];
       sels.forEach(sel=>{ const b=document.querySelector(sel); if(b){ b.textContent=txt; b.innerText=txt; if(isEdit) b.dataset.mode='edit'; else delete b.dataset.mode; } });
     }
-
     function openSOSModalForEdit(postData){
       try{
         console.log('[v17.22 edit] DB row:', postData);
@@ -7057,7 +6691,6 @@ function closeLocationModal() {
         setSOSSubmitButtonText(true);
       }catch(e){ console.error('[v17.22 edit] error', e); }
     }
-
     function showSOSLimitPickerModal(myPosts, limit){
       const old = document.getElementById('sosLimitPickerOverlay');
       if(old) old.remove();
@@ -7094,7 +6727,6 @@ function closeLocationModal() {
         document.getElementById('sosLimitPickerOverlay').remove();
       };
     }
-
     async function openSOSModal() { 
       try{
         const myRoleInfo = await getCurrentUserRole();
@@ -7138,7 +6770,6 @@ function closeLocationModal() {
       }
     }
     /* === v17.1 SOS Role Limit System - END === */
-
     function closeSOSModal() { document.getElementById('sosModalOverlay').classList.remove('active'); }
     
     function toggleSOSTag(btn) {
@@ -7153,7 +6784,6 @@ function closeLocationModal() {
       if(evacEl) evacEl.style.display = selectedSOSTags.has('evacuate') ? 'block' : 'none';
       if(evacHint) evacHint.style.display = selectedSOSTags.has('evacuate') ? 'block' : 'none';
     }
-
     function getCurrentUserLocationSOS() {
       if (typeof getCurrentUserLocation === 'function') getCurrentUserLocation();
       setTimeout(() => {
@@ -7163,7 +6793,6 @@ function closeLocationModal() {
         if (lng) document.getElementById('sosLng').value = lng;
       }, 800);
     }
-
     // v7.7 Helpers for evac destination
     function setEvacQuick(text){
       const el = document.getElementById('sosEvacDestination');
@@ -7211,13 +6840,8 @@ function closeLocationModal() {
         }
       }
     };
-
-
-
     // v7.7 FIX: ลบ submitSOS ตัวแรกที่ซ้ำซ้อน ใช้ window.submitSOS ตัวเดียวด้านล่างแทน เพื่อแก้ SyntaxError await
     
-
-
     async function loadSOSRequests() {
       // 1. โหลดจาก Supabase จริง
       let hasRealData = false;
@@ -7243,7 +6867,6 @@ function closeLocationModal() {
       } catch (e) {
         console.warn('โหลด Supabase ไม่ได้', e);
       }
-
       // 2. ถ้าไม่มี Supabase จริงๆ ให้ใช้ Mock เพื่อเทส UI
       if (!hasRealData && (!sosRequestsCache || sosRequestsCache.length === 0)) {
         if (typeof supabaseClient === 'undefined' || !supabaseClient) {
@@ -7256,7 +6879,6 @@ function closeLocationModal() {
           renderSOSList(sosRequestsCache);
         }
       }
-
       // 3. เปิด Realtime (ทำงานเสมอ ไม่ว่า return หรือไม่)
       try {
         if (typeof supabaseClient !== 'undefined' && supabaseClient) {
@@ -7275,8 +6897,6 @@ function closeLocationModal() {
         console.error('Realtime error', e);
       }
     }
-
-
     let isSOSMapExpanded = false;
     function toggleSOSMapSize() {
       const mapContainer = document.getElementById('sosMapContainer');
@@ -7292,12 +6912,10 @@ function closeLocationModal() {
       }
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 350);
     }
-
     var sosMap = null;
     var sosMarkersLayer = null;
     window.sosMap = window.sosMap || null;
     window.sosMarkersLayer = window.sosMarkersLayer || null;
-
 function ensureSOSMapVisible(){
   const c=document.getElementById('sosMapContainer');
   const p=document.getElementById('sosMapPreview');
@@ -7321,7 +6939,6 @@ function initSOSMap(){
       // === v15.5 CLEAN: เหลือแค่ปุ่มเต็มจอ ไม่เอาปุ่ม ↕️ แล้ว ===
       // DELETED: mapControlBar ถูกลบทิ้งถาวรตามคำสั่ง - ย้ายปุ่มไปอยู่ใน tab แล้ว (tabFullscreenBtn)
     }
-
     // ปรับความสูงอัตโนมัติเมื่ออยู่ในโหมด warnings
     if(window.currentViewMode==='warnings'){
       const c=document.getElementById('sosMapContainer');
@@ -7384,14 +7001,11 @@ function updateFullscreenOverlay(list){
     tempDiv.innerHTML=html;
     tempDiv.querySelectorAll('#circleFilterBar, #circleFilterBarFullscreen').forEach(el=>el.remove());
     const cardsHtml = tempDiv.innerHTML;
-
     // สร้างแถบเดียวเท่านั้น
     const base=window.floodWarningsCache||[];
     const barHtml = `<div id="circleFilterBarFullscreen" style="background:#eff6ff; border:1.5px solid #3b82f6; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#1e40af;"><span>📍 ในวงกลมนี้มี ${list.length} รายการ (จาก ${base.length})</span><button onclick="clearCircleFilter(); updateFullscreenOverlay(window.floodWarningsCache||[]);" style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button></div>`;
-
     ov.innerHTML = barHtml + cardsHtml;
     ov.style.display='block';
-
     // === v15.9 FIX + v15.10 FIX z-index/fullscreen: กดการ์ดใน overlay เต็มจอ -> ออกจากเต็มจอแล้วเด้งไปหน้า detail ===
     setTimeout(()=>{
       ov.querySelectorAll('[data-warning-id]').forEach(card=>{
@@ -7446,9 +7060,6 @@ document.addEventListener('fullscreenchange', ()=>{
     }
   }
 });
-
-
-
     function _old_initSOSMap_temp() {
       const mapEl = document.getElementById('sosMapPreview');
       if (!mapEl) return;
@@ -7502,7 +7113,6 @@ document.addEventListener('fullscreenchange', ()=>{
       // init map after load
       setTimeout(() => { if (window.sosMap) window.sosMap.invalidateSize(); }, 300);
     }
-
     // === v13.6 FIX กดหมุด -> ฟีดล่างเลื่อนหา + เปิดรายละเอียด (ตามรูป 1,2,3) ===
     
         function onSOSMarkerClicked(sosId){
@@ -7522,19 +7132,10 @@ document.addEventListener('fullscreenchange', ()=>{
       }
     }
     window.onSOSMarkerClicked = onSOSMarkerClicked;
-
     // Alias for old calls
     window.onFloodMarkerClickedSafe = onSOSMarkerClicked;
-
-
-
     // Alias สำหรับโค้ดเก่าที่เรียก onFloodMarkerClicked แต่จริงๆ เป็น SOS
     window.onSOSMarkerClickedSafe = onSOSMarkerClicked;
-
-
-
-
-
     // ===== v9.5 FIX - Auto Expire Logic (3 วันไม่มีอัปเดต) =====
     // เรียกทุกครั้งที่โหลดลิสต์ - จะเปลี่ยน status เป็น expired แบบ soft delete ไม่ลบจริง
     async function autoExpireOldRequests() {
@@ -7558,7 +7159,6 @@ document.addEventListener('fullscreenchange', ()=>{
         }
       } catch(e){ console.warn('autoExpire error', e); }
     }
-
     // SQL สำหรับตั้งใน Supabase Dashboard > SQL Editor (แนะนำให้รันครั้งเดียว)
     // --- START SQL ---
     // -- 1. เพิ่มคอลัมน์ถ้ายังไม่มี
@@ -7572,11 +7172,8 @@ document.addEventListener('fullscreenchange', ()=>{
     // $$);
     // -- 3. ลบรูปใน storage ที่ completed เกิน 30 วัน (กันเต็ม)
     // --- END SQL ---
-
     // เรียกตอนโหลด
     // setTimeout(autoExpireOldRequests, 5000);
-
-
         window._lastHighlightedSOSId = window._lastHighlightedSOSId || null;
     function applyPersistedHighlight(){
       if(!window._lastHighlightedSOSId) return;
@@ -7601,10 +7198,8 @@ document.addEventListener('fullscreenchange', ()=>{
       const counts = {all:baseForCount.length, evacuate:0, food:0, medicine:0, clothes:0, power:0, shelter:0};
       baseForCount.forEach(r => { (r.need_types||[]).forEach(t => { if (counts[t] !== undefined) counts[t]++; }); });
       Object.keys(counts).forEach(k => { const el = document.getElementById('count-'+k); if (el) el.textContent = counts[k]; });
-
       // map vehicle code to readable
       const vehicleMap = {boat:'🛶 เรือ (ท้องแบน/พาย)', high_truck:'🚚 รถยกสูง/รถทหาร', pickup:'🛻 รถกระบะ', car:'🚗 รถเก๋ง', any:'อะไรก็ได้ ขอออกก่อน'};
-
       const sosCardsHtml = list.map(item => {
         const statusIcon = item.status === 'waiting' ? '🔴' : item.status === 'going' ? '🟢' : item.status === 'completed' ? '⚫' : item.status === 'expired' ? '⚪' : '🔵';
         const statusText = item.status === 'waiting' ? '' : item.status === 'going' ? 'กำลังเข้าช่วยเหลือแล้ว' : item.status === 'completed' ? 'เสร็จสิ้นแล้ว' : item.status === 'expired' ? 'หมดอายุ (3วันไม่มีอัปเดต)' : 'จุดแจก/พักพิง';
@@ -7628,7 +7223,6 @@ document.addEventListener('fullscreenchange', ()=>{
           }
         }catch(_){}
         const sosRoleBadge = getSOSRoleBadgeHTML(effectiveRole, effectiveTrusted, item.reporter_type);
-
         // คำสั่งที่สอง: เวลา + วันที่แบบย่อที่สุด เช่น 1ต.ค. 11:30
         let timeAgo = '';
         if(item.created_at){
@@ -7641,13 +7235,11 @@ document.addEventListener('fullscreenchange', ()=>{
           timeAgo = `${day}${mon} ${hr}:${min}`;
         }
         const isEvac = (item.need_types||[]).includes('evacuate');
-
         // --- v8.6 FIX: เตรียมข้อมูลอพยพ 3 ฟิลด์ ---
         const origin = item.origin_text || item.location_text || '-';
         const destination = item.evac_destination_text || item.evac_destination || '';
         const vehicleRaw = item.evac_vehicle_type || '';
         const vehicleLabel = vehicleMap[vehicleRaw] || vehicleRaw || 'ไม่ระบุ';
-
         let evacDetailHtml = '';
         if(isEvac){
           const safeOrigin = typeof escapeHtml!=='undefined' ? escapeHtml(origin) : origin;
@@ -7676,7 +7268,6 @@ document.addEventListener('fullscreenchange', ()=>{
               <button style="background:#fff; color:#ff3b30; border:1px solid #fecaca; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:auto;" onclick="if(window.sosMap){window.sosMap.setView([${item.lat||13.7563}, ${item.lng||100.5018}], 15); document.getElementById('sosMapContainer').scrollIntoView({behavior:'smooth'});} event.stopPropagation();">📍 ดูบนแผนที่</button>
             </div>
             <div style="font-size:13px; color:#333; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${typeof escapeHtml!=='undefined' ? escapeHtml(item.location_text||'-') : (item.location_text||'-')}</div>
-
             <div style="font-size:11px; color:#666; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">👥 ${item.people_count||1} คน • 📞 <span title="กดติดต่อเพื่อดูเบอร์เต็ม">${typeof maskPhone!=="undefined" ? maskPhone(item.contact_phone) : (item.contact_phone||"-")}</span>
               <button style="background:#4a83cc; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.8;" onclick="openSOSChatById('${item.id}', event); event.stopPropagation();">💬 ติดต่อ</button>
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
@@ -7696,10 +7287,8 @@ document.addEventListener('fullscreenchange', ()=>{
           </div>` : `<div style="width:92px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9; border-radius:10px; border:1px dashed #cbd5e1; font-size:10px; color:#94a3b8;">📷 ไม่มีรูป</div>`}
         </div>`;
       }).join('');
-
       const sosResultsDiv = document.getElementById('sosResults');
       if (sosResultsDiv) sosResultsDiv.innerHTML = sosCardsHtml;
-
       const listContainer = document.getElementById('list-container');
       const activeTab = document.querySelector('.tab-btn.active');
       const isSOSActive = activeTab && activeTab.id === 'tab-btn-sos';
@@ -7713,14 +7302,12 @@ document.addEventListener('fullscreenchange', ()=>{
         const noResults = document.getElementById('no-results');
         if (noResults) noResults.style.display = 'none';
       }
-
       if (typeof updateSOSMapMarkers === 'function') {
         updateSOSMapMarkers(list);
       }
       // v14.1 persist highlight after render
       setTimeout(applyPersistedHighlight, 100);
     }
-
     function filterSOS(type) {
       document.querySelectorAll('.sos-chip').forEach(b => b.classList.remove('active'));
       const btn = document.querySelector(`.sos-chip[data-need="${type}"]`);
@@ -7730,7 +7317,6 @@ document.addEventListener('fullscreenchange', ()=>{
       if (type === 'all') renderSOSList(base);
       else renderSOSList(base.filter(r => (r.need_types||[]).includes(type)));
     }
-
     function switchToHelperMode() {
       const mapContainer = document.getElementById('sosMapContainer');
       if (mapContainer) {
@@ -7743,10 +7329,7 @@ document.addEventListener('fullscreenchange', ()=>{
       }
       filterSOS('all');
     }
-
     // ===================== END SOS FINAL =====================
-
-
     // ===== FIX คำสั่งที่ 1: อัปเดตวันที่และเวลาเป็นปัจจุบันแบบ Real-time =====
     function updateFloodCenterTime() {
       const now = new Date();
@@ -7765,26 +7348,20 @@ document.addEventListener('fullscreenchange', ()=>{
     updateFloodCenterTime();
     setInterval(updateFloodCenterTime, 60000);
     // ===================== END FIX คำสั่งที่ 1 =====================
-
-
-
     // ===================== SOS ENHANCED v6.6 - คำสั่ง 1,2,3 =====================
     // หลักการตั้งชื่อรูปเดิม: property-images ใช้ ${userId}-${newPropertyId}-${001}.${ext}
     // สำหรับ SOS ใช้ bucket 'flood-photos' โครงสร้างเดียวกัน: userid-postid-imagenumber
     // 1 คน = 1 โพสต์ เช็คจาก user_id
-
     window.sosUploadedFiles = window.sosUploadedFiles || [];
     window.sosExistingImageUrls = window.sosExistingImageUrls || []; // url ที่เคยอัปโหลดแล้ว
     window.currentSOSPostId = window.currentSOSPostId || null;
     window.currentSOSUserId = window.currentSOSUserId || null;
-
     
     // === v18.1 SOS: บีบอัดรูปไม่เกิน 500KB ===
     const SOS_MAX_KB = 500;
     const SOS_MAX_BYTES = SOS_MAX_KB * 1024;
     const FLOOD_MAX_KB = 500;
     const FLOOD_MAX_BYTES = FLOOD_MAX_KB * 1024;
-
     function loadImageFromFile(file){
       return new Promise((resolve, reject)=>{
         const url = URL.createObjectURL(file);
@@ -7821,7 +7398,6 @@ document.addEventListener('fullscreenchange', ()=>{
         canvas.width = w;
         canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
-
         let quality = 0.85;
         let compressed = await canvasToFile(canvas, file.name, quality);
         let attempts = 0;
@@ -7889,7 +7465,6 @@ document.addEventListener('fullscreenchange', ()=>{
       }
       return out;
     }
-
     async function handleSOSFilesSelected(event){
       // v18.1 SOS: บีบอัดไม่เกิน 500KB ก่อนพรีวิว
       const targetFiles = event && event.target && event.target.files ? Array.from(event.target.files) : [];
@@ -7909,7 +7484,6 @@ document.addEventListener('fullscreenchange', ()=>{
       if(camInput) camInput.value='';
       if(event && event.target) event.target.value='';
     }
-
     // === v18 SOS Camera Continuous 8 shots === //
     function openSOSPreview(newFiles){
       if(!window.sosPendingPreviewFiles) window.sosPendingPreviewFiles=[];
@@ -8047,21 +7621,15 @@ document.addEventListener('fullscreenchange', ()=>{
     window.sosPendingPreviewFiles = window.sosPendingPreviewFiles || [];
     window.sosCameraTempFiles = window.sosCameraTempFiles || [];
     window.sosCameraStream = window.sosCameraStream || null;
-
-
-
     function renderSOSUploadGrid(){
       const grid = document.getElementById('sosUploadGrid');
       const statusText = document.getElementById('sosUploadStatusText');
       if(!grid) return;
       if(!window.sosUploadedFiles) window.sosUploadedFiles=[];
       if(!window.sosExistingImageUrls) window.sosExistingImageUrls=[];
-
       const total = window.sosExistingImageUrls.length + window.sosUploadedFiles.length;
       if(statusText) statusText.innerText = `อัปโหลดรูปภาพ (${total}/8)`;
-
       grid.innerHTML='';
-
       // แสดงรูปเก่าที่มีอยู่แล้ว (จากโพสต์เดิม)
       window.sosExistingImageUrls.forEach((url, idx)=>{
         const box = document.createElement('div');
@@ -8074,7 +7642,6 @@ document.addEventListener('fullscreenchange', ()=>{
         `;
         grid.appendChild(box);
       });
-
       // แสดงรูปใหม่ที่เพิ่งเลือก
       window.sosUploadedFiles.forEach((file, index)=>{
         const box = document.createElement('div');
@@ -8088,7 +7655,6 @@ document.addEventListener('fullscreenchange', ()=>{
         `;
         grid.appendChild(box);
       });
-
       const remaining = 8 - total;
       for(let i=0;i<remaining;i++){
         const emptyBox=document.createElement('div');
@@ -8098,7 +7664,6 @@ document.addEventListener('fullscreenchange', ()=>{
         grid.appendChild(emptyBox);
       }
     }
-
     function deleteSOSImage(index){
       window.sosUploadedFiles.splice(index,1);
       renderSOSUploadGrid();
@@ -8112,7 +7677,6 @@ document.addEventListener('fullscreenchange', ()=>{
       renderSOSUploadGrid();
     }
     window.sosImagesToDelete = window.sosImagesToDelete || [];
-
     async function checkAndLoadExistingSOS(){
       try{
         const userId = await getCurrentUserId();
@@ -8127,7 +7691,6 @@ document.addEventListener('fullscreenchange', ()=>{
         return null;
       }catch(e){ console.warn(e); return null; }
     }
-
     function fillSOSFormWithExisting(post){
       if(!post) return;
       window.currentSOSPostId = post.id || post.post_id;
@@ -8174,7 +7737,6 @@ document.addEventListener('fullscreenchange', ()=>{
       if(typeof renderSOSUploadGrid==='function') renderSOSUploadGrid();
       if(typeof setSOSSubmitButtonText==='function') setSOSSubmitButtonText(true);
     }
-
     // Override openSOSModal to include check existing + scroll reset + clear
     const _origOpenSOSModal = window.openSOSModal;
     window.openSOSModal = async function(){
@@ -8210,25 +7772,21 @@ document.addEventListener('fullscreenchange', ()=>{
         renderSOSUploadGrid();
       }
     };
-
     window.closeSOSModal = function(){
       document.getElementById('sosModalOverlay').classList.remove('active');
       if(typeof setSOSSubmitButtonText==='function') setSOSSubmitButtonText(false);
     };
-
     // Override submitSOS - รวม logic รูปภาพ 8 รูป + 1 คน 1 โพสต์
     // v17.20 FIX คำสั่งที่ 1 - กันกดเบิ้ลเฉพาะ แจ้งขอให้ช่วยเท่านั้น (ไม่แตะเตือนท่วม)
     window._isSubmittingSOS = window._isSubmittingSOS || false;
     window.submitSOS = async function(){
       // HOTFIX SOS PHONE BUG - ย้าย validation มาก่อนล็อคปุ่ม กันค้าง "กำลังบันทึก..."
       if(window._isSubmittingSOS){ console.log('[v17.20 SOS] กันกดเบิ้ล'); return; }
-
       // 1. validation ก่อนล็อค
       const phoneEarly = document.getElementById('sosPhone')?.value.trim() || '';
       const locTextEarly = document.getElementById('sosLocationText')?.value.trim() || '';
       const latEarly = document.getElementById('sosLat')?.value || document.getElementById('latInput')?.value || '';
       const lngEarly = document.getElementById('sosLng')?.value || document.getElementById('lngInput')?.value || '';
-
       if (typeof selectedSOSTags !== 'undefined' && selectedSOSTags.size === 0) { alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); return; }
       if (!phoneEarly) { alert('กรุณากรอกเบอร์โทร/Line ID'); document.getElementById('sosPhone')?.focus(); return; }
       if (!locTextEarly && !latEarly) { alert('กรุณาปักหมุดพิกัดหรือกรอกรายละเอียดสถานที่'); return; }
@@ -8236,12 +7794,10 @@ document.addEventListener('fullscreenchange', ()=>{
         const evacDestEarly = document.getElementById('sosEvacDestination')?.value.trim() || '';
         if(!evacDestEarly){ alert('⚠️ หมวดยานพาหนะ/อพยพ: กรุณาระบุปลายทางว่าจะให้ไปส่งที่ไหน (เช่น ศูนย์อพยพ วัด...)'); document.getElementById('sosEvacDestination')?.focus(); return; }
       }
-
       // 2. ผ่าน validation แล้วค่อยล็อคปุ่ม
       window._isSubmittingSOS = true;
       let sosBtn = document.getElementById('sosSubmitBtn') || document.querySelector('#sosModalOverlay button[onclick*="submitSOS"]') || document.querySelector('button[onclick="submitSOS()"]');
       if(sosBtn){ sosBtn.disabled=true; if(!sosBtn.dataset.origText) sosBtn.dataset.origText=sosBtn.innerHTML; sosBtn.innerHTML='⏳ กำลังบันทึก...'; }
-
       // v6.7 FIX: ยามเฝ้าประตู - ต้องยืนยันตัวตน LINE จริงเท่านั้น (ถ้าไม่ผ่านต้องปลดล็อค)
       if (typeof currentUserLineProfile !== 'undefined' && typeof CURRENT_USER_ID !== 'undefined' && (!currentUserLineProfile || !CURRENT_USER_ID)) {
         const freshId = await getCurrentUserId();
@@ -8252,12 +7808,10 @@ document.addEventListener('fullscreenchange', ()=>{
           return;
         }
       }
-
       const phone = document.getElementById('sosPhone').value.trim();
       const locText = document.getElementById('sosLocationText').value.trim();
       const lat = document.getElementById('sosLat').value || document.getElementById('latInput')?.value;
       const lng = document.getElementById('sosLng').value || document.getElementById('lngInput')?.value;
-
       // re-check เผื่อมีการเปลี่ยนแปลง
       if (selectedSOSTags.size === 0) { 
         alert('กรุณาเลือกประเภทความช่วยเหลืออย่างน้อย 1 อย่าง'); 
@@ -8288,7 +7842,6 @@ document.addEventListener('fullscreenchange', ()=>{
           return; 
         }
       }
-
       let userId = null;
       try{ 
         userId = await getCurrentUserId(); 
@@ -8301,7 +7854,6 @@ document.addEventListener('fullscreenchange', ()=>{
         alert('⚠️ เกิดข้อผิดพลาดในการยืนยันตัวตน LINE');
         return;
       }
-
       // v17.11 FIX - ดึง role มาก่อนสร้าง payload เพื่อบันทึก role ลงโพสต์
       let myRoleForPayload = {role:'general', is_trusted:false};
       try{ myRoleForPayload = await getCurrentUserRole(); }catch(_){}
@@ -8335,10 +7887,8 @@ document.addEventListener('fullscreenchange', ()=>{
         reporter_role: myRoleForPayload.role,
         reporter_trusted: myRoleForPayload.is_trusted
       };
-
       try{
         if(typeof supabaseClient==='undefined' || !supabaseClient) throw new Error('No supabaseClient');
-
         // v17.8 FIX: ตรวจสอบ role ก่อนบังคับ 1 คน 1 โพสต์ - แก้บั๊ก admin ได้แค่ 1 โพสต์
         let existingPost = null;
         let myRoleForSubmit = {role:'general'};
@@ -8370,7 +7920,6 @@ document.addEventListener('fullscreenchange', ()=>{
             }
           }
         }
-
         // v17.15 FIX - ฟังก์ชันลบโพสต์แบบยืดหยุ่น กันคอลัมน์ไม่มีใน DB (PGRST204)
         async function resilientInsertSOS(payloadObj, isUpdateMode, existingId){
           let tryPayload = {...payloadObj};
@@ -8403,10 +7952,8 @@ document.addEventListener('fullscreenchange', ()=>{
           }
           throw new Error('resilientInsertSOS failed after retries');
         }
-
         let postIdToUse = window.currentSOSPostId;
         let isUpdate = !!postIdToUse;
-
         if(isUpdate){
           // อัปเดตข้อมูลหลักก่อน (ยังไม่รวมรูปใหม่)
           const updRes = await resilientInsertSOS(payload, true, postIdToUse);
@@ -8423,17 +7970,14 @@ document.addEventListener('fullscreenchange', ()=>{
           if(!postIdToUse && typeof insRes!=='undefined' && insRes.id) postIdToUse = insRes.id;
           window.currentSOSPostId = postIdToUse;
         }
-
         // อัปโหลดรูปภาพ 8 รูป ไปยัง bucket 'flood-photos'
         // v17.7 FINAL 100% CLEAN - ชื่อ unique + ลบจริง + verify
         let finalImageUrls = [...(window.sosExistingImageUrls||[])];
         const newFiles = window.sosUploadedFiles||[];
         const timestamp = Date.now();
-
         for(let i=0;i<newFiles.length;i++){
           const file = newFiles[i];
           const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
-
           // v17.17 FIX - เช็คขนาดไฟล์ 5MB กันเต็ม Storage (ไม่ลบฟังก์ชันเดิม)
           if(file.size > 5*1024*1024){
             alert(`❌ รูปที่ ${i+1} (${file.name}) ใหญ่เกิน 5MB (ขนาด ${ (file.size/1024/1024).toFixed(2)}MB) กรุณาลดขนาดก่อนอัพโหลด`);
@@ -8441,12 +7985,10 @@ document.addEventListener('fullscreenchange', ()=>{
           }
           const randomStr = Math.random().toString(36).substring(2,7);
           const fileName = `SOS-${userId}-${postIdToUse}-${timestamp}-${i+1}-${randomStr}.${fileExt}`;
-
           const {error: uploadError} = await supabaseClient.storage.from('flood-photos').upload(fileName, file, {
             cacheControl: '3600',
             upsert: false
           });
-
           if(uploadError){
             console.error(`อัปโหลดรูปที่ ${i+1} ไม่สำเร็จ`, uploadError.message);
           }else{
@@ -8456,9 +7998,7 @@ document.addEventListener('fullscreenchange', ()=>{
             }
           }
         }
-
         if(finalImageUrls.length>8) finalImageUrls = finalImageUrls.slice(0,8);
-
         // v17.7 FIX: อัปเดต images เสมอ แม้ลบหมดเหลือ 0
         try{
           const cleanUrls = finalImageUrls.map(u=>u.split('?')[0]);
@@ -8475,8 +8015,6 @@ document.addEventListener('fullscreenchange', ()=>{
           }
         }catch(e){ console.warn('update images exception', e); }
         finalImageUrls = finalImageUrls.map(u=>u.split('?')[0]);
-
-
         alert(isUpdate ? '✅ แก้ไขคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันที' : '✅ ส่งคำขอเรียบร้อยแล้ว ทีมงานเห็นพิกัดทันทีบนแผนที่');
         window.sosUploadedFiles=[];
         window.sosExistingImageUrls=[];
@@ -8486,7 +8024,6 @@ document.addEventListener('fullscreenchange', ()=>{
         document.querySelectorAll('.sos-tag-btn.selected').forEach(b=>b.classList.remove('selected'));
         if(typeof loadSOSRequests==='function') loadSOSRequests();
         alert('✅ ส่งคำขอช่วยเหลือสำเร็จ!');
-
       }catch(e){
         console.warn('ใช้โหมด Demo เพราะ:', e);
         const demoPayload = {...payload, id: window.currentSOSPostId || Date.now(), created_at: new Date().toISOString(), images: []};
@@ -8549,16 +8086,11 @@ async function retryFailedFlood(){
 }
 function clearFailedFlood(){ localStorage.removeItem('flood_failed_queue'); localStorage.removeItem('pending_flood_last'); showFloodRetryButtonIfNeeded(); }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(showFloodRetryButtonIfNeeded, 2000); });
-
-
 // ===================== END SOS ENHANCED v6.6 =====================
-
-
 // === v10.5 FIX - dangerLayer ยังไม่พร้อม ===
 console.log('=== SYSTEM INIT: SOS 8 cases, WARNING 1 case ===');
 window.currentViewMode = 'requests';
 window.dangerLayer = window.dangerLayer || null;
-
 window.initDangerLayer = function(){
   try{
     if(typeof L==='undefined'){
@@ -8579,7 +8111,6 @@ window.initDangerLayer = function(){
     return window.dangerLayer;
   }catch(e){ console.error('initDangerLayer error', e); return window.dangerLayer; }
 }
-
 window.toggleWarningView = function(){
   console.log('--- กดปุ่ม เตือนภัย/ระดับน้ำ --- mode:', window.currentViewMode);
   let layer = window.initDangerLayer();
@@ -8605,12 +8136,10 @@ window.toggleWarningView = function(){
     if(typeof loadSOSRequests==='function') loadSOSRequests();
   }
 }
-
 // === v10.6 FIX - แก้ sosMarkersLayer + fitBounds ไม่บิน ===
 console.log('=== v10.6 INIT ===');
 window.currentViewMode = 'requests';
 window.dangerLayer = window.dangerLayer || null;
-
 window.initDangerLayer = function(){
   try{
     if(typeof L==='undefined') return window.dangerLayer;
@@ -8627,7 +8156,6 @@ window.initDangerLayer = function(){
     return window.dangerLayer;
   }catch(e){ console.error('initDangerLayer error', e); return window.dangerLayer; }
 }
-
 window.toggleWarningView = function(){
   console.log('--- กดปุ่ม เตือนภัย/ระดับน้ำ --- mode:', window.currentViewMode);
   let layer = window.initDangerLayer();
@@ -8639,7 +8167,6 @@ window.toggleWarningView = function(){
   let targetMap = window.sosMap || (typeof sosMap!=='undefined' ? sosMap : null) || (typeof map!=='undefined' ? map : null);
   let sosLayerRef = window.sosMarkersLayer || (typeof sosMarkersLayer!=='undefined' ? sosMarkersLayer : null) || window.sosLayer || (typeof sosLayer!=='undefined' ? sosLayer : null);
   const btn = document.getElementById('btnWarningTop');
-
   if(window.currentViewMode === 'requests'){
     window.currentViewMode = 'warnings';
     console.log('-> ไปโหมด WARNINGS: ต้องซ่อน SOS 8 จุด, โชว์ WARNING 1 จุด');
@@ -8658,19 +8185,15 @@ window.toggleWarningView = function(){
     if(typeof loadSOSRequests==='function') loadSOSRequests();
   }
 }
-
 var dangerLayer=null; let IS_FLOOD_MODE=true;
 function initDangerLayer(){ return window.initDangerLayer(); }
-
 // v17.12 FIX - ลบ updateSegmentedUI ซ้ำซ้อน
-
 function switchSOSSubView(mode){
   if(window.currentViewMode === mode) return;
   let layer = window.initDangerLayer();
   if(!layer && typeof L!=='undefined'){ window.dangerLayer = L.featureGroup(); layer = window.dangerLayer; }
   let targetMap = window.sosMap || (typeof sosMap!=='undefined' ? sosMap : null) || (typeof map!=='undefined' ? map : null);
   let sosLayerRef = window.sosMarkersLayer || (typeof sosMarkersLayer!=='undefined' ? sosMarkersLayer : null) || window.sosLayer || (typeof sosLayer!=='undefined' ? sosLayer : null);
-
   if(mode==='warnings'){
     window.currentViewMode = 'warnings';
     console.log('-> SEGMENTED: ไปโหมด WARNINGS');
@@ -8692,8 +8215,6 @@ window.toggleWarningView = function(){
   if(window.currentViewMode==='requests') switchSOSSubView('warnings'); 
   else switchSOSSubView('requests'); 
 };
-
-
 window.loadFloodWarnings = async function(){
   console.log('[WARNING] loadFloodWarnings() เริ่ม - ควรได้ 1 รายการ (จรัญ 69)');
   let layer = window.initDangerLayer();
@@ -8740,10 +8261,7 @@ window.loadFloodWarnings = async function(){
 }
 async function loadFloodWarnings(){ return window.loadFloodWarnings(); }
 document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.initDangerLayer(); console.log('Ready v10.6 - SOS 8 จุดโชว์, WARNING 1 จุดซ่อน'); },1500); });
-
-
 </script>
-
 <style>
 /* v6.9 - Modal บังคับเปิดผ่าน LINE */
 #lineRequiredModalOverlay {
@@ -8798,7 +8316,6 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
   margin-bottom: 8px;
 }
 .line-modal-link { font-size: 11px; color: #888; margin-top: 10px; word-break: break-all; }
-
     /* v9.1 - SOS Mutual Consent */
     .sos-consent-bar{
       background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
@@ -8821,12 +8338,9 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
     .sos-consent-btn.accept{background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); color:white;}
     .sos-consent-btn.call{background:linear-gradient(135deg, #4a83cc 0%, #2b5893 100%); color:white;}
     .sos-consent-status{font-size:11px; margin-top:6px; color:#555;}
-
-
     .role-badge.admin { background: linear-gradient(135deg,#ff4b2b,#ff416c) !important; color:white !important; border-color:#ff416c !important; }
     .role-badge.special { background: linear-gradient(135deg,#10b981,#059669) !important; color:white !important; border-color:#059669 !important; }
     .role-badge.general { background: #f1f5f9 !important; color:#334155 !important; border-color:#cbd5e1 !important; }
-
 </style>
 <div id="lineRequiredModalOverlay" onclick="if(event.target===this) closeLineRequiredModal()">
   <div id="lineRequiredModal">
@@ -8842,8 +8356,6 @@ document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ window.init
     <div class="line-modal-link" id="lineUrlDisplay"></div>
   </div>
 </div>
-
-
 <script>
 // อัปเดตวันที่เวลาปัจจุบันสำหรับแถบสถานะเหนือฟิลเตอร์ SOS - HOTFIX restore missing function
 function updateSOSDateTime(){
@@ -8858,7 +8370,6 @@ function updateFloodCenterTime(){
   var el=document.getElementById('floodCenterTime');
   if(el){ el.textContent = new Date().toLocaleString('th-TH'); }
 }
-
 document.addEventListener('DOMContentLoaded', function(){
   try{ updateSOSDateTime(); }catch(e){}
   try{ updateFloodCenterTime(); }catch(e){}
@@ -8867,7 +8378,6 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 try{ updateSOSDateTime(); }catch(e){}
 </script>
-
 <script>
 // === PATCH v11.8 - FIX ปักหมุด user เป็นเริ่มต้น + คง UI ฟีดล่าง v11.5 + ไม่มี alert บัง ===
 window.floodWarningsCache = window.floodWarningsCache || [];
@@ -8875,7 +8385,6 @@ window._currentWarningFilter = window._currentWarningFilter || 'latest';
 window._originalSOSStatusHTML = window._originalSOSStatusHTML || null;
 window._originalSOSFilterHTML = window._originalSOSFilterHTML || null;
 window.userLocationLayer = window.userLocationLayer || null;
-
 function ensureSOSMapReady(){
   if(!window.sosMap || typeof window.sosMap.setView !== 'function'){
     try{ if(typeof initSOSMap === 'function') initSOSMap(); }catch(e){}
@@ -8916,7 +8425,6 @@ function stableSetView(map, lat, lng, zoom){
   }catch(e){ return false; }
 }
 window._lastSetViewPos = window._lastSetViewPos || null;
-
 function ensureDangerLayer(){
   let m = ensureSOSMapReady();
   let layer = null;
@@ -8961,10 +8469,17 @@ function updateSOSUIForMode(mode){
   const dateTimeHTML = dateTimeSpan ? dateTimeSpan.outerHTML : `<span id="sosCurrentDateTime" style="margin-left:auto; font-weight:normal; color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:10px; border:1px solid #e2e8f0;"></span>`;
   if(mode === 'warnings'){
     if(statusEl){
-      statusEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:12px; height:12px; background:#ef4444; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #ef4444; display:inline-block;"></span> อันตราย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#d97706; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #d97706; display:inline-block;"></span> เตือนภัย</span><span style="display:inline-flex; align-items:center; gap:5px; margin-left:10px;"><span style="width:12px; height:12px; background:#dcfce7; border-radius:50%; border:2px solid #15803d; box-shadow:0 0 0 1px #86efac; display:inline-block;"></span> เฝ้าระวัง</span>` + dateTimeHTML;
-      statusEl.style.background = 'linear-gradient(135deg, #fef2f2 0%, #fef9c3 100%)';
-      statusEl.style.borderRadius = '10px';
-      statusEl.style.border = '1px solid #fecaca';
+      // คำสั่งที่ 1 - ลบชุดข้อความ อันตราย เตือนภัย เฝ้าระวัง + เวลา วันที่ + ลบพื้นหลังเหลืองและกรอบ
+      statusEl.innerHTML = '';
+      statusEl.style.display = 'none';
+      statusEl.style.background = 'transparent';
+      statusEl.style.backgroundImage = 'none';
+      statusEl.style.border = 'none';
+      statusEl.style.padding = '0';
+      statusEl.style.margin = '0';
+      statusEl.style.height = '0';
+      statusEl.style.minHeight = '0';
+      statusEl.style.overflow = 'hidden';
     }
     if(filterEl){
       filterEl.innerHTML = `
@@ -9066,11 +8581,8 @@ function renderFloodWarningsList(list){
     `;
   }).join('');
 }
-
-
 // === v13.12 FIX: กดหมุดน้ำท่วม -> ONLY HIGHLIGHT + AUTO SCROLL (ไม่เด้ง Modal) ===
 window._selectedFloodWarningId = window._selectedFloodWarningId || null;
-
 function onFloodMarkerClicked(w){
   if(!w) return;
   console.log('[FLOOD CLICK v15.6] marker clicked', w.id, w.title);
@@ -9090,13 +8602,10 @@ function onFloodMarkerClicked(w){
       }
     }
   }catch(e){ console.warn('auto-zoom flood error', e); }
-
   if(typeof updateSOSUIForMode==='function') updateSOSUIForMode('warnings');
   if(typeof updateSegmentedUI==='function') updateSegmentedUI('warnings');
-
   const base = window.floodWarningsCache || [];
   const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.querySelector('#sosMapContainer.map-expanded'));
-
   // === v15.6 NEW: ถ้าอยู่ในโหมดเต็มจอ ให้กรองเฉพาะรายการในวงกลม ===
   let filteredList = base;
   if(isFullscreen){
@@ -9130,13 +8639,11 @@ function onFloodMarkerClicked(w){
       return new Date(b.created_at) - new Date(a.created_at);
     });
   }
-
   if(typeof renderFloodWarningsList==='function'){
     renderFloodWarningsList(filteredList);
     // v15.7: อัพเดท overlay ตอนเต็มจอด้วย
     setTimeout(()=>updateFullscreenOverlay(filteredList), 150);
   }
-
   // แสดงปุ่ม "ดูทั้งหมด" เมื่ออยู่ในโหมดกรองวงกลม
   if(isFullscreen && filteredList.length < base.length){
     setTimeout(()=>{
@@ -9153,12 +8660,10 @@ function onFloodMarkerClicked(w){
     const oldBar=document.getElementById('circleFilterBar');
     if(oldBar) oldBar.remove();
   }
-
   document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
   const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
   if(allBtn) allBtn.classList.add('active');
   window._currentWarningFilter = 'all';
-
   setTimeout(()=>{
     if(typeof window.highlightBoth === 'function'){
       window.highlightBoth(String(w.id), 'warning');
@@ -9196,8 +8701,6 @@ function clearCircleFilter(){
   const allBtn = document.querySelector('.warning-chip[data-warn="all"]');
   if(allBtn) allBtn.classList.add('active');
 }
-
-
 function focusWarningOnMap(lat,lng){
   console.log('[v14.10] WARNING MARKER ONLY HIGHLIGHT', lat,lng);
   let m=window.sosMap; if(m) m.flyTo([parseFloat(lat), parseFloat(lng)],13,{duration:0.6}) // v15.4 FIX 15->13;
@@ -9212,9 +8715,6 @@ function focusWarningOnMap(lat,lng){
     }
   }
 }
-
-
-
 // highlight CSS inject
 (function(){
   if(document.getElementById('flood-highlight-style')) return;
@@ -9226,7 +8726,6 @@ function focusWarningOnMap(lat,lng){
   `;
   document.head.appendChild(s);
 })();
-
 function filterFloodWarnings(type){
   document.querySelectorAll('.warning-chip').forEach(b=>b.classList.remove('active'));
   const btn = document.querySelector(`.warning-chip[data-warn="${type}"]`);
@@ -9264,11 +8763,9 @@ function updateWarningMapMarkers(list){
     if(_lvl.includes('watch') || _lvl.includes('เฝ้าระวัง')){ col='#15803d'; fillOp=0.55; } // FIX เขียวเข้ม
     if(_lvl.includes('critical')||_lvl.includes('danger')||_lvl.includes('อันตราย')) col='#ef4444';
     else if(_lvl.includes('warning')||_lvl.includes('เตือนภัย')) col='#d97706';
-
     const circle = L.circle([lat,lng], {radius: Math.min(Math.max(parseInt(w.radius_m)||200, 50), 600), fillColor:col, fillOpacity:0.35, stroke:false}).addTo(layer);
     // v13.11.3 FIX: ลบขอบส้ม (stroke:false) และลบหมุดสีฟ้า (ไม่สร้าง L.marker แล้ว)
     // v13.12: ตัด bindPopup ออก เพื่อไม่ให้ popup เล็กซ้อนกับ highlight logic
-
     // === v13.5 CLICK HANDLER ===
     const clickFn = ()=> onFloodMarkerClicked(w);
     circle.on('click', clickFn);
@@ -9286,7 +8783,6 @@ function updateSegmentedUI(mode){
     btnReq.classList.add('active'); btnReq.setAttribute('aria-selected','true');
   }
 }
-
 // สำคัญ: ไม่มี alert('ไม่พบเตือนภัย') แล้ว ให้ไปต่อได้แม้ data = 0
 window.loadFloodWarnings = async function(){
   console.log('[WARNING v11.8] โหลดเตือนภัย + ปักหมุดตำแหน่งปัจจุบัน + UI ฟีดล่าง');
@@ -9301,17 +8797,14 @@ window.loadFloodWarnings = async function(){
     const data = res.data||[];
     window.floodWarningsCache = data;
     console.log(`[WARNING] ได้ ${data.length} รายการ`);
-
     // 1. เปลี่ยน UI ฟีดล่างก่อนเลย - ต้องทำไม่ว่า data จะ 0 หรือไม่ (v17.24 FIX - ไม่ตั้ง height ตรงๆ แล้ว กันกระพริบ)
     updateSOSUIForMode('warnings'); /* const mc=document.getElementById('sosMapContainer'); if(mc) mc.style.height='60vh'; */ setTimeout(()=>{ try{ if(window.sosMap && (!window._lastInvalidateTs || Date.now()-window._lastInvalidateTs>800)){ window._lastInvalidateTs=Date.now(); window.sosMap.invalidateSize(); } }catch(e){} }, 400);
     updateSegmentedUI('warnings');
-
     if(data.length===0){
       renderFloodWarningsList([]);
     } else {
       filterFloodWarnings(window._currentWarningFilter||'latest');
     }
-
     // 2. ปักหมุดตำแหน่ง user - ทำแยก ไม่เกี่ยวว่าเตือนภัยมีหรือไม่มี
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition((pos)=>{
@@ -9344,7 +8837,6 @@ window.loadFloodWarnings = async function(){
     }
   }catch(e){ console.error(e); }
 }
-
 window.switchSOSSubView = function(mode){
   if(window.currentViewMode === mode) return;
   let targetMap = ensureSOSMapReady();
@@ -9359,7 +8851,7 @@ window.switchSOSSubView = function(mode){
     // --- คำสั่งที่ 2: เปลี่ยนปุ่ม แจ้งขอให้ช่วย -> แจ้งเตือนท่วม ---
     const mainBtn = document.getElementById('sosMainActionBtn');
     if(mainBtn){
-      mainBtn.innerHTML = '🌊 แจ้งเตือนท่วม';
+      mainBtn.innerHTML = 'ลงประกาศเตือน';
       mainBtn.setAttribute('onclick','openFloodWarningModal()');
       mainBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)';
       mainBtn.style.borderColor = '#c2410c';
@@ -9373,7 +8865,7 @@ window.switchSOSSubView = function(mode){
     // --- คำสั่งที่ 2: เปลี่ยนปุ่มกลับเป็น แจ้งขอให้ช่วย ---
     const mainBtn = document.getElementById('sosMainActionBtn');
     if(mainBtn){
-      mainBtn.innerHTML = '📍 แจ้งขอให้ช่วย';
+      mainBtn.innerHTML = 'ลงประกาศเตือน';
       mainBtn.setAttribute('onclick','openSOSModal()');
       mainBtn.style.background = 'linear-gradient(135deg, #ff3b30 0%, #d70000 100%)';
       mainBtn.style.borderColor = '#a80000';
@@ -9389,7 +8881,6 @@ window.toggleWarningView = function(){
   if(window.currentViewMode==='requests') window.switchSOSSubView('warnings'); 
   else window.switchSOSSubView('requests'); 
 };
-
 // === v11.9 NEW FEATURES ===
 // คำสั่งที่ 1: ฟังก์ชันปักหมุดตำแหน่งปัจจุบันเมื่อกด จุดขอให้ช่วย
 function pinCurrentLocationOnSOSMap(){
@@ -9425,18 +8916,15 @@ function pinCurrentLocationOnSOSMap(){
     console.warn('ขอตำแหน่งไม่สำเร็จ:', err.code, err.message);
   }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
 }
-
 // คำสั่งที่ 2: ฟังก์ชันสำหรับ Modal แจ้งเตือนท่วม
 // === v12.6 FLOOD IMAGE UPLOAD - หลักการเดียวกับ SOS 8 รูป ===
 window.floodUploadedFiles = window.floodUploadedFiles || [];
 window.floodExistingImageUrls = window.floodExistingImageUrls || [];
 window.currentFloodWarningId = window.currentFloodWarningId || null;
-
 // === PATCHED v13.12.2: แก้บั๊กภาพกล้องไม่ลงช่อง + เพิ่มพรีวิว + รองรับถ่ายต่อเนื่อง ===
 window.floodPendingPreviewFiles = window.floodPendingPreviewFiles || [];
 window.floodCameraTempFiles = window.floodCameraTempFiles || [];
 window.floodCameraStream = null;
-
 async function handleFloodFilesSelected(event){
   const targetFiles = event && event.target && event.target.files ? Array.from(event.target.files) : [];
   const floodInput = document.getElementById('floodFileInput');
@@ -9454,7 +8942,6 @@ async function handleFloodFilesSelected(event){
   if(camInput) camInput.value='';
   if(event && event.target) event.target.value='';
 }
-
 function openFloodPreview(newFiles){
   if(!window.floodPendingPreviewFiles) window.floodPendingPreviewFiles=[];
   // กรองไม่ให้เกิน 8 เมื่อรวมกับที่มีอยู่
@@ -9470,7 +8957,6 @@ function openFloodPreview(newFiles){
   renderFloodPreview();
   document.getElementById('floodPreviewModal').style.display='flex';
 }
-
 function renderFloodPreview(){
   const grid = document.getElementById('floodPreviewGrid');
   if(!grid) return;
@@ -9489,9 +8975,7 @@ function renderFloodPreview(){
     grid.appendChild(div);
   });
 }
-
 window._floodPreviewObjectUrls = window._floodPreviewObjectUrls || [];
-
 function removeFloodPreview(idx){
   // Step2.2 FIX: revoke URL ของไฟล์ที่จะลบ
   try{
@@ -9504,7 +8988,6 @@ function removeFloodPreview(idx){
   renderFloodPreview();
   if(window.floodPendingPreviewFiles.length===0) closeFloodPreview();
 }
-
 function closeFloodPreview(){
   const m = document.getElementById('floodPreviewModal');
   if(m) m.style.display='none';
@@ -9516,7 +8999,6 @@ function closeFloodPreview(){
     }
   }catch(e){}
 }
-
 async function saveFloodPreviewToGrid(){
   if(!window.floodUploadedFiles) window.floodUploadedFiles=[];
   window.floodPendingPreviewFiles = await compressFilesTo500KB(window.floodPendingPreviewFiles);
@@ -9531,7 +9013,6 @@ async function saveFloodPreviewToGrid(){
   closeFloodPreview();
   renderFloodUploadGrid();
 }
-
 // === คำสั่ง 2: กล้องถ่ายต่อเนื่องไม่ต้องปิด ===
 async function openFloodCameraLive(){
   const modal = document.getElementById('floodCameraLiveModal');
@@ -9554,7 +9035,6 @@ async function openFloodCameraLive(){
     if(camInput) camInput.click();
   }
 }
-
 function closeFloodCameraLive(){
   const modal = document.getElementById('floodCameraLiveModal');
   const video = document.getElementById('floodCameraVideo');
@@ -9565,7 +9045,6 @@ function closeFloodCameraLive(){
   if(video) video.srcObject=null;
   if(modal) modal.style.display='none';
 }
-
 function captureFloodCameraFrame(){
   const video = document.getElementById('floodCameraVideo');
   const canvas = document.getElementById('floodCameraCanvas');
@@ -9590,7 +9069,6 @@ function captureFloodCameraFrame(){
     updateFloodCameraBadge();
   }, 'image/jpeg', 0.9);
 }
-
 function renderFloodCameraStrip(){
   const strip = document.getElementById('floodCameraStrip');
   if(!strip) return;
@@ -9603,12 +9081,10 @@ function renderFloodCameraStrip(){
     strip.appendChild(d);
   });
 }
-
 function updateFloodCameraBadge(){
   const b = document.getElementById('floodCameraCountBadge');
   if(b) b.innerText = `ถ่ายแล้ว ${window.floodCameraTempFiles.length} รูป`;
 }
-
 function confirmFloodCameraCaptures(){
   if(window.floodCameraTempFiles.length===0){
     alert('ยังไม่ได้ถ่ายรูปเลยครับ');
@@ -9620,19 +9096,15 @@ function confirmFloodCameraCaptures(){
   closeFloodCameraLive();
   openFloodPreview(filesToPreview);
 }
-
 function renderFloodUploadGrid(){
   const grid = document.getElementById('floodUploadGrid');
   const statusText = document.getElementById('floodUploadStatusText');
   if(!grid) return;
   if(!window.floodUploadedFiles) window.floodUploadedFiles=[];
   if(!window.floodExistingImageUrls) window.floodExistingImageUrls=[];
-
   const total = window.floodExistingImageUrls.length + window.floodUploadedFiles.length;
   if(statusText) statusText.innerText = `อัปโหลดรูปภาพ (${total}/8)`;
-
   grid.innerHTML='';
-
   // รูปเก่า
   window.floodExistingImageUrls.forEach((url, idx)=>{
     const box = document.createElement('div');
@@ -9645,7 +9117,6 @@ function renderFloodUploadGrid(){
     `;
     grid.appendChild(box);
   });
-
   // รูปใหม่
   window.floodUploadedFiles.forEach((file, index)=>{
     const box = document.createElement('div');
@@ -9659,7 +9130,6 @@ function renderFloodUploadGrid(){
     `;
     grid.appendChild(box);
   });
-
   const remaining = 8 - total;
   for(let i=0;i<remaining;i++){
     const emptyBox=document.createElement('div');
@@ -9669,7 +9139,6 @@ function renderFloodUploadGrid(){
     grid.appendChild(emptyBox);
   }
 }
-
 function deleteFloodImage(index){
   window.floodUploadedFiles.splice(index,1);
   renderFloodUploadGrid();
@@ -9679,7 +9148,6 @@ function deleteFloodExistingImage(idx){
   window.floodExistingImageUrls.splice(idx,1);
   renderFloodUploadGrid();
 }
-
 let selectedFloodLevel = 'warning';
 function openFloodWarningModal(){
   document.getElementById('floodWarningModalOverlay').classList.add('active');
@@ -9727,7 +9195,6 @@ function getCurrentLocationForFloodWarning(){
     }
   }, null, {enableHighAccuracy:true, timeout:8000});
 }
-
 // v17.18 FIX บั๊ก 1 - กันกดเบิ้ล 2 ครั้งแล้วได้ 2 โพสต์ (เฉพาะเตือนท่วมเท่านั้น)
  window._isSubmittingFlood = window._isSubmittingFlood || false;
  async function submitFloodWarning(){
@@ -9757,7 +9224,6 @@ function getCurrentLocationForFloodWarning(){
   const locationText = document.getElementById('floodLocationText')?.value;
   const radiusRaw = document.getElementById('floodRadius')?.value || 200;
   const radius = Math.min(Math.max(parseInt(radiusRaw)||200, 50), 600); // HOTFIX Step1.4 max 600m
-
   if(!lat || !lng){
     alert('กรุณาระบุพิกัดน้ำท่วมก่อนครับ');
     return;
@@ -9779,7 +9245,6 @@ function getCurrentLocationForFloodWarning(){
   }
   try{
     console.log('[FLOOD SUBMIT v13.2 FIXED] เริ่มบันทึก...', lat, lng);
-
     // ===== v17: เช็คสิทธิ์ general vs special (2 คอลัมน์) - START =====
     const myRoleInfo = await getCurrentUserRole();
     let myUserIdForCheck = myRoleInfo.user_id;
@@ -9795,7 +9260,6 @@ function getCurrentLocationForFloodWarning(){
     }
     const isSpecialMember = myRoleInfo.role === 'special' || myRoleInfo.role === 'admin' || myRoleInfo.is_trusted === true;
     console.log('[v17] Role check:', myRoleInfo, 'isSpecialMember:', isSpecialMember);
-
     if(!isSpecialMember){
       // บุคคลทั่วไป: 1 คนแจ้งได้หลายจุด แต่ใส่กรอบ 30นาที/5ครั้ง/100เมตร/ต้องมีรูป
       const limitCheck = await canPostWarning(myUserIdForCheck, lat, lng);
@@ -9830,7 +9294,6 @@ function getCurrentLocationForFloodWarning(){
       try{ localStorage.setItem('last_special_flood_'+myUserIdForCheck, String(Date.now())); }catch(e){}
     }
     // ===== v17: เช็คสิทธิ์ general vs special - END =====
-
     let basePayload = {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
@@ -9866,7 +9329,6 @@ function getCurrentLocationForFloodWarning(){
       localStorage.setItem('pending_flood_last', JSON.stringify(pendingPayloadEarly));
       localStorage.setItem(floodPendingKey, JSON.stringify(pendingPayloadEarly));
     }catch(e){}
-
     // 2.1: อัปโหลดรูปก่อน แต่เก็บชื่อไฟล์ไว้เพื่อลบถ้า insert พัง
     let finalImageUrls = [];
     let uploadedFileNames = []; // เก็บชื่อไฟล์จริงใน bucket เพื่อลบถ้าพัง
@@ -9896,7 +9358,6 @@ function getCurrentLocationForFloodWarning(){
     }
     let payload = {...basePayload, ...optionalFields};
     console.log('[FLOOD SUBMIT FIXED] payload:', payload);
-
     async function resilientInsert(p){
       let current = {...p};
       let attempts = 0;
@@ -9920,7 +9381,6 @@ function getCurrentLocationForFloodWarning(){
       }
       throw new Error('ลองหลายครั้งไม่สำเร็จ');
     }
-
     let result;
     try{
       result = await resilientInsert(payload);
@@ -9982,8 +9442,6 @@ function getCurrentLocationForFloodWarning(){
     if(btn){ btn.disabled=false; btn.innerHTML=btn.dataset.origText||'📢 ส่งแจ้งเตือนท่วม'; }
   }
 }
-
-
 // Override openSOSModal เดิมให้ซ่อน flood modal ด้วย (กันซ้อน)
 const _origOpenSOS = window.openSOSModal;
 window.openSOSModal = function(){
@@ -9992,13 +9450,9 @@ window.openSOSModal = function(){
   document.getElementById('sosModalOverlay').classList.add('active');
   pinCurrentLocationOnSOSMap();
 };
-
 console.log('✅ v13.4 FIXED โหลดแล้ว - แก้ latitude schema + มี 8 รูป + ลบจริงครบวงจร');
 console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำสั่ง: 1)จุดขอให้ช่วยปักหมุดปัจจุบัน 2)สลับปุ่มแจ้งเตือนท่วม');
-
-
 // === v13 POPUP DETAIL LOGIC ===
-
 // ============================================================
 // === v14.5 FLOW ใหม่ ชัดเจน FIXED 400 Error - จุดขอให้ช่วย 3 ขั้น ===
 // ============================================================
@@ -10006,7 +9460,6 @@ console.log('✅ Patch v11.9 โหลดแล้ว - เพิ่ม 2 คำ
 // ขั้น 2: (1 วันสำเร็จ / 3 วันเงียบ) ลบแชท + ลบหมุด + ย้ายไป Archive
 // ขั้น 3: (7 วัน) ลบ Archive ถาวร
 // FIX: แก้ .or() ที่ทำให้ 400 Bad Request + ใช้ created_at แทน updated_at กันแชทดันเวลา
-
 function extractFileNameFromUrl(url){
   try{
     if(!url) return null;
@@ -10019,7 +9472,6 @@ function extractFileNameFromUrl(url){
     return parts[parts.length-1];
   }catch(e){ return null; }
 }
-
 async function deleteFilesFromStorage(imageUrls){
   if(!imageUrls || imageUrls.length===0) return {ok:true, deleted:0, verified:true};
   if(typeof supabaseClient==='undefined' || !supabaseClient) return {ok:false, verified:false};
@@ -10052,7 +9504,6 @@ async function deleteFilesFromStorage(imageUrls){
     return {ok:true, deleted:fileNames.length, verified, stillExists};
   }catch(e){ console.warn('[STORAGE-DELETE-100%] exception', e); return {ok:false, error:e, verified:false}; }
 }
-
 async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
   const result = await deleteFilesFromStorage(imageUrls);
   try{
@@ -10070,7 +9521,6 @@ async function deleteSOSImage100Percent(imageUrls, context='manual_edit'){
   }catch(_){}
   return result;
 }
-
 async function checkSOSStorageUsage(){
   try{
     const {data, error} = await supabaseClient.storage.from('flood-photos').list('', {limit:1000});
@@ -10082,8 +9532,6 @@ async function checkSOSStorageUsage(){
   }catch(e){ console.warn(e); }
 }
 window.checkSOSStorageUsage = checkSOSStorageUsage;
-
-
 async function deleteChatsBySOSId(sosId){
   if(!sosId) return;
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
@@ -10108,7 +9556,6 @@ async function deleteChatsBySOSId(sosId){
     else console.log('[FLOW-STEP2] ลบแชทสำเร็จ', sosIdText);
   }catch(e){ console.warn('[FLOW-STEP2] deleteChats error', e.message); }
 }
-
 // ขั้น 1: สำเร็จ 3 ชม / เงียบ 3 วัน ลบแค่รูป
 async function autoStep1_DeleteImages_3hr(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
@@ -10116,7 +9563,6 @@ async function autoStep1_DeleteImages_3hr(){
     const threeHoursAgo = new Date(Date.now() - 3*60*60*1000).toISOString();
     const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
     console.log('[FLOW-STEP1] เช็ค สำเร็จ>3ชม:', threeHoursAgo, 'เงียบ>3วัน:', threeDaysAgo);
-
     // สำเร็จ: ใช้ is() แทน or(eq("")) ที่พัง
     const {data: completedToClean, error: err1} = await supabaseClient.from('flood_help_requests')
       .select('id, image_urls, image_cleaned_at, status, created_at')
@@ -10125,7 +9571,6 @@ async function autoStep1_DeleteImages_3hr(){
       .lt('created_at', threeHoursAgo)
       .limit(20);
     if(err1) console.warn('[FLOW-STEP1] completed query error', err1);
-
     const {data: silentToClean, error: err2} = await supabaseClient.from('flood_help_requests')
       .select('id, image_urls, image_cleaned_at, status, created_at')
       .in('status',['waiting','going'])
@@ -10133,11 +9578,9 @@ async function autoStep1_DeleteImages_3hr(){
       .lt('created_at', threeDaysAgo)
       .limit(20);
     if(err2) console.warn('[FLOW-STEP1] silent query error', err2);
-
     const list = [...(completedToClean||[]), ...(silentToClean||[])];
     console.log(`[FLOW-STEP1] เจอ ${list.length} เคสต้องลบรูป (สำเร็จ>3ชม.=${completedToClean?.length||0} / เงียบ>3วัน=${silentToClean?.length||0})`, list);
     if(list.length===0) return;
-
     for(let item of list){
       const imgs = item.image_urls || item.images || [];
       if(imgs.length>0) await deleteFilesFromStorage(imgs);
@@ -10155,7 +9598,6 @@ async function autoStep1_DeleteImages_3hr(){
     }
   }catch(e){ console.warn('[FLOW-STEP1] error', e); }
 }
-
 // ขั้น 2: 1 วันสำเร็จ / 3 วันเงียบ ลบแชท+ลบหมุด+Archive
 async function autoStep2_ArchiveAndCleanup(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
@@ -10163,25 +9605,21 @@ async function autoStep2_ArchiveAndCleanup(){
     const oneDayAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วัน
     const threeDaysAgo = new Date(Date.now() - 3*24*60*60*1000).toISOString();
     console.log('[FLOW-STEP2] เช็ค สำเร็จ>1วัน:', oneDayAgo, 'เงียบ>3วัน:', threeDaysAgo);
-
     const {data: completedList} = await supabaseClient.from('flood_help_requests')
       .select('id, status, created_at, archived_at')
       .eq('status','completed')
       .is('archived_at', null)
       .lt('created_at', oneDayAgo)
       .limit(20);
-
     const {data: silentList} = await supabaseClient.from('flood_help_requests')
       .select('id, status, created_at, archived_at')
       .in('status',['waiting','going'])
       .is('archived_at', null)
       .lt('created_at', threeDaysAgo)
       .limit(20);
-
     const toArchive = [...(completedList||[]), ...(silentList||[])];
     console.log(`[FLOW-STEP2] เจอ ${toArchive.length} เคสต้อง Archive`, toArchive);
     if(toArchive.length===0) return;
-
     for(let item of toArchive){
       await deleteChatsBySOSId(item.id);
       if(window.sosRequestsCache){
@@ -10201,7 +9639,6 @@ async function autoStep2_ArchiveAndCleanup(){
     }
   }catch(e){ console.warn('[FLOW-STEP2] error', e); }
 }
-
 // ขั้น 3: 7 วันลบถาวร
 async function autoStep3_DeleteArchivePermanently(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
@@ -10223,7 +9660,6 @@ async function autoStep3_DeleteArchivePermanently(){
     }
   }catch(e){ console.warn('[FLOW-STEP3] error', e); }
 }
-
 async function autoPurgeOldRequests(){
   console.log('[FLOW v14.5] เริ่มตรวจ 3 ขั้น...');
   await autoStep1_DeleteImages_3hr();
@@ -10231,7 +9667,6 @@ async function autoPurgeOldRequests(){
   await autoStep3_DeleteArchivePermanently();
   console.log('[FLOW v14.5] จบรอบตรวจ');
 }
-
 async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
   const {skipConfirm=false, reason='expired_24h'} = options;
   if(!warningId) return;
@@ -10296,7 +9731,6 @@ async function deleteFloodWarningAndAssetsCompletely(warningId, options={}){
     return true;
   }catch(e){ console.error(e); alert('ลบเตือนภัยไม่สำเร็จ: '+e.message); return false; }
 }
-
 async function deleteSOSAndAssetsCompletely(sosId, options={}){
   const {skipConfirm=false, reason='manual'} = options;
   if(!sosId) return;
@@ -10317,7 +9751,6 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
     }
   }catch(e){ console.warn('[v17.1 delete check] warn', e); }
   // ===== v17.1 RLS client-side check - END =====
-
     const {data: oldData} = await supabaseClient.from('flood_help_requests').select('image_urls').eq('id', sosId).maybeSingle();
     const imgs = (oldData && (oldData.image_urls || oldData.images)) || [];
     console.log(`[DELETE-POST-100%] ลบโพสต์ ${sosId} พร้อมรูป ${imgs.length} รูป`);
@@ -10340,20 +9773,15 @@ async function deleteSOSAndAssetsCompletely(sosId, options={}){
     return false;
   }
 }
-
-
 // ============================================================
 // === v14.8 WARNING FLOW ONLY 1วัน/3วัน/7วัน - แก้เฉพาะเตือนท่วมเท่านั้น ===
 // === SOS Flow เดิมไม่แก้: สำเร็จลบรูป 3ชม / เงียบลบรูป 3วัน / 1วันArchive / 7วันลบถาวร ===
 // ============================================================
-
 // --- WARNING FLOW: 1วันซ่อน / 3วันลบรูป / 7วันลบถาวร ---
 // ตามคำขอ: แก้เฉพาะหน้าเตือนท่วมเท่านั้น ส่วนอื่นห้ามแก้ไขเด็ดขาด
-
 async function autoWarningStep1_HideFromMap_1Day(){
   // HOTFIX v4_2_2: เปลี่ยนจาก 1 วัน -> 2 วันตามคำขอผู้ใช้ (expire 2 วัน)
   // console.log('[HOTFIX Step1] autoWarningStep1 disabled for flood crisis - keep pins 72h'); return; // HOTFIX disabled - ยกเลิกการ disable
-
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
     const oneDayAgo = new Date(Date.now() - 2*24*60*60*1000).toISOString(); // HOTFIX 2 วัน
@@ -10379,7 +9807,6 @@ async function autoWarningStep1_HideFromMap_1Day(){
     if(typeof window.loadFloodWarnings==='function') window.loadFloodWarnings();
   }catch(e){ console.warn('[WARNING-STEP1] error', e); }
 }
-
 async function autoWarningStep2_DeleteImages_3Days(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
@@ -10412,7 +9839,6 @@ async function autoWarningStep2_DeleteImages_3Days(){
     }
   }catch(e){ console.warn('[WARNING-STEP2] error', e); }
 }
-
 async function autoWarningStep3_DeletePermanently_7Days(){
   if(typeof supabaseClient==='undefined' || !supabaseClient) return;
   try{
@@ -10443,7 +9869,6 @@ async function autoWarningStep3_DeletePermanently_7Days(){
     if(typeof renderFloodWarningsList==='function' && window.floodWarningsCache) renderFloodWarningsList(window.floodWarningsCache);
   }catch(e){ console.warn('[WARNING-STEP3] error', e); }
 }
-
 async function autoPurgeFloodWarnings(){
   console.log('[WARNING-FLOW v14.8] เริ่มตรวจ 3 ขั้น - 2วันซ่อน(expire) / 2วันลบรูป / 7วันลบถาวร...');
   await autoWarningStep1_HideFromMap_1Day();
@@ -10451,16 +9876,13 @@ async function autoPurgeFloodWarnings(){
   await autoWarningStep3_DeletePermanently_7Days();
   console.log('[WARNING-FLOW v14.8] จบรอบตรวจเตือนท่วม');
 }
-
 // === END v14.8 WARNING FLOW ONLY ===
 // ============================================================
-
 document.addEventListener('DOMContentLoaded', ()=>{
   setTimeout(()=>{ autoPurgeOldRequests(); autoPurgeFloodWarnings(); }, 8000);
   setInterval(()=>{ autoPurgeOldRequests(); }, 60*60*1000);
   setInterval(()=>{ autoPurgeFloodWarnings(); }, 60*60*1000);
 });
-
 window.deleteSOSFromDetail = async function(id){
   await deleteSOSAndAssetsCompletely(id, {skipConfirm:false, reason:'manual'});
   if(typeof closeSOSDetailModal==='function') closeSOSDetailModal();
@@ -10469,7 +9891,6 @@ window.deleteFloodWarningFromDetail = async function(id){
   await deleteFloodWarningAndAssetsCompletely(id, {skipConfirm:false, reason:'manual'});
   if(typeof closeWarningDetailModal==='function') closeWarningDetailModal();
 };
-
 // SQL pg_cron ที่ถูกต้อง (ไม่ใช้ or(eq("")))
  // alter table flood_help_requests add column if not exists image_cleaned_at timestamptz;
  // alter table flood_help_requests add column if not exists archived_at timestamptz;
@@ -10477,9 +9898,6 @@ window.deleteFloodWarningFromDetail = async function(id){
 // ============================================================
 // === END v14.5 FLOW ใหม่ FIXED ===
 // ============================================================
-
-
-
 function openSOSDetailModal(id){
   const cache = (window.sosRequestsCache||[]).concat(window.floodWarningsCache||[]);
   let item = (window.sosRequestsCache||[]).find(x=>String(x.id)===String(id));
@@ -10539,7 +9957,6 @@ function openSOSDetailModal(id){
   document.getElementById('sosDetailModalOverlay').classList.add('active');
 }
 function closeSOSDetailModal(){ document.getElementById('sosDetailModalOverlay').classList.remove('active'); }
-
 // v17.20 FIX คำสั่งที่ 2 - ฟังก์ชันลบโพสต์จากหน้า detail แบบ 100% (เฉพาะแจ้งขอให้ช่วยเท่านั้น)
 async function deleteSOSFromDetail(sosId){
   if(!sosId) return;
@@ -10585,7 +10002,6 @@ async function deleteSOSFromDetail(sosId){
     if(btn){ btn.disabled=false; btn.innerHTML='🗑️ ลบโพสต์นี้ (ลบวงกลม+ลบรูปทั้งหมด)'; }
   }
 }
-
 // v17.21 FIX - ฟังก์ชันแก้ไขโพสต์จากหน้า detail (เฉพาะจุดขอให้ช่วยเท่านั้น) - ใช้ openSOSModalForEdit ที่มีอยู่แล้ว
 async function editSOSFromDetail(sosId){
   if(!sosId) return;
@@ -10616,7 +10032,6 @@ async function editSOSFromDetail(sosId){
     document.getElementById('sosModalOverlay').classList.add('active');
   }
 }
-
 // เก็บ sosId ไว้ใน marker ตอนสร้าง marker เพื่อลบง่าย
 (function(){
   const origUpdate = window.updateSOSMapMarkers;
@@ -10640,12 +10055,8 @@ async function editSOSFromDetail(sosId){
     window.updateSOSMapMarkers._v1720_patched = true;
   }
 })();
-
-
 // v17.12 FIX - ลบ closeWarningDetailModal ซ้ำซ้อน
-
  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeSOSDetailModal(); closeWarningDetailModal(); } });
-
 function openWarningDetailModal(id){
   window._selectedFloodWarningId = String(id);
   let item = (window.floodWarningsCache||[]).find(x=>String(x.id)===String(id) || String(x.lat)===String(id));
@@ -10688,15 +10099,12 @@ function openWarningDetailModal(id){
   document.getElementById('warningDetailModalOverlay').classList.add('active');
 }
 function closeWarningDetailModal(){ document.getElementById('warningDetailModalOverlay').classList.remove('active'); }
-
-
 // === v13.1 HOTFIX ensure modal works even if id is number ===
 window.openWarningDetailModalByLatLng = function(lat,lng){
   let item = (window.floodWarningsCache||[]).find(x=> String(x.lat)===String(lat) && String(x.lng)===String(lng));
   if(item) openWarningDetailModal(item.id);
   else focusWarningOnMap(lat,lng);
 };
-
 // === v13 OVERRIDE RENDER TO MAKE CARD CLICKABLE ===
 const _origRenderSOSList = window.renderSOSList;
 window.renderSOSList = function(list){
@@ -10725,7 +10133,6 @@ window.renderSOSList = function(list){
     });
   }, 50);
 };
-
 const _origRenderFloodWarningsList = window.renderFloodWarningsList; // v14 patched - badge removed
 window.renderFloodWarningsList = function(list){
   if(typeof _origRenderFloodWarningsList === 'function') _origRenderFloodWarningsList(list);
@@ -10751,15 +10158,11 @@ window.renderFloodWarningsList = function(list){
     });
   }, 50);
 };
-
 </script>
-
-
 <script>
 // === v15.11 FIX SOS FULLSCREEN CIRCLE FILTER - แก้เฉพาะหน้า จุดขอให้ช่วย เท่านั้น (ห้ามแก้ส่วนอื่น) ===
 (function(){
   console.log('[v15.11] PATCH SOS FULLSCREEN CIRCLE FILTER LOADED');
-
   // Helper: update overlay for SOS mode (copy logic from flood but use sos cache)
   window.updateFullscreenOverlaySOS = function(list){
     const overlay=document.getElementById('fullscreenListOverlay');
@@ -10786,13 +10189,10 @@ window.renderFloodWarningsList = function(list){
     tempDiv.innerHTML=html;
     tempDiv.querySelectorAll('#circleFilterBar, #circleFilterBarFullscreen, #circleFilterBarSOS, #circleFilterBarFullscreenSOS').forEach(el=>el.remove());
     const cardsHtml = tempDiv.innerHTML;
-
     const base=window.sosRequestsCache||[];
     const barHtml = `<div id="circleFilterBarFullscreenSOS" style="background:#fef2f2; border:1.5px solid #ef4444; border-radius:10px; padding:8px 12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:bold; color:#b91c1c;"><span>📍 ในวงกลมนี้มี ${list.length} รายการ (จาก ${base.length})</span><button onclick="clearSOSCircleFilter();" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px;">ดูทั้งหมด</button></div>`;
-
     ov.innerHTML = barHtml + cardsHtml;
     ov.style.display='block';
-
     // v15.11: กดการ์ดใน overlay เต็มจอ -> ออกจากเต็มจอแล้วเด้งไปหน้า detail SOS
     setTimeout(()=>{
       ov.querySelectorAll('[data-sos-id], [data-warning-id]').forEach(card=>{
@@ -10827,7 +10227,6 @@ window.renderFloodWarningsList = function(list){
       });
     }, 80);
   };
-
   window.clearSOSCircleFilter = function(){
     const base = window.sosRequestsCache || [];
     if(typeof renderSOSList==='function') renderSOSList(base);
@@ -10861,7 +10260,6 @@ window.renderFloodWarningsList = function(list){
       // hide overlay handled
     }
   };
-
   // Override clearCircleFilter to handle SOS mode too
   const _origClearCircleFilter = window.clearCircleFilter;
   window.clearCircleFilter = function(){
@@ -10888,7 +10286,6 @@ window.renderFloodWarningsList = function(list){
       }catch(e){}
     }
   };
-
   // === OVERRIDE onSOSMarkerClicked for SOS tab only ===
   window.onSOSMarkerClicked = function(sosId){
     if(!sosId) return;
@@ -10899,13 +10296,10 @@ window.renderFloodWarningsList = function(list){
       let m=window.sosMap;
       if(m && it && it.lat){ const la=parseFloat(it.lat), ln=parseFloat(it.lng); if(!isNaN(la)) m.flyTo([la,ln],16,{duration:0.6}); }
     }catch(e){}
-
     const base = window.sosRequestsCache || [];
     const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.querySelector('#sosMapContainer.map-expanded') || document.querySelector('#sosMapContainer.map-fullscreen-fallback'));
-
     let filteredList = base;
     const clickedItem = base.find(x=>String(x.id)===idStr);
-
     if(isFullscreen){
       // v17.13 FIX - แก้บั๊กว้งกลมหาย: กรองแค่ลิสต์การ์ด ไม่กรองหมุดบนแผนที่
       // หมุดบนแผนที่ต้องอยู่ครบทุกจุด แม้ลิสต์จะกรองเหลือ 1
@@ -10916,7 +10310,6 @@ window.renderFloodWarningsList = function(list){
         filteredList = base.filter(x=>String(x.id)===idStr);
         if(filteredList.length===0 && clickedItem) filteredList=[clickedItem];
       }
-
       if(typeof renderSOSList==='function'){
         // ส่ง filteredList ไป render แค่ลิสต์การ์ดเท่านั้น ห้ามไปยุ่งกับ map markers
         renderSOSList(filteredList);
@@ -10931,7 +10324,6 @@ window.renderFloodWarningsList = function(list){
           if(typeof updateFullscreenOverlaySOS==='function') updateFullscreenOverlaySOS(filteredList);
         }, 150);
       }
-
       // แสดงแถบ ในวงกลมนี้มี X รายการ (สำหรับโหมดเต็มจอปกติ)
       if(filteredList.length < base.length || filteredList.length===1){
         setTimeout(()=>{
@@ -10957,7 +10349,6 @@ window.renderFloodWarningsList = function(list){
       });
       if(typeof renderSOSList==='function') renderSOSList(filteredList);
     }
-
     // Highlight + scroll
     setTimeout(()=>{
       if(typeof window.highlightBoth === 'function'){
@@ -10971,7 +10362,6 @@ window.renderFloodWarningsList = function(list){
         }
       }
     }, 200);
-
     // ถ้าไม่ได้อยู่ในโหมด requests ให้สลับกลับ
     if(window.currentViewMode!=='requests' && typeof switchSOSSubView==='function'){
       switchSOSSubView('requests');
@@ -10985,7 +10375,6 @@ window.renderFloodWarningsList = function(list){
       }, 500);
     }
   };
-
   // Also patch the map marker click to support circle-like hit area
   // Add listener for fullscreenchange to show/hide SOS overlay correctly
   document.addEventListener('fullscreenchange', ()=>{
@@ -11008,11 +10397,9 @@ window.renderFloodWarningsList = function(list){
     }
     if(window.sosMap) setTimeout(()=>window.sosMap.invalidateSize(), 350);
   });
-
   console.log('[v15.11] SOS fullscreen logic ready');
 })();
 </script>
-
 <!-- === v13 DETAIL MODALS === -->
 <div class="detail-modal-overlay" id="sosDetailModalOverlay" onclick="if(event.target===this) closeSOSDetailModal()">
   <div class="detail-modal-sheet" id="sosDetailSheet">
@@ -11023,7 +10410,6 @@ window.renderFloodWarningsList = function(list){
     <div id="sosDetailContent" style="padding-bottom:24px;"></div>
   </div>
 </div>
-
 <div class="detail-modal-overlay" id="warningDetailModalOverlay" onclick="if(event.target===this) closeWarningDetailModal()">
   <div class="detail-modal-sheet" id="warningDetailSheet">
     <div class="detail-modal-header">
@@ -11033,8 +10419,6 @@ window.renderFloodWarningsList = function(list){
     <div id="warningDetailContent" style="padding-bottom:24px;"></div>
   </div>
 </div>
-
-
 <style>
 /* v17.11.9 iPhone camera fix Command4 */
 # floodCameraLiveModal fix: ensure buttons visible on iPhone */
@@ -11062,7 +10446,6 @@ window.renderFloodWarningsList = function(list){
 }
 .flood-level-btn.watch.selected { background: #15803d !important; border-color: #14532d !important; color: #fff !important; opacity: 1 !important; box-shadow: 0 0 0 3px rgba(21,128,61,0.35); } // FIX เขียวเข้ม
 </style>
-
 <script>
 // === v17.11.9 FIX Command1: เปิดแอปมาหน้าแรกเป็น เตือนท่วม + ซูมตำแหน่งปัจจุบัน ===
 (function(){
@@ -11105,8 +10488,6 @@ window.renderFloodWarningsList = function(list){
   });
 })();
 </script>
-
-
 <script>
 // === v7-7 PATCH v5: เปิดค้าง - ปิดเมื่อ scroll down ดูโพสต์ล่าง ===
 console.log('[v7-7 PATCH v5] load - stay open until scroll down');
@@ -11114,7 +10495,6 @@ window._lastManualExpandAt = 0;
 window._manualExpandLock = false;
 window._mapStayOpen = false;
 window._isProgrammaticScroll = false; // FIX v7-7-1: กันพับจาก scroll โค้ด
-
 function _forceExpandMapDown(){
   try{
     const container = document.getElementById('sosMapContainer');
@@ -11165,7 +10545,6 @@ function _forceExpandMapDown(){
     console.log('[v5] forced expand 62vh - will collapse on scroll down');
   }catch(e){ console.error(e); }
 }
-
 function _collapseMapOnScrollDown(){
   try{
     const container = document.getElementById('sosMapContainer');
@@ -11191,7 +10570,6 @@ function _collapseMapOnScrollDown(){
     if(btn) btn.style.display='none';
   }catch(e){ console.error(e); }
 }
-
 function _setupScrollDownCollapse(){
   // ติดตั้งครั้งเดียว
   if(window._scrollDownCollapseSetup) return;
@@ -11249,7 +10627,6 @@ function _setupScrollDownCollapse(){
     }, {passive:true});
   }catch(e){ console.error('setup scroll fail', e); }
 }
-
 // กันฟังก์ชันอื่นมาย่อระหว่าง lock
 (function(){
   const _origEnsureVisible = window.ensureSOSMapVisible;
@@ -11264,7 +10641,6 @@ function _setupScrollDownCollapse(){
     window.ensureSOSMapVisible._v5patched = true;
   }
 })();
-
 window.viewWarningOnMapFromList = function(lat,lng,id){
   try{
     window._isProgrammaticScroll = true; // FIX v7-7-1
@@ -11324,7 +10700,6 @@ window.viewWarningOnMapFromList = function(lat,lng,id){
     }
   }catch(e){ console.error(e); window._isProgrammaticScroll=false; }
 };
-
 window.viewSOSOnMapFromList = function(lat,lng,id){
   try{
     window._isProgrammaticScroll = true; // FIX v7-7-1
@@ -11384,7 +10759,6 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
     }
   }catch(e){ console.error(e); window._isProgrammaticScroll=false; }
 };
-
 // ปุ่มเก็บเองยังใช้ได้
 (function(){
   setTimeout(function(){
@@ -11412,7 +10786,6 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
     observer.observe(container, {attributes:true, attributeFilter:['style','class']});
   }, 1500);
 })();
-
 console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
 </script>
 </body>
