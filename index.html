@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-16  </title>
+  <title> v7-8-15  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1388,10 +1388,9 @@
       background: linear-gradient(135deg, #ff3b30 0%, #d70000 100%) !important;
       color: white !important;
     }
-    
     .btn-notify-compact{
       position: absolute !important;
-      bottom: 14px !important;
+      bottom: 12px !important;
       left: 10px !important;
       top: auto !important;
       right: auto !important;
@@ -1406,32 +1405,6 @@
       box-shadow: 0 2px 8px rgba(234,88,12,0.35) !important;
       z-index: 510 !important;
     }
-    /* v7-8-15 FIX: ย้ายปุ่ม + - ลงมากลางจอ ชิดซ้าย */
-    #sosMapPreview .leaflet-top.leaflet-left{
-      top: 50% !important;
-      bottom: auto !important;
-      transform: translateY(-50%) !important;
-      left: 6px !important;
-      right: auto !important;
-    }
-    #sosMapPreview .leaflet-control-zoom{
-      margin: 0 !important;
-      border-radius: 6px !important;
-      overflow: hidden !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-    }
-    #sosMapPreview .leaflet-control-zoom a{
-      width: 32px !important;
-      height: 32px !important;
-      line-height: 32px !important;
-      font-size: 18px !important;
-    }
-    /* ย้ายปุ่มขยายเต็มจอไปมุมขวาบนตามรูป 2 */
-    #sosMapPreview .leaflet-top.leaflet-right{
-      top: 8px !important;
-      right: 8px !important;
-    }
-
     /* ลบพื้นหลังขาวของ container ที่หุ้ม map เดิมให้โปร่งใสขึ้น */
     #crisisContainer, #sosSectionContainer{
       background: transparent !important;
@@ -11494,61 +11467,5 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
 
 console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
 </script>
-
-<script>
-// v7-8-15 FIX: ย้ายปุ่มแจ้งเตือนท่วมไปอยู่ล่างซ้ายบนแผนที่จริง + ย้าย zoom กลางซ้าย
-(function(){
-  function fixMapButtons(){
-    try{
-      var mapContainer = document.getElementById('sosMapContainer');
-      var preview = document.getElementById('sosMapPreview');
-      var btn = document.getElementById('sosMainActionBtn');
-      if(mapContainer && btn && btn.parentElement !== mapContainer){
-        // ย้ายปุ่มออกจาก top row ไปเป็นลูกโดยตรงของ mapContainer เพื่อให้ bottom อ้างอิงแผนที่
-        mapContainer.appendChild(btn);
-        btn.style.position = 'absolute';
-        btn.style.bottom = '14px';
-        btn.style.left = '10px';
-        btn.style.top = 'auto';
-        btn.style.zIndex = '510';
-      }
-      // ย้ายปุ่ม fullscreen จากซ้ายไปขวาบนถ้ายังอยู่ซ้าย
-      if(preview){
-        var leftControls = preview.querySelectorAll('.leaflet-top.leaflet-left .leaflet-control-fullscreen-btn');
-        var rightContainer = preview.querySelector('.leaflet-top.leaflet-right');
-        if(!rightContainer && preview.querySelector('.leaflet-top')){
-          // สร้าง right container ถ้าไม่มี
-          var rc = document.createElement('div');
-          rc.className = 'leaflet-top leaflet-right';
-          rc.style.top = '8px';
-          rc.style.right = '8px';
-          preview.querySelector('.leaflet-control-container')?.appendChild(rc);
-          rightContainer = rc;
-        }
-        // ถ้า fullscreen อยู่ซ้าย ย้ายไปขวา
-        var fsBtns = preview.querySelectorAll('.leaflet-control-fullscreen-btn');
-        fsBtns.forEach(function(fs){
-          var wrapper = fs.closest('.leaflet-control');
-          if(wrapper && wrapper.parentElement && wrapper.parentElement.classList.contains('leaflet-left')){
-            if(rightContainer) rightContainer.appendChild(wrapper);
-          }
-        });
-      }
-    }catch(e){ console.warn('fixMapButtons error', e); }
-  }
-  document.addEventListener('DOMContentLoaded', fixMapButtons);
-  window.addEventListener('load', function(){ setTimeout(fixMapButtons, 500); setTimeout(fixMapButtons, 1500); });
-  // เรียกซ้ำเมื่อสลับโหมด
-  var origSwitch = window.switchSOSSubView;
-  if(origSwitch){
-    window.switchSOSSubView = function(mode){
-      var r = origSwitch.apply(this, arguments);
-      setTimeout(fixMapButtons, 300);
-      return r;
-    };
-  }
-})();
-</script>
-
 </body>
 </html>
