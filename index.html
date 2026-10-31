@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-8-  </title>
+  <title> v7-8-9  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2022,14 +2022,12 @@ window.highlightBoth = function(idStr, type){
       <div style="display:flex; justify-content: flex-end; align-items:center; height: 18px; flex-shrink:0;">
         <span class="close-modal" onclick="closeLocationModal()" style="font-size:22px; line-height:18px; cursor:pointer; padding:0 4px;">×</span>
       </div>
-      <!-- แถวที่ 1: ค้นหา + lat + lng + กม. บรรทัดเดียว -->
+      <!-- แถวที่ 1: ค้นหา + กม. + ยืนยัน + Google Maps (ตามรูป n1) -->
       <div style="display:flex; gap:4px; align-items:center; flex-shrink:0; position:relative;">
-        <div style="flex: 0 0 40%; position: relative;">
+        <div style="flex:1; position: relative; min-width:0;">
           <input type="text" id="placeSearchInput" placeholder="🔍 ค้นหาที่..." oninput="handlePlaceSearchInput(this.value)" style="width: 100%; padding: 6px 8px; border: 1px solid var(--btn-blue); border-radius: 8px; box-sizing: border-box; font-size: 12px; height: 30px;">
           <div id="placeSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 160px; overflow-y: auto; z-index: 10000; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-size:12px;"></div>
         </div>
-        <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 4px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
-        <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 4px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
         <select id="radiusSelect" onchange="updateRadiusCircle()" style="flex:0 0 62px; padding: 4px 2px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;">
           <option value="1">1กม.</option>
           <option value="3">3กม.</option>
@@ -2038,14 +2036,16 @@ window.highlightBoth = function(idStr, type){
           <option value="20">20กม.</option>
           <option value="50">50กม.</option>
         </select>
+        <button onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ยืนยัน</button>
+        <button onclick="openGoogleMaps()" style="flex:0 0 auto; background: var(--btn-blue); color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">Google Maps</button>
       </div>
       <!-- แถวที่ 2: แผนที่ล้วน -->
       <div id="locationMap" style="width: 100%; flex:1; min-height:0; border-radius: 10px;"></div>
-      <!-- แถวที่ 3: ปุ่ม 1 แถว (แตก 2 แถวถ้าจอแคบ) -->
-      <div style="display:flex; gap:4px; flex-shrink:0; flex-wrap:wrap;">
-        <button onclick="getCurrentUserLocation()" style="flex:1 1 22%; background: #e2e8f0; color: #333; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ปัจจุบัน</button>
-        <button onclick="confirmLocation()" style="flex:1 1 28%; background: #159947; color: white; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ยืนยัน</button>
-        <button onclick="openGoogleMaps()" style="flex:1 1 28%; background: var(--btn-blue); color: white; border: none; padding: 6px 4px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">🗺️ Google Maps</button>
+      <!-- แถวที่ 3: Lat + Lng + ปัจจุบัน + ถังขยะ (ตามรูป n1) -->
+      <div style="display:flex; gap:4px; flex-shrink:0; align-items:center;">
+        <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
+        <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;" onchange="updateMapFromInputs()">
+        <button onclick="getCurrentUserLocation()" style="flex:0 0 auto; background: #e2e8f0; color: #333; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ปัจจุบัน</button>
         <button onclick="clearLocationFilter()" style="flex:0 0 40px; background: #eee; color: #d00; border: 1px solid #ddd; padding: 6px 2px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px;">🗑️</button>
       </div>
     </div>
