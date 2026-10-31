@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-11  </title>
+  <title> v7-8-12  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2054,7 +2054,7 @@ window.highlightBoth = function(idStr, type){
           <option value="50">50กม.</option>
           <option value="100">100กม.</option>
         </select>
-        <button onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ยืนยัน</button>
+        <button onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ค้นหา</button>
         <button onclick="openGoogleMaps()" style="flex:0 0 auto; background: var(--btn-blue); color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">Google Maps</button>
       </div>
       <!-- แถวที่ 2: แผนที่ล้วน -->
@@ -2063,6 +2063,7 @@ window.highlightBoth = function(idStr, type){
       <div style="display:flex; gap:4px; flex-shrink:0; align-items:center;">
         <input type="text" id="latInput" placeholder="Lat" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
         <input type="text" id="lngInput" placeholder="Lng" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box; color:#b0b0b0;" onchange="updateMapFromInputs()">
+        <button onclick="confirmPostingLocation()" style="flex:0 0 auto; background: #0e6b38; color: white; border: none; padding: 6px 12px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">📍ยืนยันพิกัด</button>
         <button onclick="clearLocationFilter()" style="flex:0 0 40px; background: #eee; color: #d00; border: 1px solid #ddd; padding: 6px 2px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px;">🗑️</button>
       </div>
     </div>
@@ -5427,6 +5428,59 @@ function closeLocationModal() {
       testShowList();
       // ไม่เรียก closeLocationModal() เพื่อให้แผนที่ค้างอยู่ตามคำสั่ง
     }
+
+    // ===== คำสั่งที่ 2: ปุ่มยืนยันพิกัด - ส่ง lat/lng ไปใช้ตอนลงประกาศ และปิดแผนที่ =====
+    function confirmPostingLocation() {
+      const latEl = document.getElementById('latInput');
+      const lngEl = document.getElementById('lngInput');
+      const lat = latEl ? latEl.value.trim() : '';
+      const lng = lngEl ? lngEl.value.trim() : '';
+      if (!lat || !lng) {
+        alert('กรุณาเลือกพิกัดบนแผนที่ก่อนครับ');
+        return;
+      }
+      const parsedLat = parseFloat(lat);
+      const parsedLng = parseFloat(lng);
+      if (isNaN(parsedLat) || isNaN(parsedLng)) {
+        alert('พิกัดไม่ถูกต้อง');
+        return;
+      }
+      // ส่งค่าเข้า ตัวแปรหลักที่ใช้กำหนดเป้าหมายหมุดลงประกาศ
+      selectedLat = parsedLat;
+      selectedLng = parsedLng;
+      // sync ไปทุกฟอร์มที่เกี่ยวข้อง - ใช้ setCoordinates ที่มีอยู่แล้วเพื่อความครบ
+      if (typeof setCoordinates === 'function') {
+        setCoordinates(parsedLat, parsedLng);
+      } else {
+        // fallback sync manual
+        const sosLatEl = document.getElementById('sosLat');
+        const sosLngEl = document.getElementById('sosLng');
+        if (sosLatEl) sosLatEl.value = parsedLat.toFixed(6);
+        if (sosLngEl) sosLngEl.value = parsedLng.toFixed(6);
+        const fLat = document.getElementById('floodLat');
+        const fLng = document.getElementById('floodLng');
+        if (fLat) fLat.value = parsedLat.toFixed(6);
+        if (fLng) fLng.value = parsedLng.toFixed(6);
+      }
+      // เก็บไว้ในตัวแปรสำหรับหน้าลงประกาศโดยเฉพาะ
+      window.postingTargetLat = parsedLat;
+      window.postingTargetLng = parsedLng;
+      // อัปเดตปุ่มแสดงพิกัด
+      const radiusSelect = document.getElementById('radiusSelect');
+      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
+      selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
+      const locationFilterBtn = document.getElementById('locationFilterBtn');
+      if (locationFilterBtn) locationFilterBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+      if (postLocationBtn) postLocationBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)}`;
+
+      // หลังส่งค่าเสร็จ ปิดหน้าต่างแผนที่ทันทีตามคำสั่งที่ 2
+      if (typeof closeLocationModal === 'function') {
+        closeLocationModal();
+      }
+    }
+
+
 
 
     // ===================== SOS AI VOICE HELPER FUNCTIONS - v6 FLOOD EDITION =====================
