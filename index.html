@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9 </title>
+  <title> v7-9-1 FIX </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -7149,57 +7149,43 @@ function closeLocationModal() {
 
     let isSOSMapExpanded = false;
 
-    // ===== v7-8-12 Unified Map Factory - แก้ซ้ำซ้อนแผนที่ =====
-    function createBaseMap(domId, opts={}){
+    // ===== v7-8-12 FIX - Unified Map Factory =====
+    function createBaseMap(domId){
+      const el = document.getElementById(domId);
+      if(!el) { console.warn('createBaseMap: no element', domId); return null; }
       try{
-        const el = document.getElementById(domId);
-        if(!el) return null;
-        const m = L.map(domId, {zoomControl:true, ...opts}).setView([13.7563, 100.5018], 11);
+        const m = L.map(domId, {zoomControl:true}).setView([13.7563, 100.5018], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
         return m;
-      }catch(e){ console.error('createBaseMap fail', domId, e); return null; }
+      }catch(e){ console.error('createBaseMap error', domId, e); return null; }
     }
-    function ensureSOSMapReady(){
-      if(window.sosMap && typeof window.sosMap.setView === 'function') return window.sosMap;
-      window.sosMap = createBaseMap('sosMapPreview');
-      return window.sosMap;
-    }
+    // Factory for location picker (with lat/lng)
     function ensureLocationMapReady(lat, lng){
       const _lat = parseFloat(lat)||13.7563, _lng = parseFloat(lng)||100.5018;
       if(window.leafletMap && typeof window.leafletMap.setView === 'function'){
         try{ window.leafletMap.setView([_lat,_lng], 14); }catch(e){}
         return window.leafletMap;
       }
-      window.leafletMap = createBaseMap('locationMap');
-      if(window.leafletMap) try{ window.leafletMap.setView([_lat,_lng], 14); }catch(e){}
+      const map = createBaseMap('locationMap');
+      if(map){ try{ map.setView([_lat,_lng], 14); }catch(e){} window.leafletMap = map; }
       return window.leafletMap;
     }
-    // ===== END v7-8-12 Factory =====
-    // auto check crisis on start
-    document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ try{ checkCrisisMode(); }catch(e){} }, 800); });
+    // ===== END Factory =====
 
-    // v7-8-12 Crisis Mode - เปิด/ปิดแท็บวิกฤตน้ำท่วมตาม app_settings
+    // v7-8-12 Crisis Toggle
     async function checkCrisisMode(){
       try{
-        if(!window.supabaseClient) return true;
-        const {data, error} = await window.supabaseClient.from('app_settings').select('value').eq('key','flood_crisis_active').single();
-        if(error){
-          // ถ้าไม่มี key ให้ถือว่าไม่มีวิกฤต แต่ไม่ซ่อนแท็บเพื่อไม่ให้พัง
-          console.log('checkCrisisMode: no key', error.message);
-          return true;
-        }
-        const isCrisis = data?.value === true;
+        const client = window.supabaseClient || window.supabase;
+        if(!client) return;
+        const {data, error} = await client.from('app_settings').select('value').eq('key','flood_crisis_active').single();
+        let isCrisis = true; // default show if no key
+        if(!error && data){ isCrisis = data.value === true; }
         const crisisTab = document.getElementById('crisisTab');
         if(crisisTab){
           crisisTab.style.display = isCrisis ? '' : 'none';
-          if(!isCrisis && crisisTab.classList.contains('active')){
-            // ถ้ากำลังดูแท็บวิกฤตอยู่แล้ววิกฤตปิด ให้สลับไปอสังหา
-            const estateTab = document.querySelector('[data-tab="estate"]') || document.getElementById('estateTab');
-            if(estateTab) estateTab.click();
-          }
+          console.log('[v7-8-12] crisis:', isCrisis);
         }
-        return isCrisis;
-      }catch(e){ console.warn('checkCrisisMode error', e); return true; }
+      }catch(e){ console.warn('checkCrisisMode', e); }
     }
 
     function toggleSOSMapSize() {
@@ -7229,37 +7215,40 @@ function ensureSOSMapVisible(){
   if(p){ p.style.display='block'; if(!p.style.height||p.style.height==='0px') p.style.height='100%'; }
 }
 function initSOSMap(){
-  ensureSOSMapVisible();
-  const mapEl=document.getElementById('sosMapPreview');
-  if(!mapEl) return;
-  if(window.sosMap){ try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){} return; }
   try{
-    window.sosMap = ensureSOSMapReady();
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
+    const c = document.getElementById('sosMapContainer');
+    const p = document.getElementById('sosMapPreview');
+    if(c){ c.style.display='block'; c.style.visibility='visible'; }
+    if(!p) { console.warn('initSOSMap: no sosMapPreview'); return; }
+    if(window.sosMap && typeof window.sosMap.setView === 'function'){
+      try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){}
+      return;
+    }
+    const map = createBaseMap('sosMapPreview');
+    if(!map){ console.warn('initSOSMap: createBaseMap returned null'); return; }
+    window.sosMap = map;
     window.sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
     window.userLocationLayer = L.featureGroup().addTo(window.sosMap);
-    window.sosMap.whenReady(()=>{ setTimeout(()=>{ try{ if(!window._lastInvalidateTs || Date.now()-window._lastInvalidateTs>800){ window._lastInvalidateTs=Date.now(); window.sosMap.invalidateSize(); } }catch(e){} }, 400); });
-    // === v15.4 RECOMMENDED: ปุ่มขยายเต็มจอ + ปุ่มขยายพื้นที่แผนที่เต็มมือถือ ===
+    try{
+      window.dangerLayer = L.featureGroup().addTo(window.sosMap);
+      window.sosLayer = window.sosMarkersLayer;
+    }catch(e){}
+    window.sosMap.whenReady(()=>{
+      setTimeout(()=>{ try{ window.sosMap.invalidateSize(); }catch(e){} }, 400);
+    });
     const containerEl = document.getElementById('sosMapContainer');
-    if(containerEl){
-      // === v15.5 CLEAN: เหลือแค่ปุ่มเต็มจอ ไม่เอาปุ่ม ↕️ แล้ว ===
-      if(!document.getElementById('mapControlBar')){
-        const bar = document.createElement('div');
-        bar.id='mapControlBar';
-        bar.style.cssText='position:absolute; top:8px; right:8px; z-index:800; display:flex; gap:6px;';
-        bar.innerHTML = `
-          <button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,0.3);">⛶</button>
-        `;
-        containerEl.appendChild(bar);
-        document.getElementById('mapFullscreenBtn').onclick=()=>toggleSOSMapFullscreen();
-      }
+    if(containerEl && !document.getElementById('mapControlBar')){
+      const bar = document.createElement('div');
+      bar.id='mapControlBar';
+      bar.style.cssText='position:absolute; top:8px; right:8px; z-index:800; display:flex; gap:6px;';
+      bar.innerHTML = `<button id="mapFullscreenBtn" title="ขยายเต็มจอ" style="width:38px;height:34px;background:white;border:2px solid rgba(0,0,0,0.2);border-radius:6px;font-size:18px;cursor:pointer;">⛶</button>`;
+      containerEl.appendChild(bar);
+      const btn = document.getElementById('mapFullscreenBtn');
+      if(btn) btn.onclick=()=>{ if(typeof toggleSOSMapFullscreen==='function') toggleSOSMapFullscreen(); };
     }
-    // ปรับความสูงอัตโนมัติเมื่ออยู่ในโหมด warnings
-    if(window.currentViewMode==='warnings'){
-      const c=document.getElementById('sosMapContainer');
-      if(c && !c.classList.contains('map-expanded')) c.style.height='60vh';
-    }
+    console.log('[v7-8-12] initSOSMap OK');
   }catch(e){ console.warn('initSOSMap failed', e); }
+}
 }
 let _isMapExpanded=false; // v15.5 ลบฟังก์ชันขยายแล้วซ่อนฟีดออก ไม่ใช้งานแล้ว
 // === v15.7 FIX FULLSCREEN: ให้เห็นลิสต์ตอนเต็มจอด้วย ===
@@ -7386,7 +7375,7 @@ document.addEventListener('fullscreenchange', ()=>{
       if (!mapEl) return;
       if (window.sosMap) return;
       try {
-        window.sosMap = ensureSOSMapReady();
+        window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
         sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
         window.sosMarkersLayer = sosMarkersLayer;
@@ -8808,24 +8797,7 @@ window._originalSOSStatusHTML = window._originalSOSStatusHTML || null;
 window._originalSOSFilterHTML = window._originalSOSFilterHTML || null;
 window.userLocationLayer = window.userLocationLayer || null;
 
-function ensureSOSMapReady(){
-  if(!window.sosMap || typeof window.sosMap.setView !== 'function'){
-    try{ if(typeof initSOSMap === 'function') initSOSMap(); }catch(e){}
-    try{ if(typeof window.initSOSMap === 'function') window.initSOSMap(); }catch(e){}
-  }
-  let m = window.sosMap || (typeof sosMap!=='undefined'?sosMap:null) || window.map || (typeof map!=='undefined'?map:null);
-  // v17.24 FIX - ไม่ invalidate ทุกครั้ง
-  if(m){
-    try{
-      const now = Date.now();
-      if(!window._lastInvalidateTs || now - window._lastInvalidateTs > 1000){
-        const container = document.getElementById('sosMapPreview');
-        if(container && container.offsetHeight > 10){
-          m.invalidateSize();
-          window._lastInvalidateTs = now;
-        }
-      }
-    }catch(e){}
+function ensureSOSMapReady(){ if(window.sosMap && typeof window.sosMap.setView==='function') return window.sosMap; initSOSMap(); return window.sosMap; }catch(e){}
   }
   return m;
 }
@@ -11347,5 +11319,6 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
 
 console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
 </script>
+<script>document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>{ try{ checkCrisisMode(); if(typeof ensureSOSMapReady==='function'){ /* compat */ window.ensureSOSMapReady = function(){ if(window.sosMap) return window.sosMap; return initSOSMap(), window.sosMap; }; } }catch(e){} }, 900); });</script>
 </body>
 </html>
