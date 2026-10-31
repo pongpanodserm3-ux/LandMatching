@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-12  </title>
+  <title> v7-8-13  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1519,7 +1519,7 @@ window.highlightBoth = function(idStr, type){
       
       <button id="notificationBellBtn" onclick="toggleNotificationSound()" style="background: rgba(255,255,255,0.8); border: 1px solid var(--btn-blue); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex:0 0 auto;">🔔</button>
 
-      <button id="locationFilterBtn" onclick="openLocationModal()" style="position:relative !important; top:auto !important; right:auto !important; flex:0 0 auto;">📍 พิกัด ▾</button>
+      <button id="locationFilterBtn" onclick="openLocationModal('filter')" style="position:relative !important; top:auto !important; right:auto !important; flex:0 0 auto;">📍 พิกัด ▾</button>
     </div>
 
     <!-- แถบระบบนำทาง 5 แท็บ - SOS เป็นแท็บแรกสุด (เลื่อนซ้ายขวาได้) -->
@@ -1993,7 +1993,7 @@ window.highlightBoth = function(idStr, type){
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="เนื้อที่ (ตัวเลขเต็ม)" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="เบอร์โทรศัพท์ (ใส่เลข 9-10 หลัก)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" onblur="if(this.value.length > 0 && ((this.value.length !== 9 && this.value.length !== 10) || !this.value.startsWith('0'))) { alert('เบอร์โทรศัพท์ต้องขึ้นต้นด้วยเลข 0 และมีจำนวน 9 หรือ 10 หลักเท่านั้นครับ'); this.value = ''; }">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ไอดีไลน์">
-          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openLocationModal()">📍 ปักหมุดพิกัด</button>          
+          <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openLocationModal(\'posting\')">📍 ปักหมุดพิกัด</button>          
           <input type="text" id="DetailEdit" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="รายละเอียดเพิ่มเติม">
           <input type="text" class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px; text-align: center; width: 100%; box-sizing: border-box; cursor: text; color: #333;" placeholder="ลิงก์หรือเว็บไซต์">
           <button class="filter-btn" style="margin: 0; border-radius: 8px; font-size: 13px; padding: 8px 4px;" onclick="openDropdownModal('สาธารณูปโภคพิเศษ')">สาธารณูปโภคพิเศษ ▾</button>
@@ -2054,7 +2054,7 @@ window.highlightBoth = function(idStr, type){
           <option value="50">50กม.</option>
           <option value="100">100กม.</option>
         </select>
-        <button onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ค้นหา</button>
+        <button id="locationSearchBtn" onclick="confirmLocation()" style="flex:0 0 auto; background: #159947; color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">✅ค้นหา</button>
         <button onclick="openGoogleMaps()" style="flex:0 0 auto; background: var(--btn-blue); color: white; border: none; padding: 6px 10px; border-radius: 7px; font-weight: bold; cursor: pointer; font-size: 11px; height: 30px; white-space:nowrap;">Google Maps</button>
       </div>
       <!-- แถวที่ 2: แผนที่ล้วน -->
@@ -4942,13 +4942,46 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
     // ==================== END v7-8-1 ====================
 
 
-    function openLocationModal(isFromFlood){
+    function openLocationModal(isFromFloodOrMode){
+      // รองรับโหมดใหม่: 'posting' = จากหน้าลงประกาศ, 'filter' = จากปุ่มพิกัดกรอง
+      let isFromFlood = false;
+      let locationMode = 'filter';
+      if (typeof isFromFloodOrMode === 'string') {
+        locationMode = isFromFloodOrMode;
+        if (locationMode === 'flood') isFromFlood = true;
+      } else {
+        isFromFlood = !!isFromFloodOrMode;
+        // ถ้า isFromFlood = true มาจากน้ำท่วม ถือว่าเป็น posting mode ด้วย (ต้องเบลอปุ่มค้นหา)
+        if (isFromFlood) locationMode = 'posting';
+      }
+      // เก็บโหมดไว้ global
+      window._locationModalMode = locationMode;
+
       stopAIVoiceSpeech();
       const locOverlay = document.getElementById('locationModalOverlay');
       locOverlay.classList.add('active');
       // FIX v13.4: force to front above flood modal (9001) and detail modals (9999)
       locOverlay.style.zIndex = '10010';
       locOverlay.style.display = 'flex';
+
+      // ===== คำสั่งใหม่: เบลอปุ่มค้นหาถ้าเปิดจากหน้าลงประกาศ =====
+      const searchBtn = document.getElementById('locationSearchBtn');
+      if (searchBtn) {
+        if (window._locationModalMode === 'posting') {
+          searchBtn.disabled = true;
+          searchBtn.style.opacity = '0.4';
+          searchBtn.style.filter = 'blur(0.5px)';
+          searchBtn.style.pointerEvents = 'none';
+          searchBtn.style.cursor = 'not-allowed';
+        } else {
+          searchBtn.disabled = false;
+          searchBtn.style.opacity = '1';
+          searchBtn.style.filter = 'none';
+          searchBtn.style.pointerEvents = 'auto';
+          searchBtn.style.cursor = 'pointer';
+        }
+      }
+
       
       const defaultLat = selectedLat || 13.7563;
       const defaultLng = selectedLng || 100.5018;
@@ -5327,7 +5360,7 @@ function closeLocationModal() {
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
       
       // 2. คืนค่าปุ่มปักหมุดพิกัด ในหน้าลงประกาศ (ส่วนที่เพิ่มใหม่)
-      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
       if (postLocationBtn) {
         postLocationBtn.innerText = '📍 ปักหมุดพิกัด';
       }
@@ -5369,7 +5402,7 @@ function closeLocationModal() {
       const radiusSelect = document.getElementById('radiusSelect');
       const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
       
-      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
 
       if (lat && lng) {
         selectedLat = parseFloat(lat);
@@ -5471,7 +5504,7 @@ function closeLocationModal() {
       selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
       const locationFilterBtn = document.getElementById('locationFilterBtn');
       if (locationFilterBtn) locationFilterBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
-      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick="openLocationModal()"]');
+      const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
       if (postLocationBtn) postLocationBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)}`;
 
       // หลังส่งค่าเสร็จ ปิดหน้าต่างแผนที่ทันทีตามคำสั่งที่ 2
