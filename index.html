@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-3  </title>
+  <title> v7-9-4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5767,6 +5767,7 @@ function closeLocationModal() {
       if (editBox && editBox.value.trim()) {
         applyEditToDropdowns(editBox.value.trim());
       }
+      // รองรับทั้งปุ่มเก่า (onclick มีคำไทย) และปุ่มใหม่ (id แบบ re_xxxBtn)
       const filterBtns = document.querySelectorAll('#tab-content-realestate .filter-btn, #tab-content-decor .filter-btn');
       const defaultLabels = [
         "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
@@ -5781,10 +5782,12 @@ function closeLocationModal() {
         const val = text.replace(' ▾', '').replace('📍 ', '').trim();
         if (defaultLabels.includes(val)) return;
         if (val.startsWith("พิกัด") || val.includes("กม.") || val.startsWith("ขาย/เช่า")) return;
+        // ข้ามปุ่มพิเศษของ decor ที่ไม่ใช่ของอสังหา
         if (btn.id === 'saleTypeBtn' || btn.id === 'coordFilterBtn') return;
         
         const onclick = btn.getAttribute('onclick') || '';
         const id = btn.id || '';
+        // รองรับทั้งระบบเก่า (ดูจาก onclick) และระบบใหม่ (ดูจาก id)
         if (onclick.includes('ขาย/เช่า') || id.includes('re_saleBtn')) criteria.priceType = val;
         else if (onclick.includes('คอนโด/บ้าน') || id.includes('re_typeBtn')) criteria.propertyType = val;
         else if (onclick.includes('ราคาขาย') || id.includes('re_salePriceBtn')) criteria.priceSale = val;
@@ -5799,6 +5802,7 @@ function closeLocationModal() {
         else if (id.includes('re_nearbyBtn')) criteria.nearby = val;
         else if (id.includes('re_facilityBtn')) criteria.facility = val;
       });
+      // ดึงค่าพิกัดจากระบบใหม่ด้วย
       if (window.coordFilterData) {
         if (window.coordFilterData.province) criteria.province = window.coordFilterData.province;
         if (window.coordFilterData.district) criteria.district = window.coordFilterData.district;
@@ -5816,16 +5820,14 @@ function closeLocationModal() {
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
-      // FIX V14 - สินค้าทั่วไป 10 หมวด ยิงไป marketplace_items ใช้ gemini-3.5-flash-lite เสมอ
+            // FIX v14 - 10 ปุ่มยิงไป marketplace_items gemini-3.5-flash-lite
       try {
         const decorTab = document.getElementById('tab-content-decor');
         const isDecorActive = decorTab && decorTab.style.display !== 'none';
         if (isDecorActive) {
           let selectedDecor = null;
           const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
-          decorBtns.forEach(function(btn){
-            if (btn.dataset.selectedValue) selectedDecor = btn.dataset.selectedValue.trim();
-          });
+          decorBtns.forEach(function(btn){ if (btn.dataset.selectedValue) selectedDecor = btn.dataset.selectedValue.trim(); });
           if (!selectedDecor) {
             const anySelected = document.querySelector('#tab-content-decor .decor-btn[data-selected-value]');
             if (anySelected) selectedDecor = anySelected.dataset.selectedValue;
@@ -5833,18 +5835,15 @@ function closeLocationModal() {
           if (selectedDecor) {
             criteria.itemType = selectedDecor;
             criteria.item_type = selectedDecor;
-            criteria.productCategory = selectedDecor;
             criteria.table = "marketplace_items";
           } else {
             criteria.table = "marketplace_items";
           }
         }
-      } catch(e){ console.error('decor criteria error', e); }
-      console.log('getSelectedCriteria:', criteria, 'model=gemini-3.5-flash-lite');
+      } catch(e){}
+            console.log('getSelectedCriteria:', criteria, 'model=gemini-3.5-flash-lite');
       return criteria;
     }
-
-
     function testShowList() {
       AppState.pagination.offset = 0;
       AppState.pagination.hasMore = true;
@@ -5903,8 +5902,8 @@ function closeLocationModal() {
       if(properties && properties.length){
         const existing = AppState.data.properties || [];
         properties.forEach(p=>{
-          const key = p.post_id || p.url || p.item_id || p.id;
-          if(!existing.find(e=> (e.post_id||e.url||e.item_id||e.id)==key)) existing.push(p);
+          const key = p.post_id || p.url;
+          if(!existing.find(e=> (e.post_id||e.url)===key)) existing.push(p);
         });
         AppState.data.properties = existing;
         // v7-8-2: ฟีดคงลำดับ relevance เดิม (ตรงเงื่อนไขสุดอยู่บน) ไม่เรียงราคา, ส่วนแผนที่เรียงตามใกล้สุดใน renderPropertyMarkersOnMap
@@ -5925,7 +5924,7 @@ function closeLocationModal() {
       }
     
       properties.forEach(item => {
-        const key = item.post_id || item.url || item.item_id || item.id;
+        const key = item.post_id || item.url || item.id;
         if (AppState.pagination.renderedKeys.has(key)) return;
         AppState.pagination.renderedKeys.add(key);
     
@@ -5935,51 +5934,62 @@ function closeLocationModal() {
         
         card.onclick = () => showDetailModal(item);
     
-        // FIX V14.1 - รถยนต์ต้องโชว์ชื่อจริง ไม่ใช่ ประกาศอสังหาริมทรัพย์
+        const price = item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
+        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
+        // FIX v14.2 - รถยนต์ต้องโชว์ชื่อจริง
         const isProduct = !!(item.item_id || item.item_type || item.title || item._score !== undefined);
-        let price = item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
         let titleText = '';
-        let locText = '';
+        let locExtra = '';
         if (isProduct) {
           titleText = item.title || item.item_type || item.property_type || item.facebook_name || 'สินค้าทั่วไป';
           const cat = item.item_type || item.property_type || '';
           const prov = item.province || '';
           const dist = item.district || '';
-          locText = (cat + ' ' + dist + ' ' + prov).trim();
+          locExtra = (cat + ' ' + dist + ' ' + prov).trim();
         } else {
-          price = item.price_sell || item.price_rent || 'ไม่ระบุราคา';
           titleText = item.project || item.facebook_name || 'ประกาศอสังหาริมทรัพย์';
-          locText = ( (item.property_type||'') + ' ' + (item.soi||'') + ' ' + (item.road||'') + ' ' + (item.district||'') + ' ' + (item.province||'') ).trim();
+          locExtra = ( (item.property_type||'') + ' ' + (item.soi||'') + ' ' + (item.road||'') + ' ' + (item.district||'') + ' ' + (item.province||'') ).trim();
         }
-        const distanceText = item._distance !== undefined ? ' | ห่าง ' + item._distance.toFixed(1) + ' กม.' : '';
+        // ใช้ locExtra แทนการสร้างใหม่ด้านล่าง
+        const _originalLocationBuild = true;
     
         // 1. ดึงภาพบ้านจาก database (คอลัมน์ images) ถ้าไม่มีให้ใช้ภาพสำรอง
         const images = (Array.isArray(item.images) && item.images.length > 0)
           ? item.images
-          : (item.image_url ? [item.image_url] : ['https://via.placeholder.com/110x100?text=No+Image']);
+          : ['https://via.placeholder.com/110x100?text=No+Image'];
     
         // 2. สร้าง HTML รูปภาพซ้อนกันเพื่อให้เลื่อนสไลด์ซ้าย-ขวาได้
-        const imagesHTML = images.map(function(imgUrl) {
-          return '<img src="' + imgUrl + '" alt="ภาพบ้าน" style="width: 110px; height: 100px; object-fit: cover; border-radius: 12px; scroll-snap-align: start; flex-shrink: 0;" loading="lazy">';
-        }).join('');
+        const imagesHTML = images.map(imgUrl => 
+          `<img src="${imgUrl}" alt="ภาพบ้าน" style="width: 110px; height: 100px; object-fit: cover; border-radius: 12px; scroll-snap-align: start; flex-shrink: 0;" loading="lazy">`
+        ).join('');
     
         // 3. กำหนดโครงสร้าง HTML ภายในตัวการ์ด
-        card.innerHTML = '<div style="flex: 1; min-width: 0;">' +
-              '<div style="font-size: 15px; font-weight: bold; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' +
-              titleText +
-              '</div>' +
-              '<div style="font-size: 12px; color: #555; margin-bottom: 6px;">' +
-              '📍 ' + locText + distanceText +
-              '</div>' +
-              '<div style="font-size: 15px; font-weight: bold; color: #d9534f;">' +
-              '💰 ' + price +
-              ' <button class="chat-owner-btn">💬chat.</button>' +
-              '</div>' +
-            '</div>' +
-            '<div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;"></div>' +
-            '<div class="card-right-slider" style="width: 110px; height: 100px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 12px; gap: 4px; background: #f0f4f8; flex-shrink: 0;" onclick="event.stopPropagation();">' +
-              imagesHTML +
-            '</div>';
+        card.innerHTML = `
+          <!-- 1. ฝั่งซ้าย: ข้อมูลบ้าน -->
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 15px; font-weight: bold; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${titleText}
+            </div>
+            <div style="font-size: 12px; color: #555; margin-bottom: 6px;">
+              📍 ${locExtra} ${distanceText}
+            </div>
+            <div style="font-size: 15px; font-weight: bold; color: #d9534f;">
+              💰 ${price}
+              <button class="chat-owner-btn">
+                💬chat.
+              </button>
+            </div>
+          </div>
+    
+          <!-- 2. ตรงกลาง: ว่าง ใส่เพิ่มได้ SS -->
+          <div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          </div>
+    
+          <!-- 3. ฝั่งขวา: ภาพบ้านสไลด์ซ้าย-ขวาได้ 8 ภาพ (ดึงจาก Database) -->
+          <div class="card-right-slider" style="width: 110px; height: 100px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 12px; gap: 4px; background: #f0f4f8; flex-shrink: 0;" onclick="event.stopPropagation();">
+            ${imagesHTML}
+          </div>
+        `;
     
         // 4. ผูกคำสั่งเปิดแชตกับปุ่มคุยกับเจ้าของ
         const chatBtn = card.querySelector('.chat-owner-btn');
@@ -5992,7 +6002,6 @@ function closeLocationModal() {
         container.appendChild(card);
       });
     }
-    function showDetailModal(item) {
     function showDetailModal(item) {
       stopAIVoiceSpeech(); 
       document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
