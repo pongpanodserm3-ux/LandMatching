@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-10-2  </title>
+  <title> v7-10-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6094,6 +6094,34 @@ if (name === "switch_tab_category") {
       }
     }
     function renderProperties(properties) {
+      // FIX v7-10-3: Relevance Ranking - นับจำนวนคำที่เจอใน edit
+      const activeInputForScore = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      const searchForScore = activeInputForScore ? activeInputForScore.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      if (searchForScore && properties && properties.length) {
+        const keywords = searchForScore.split(/\s+/).filter(k=>k.trim().length>=2);
+        // ให้คะแนนแต่ละโพสต์
+        properties.forEach(p => {
+          if (p._score !== undefined) return; // ถ้า server ส่งมาแล้วใช้ของ server
+          const haystack = `${p.title||''} ${p.item_type||''} ${p.property_type||''} ${p.details||''} ${p.facebook_name||''} ${p.project||''}`.toLowerCase();
+          let score = 0;
+          keywords.forEach(kw => {
+            const kwLow = kw.toLowerCase();
+            if (haystack.includes(kwLow)) {
+              // นับจำนวนครั้งที่เจอ + น้ำหนักถ้าเป็นแบรนด์หลัก
+              const count = (haystack.match(new RegExp(kwLow.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+              score += count;
+              // โบนัส: ถ้าเจอ นิสสัน/Nissan ตรงๆ ให้ +5
+              if (['นิสสัน','nissan','โตโยต้า','toyota','มาสด้า','mazda','ฮอนด้า','honda'].includes(kwLow)) {
+                if (haystack.includes(kwLow)) score += 5;
+              }
+            }
+          });
+          p._score = score;
+        });
+        // เรียงจากคะแนนมากไปน้อย
+        properties.sort((a,b) => (b._score||0) - (a._score||0));
+        console.log('RANKING: keyword=', keywords, 'sorted by _score', properties.slice(0,3).map(p=>({title:(p.title||'').slice(0,30), score:p._score})));
+      }
       // v7-8-1 sync properties cache for map markers
       if(properties && properties.length){
         const existing = AppState.data.properties || [];
