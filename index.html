@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-5  </title>
+  <title> v7-9-6  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2675,7 +2675,8 @@ window.highlightBoth = function(idStr, type){
     const TAB_PROMPTS = {
       sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ",
-      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านสินค้าทั่วไป ของแต่งบ้าน และอุปกรณ์ซ่อมแซมบ้าน ให้คำแนะนำและค้นหาสินค้าอย่างคุ้มค่า",
+      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
+
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
       others: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ช่างและงานบริการ' ให้คุณรับบทบาทเป็น AI ผู้ช่วยค้นหาและแนะนำช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ และงานบริการต่างๆ ให้คำแนะนำที่ตรงจุดและเชื่อถือได้"
     };
@@ -5632,12 +5633,20 @@ function closeLocationModal() {
                           }));
                         }
                       }                        
-                      //AI สั่งสลับแท็บ ผ่านเสียง(Function Calling / Tool Handling) Function Nameชื่อ"switch_tab_category"
+                      //AI สั่งสลับแท็บ ผ่านเสียง(Function Calling / Tool Handling) Function Nameชื่อ"switch_tab_category" - FIX 10 หมวดสินค้าทั่วไป
                       else if (name === "switch_tab_category") {
-                      switchTab(args.tabId); //ตัวแปร Parameter: ในโค้ด ใช้ args.tabId (รูปแบบ camelCase)
+                      switchTab(args.tabId);
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
                         if (activeInput) activeInput.value = args.searchText;
+                        // FIX v7-9-6: ถ้าเป็นแท็บสินค้าทั่วไป ให้ auto-select ปุ่มหมวดย่อยตาม keyword
+                        if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
+                          setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
+                        }
+                      }
+                      // FIX: ถ้าไม่มี searchText แต่เป็น decor ให้ลอง auto-select จาก tabId เดิม (กรณี AI ส่งแค่หมวด)
+                      if (args.tabId === 'decor' && !args.searchText && typeof window.autoSelectDecorByKeyword === 'function') {
+                        setTimeout(()=>{ window.autoSelectDecorByKeyword(args.tabId); }, 300);
                       }
                     } else if (name === "submit_user_summary") {
                     // 1. ป้องกัน Error จากกรณี AI ส่งค่า args มาเป็น null หรือโครงสร้างไม่ตรง
@@ -6239,6 +6248,117 @@ function closeLocationModal() {
       }
     }
     // ฟังก์ชันกลางสำหรับ modal อสังหาเรียกเมื่อเลือกค่าเสร็จ
+    // === FIX v7-9-6: Auto-select decor category by AI keyword - 10 หมวดจากรูป ===
+    window.DECOR_CATEGORIES_MAP = {
+      // 1. เฟอร์นิเจอร์ แต่งบ้าน
+      'เฟอร์นิเจอร์': { cat: 'cat1Flyout', btnIndex: 0, value: 'เฟอร์นิเจอร์ แต่งบ้าน' },
+      'เก้าอี้': { cat: 'cat1Flyout', btnIndex: 0, value: 'เก้าอี้และโซฟา' },
+      'โซฟา': { cat: 'cat1Flyout', btnIndex: 0, value: 'เก้าอี้และโซฟา' },
+      'โต๊ะ': { cat: 'cat1Flyout', btnIndex: 0, value: 'โต๊ะและตู้' },
+      'ตู้': { cat: 'cat1Flyout', btnIndex: 0, value: 'โต๊ะและตู้' },
+      'เตียง': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
+      'ห้องนอน': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
+      'เฟอร์นิเจอร์ภายนอก': { cat: 'cat1Flyout', btnIndex: 0, value: 'เฟอร์นิเจอร์ภายนอก' },
+      'ของแต่งบ้าน': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      // 2. โคมไฟ และระบบแสงสว่าง
+      'โคมไฟ': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟ และระบบแสงสว่าง' },
+      'โคมไฟตกแต่ง': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
+      'โคมไฟเพดาน': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
+      'Chandelier': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
+      'โคมไฟใช้งาน': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟใช้งาน' },
+      'หลอดไฟ': { cat: 'cat2Flyout', btnIndex: 1, value: 'หลอดไฟและอุปกรณ์' },
+      // 3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน
+      'ประตู': { cat: 'cat3Flyout', btnIndex: 2, value: 'ประตู' },
+      'หน้าต่าง': { cat: 'cat3Flyout', btnIndex: 2, value: 'หน้าต่าง' },
+      'สุขภัณฑ์': { cat: 'cat3Flyout', btnIndex: 2, value: 'สุขภัณฑ์และห้องน้ำ' },
+      'ห้องน้ำ': { cat: 'cat3Flyout', btnIndex: 2, value: 'สุขภัณฑ์และห้องน้ำ' },
+      'วัสดุซ่อมบ้าน': { cat: 'cat3Flyout', btnIndex: 2, value: 'วัสดุและเครื่องมือช่าง' },
+      // 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์
+      'คอมพิวเตอร์': { cat: 'cat4Flyout', btnIndex: 3, value: 'คอมพิวเตอร์และโน้ตบุ๊ก' },
+      'โน้ตบุ๊ก': { cat: 'cat4Flyout', btnIndex: 3, value: 'คอมพิวเตอร์และโน้ตบุ๊ก' },
+      'อุปกรณ์เสริมคอมพิวเตอร์': { cat: 'cat4Flyout', btnIndex: 3, value: 'อุปกรณ์เสริมคอมพิวเตอร์' },
+      'สมาร์ทโฟน': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'แท็บเล็ต': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'กล้อง': { cat: 'cat4Flyout', btnIndex: 3, value: 'กล้องและอุปกรณ์บันทึก' },
+      'เครื่องเสียง': { cat: 'cat4Flyout', btnIndex: 3, value: 'เครื่องเสียงและแกดเจ็ต' },
+      'แกดเจ็ต': { cat: 'cat4Flyout', btnIndex: 3, value: 'เครื่องเสียงและแกดเจ็ต' },
+      // 5. ยานพาหนะ และอะไหล่
+      'ยานพาหนะ': { cat: 'cat5Flyout', btnIndex: 4, value: 'ยานพาหนะ และอะไหล่' },
+      'รถยนต์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'รถเก๋ง': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'รถ SUV': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'รถจักรยานยนต์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถจักรยานยนต์' },
+      'มอเตอร์ไซค์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถจักรยานยนต์' },
+      'จักรยาน': { cat: 'cat5Flyout', btnIndex: 4, value: 'จักรยานและสกู๊ตเตอร์' },
+      'สกู๊ตเตอร์': { cat: 'cat5Flyout', btnIndex: 4, value: 'จักรยานและสกู๊ตเตอร์' },
+      'อะไหล่': { cat: 'cat5Flyout', btnIndex: 4, value: 'อะไหล่และอุปกรณ์ตกแต่ง' },
+      // 6. เครื่องใช้ไฟฟ้าภายในบ้าน
+      'เครื่องใช้ไฟฟ้า': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าภายในบ้าน' },
+      'เครื่องใช้ไฟฟ้าใหญ่': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าใหญ่' },
+      'ตู้เย็น': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าใหญ่' },
+      'เครื่องใช้ไฟฟ้าในครัว': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าในครัว' },
+      'เครื่องใช้ไฟฟ้าทำความสะอาด': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าทำความสะอาด' },
+      // 7. แฟชั่น เครื่องแต่งกาย
+      'แฟชั่น': { cat: 'cat7Flyout', btnIndex: 6, value: 'แฟชั่น เครื่องแต่งกาย' },
+      'เสื้อผ้า': { cat: 'cat7Flyout', btnIndex: 6, value: 'เสื้อผ้า' },
+      'รองเท้า': { cat: 'cat7Flyout', btnIndex: 6, value: 'รองเท้าและกระเป๋า' },
+      'กระเป๋า': { cat: 'cat7Flyout', btnIndex: 6, value: 'รองเท้าและกระเป๋า' },
+      'เครื่องประดับ': { cat: 'cat7Flyout', btnIndex: 6, value: 'เครื่องประดับและนาฬิกา' },
+      'นาฬิกา': { cat: 'cat7Flyout', btnIndex: 6, value: 'เครื่องประดับและนาฬิกา' },
+      // 8. แม่และเด็ก / สัตว์เลี้ยง
+      'แม่และเด็ก': { cat: 'cat8Flyout', btnIndex: 7, value: 'แม่และเด็ก' },
+      'เด็ก': { cat: 'cat8Flyout', btnIndex: 7, value: 'แม่และเด็ก' },
+      'สัตว์เลี้ยง': { cat: 'cat8Flyout', btnIndex: 7, value: 'สัตว์เลี้ยง' },
+      // 9. กีฬา และของสะสม
+      'กีฬา': { cat: 'cat9Flyout', btnIndex: 8, value: 'กีฬา และของสะสม' },
+      'อุปกรณ์กีฬา': { cat: 'cat9Flyout', btnIndex: 8, value: 'อุปกรณ์กีฬาและฟิตเนส' },
+      'ฟิตเนส': { cat: 'cat9Flyout', btnIndex: 8, value: 'อุปกรณ์กีฬาและฟิตเนส' },
+      'แคมป์ปิ้ง': { cat: 'cat9Flyout', btnIndex: 8, value: 'การแคมป์ปิ้ง' },
+      'เครื่องดนตรี': { cat: 'cat9Flyout', btnIndex: 8, value: 'เครื่องดนตรี' },
+      'ของสะสม': { cat: 'cat9Flyout', btnIndex: 8, value: 'ของสะสม' },
+      // 10. สินค้าอุตสาหกรรม และร้านค้า
+      'อุตสาหกรรม': { cat: 'cat10Flyout', btnIndex: 9, value: 'สินค้าอุตสาหกรรม และร้านค้า' },
+      'ร้านค้า': { cat: 'cat10Flyout', btnIndex: 9, value: 'อุปกรณ์ร้านค้า' },
+      'อุปกรณ์ร้านค้า': { cat: 'cat10Flyout', btnIndex: 9, value: 'อุปกรณ์ร้านค้า' },
+      'เครื่องจักร': { cat: 'cat10Flyout', btnIndex: 9, value: 'เครื่องจักรและเกษตรกรรม' },
+      'เกษตรกรรม': { cat: 'cat10Flyout', btnIndex: 9, value: 'เครื่องจักรและเกษตรกรรม' }
+    };
+    window.autoSelectDecorByKeyword = function(keyword) {
+      if (!keyword) return;
+      const kw = keyword.toLowerCase().trim();
+      let matched = null;
+      // หา keyword ที่ตรงที่สุด
+      for (const key in window.DECOR_CATEGORIES_MAP) {
+        if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) {
+          matched = window.DECOR_CATEGORIES_MAP[key];
+          // ถ้าตรงเป๊ะ ให้ใช้เลย
+          if (key.toLowerCase() === kw) break;
+        }
+      }
+      if (!matched) {
+        // ถ้าไม่เจอ ให้ใช้ keyword ตรงๆ เป็น selectedValue
+        const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
+        if (decorBtns.length > 0) {
+          // เลือกปุ่มตาม btnIndex ถ้ามี
+          console.log('DECOR: ไม่เจอ mapping ใช้ keyword ตรงๆ:', keyword);
+        }
+        return;
+      }
+      try {
+        const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
+        const targetBtn = decorBtns[matched.btnIndex];
+        if (targetBtn) {
+          currentFlyoutBtn = targetBtn;
+          targetBtn.innerText = matched.value + ' ▾';
+          targetBtn.dataset.selectedValue = matched.value;
+          console.log('DECOR AUTO-SELECT:', matched.value, 'from keyword:', keyword);
+          if (typeof testShowList === 'function') {
+            setTimeout(()=> testShowList(), 200);
+          }
+        }
+      } catch(e){ console.error('autoSelectDecor error', e); }
+    };
+
     function onFilterSelectedInSameRow(selectedBtn, newValue) {
       if (selectedBtn) {
         selectedBtn.innerText = newValue + ' ▾';
