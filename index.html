@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-1  </title>
+  <title> v7-9-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5816,58 +5816,34 @@ function closeLocationModal() {
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
-
-      // FIX V14: สินค้าทั่วไป 10 หมวด - ยิงไป marketplace_items - ใช้ gemini-3.5-flash-lite เสมอ
-      const GEMINI_MODEL = "gemini-3.5-flash-lite";
+      // FIX V14 - สินค้าทั่วไป 10 หมวด ยิงไป marketplace_items ใช้ gemini-3.5-flash-lite เสมอ
       try {
         const decorTab = document.getElementById('tab-content-decor');
         const isDecorActive = decorTab && decorTab.style.display !== 'none';
         if (isDecorActive) {
-          const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
           let selectedDecor = null;
-          decorBtns.forEach(btn => {
-            if (btn.dataset.selectedValue) {
-              selectedDecor = btn.dataset.selectedValue.trim();
-            }
+          const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
+          decorBtns.forEach(function(btn){
+            if (btn.dataset.selectedValue) selectedDecor = btn.dataset.selectedValue.trim();
           });
           if (!selectedDecor) {
             const anySelected = document.querySelector('#tab-content-decor .decor-btn[data-selected-value]');
             if (anySelected) selectedDecor = anySelected.dataset.selectedValue;
           }
           if (selectedDecor) {
-            const mainCategories = ["เฟอร์นิเจอร์ แต่งบ้าน","โคมไฟ และระบบแสงสว่าง","ประตูหน้าต่าง และวัสดุซ่อมบ้าน","คอมพิวเตอร์ และอิเล็กทรอนิกส์","ยานพาหนะ และอะไหล่","เครื่องใช้ไฟฟ้าภายในบ้าน","แฟชั่น เครื่องแต่งกาย","แม่และเด็ก / สัตว์เลี้ยง","กีฬา และของสะสม","สินค้าอุตสาหกรรม และร้านค้า"];
-            let mainCat = selectedDecor;
-            const keywordToMain = {
-              "โซฟา":"เฟอร์นิเจอร์ แต่งบ้าน","เก้าอี้":"เฟอร์นิเจอร์ แต่งบ้าน","โต๊ะ":"เฟอร์นิเจอร์ แต่งบ้าน","เตียง":"เฟอร์นิเจอร์ แต่งบ้าน","ตู้":"เฟอร์นิเจอร์ แต่งบ้าน","ผ้าม่าน":"เฟอร์นิเจอร์ แต่งบ้าน",
-              "โคมไฟ":"โคมไฟ และระบบแสงสว่าง","หลอดไฟ":"โคมไฟ และระบบแสงสว่าง","LED":"โคมไฟ และระบบแสงสว่าง",
-              "ประตู":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","หน้าต่าง":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","วัสดุซ่อม":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","ปูน":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน",
-              "คอมพิวเตอร์":"คอมพิวเตอร์ และอิเล็กทรอนิกส์","โน้ตบุ๊ค":"คอมพิวเตอร์ และอิเล็กทรอนิกส์","อิเล็กทรอนิกส์":"คอมพิวเตอร์ และอิเล็กทรอนิกส์",
-              "ยานพาหนะ":"ยานพาหนะ และอะไหล่","รถยนต์":"ยานพาหนะ และอะไหล่","มอเตอร์ไซค์":"ยานพาหนะ และอะไหล่","อะไหล่":"ยานพาหนะ และอะไหล่","รถยนต์":"ยานพาหนะ และอะไหล่",
-              "เครื่องใช้ไฟฟ้า":"เครื่องใช้ไฟฟ้าภายในบ้าน","ตู้เย็น":"เครื่องใช้ไฟฟ้าภายในบ้าน","แอร์":"เครื่องใช้ไฟฟ้าภายในบ้าน","ทีวี":"เครื่องใช้ไฟฟ้าภายในบ้าน",
-              "แฟชั่น":"แฟชั่น เครื่องแต่งกาย","เสื้อผ้า":"แฟชั่น เครื่องแต่งกาย","กระเป๋า":"แฟชั่น เครื่องแต่งกาย",
-              "แม่และเด็ก":"แม่และเด็ก / สัตว์เลี้ยง","สัตว์เลี้ยง":"แม่และเด็ก / สัตว์เลี้ยง","ของเล่นเด็ก":"แม่และเด็ก / สัตว์เลี้ยง",
-              "กีฬา":"กีฬา และของสะสม","ฟิตเนส":"กีฬา และของสะสม","ของสะสม":"กีฬา และของสะสม",
-              "อุตสาหกรรม":"สินค้าอุตสาหกรรม และร้านค้า","ร้านค้า":"สินค้าอุตสาหกรรม และร้านค้า","เครื่องจักร":"สินค้าอุตสาหกรรม และร้านค้า"
-            };
-            for (let k in keywordToMain) {
-              if (selectedDecor.includes(k)) { mainCat = keywordToMain[k]; break; }
-            }
-            if (mainCategories.includes(selectedDecor)) mainCat = selectedDecor;
-            
             criteria.itemType = selectedDecor;
             criteria.item_type = selectedDecor;
-            criteria.mainCategory = mainCat;
-            criteria.productCategory = mainCat;
+            criteria.productCategory = selectedDecor;
             criteria.table = "marketplace_items";
           } else {
             criteria.table = "marketplace_items";
           }
         }
       } catch(e){ console.error('decor criteria error', e); }
-
       console.log('getSelectedCriteria:', criteria, 'model=gemini-3.5-flash-lite');
       return criteria;
     }
+
 
     function testShowList() {
       AppState.pagination.offset = 0;
@@ -5931,6 +5907,8 @@ function closeLocationModal() {
           if(!existing.find(e=> (e.post_id||e.url||e.item_id||e.id)==key)) existing.push(p);
         });
         AppState.data.properties = existing;
+        // v7-8-2: ฟีดคงลำดับ relevance เดิม (ตรงเงื่อนไขสุดอยู่บน) ไม่เรียงราคา, ส่วนแผนที่เรียงตามใกล้สุดใน renderPropertyMarkersOnMap
+        // ถ้าแผนที่เปิดอยู่และเป็นโหมดตามฟีด ให้อัพเดทหมุดตามฟีด/condition
         const overlay = document.getElementById('locationModalOverlay');
         if(overlay && overlay.classList.contains('active')){
           if(!isMapModeActive) renderPropertyMarkersOnMap(AppState.data.properties);
@@ -5952,72 +5930,58 @@ function closeLocationModal() {
         AppState.pagination.renderedKeys.add(key);
     
         const card = document.createElement('div');
+        // จัด Layout การ์ดเป็น Flexbox แนวนอน (ฝั่งซ้าย=ข้อมูล, ตรงกลาง=ปุ่มแชท, ฝั่งขวา=ภาพสไลด์)
         card.style.cssText = 'background: #fff; border-radius: 15px; padding: 12px 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: pointer; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px;';
         
         card.onclick = () => showDetailModal(item);
     
-        // === FIX V14: แยก logic อสังหา vs สินค้าทั่วไป 10 หมวด ===
-        const isMarketplace = !!(item.item_id || item.item_type || item.title && item.property_type && item.property_type.includes('ยานพาหนะ') || item.table==='marketplace_items' || item._score!==undefined);
-        const isProduct = isMarketplace || item.item_type || item.title;
-        
-        let price = 'ไม่ระบุราคา';
-        let titleText = 'ประกาศอสังหาริมทรัพย์';
-        let locationText = '';
-        
+        // FIX V14.1 - รถยนต์ต้องโชว์ชื่อจริง ไม่ใช่ ประกาศอสังหาริมทรัพย์
+        const isProduct = !!(item.item_id || item.item_type || item.title || item._score !== undefined);
+        let price = item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
+        let titleText = '';
+        let locText = '';
         if (isProduct) {
-          // สินค้าทั่วไป 10 หมวด - ใช้ title จริงจาก marketplace_items
           titleText = item.title || item.item_type || item.property_type || item.facebook_name || 'สินค้าทั่วไป';
-          // ราคา - รองรับหลายคอลัมน์
-          price = item.price || item.price_sell || item.price_rent || item.sale_price || item.rent_price || item.cost || 'ไม่ระบุราคา';
-          if (typeof price === 'number') price = price.toLocaleString();
-          // แสดงหมวด + จังหวัด
           const cat = item.item_type || item.property_type || '';
           const prov = item.province || '';
           const dist = item.district || '';
-          locationText = `${cat} ${dist} ${prov}`.trim();
-          // ถ้าไม่มี title จริง ให้ใช้รายละเอียดสั้นๆ จาก ai_summary
-          if (titleText === 'สินค้าทั่วไป' && item.ai_summary) {
-            titleText = item.ai_summary.substring(0,60);
-          }
+          locText = (cat + ' ' + dist + ' ' + prov).trim();
         } else {
-          // อสังหาเดิม
           price = item.price_sell || item.price_rent || 'ไม่ระบุราคา';
           titleText = item.project || item.facebook_name || 'ประกาศอสังหาริมทรัพย์';
-          locationText = `${item.property_type||''} ${item.soi||''} ${item.road||''} ${item.district||''} ${item.province||''}`.trim();
+          locText = ( (item.property_type||'') + ' ' + (item.soi||'') + ' ' + (item.road||'') + ' ' + (item.district||'') + ' ' + (item.province||'') ).trim();
         }
-        
-        const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        const scoreText = item._score !== undefined ? `⭐${item._score}` : '';
+        const distanceText = item._distance !== undefined ? ' | ห่าง ' + item._distance.toFixed(1) + ' กม.' : '';
     
+        // 1. ดึงภาพบ้านจาก database (คอลัมน์ images) ถ้าไม่มีให้ใช้ภาพสำรอง
         const images = (Array.isArray(item.images) && item.images.length > 0)
           ? item.images
           : (item.image_url ? [item.image_url] : ['https://via.placeholder.com/110x100?text=No+Image']);
     
-        const imagesHTML = images.map(imgUrl => 
-          `<img src="${imgUrl}" alt="ภาพสินค้า" style="width: 110px; height: 100px; object-fit: cover; border-radius: 12px; scroll-snap-align: start; flex-shrink: 0;" loading="lazy">`
-        ).join('');
+        // 2. สร้าง HTML รูปภาพซ้อนกันเพื่อให้เลื่อนสไลด์ซ้าย-ขวาได้
+        const imagesHTML = images.map(function(imgUrl) {
+          return '<img src="' + imgUrl + '" alt="ภาพบ้าน" style="width: 110px; height: 100px; object-fit: cover; border-radius: 12px; scroll-snap-align: start; flex-shrink: 0;" loading="lazy">';
+        }).join('');
     
-        card.innerHTML = `
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 15px; font-weight: bold; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              ${titleText} ${scoreText ? '<span style="font-size:10px;color:#888;">'+scoreText+'</span>' : ''}
-            </div>
-            <div style="font-size: 12px; color: #555; margin-bottom: 6px;">
-              📍 ${locationText} ${distanceText}
-            </div>
-            <div style="font-size: 15px; font-weight: bold; color: #d9534f;">
-              💰 ${price}
-              <button class="chat-owner-btn">
-                💬chat.
-              </button>
-            </div>
-          </div>
-          <div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;"></div>
-          <div class="card-right-slider" style="width: 110px; height: 100px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 12px; gap: 4px; background: #f0f4f8; flex-shrink: 0;" onclick="event.stopPropagation();">
-            ${imagesHTML}
-          </div>
-        `;
+        // 3. กำหนดโครงสร้าง HTML ภายในตัวการ์ด
+        card.innerHTML = '<div style="flex: 1; min-width: 0;">' +
+              '<div style="font-size: 15px; font-weight: bold; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' +
+              titleText +
+              '</div>' +
+              '<div style="font-size: 12px; color: #555; margin-bottom: 6px;">' +
+              '📍 ' + locText + distanceText +
+              '</div>' +
+              '<div style="font-size: 15px; font-weight: bold; color: #d9534f;">' +
+              '💰 ' + price +
+              ' <button class="chat-owner-btn">💬chat.</button>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display: flex; align-items: center; justify-content: center; flex-shrink: 0;"></div>' +
+            '<div class="card-right-slider" style="width: 110px; height: 100px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 12px; gap: 4px; background: #f0f4f8; flex-shrink: 0;" onclick="event.stopPropagation();">' +
+              imagesHTML +
+            '</div>';
     
+        // 4. ผูกคำสั่งเปิดแชตกับปุ่มคุยกับเจ้าของ
         const chatBtn = card.querySelector('.chat-owner-btn');
         if (chatBtn) {
           chatBtn.onclick = (e) => {
