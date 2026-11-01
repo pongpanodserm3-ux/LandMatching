@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-10-1  </title>
+  <title> v7-10-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5646,116 +5646,103 @@ function closeLocationModal() {
                         }
                       }                        
                       //AI สั่งสลับแท็บ ผ่านเสียง(Function Calling / Tool Handling) Function Nameชื่อ"switch_tab_category" - FIX 10 หมวดสินค้าทั่วไป
-                      else if (name === "switch_tab_category") {
+                      else 
+if (name === "switch_tab_category") {
                       switchTab(args.tabId);
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
                         if (activeInput) {
-                          // FIX v7-9-10: Smart merge - แก้บั๊ก iPhone 11 พิมพ์ไม่ได้เมื่อมียี่ห้อซ้ำ
                           let finalText = args.searchText;
                           if (typeof window.getPrimaryThaiBrand === 'function') {
                             finalText = window.getPrimaryThaiBrand(finalText);
                           }
-                          // แปลงเฉพาะ 4 แบรนด์รถยนต์เดิม แต่ใช้ finalText ไม่ใช่ args.searchText เพื่อไม่ให้เลขรุ่นหาย
                           let lowerFinal = finalText.toLowerCase();
                           if (lowerFinal.includes('nissan') && !finalText.includes('นิสสัน')) finalText = 'นิสสัน ' + finalText;
                           if (lowerFinal.includes('toyota') && !finalText.includes('โตโยต้า')) finalText = 'โตโยต้า ' + finalText;
                           if (lowerFinal.includes('honda') && !finalText.includes('ฮอนด้า')) finalText = 'ฮอนด้า ' + finalText;
                           if (lowerFinal.includes('mazda') && !finalText.includes('มาสด้า')) finalText = 'มาสด้า ' + finalText;
 
-                          // FIX บั๊กหลัก: ถ้าช่อง edit มีคำว่า ไอโฟน/iPhone อยู่แล้ว และ user พูดรุ่นเพิ่ม เช่น 11, S10, 12 Pro
-                          // ให้รวมคำใหม่แทนที่จะแทนที่ทั้งช่อง
                           const existingText = activeInput.value || '';
-                          if (existingText.trim() && finalText.trim()) {
-                            // แยกคำใหม่ที่เป็นรุ่น/ตัวเลข เช่น 11, 12, S10, Pro, Max
-                            const existingLower = existingText.toLowerCase();
-                            const finalLower = finalText.toLowerCase();
-                            // ถ้า finalText เป็นรุ่นเดิมซ้ำๆ (เช่น iPhone) และ existing มีอยู่แล้ว ให้เพิ่มเฉพาะส่วนที่ใหม่
-                            // เช่น existing = "ไอโฟน iPhone มือถือ" , final = "iPhone 11 ไอโฟน" -> ต้องเพิ่ม "11"
-                            let merged = existingText;
-                            // หาคำที่เป็นตัวเลขหรือรุ่นใหม่ที่ยังไม่มีในช่อง
-                            const tokens = finalText.split(/\s+/);
-                            tokens.forEach(tok => {
-                              const tokLower = tok.toLowerCase();
-                              // ถ้าเป็นตัวเลขล้วนหรือรุ่น S10, 11, 12, Pro, Max, Plus ที่ยังไม่มี ให้เพิ่ม
-                              const isModelToken = /^(\d+|[A-Z]?\d+[A-Za-z]*|Pro|Max|Plus|Ultra|Mini|SE)$/i.test(tok) || /^\d+$/.test(tok);
-                              const alreadyExists = existingLower.includes(tokLower) || merged.toLowerCase().includes(tokLower);
-                              // ถ้าเป็นยี่ห้อซ้ำ (ไอโฟน,iPhone,มือถือ) ที่ alreadyExists ให้ข้าม
-                              const isBrandDup = ['ไอโฟน','iphone','มือถือ','mobile','smartphone','phone'].includes(tokLower) && alreadyExists;
-                              if (isModelToken && !alreadyExists) {
-                                merged += ' ' + tok;
-                                console.log('MERGE: เพิ่มรุ่นใหม่', tok);
-                              } else if (!alreadyExists && !isBrandDup && tok.length > 1) {
-                                // เพิ่มคำใหม่ที่ไม่ใช่แบรนด์ซ้ำ
-                                // แต่ถ้าเป็นคำไทย/อังกฤษซ้ำให้ข้าม
-                                const isBrandKey = window.BILINGUAL_BRAND_MAP && window.BILINGUAL_BRAND_MAP[tokLower];
-                                if (!isBrandKey || !existingLower.includes(tokLower)) {
-                                  // ตรวจสอบว่าไม่ใช่คำซ้ำจาก mapping
-                                  if (tokLower.length >= 2) {
-                                    // ถ้าเป็นคำใหม่จริงๆ ให้เพิ่ม (เช่น Samsung, S10)
-                                    if (!merged.toLowerCase().includes(tokLower)) {
-                                      // ถ้า existing มีไอโฟนอยู่แล้ว และ tok เป็น iPhone ซ้ำ ให้ข้าม
-                                      if (!(existingLower.includes('ไอโฟน') && (tokLower === 'iphone' || tokLower === 'ไอโฟน'))) {
-                                        // แต่ถ้า tok เป็นรุ่นใหม่ให้เพิ่มเสมอ
-                                        if (isModelToken || !existingLower.includes(tokLower)) {
-                                          // สำหรับ Samsung S10 กรณี existing ไม่มี Samsung
-                                          if (!existingLower.includes(tokLower) || isModelToken) {
-                                            if (!merged.toLowerCase().includes(tokLower)) {
-                                              merged += ' ' + tok;
-                                            }
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
+                          
+                          function extractBrandsSmart(txt) {
+                            const brands = [];
+                            const lower = txt.toLowerCase();
+                            if (!window.BILINGUAL_MAPPING_CONFIG) return brands;
+                            const cfg = window.BILINGUAL_MAPPING_CONFIG;
+                            for (const cat in cfg) {
+                              for (const key in cfg[cat]) {
+                                if (lower.includes(key.toLowerCase())) {
+                                  brands.push({key: key.toLowerCase(), cat: cat});
                                 }
                               }
-                            });
-                            // กรณีพิเศษ: ถ้า finalText มีเลขรุ่นล้วนๆ เช่น "11" และ existing มี iPhone อยู่แล้ว
-                            // ให้เพิ่มเลย
-                            const numberMatch = finalText.match(/\b\d+\b/g);
-                            if (numberMatch) {
-                              numberMatch.forEach(num => {
-                                if (!merged.includes(num)) {
-                                  merged += ' ' + num;
-                                }
-                              });
                             }
-                            // ถ้า merged มีการเปลี่ยนแปลง ให้ใช้ merged
-                            if (merged !== existingText) {
+                            return brands;
+                          }
+                          
+                          if (existingText.trim()) {
+                            const cleanedForModel = finalText.replace(/ไอโฟน|iphone|มือถือ|mobile|smartphone|phone|ซัมซุง|samsung/gi,'').trim();
+                            const isOnlyModel = /^\s*(\d+|[A-Z]?\d+[A-Za-z]*|Pro|Max|Plus|Ultra|Mini|SE|\s)+$/i.test(cleanedForModel) && /\d/.test(cleanedForModel);
+                            
+                            const existingLower = existingText.toLowerCase();
+                            const finalLower = finalText.toLowerCase();
+                            
+                            const majorBrandsList = ['ไอโฟน','iphone','ซัมซุง','samsung','ออปโป้','oppo','วีโว่','vivo','หัวเหว่ย','huawei','เสียวหมี่','xiaomi','นิสสัน','nissan','โตโยต้า','toyota','หลังคา','roof'];
+                            const exMajor = majorBrandsList.filter(mb => existingLower.includes(mb));
+                            const nwMajor = majorBrandsList.filter(mb => finalLower.includes(mb));
+                            const isDiffBrand = exMajor.length>0 && nwMajor.length>0 && !exMajor.some(em => nwMajor.includes(em));
+                            
+                            const exBrands = extractBrandsSmart(existingText);
+                            const nwBrands = extractBrandsSmart(finalText);
+                            const exCats = [...new Set(exBrands.map(b=>b.cat))];
+                            const nwCats = [...new Set(nwBrands.map(b=>b.cat))];
+                            const isDiffCategory = exCats.length>0 && nwCats.length>0 && !exCats.some(c=> nwCats.includes(c));
+                            
+                            if (isOnlyModel) {
+                              let merged = existingText;
+                              const nums = finalText.match(/\b\d+[A-Za-z]*\b|\bS\d+\b|Pro|Max|Plus|Ultra/gi);
+                              if (nums) {
+                                nums.forEach(n => {
+                                  if (!merged.toLowerCase().includes(n.toLowerCase())) merged += ' ' + n;
+                                });
+                              }
                               finalText = merged.trim();
-                              console.log('SMART MERGE:', existingText, '+', args.searchText, '->', finalText);
+                              console.log('SAME GROUP MODEL APPEND:', existingText, '+', args.searchText, '->', finalText);
+                            } else if (isDiffBrand || isDiffCategory) {
+                              console.log('DIFFERENT BRAND/CATEGORY REPLACE:', existingText, '->', finalText);
                             } else {
-                              // ถ้าไม่มีอะไรใหม่ แต่ finalText มีรุ่นใหม่ ให้ใช้ finalText แทน
-                              // เช่น existing ไม่มี 11 แต่ final มี 11
-                              const finalHasNumber = /\d/.test(finalText);
-                              const existingHasNumber = /\d/.test(existingText);
-                              if (finalHasNumber && !existingHasNumber) {
-                                finalText = existingText + ' ' + finalText.replace(/ไอโฟน|iPhone|มือถือ|mobile/gi,'').trim();
-                                finalText = finalText.replace(/\s+/g,' ').trim();
+                              const nums = finalText.match(/\b\d+[A-Za-z]*\b|\bS\d+\b|Pro|Max|Plus/gi);
+                              if (nums) {
+                                let merged = existingText;
+                                let hasNew = false;
+                                nums.forEach(n => {
+                                  if (!merged.toLowerCase().includes(n.toLowerCase())) {
+                                    merged += ' ' + n;
+                                    hasNew = true;
+                                  }
+                                });
+                                if (hasNew) {
+                                  finalText = merged.trim();
+                                  console.log('SAME BRAND APPEND NUMBER:', existingText, '->', finalText);
+                                }
                               }
                             }
                           }
 
                           activeInput.value = finalText;
-                          console.log('AI Voice set edit:', finalText, 'from args:', args.searchText, 'existing was:', existingText);
+                          console.log('AI Voice set edit:', finalText);
                         }
-                        // FIX v7-9-8 ปัญหา 1: ถ้าเป็นแท็บสินค้าทั่วไป ให้ auto-select ปุ่มหมวดย่อยตาม keyword + กดค้นหาอัตโนมัติ
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
-                          // FIX เพิ่ม: กดค้นหาอัตโนมัติหลังใส่ข้อความ (แก้ปัญหาต้องกดเอง)
                           setTimeout(()=>{ 
                             if (typeof window.autoSearchAfterAI === 'function') window.autoSearchAfterAI();
                             else if (typeof testShowList === 'function') testShowList();
                           }, 800);
                         } else {
-                          // แท็บอื่นก็กดค้นหาอัตโนมัติด้วย
                           setTimeout(()=>{ 
                             if (typeof testShowList === 'function') testShowList();
                           }, 600);
                         }
                       }
-                      // FIX: ถ้าไม่มี searchText แต่เป็น decor ให้ลอง auto-select จาก tabId เดิม (กรณี AI ส่งแค่หมวด)
                       if (args.tabId === 'decor' && !args.searchText && typeof window.autoSelectDecorByKeyword === 'function') {
                         setTimeout(()=>{ window.autoSelectDecorByKeyword(args.tabId); }, 300);
                       }
@@ -5768,11 +5755,9 @@ function closeLocationModal() {
                       summaryText = args.summary;
                     }
           
-                    // 2. นำข้อความที่ได้ไปใส่กล่องค้นหาและปรับ Dropdown + FIX บั๊ก iPhone 11 ไม่พิมพ์
+                    // 2. นำข้อความที่ได้ไปใส่กล่องค้นหาและปรับ Dropdown + FIX v7-9-12: เช็คกลุ่มก่อนต่อท้าย
                     if (summaryText) {
                       applyEditToDropdowns(summaryText);
-                      // FIX v7-9-11: กรณี AI ส่ง summary เป็น "iPhone 11" แต่ edit มี "ไอโฟน iPhone มือถือ" อยู่แล้ว
-                      // ต้องเอารุ่น 11 ไปต่อท้าย edit ด้วย ไม่ใช่แค่ปรับ Dropdown
                       try {
                         const activeInput2 = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
                         if (activeInput2) {
@@ -5781,35 +5766,36 @@ function closeLocationModal() {
                           if (typeof window.expandBilingualSearch === 'function') {
                             newText = window.expandBilingualSearch(newText);
                           }
-                          // Smart merge เหมือน switch_tab_category
+                          const majorBrandsList2 = ['ไอโฟน','iphone','ซัมซุง','samsung','ออปโป้','oppo','หลังคา','roof'];
+                          const exLow = existing.toLowerCase();
+                          const nwLow = newText.toLowerCase();
+                          const exMaj = majorBrandsList2.filter(mb => exLow.includes(mb));
+                          const nwMaj = majorBrandsList2.filter(mb => nwLow.includes(mb));
+                          const isDiff = exMaj.length>0 && nwMaj.length>0 && !exMaj.some(em=> nwMaj.includes(em));
+                          const cleaned = newText.replace(/ไอโฟน|iphone|มือถือ|mobile/gi,'').trim();
+                          const isOnlyModel2 = /^\s*(\d+|[A-Z]?\d+[A-Za-z]*|Pro|Max|Plus|Ultra|Mini|SE|\s)+$/i.test(cleaned) && /\d/.test(cleaned);
+                          
                           if (existing.trim()) {
-                            let merged = existing;
-                            const tokens = newText.split(/\s+/);
-                            tokens.forEach(tok => {
-                              const isModel = /^\d+$|^[A-Z]?\d+[A-Za-z]*$|^(Pro|Max|Plus|Ultra|Mini|SE)$/i.test(tok);
-                              const lowTok = tok.toLowerCase();
-                              const already = existing.toLowerCase().includes(lowTok);
-                              if ((isModel || /^\d+$/.test(tok)) && !already) {
-                                if (!merged.includes(tok)) merged += ' ' + tok;
-                              } else if (!already && tok.length > 1) {
-                                // ถ้าเป็นรุ่นใหม่ เช่น S10, 11, 12 ที่ยังไม่มี
-                                if (!merged.toLowerCase().includes(lowTok)) {
-                                  // กันยี่ห้อซ้ำ
-                                  const brandDups = ['ไอโฟน','iphone','มือถือ','mobile'];
-                                  if (!(brandDups.includes(lowTok) && existing.toLowerCase().includes(lowTok))) {
-                                    // ถ้าเป็นเลขรุ่นให้เพิ่มเสมอ
-                                    if (isModel || /\d/.test(tok)) {
-                                      if (!merged.includes(tok)) merged += ' ' + tok;
-                                    }
-                                  }
-                                }
+                            if (isOnlyModel2) {
+                              let merged = existing;
+                              const nums = newText.match(/\b\d+[A-Za-z]*\b|\bS\d+\b|Pro|Max/gi);
+                              if (nums) nums.forEach(n => { if (!merged.toLowerCase().includes(n.toLowerCase())) merged += ' ' + n; });
+                              activeInput2.value = merged.trim();
+                              console.log('SUBMIT APPEND MODEL:', existing, '+', summaryText, '->', merged);
+                            } else if (isDiff) {
+                              activeInput2.value = newText;
+                              console.log('SUBMIT REPLACE DIFF BRAND:', existing, '->', newText);
+                            } else {
+                              const nums = newText.match(/\b\d+\b/g);
+                              if (nums && exMaj.length>0) {
+                                let merged = existing;
+                                nums.forEach(n => { if (!merged.includes(n)) merged += ' ' + n; });
+                                if (merged !== existing) activeInput2.value = merged.trim();
+                                else activeInput2.value = newText;
+                              } else {
+                                activeInput2.value = newText;
                               }
-                            });
-                            // เพิ่มเลขที่ตกหล่น
-                            const nums = newText.match(/\b\d+\b/g);
-                            if (nums) nums.forEach(n => { if (!merged.includes(n)) merged += ' ' + n; });
-                            activeInput2.value = merged.trim();
-                            console.log('SUBMIT_USER_SUMMARY MERGE:', existing, '+', summaryText, '->', merged);
+                            }
                           } else {
                             activeInput2.value = newText;
                           }
