@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-8-Bi-Language  </title>
+  <title> v7-9-9-Bi-Lang-oneCenter  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6380,113 +6380,139 @@ function closeLocationModal() {
       'เกษตรกรรม': { cat: 'cat10Flyout', btnIndex: 9, value: 'เครื่องจักรและเกษตรกรรม' }
     };
     // === FIX v7-9-8: Bilingual brand map ===
-    window.BILINGUAL_BRAND_MAP = {
-      'นิสสัน': ['Nissan','NISSAN','nissan'],
-      'โตโยต้า': ['Toyota','TOYOTA'],
-      'ฮอนด้า': ['Honda','HONDA'],
-      'มาสด้า': ['Mazda','MAZDA','CX-3','CX3','CX-5','CX5'],
-      'มิตซูบิชิ': ['Mitsubishi','MITSUBISHI'],
-      'ซูซูกิ': ['Suzuki','SUZUKI'],
-      'อีซูซุ': ['Isuzu','ISUZU','อีซูซู'],
-      'ฟอร์ด': ['Ford','FORD'],
-      'เชฟโรเลต': ['Chevrolet','CHEVROLET'],
-      'บีเอ็มดับเบิลยู': ['BMW','Bmw','bmw'],
-      'เบนซ์': ['Benz','Mercedes','เบนซ์'],
-      'nissan': ['นิสสัน'],
-      'toyota': ['โตโยต้า'],
-      'honda': ['ฮอนด้า'],
-      'mazda': ['มาสด้า','นิสสัน'], // ใส่เผื่อ
-      'mitsubishi': ['มิตซูบิชิ'],
-      'suzuki': ['ซูซูกิ'],
-      'isuzu': ['อีซูซุ','อีซูซู'],
-      'ford': ['ฟอร์ด'],
-      'bmw': ['บีเอ็มดับเบิลยู'],
-      'benz': ['เบนซ์','เบนซ์'],
-      'mercedes': ['เบนซ์']
+    
+    // ============================================================
+    // FIX v7-9-9: CENTRALIZED BILINGUAL MAPPING SYSTEM - จุดเดียวเพิ่มง่าย
+    // รวม 10 หมวด + lifestyle + แบรนด์สำคัญทั่วโลก
+    // วิธีเพิ่ม: เพิ่มที่ BILINGUAL_MAPPING_CONFIG ที่เดียวจบ
+    // ============================================================
+    window.BILINGUAL_MAPPING_CONFIG = {
+      vehicle_brands: {
+        'นิสสัน': ['Nissan'], 'โตโยต้า': ['Toyota'], 'ฮอนด้า': ['Honda'], 'มาสด้า': ['Mazda'],
+        'มิตซูบิชิ': ['Mitsubishi'], 'มิตซู': ['Mitsubishi'], 'ซูซูกิ': ['Suzuki'],
+        'อีซูซุ': ['Isuzu'], 'ฟอร์ด': ['Ford'], 'เชฟโรเลต': ['Chevrolet'],
+        'บีเอ็มดับเบิลยู': ['BMW'], 'เบนซ์': ['Benz','Mercedes'], 'เมอร์เซเดส': ['Mercedes'],
+        'ออดี้': ['Audi'], 'เล็กซัส': ['Lexus'], 'วอลโว่': ['Volvo'], 'ฮุนได': ['Hyundai'],
+        'เกีย': ['Kia'], 'เอ็มจี': ['MG'], 'บีวายดี': ['BYD'], 'เทสลา': ['Tesla'],
+        'ยามาฮ่า': ['Yamaha'], 'เวสป้า': ['Vespa'], 'ดูคาติ': ['Ducati']
+      },
+      appliance_brands: {
+        'มิตซูบิชิแอร์': ['Mitsubishi Electric'], 'มิตซูแอร์': ['Mitsubishi'], 'ไดกิ้น': ['Daikin'],
+        'แอลจี': ['LG'], 'ซัมซุงแอร์': ['Samsung'], 'พานาโซนิค': ['Panasonic'], 'ชาร์ป': ['Sharp'],
+        'โตชิบา': ['Toshiba'], 'ฮิตาชิ': ['Hitachi'], 'แคเรียร์': ['Carrier'],
+        'อีเลคโทรลักซ์': ['Electrolux'], 'บอช': ['Bosch'], 'ซัยโจเด็นกิ': ['Saijo Denki'],
+        'ไฮเออร์': ['Haier'], 'ทีซีแอล': ['TCL'], 'เครื่องปรับอากาศ': ['air conditioner','aircon'],
+        'แอร์': ['aircon','air conditioner'], 'ตู้เย็น': ['refrigerator','fridge'],
+        'เครื่องซักผ้า': ['washing machine'], 'ทีวี': ['TV'], 'ไมโครเวฟ': ['microwave']
+      },
+      computer_brands: {
+        'เลอโนโว': ['Lenovo'], 'เอชพี': ['HP','Hewlett Packard'], 'ฮิวเลตต์แพคการ์ด': ['HP'],
+        'เดลล์': ['Dell'], 'เอซุส': ['Asus'], 'เอเซอร์': ['Acer'], 'แอปเปิ้ล': ['Apple'],
+        'แมคบุ๊ค': ['Macbook','Mac'], 'ไอแมค': ['iMac'], 'ไมโครซอฟท์': ['Microsoft'],
+        'เซอร์เฟซ': ['Surface'], 'หัวเหว่ย': ['Huawei'], 'เสียวหมี่': ['Xiaomi','Mi'],
+        'ไอโฟน': ['iPhone'], 'ซัมซุงมือถือ': ['Samsung Galaxy'], 'ออปโป้': ['Oppo'],
+        'วีโว่': ['Vivo'], 'เรียลมี': ['Realme'], 'วันพลัส': ['OnePlus'],
+        'กูเกิ้ล': ['Google','Pixel'], 'นินเทนโด': ['Nintendo'], 'เพลย์สเตชัน': ['PlayStation','PS5'],
+        'เอ็กซ์บ็อกซ์': ['Xbox'], 'แคนนอน': ['Canon'], 'นิคอน': ['Nikon'], 'โซนี่': ['Sony'],
+        'โกโปร': ['GoPro'], 'ดีเจไอ': ['DJI'], 'โน้ตบุ๊ก': ['notebook','laptop'],
+        'คอมพิวเตอร์': ['computer','PC'], 'มือถือ': ['mobile','smartphone','phone'],
+        'แท็บเล็ต': ['tablet','iPad'], 'หูฟัง': ['headphone','earphone','AirPods']
+      },
+      furniture_general: {
+        'โซฟา': ['sofa','couch'], 'เก้าอี้': ['chair'], 'โต๊ะ': ['table','desk'],
+        'ตู้': ['cabinet','wardrobe'], 'เตียง': ['bed'], 'ที่นอน': ['mattress'],
+        'โคมไฟ': ['lamp','light','chandelier'], 'พรม': ['carpet','rug'], 'ม่าน': ['curtain'],
+        'ประตู': ['door'], 'หน้าต่าง': ['window'], 'สุขภัณฑ์': ['sanitary','toilet']
+      },
+      fashion_brands: {
+        'ไนกี้': ['Nike'], 'อาดิดาส': ['Adidas'], 'พูม่า': ['Puma'], 'คอนเวิร์ส': ['Converse'],
+        'วานส์': ['Vans'], 'นิวบาลานซ์': ['New Balance'], 'หลุยส์วิตตอง': ['Louis Vuitton','LV'],
+        'กุชชี่': ['Gucci'], 'ชาแนล': ['Chanel'], 'พราด้า': ['Prada'], 'ดิออร์': ['Dior'],
+        'โรเล็กซ์': ['Rolex'], 'คาสิโอ': ['Casio'], 'เสื้อผ้า': ['clothes'], 'รองเท้า': ['shoes'],
+        'กระเป๋า': ['bag'], 'นาฬิกา': ['watch']
+      },
+      lifestyle_general: {
+        'สุนัข': ['dog'], 'แมว': ['cat'], 'จักรยาน': ['bicycle','bike'], 'มอเตอร์ไซค์': ['motorcycle'],
+        'รถยนต์': ['car'], 'ฟิตเนส': ['fitness','gym'], 'โยคะ': ['yoga'], 'เครื่องดนตรี': ['musical instrument','guitar','piano'], 'กีต้าร์': ['guitar']
+      },
+      lifestyle_food_travel: {
+        'ร้านอาหาร': ['restaurant','food'], 'คาเฟ่': ['cafe','coffee shop'], 'ร้านกาแฟ': ['cafe','coffee shop'],
+        'โรงแรม': ['hotel','resort'], 'โฮสเทล': ['hostel'], 'บาร์': ['bar','pub'],
+        'ก๋วยเตี๋ยว': ['noodle'], 'ส้มตำ': ['papaya salad','somtum'], 'ผัดไทย': ['pad thai'],
+        'ข้าวผัด': ['fried rice'], 'ต้มยำ': ['tom yum'], 'ชาบู': ['shabu','hot pot'],
+        'หมูกระทะ': ['moo kata','BBQ'], 'บุฟเฟ่ต์': ['buffet'], 'อาหารญี่ปุ่น': ['Japanese food','sushi'],
+        'ซูชิ': ['sushi'], 'พิซซ่า': ['pizza'], 'เบอร์เกอร์': ['burger'], 'ท่องเที่ยว': ['travel'], 'ทะเล': ['beach']
+      },
+      realestate_general: {
+        'บ้าน': ['house','home','village'], 'คอนโด': ['condo','condominium'], 'ที่ดิน': ['land'],
+        'ทาวน์เฮ้าส์': ['townhouse'], 'อพาร์ทเมนท์': ['apartment'], 'หอพัก': ['dorm'],
+        'สำนักงาน': ['office'], 'ออฟฟิศ': ['office'], 'โกดัง': ['warehouse'], 'ขาย': ['sale'], 'เช่า': ['rent']
+      },
+      english_to_thai: {
+        'nissan': ['นิสสัน'], 'toyota': ['โตโยต้า'], 'honda': ['ฮอนด้า'], 'mazda': ['มาสด้า'],
+        'mitsubishi': ['มิตซูบิชิ','มิตซู'], 'suzuki': ['ซูซูกิ'], 'isuzu': ['อีซูซุ'], 'ford': ['ฟอร์ด'],
+        'chevrolet': ['เชฟโรเลต'], 'bmw': ['บีเอ็มดับเบิลยู'], 'benz': ['เบนซ์'], 'mercedes': ['เบนซ์'],
+        'audi': ['ออดี้'], 'lexus': ['เล็กซัส'], 'tesla': ['เทสลา'], 'daikin': ['ไดกิ้น'],
+        'lg': ['แอลจี'], 'samsung': ['ซัมซุง'], 'panasonic': ['พานาโซนิค'], 'sharp': ['ชาร์ป'],
+        'toshiba': ['โตชิบา'], 'hitachi': ['ฮิตาชิ'], 'lenovo': ['เลอโนโว'], 'hp': ['เอชพี'],
+        'dell': ['เดลล์'], 'asus': ['เอซุส'], 'acer': ['เอเซอร์'], 'apple': ['แอปเปิ้ล'],
+        'macbook': ['แมคบุ๊ค'], 'iphone': ['ไอโฟน'], 'xiaomi': ['เสียวหมี่'], 'oppo': ['ออปโป้'],
+        'vivo': ['วีโว่'], 'canon': ['แคนนอน'], 'nikon': ['นิคอน'], 'sony': ['โซนี่'],
+        'nike': ['ไนกี้'], 'adidas': ['อาดิดาส'], 'restaurant': ['ร้านอาหาร'], 'cafe': ['คาเฟ่'],
+        'hotel': ['โรงแรม'], 'house': ['บ้าน'], 'condo': ['คอนโด'], 'land': ['ที่ดิน'],
+        'sofa': ['โซฟา'], 'chair': ['เก้าอี้'], 'table': ['โต๊ะ'], 'bed': ['เตียง'],
+        'lamp': ['โคมไฟ'], 'door': ['ประตู'], 'window': ['หน้าต่าง'], 'computer': ['คอมพิวเตอร์'],
+        'laptop': ['โน้ตบุ๊ก'], 'phone': ['มือถือ'], 'dog': ['สุนัข'], 'cat': ['แมว'],
+        'car': ['รถยนต์'], 'fitness': ['ฟิตเนส'], 'guitar': ['กีต้าร์']
+      }
     };
+    window.BILINGUAL_BRAND_MAP = {};
+    (function buildUnifiedMap(){
+      const cfg = window.BILINGUAL_MAPPING_CONFIG;
+      for (const category in cfg) {
+        if (category === 'english_to_thai') continue;
+        const map = cfg[category];
+        for (const th in map) {
+          if (!window.BILINGUAL_BRAND_MAP[th]) window.BILINGUAL_BRAND_MAP[th] = [];
+          map[th].forEach(en => { if (!window.BILINGUAL_BRAND_MAP[th].includes(en)) window.BILINGUAL_BRAND_MAP[th].push(en); });
+        }
+      }
+      const engMap = cfg.english_to_thai;
+      for (const en in engMap) {
+        if (!window.BILINGUAL_BRAND_MAP[en]) window.BILINGUAL_BRAND_MAP[en] = [];
+        engMap[en].forEach(th => { if (!window.BILINGUAL_BRAND_MAP[en].includes(th)) window.BILINGUAL_BRAND_MAP[en].push(th); });
+      }
+    })();
     window.expandBilingualSearch = function(searchText) {
       if (!searchText) return searchText;
       let expanded = searchText;
       const lower = searchText.toLowerCase();
-      for (const th in window.BILINGUAL_BRAND_MAP) {
-        if (lower.includes(th.toLowerCase())) {
-          window.BILINGUAL_BRAND_MAP[th].forEach(en => {
-            if (!expanded.toLowerCase().includes(en.toLowerCase())) {
-              expanded += ' ' + en;
-            }
+      for (const key in window.BILINGUAL_BRAND_MAP) {
+        if (lower.includes(key.toLowerCase())) {
+          window.BILINGUAL_BRAND_MAP[key].forEach(trans => {
+            if (!expanded.toLowerCase().includes(trans.toLowerCase())) expanded += ' ' + trans;
           });
-        }
-      }
-      // แยกกรณี English -> Thai
-      for (const th in window.BILINGUAL_BRAND_MAP) {
-        const enList = window.BILINGUAL_BRAND_MAP[th];
-        // th เป็นภาษาอังกฤษ (เช่น nissan) ให้หาไทย
-        if (th.charCodeAt(0) < 128) { // English key
-          if (lower.includes(th)) {
-            const thai = window.BILINGUAL_BRAND_MAP[window.BILINGUAL_BRAND_MAP[th][0]] ? null : null;
-            // หา Thai key ที่ map ไป English นี้
-            for (const thaiKey in window.BILINGUAL_BRAND_MAP) {
-              if (thaiKey.charCodeAt(0) > 128) {
-                const vals = window.BILINGUAL_BRAND_MAP[thaiKey].map(v=>v.toLowerCase());
-                if (vals.includes(th)) {
-                  if (!expanded.includes(thaiKey)) expanded += ' ' + thaiKey;
-                }
-              }
-            }
-          }
         }
       }
       return expanded.trim();
     };
-    // ดึงตัวแปรหลักของ bilingual (กรณี Nissan -> นิสสัน)
-    window.getPrimaryThaiBrand = function(searchText) {
-      if (!searchText) return searchText;
-      const lower = searchText.toLowerCase();
-      const reverseMap = {
-        'nissan': 'นิสสัน',
-        'toyota': 'โตโยต้า',
-        'honda': 'ฮอนด้า',
-        'mazda': 'มาสด้า',
-        'mitsubishi': 'มิตซูบิชิ',
-        'suzuki': 'ซูซูกิ',
-        'isuzu': 'อีซูซุ',
-        'ford': 'ฟอร์ด',
-        'chevrolet': 'เชฟโรเลต',
-        'bmw': 'บีเอ็มดับเบิลยู',
-        'benz': 'เบนซ์',
-        'mercedes': 'เบนซ์'
-      };
-      for (const en in reverseMap) {
-        if (lower.includes(en)) {
-          if (!searchText.includes(reverseMap[en])) {
-            return searchText + ' ' + reverseMap[en];
-          }
-        }
-      }
-      return searchText;
+    window.getPrimaryThaiBrand = function(searchText){ return window.expandBilingualSearch(searchText); };
+    window.getMappingSource = function(keyword){
+      const cfg = window.BILINGUAL_MAPPING_CONFIG;
+      const lower = keyword.toLowerCase();
+      for (const cat in cfg) { for (const key in cfg[cat]) { if (key.toLowerCase() === lower || cfg[cat][key].some(v=> v.toLowerCase() === lower)) return { category: cat, key: key, values: cfg[cat][key] }; } }
+      return null;
     };
     window.autoSelectDecorByKeyword = function(keyword) {
-      if (!keyword) {
-        if (typeof testShowList === 'function') setTimeout(()=> testShowList(), 200);
-        return;
-      }
+      if (!keyword) { if (typeof testShowList === 'function') setTimeout(()=> testShowList(), 200); return; }
       const kw = keyword.toLowerCase().trim();
       let matched = null;
-      // หา keyword ที่ตรงที่สุด
       for (const key in window.DECOR_CATEGORIES_MAP) {
-        if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) {
-          matched = window.DECOR_CATEGORIES_MAP[key];
-          if (key.toLowerCase() === kw) break;
-        }
+        if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) { matched = window.DECOR_CATEGORIES_MAP[key]; if (key.toLowerCase() === kw) break; }
       }
       if (!matched) {
         console.log('DECOR: ไม่เจอ mapping ใช้ keyword ตรงๆ:', keyword, 'แต่จะกดค้นหาให้เลย');
-        if (typeof testShowList === 'function') {
-          setTimeout(()=> { 
-            // FIX ปัญหา 1: กดค้นหาให้เลยแม้ไม่เจอ mapping
-            testShowList(); 
-          }, 300);
-        }
+        if (typeof testShowList === 'function') { setTimeout(()=> { testShowList(); }, 300); }
         return;
       }
       try {
@@ -6494,15 +6520,14 @@ function closeLocationModal() {
         const targetBtn = decorBtns[matched.btnIndex];
         if (targetBtn) {
           currentFlyoutBtn = targetBtn;
-          targetBtn.innerText = matched.value + ' ▾';
+          targetBtn.innerText = matched.value + ' \u25BE';
           targetBtn.dataset.selectedValue = matched.value;
           console.log('DECOR AUTO-SELECT:', matched.value, 'from keyword:', keyword);
-          if (typeof testShowList === 'function') {
-            setTimeout(()=> testShowList(), 200);
-          }
+          if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
     };
+
 
     function onFilterSelectedInSameRow(selectedBtn, newValue) {
       if (selectedBtn) {
