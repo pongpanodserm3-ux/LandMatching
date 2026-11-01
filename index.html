@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-7  </title>
+  <title> v7-9-8-Bi-Language  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2675,7 +2675,7 @@ window.highlightBoth = function(idStr, type){
     const TAB_PROMPTS = {
       sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ แต่ถ้า user พูดถึงสินค้านอกเหนืออสังหาฯ เช่น รถยนต์, มอเตอร์ไซค์, เฟอร์นิเจอร์, คอมพิวเตอร์, เครื่องใช้ไฟฟ้า, เสื้อผ้า, กีฬา ให้เรียก switch_tab_category ไปยังแท็บ decor/lifestyle/others ทันที ห้ามตอบว่าเป็นอสังหาฯ อย่างเดียว",
-      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
+      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' สำคัญ: ถ้า user พูดภาษาไทย ให้ตอบและพิมพ์ค้นหาเป็นภาษาไทยเสมอ เช่น user บอก นิสสัน ให้พิมพ์ นิสสัน ห้ามพิมพ์ Nissan อย่างเดียว ถ้า user บอก Toyota ให้พิมพ์ โตโยต้า Toyota เพื่อให้หาเจอทั้ง 2 ภาษา มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
 
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
       others: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ช่างและงานบริการ' ให้คุณรับบทบาทเป็น AI ผู้ช่วยค้นหาและแนะนำช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ และงานบริการต่างๆ ให้คำแนะนำที่ตรงจุดและเชื่อถือได้"
@@ -5650,10 +5650,34 @@ function closeLocationModal() {
                       switchTab(args.tabId);
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-                        if (activeInput) activeInput.value = args.searchText;
-                        // FIX v7-9-6: ถ้าเป็นแท็บสินค้าทั่วไป ให้ auto-select ปุ่มหมวดย่อยตาม keyword
+                        if (activeInput) {
+                          // FIX v7-9-8 ปัญหา 2: แปลงอังกฤษเป็นไทยก่อนใส่ edit
+                          let finalText = args.searchText;
+                          if (typeof window.getPrimaryThaiBrand === 'function') {
+                            finalText = window.getPrimaryThaiBrand(finalText);
+                            // ถ้า AI ส่ง Nissan มา ให้แปลงเป็น นิสสัน Nissan เพื่อหาเจอทั้ง 2 ภาษา
+                            const lower = finalText.toLowerCase();
+                            if (lower.includes('nissan') && !finalText.includes('นิสสัน')) finalText = 'นิสสัน ' + args.searchText;
+                            if (lower.includes('toyota') && !finalText.includes('โตโยต้า')) finalText = 'โตโยต้า ' + args.searchText;
+                            if (lower.includes('honda') && !finalText.includes('ฮอนด้า')) finalText = 'ฮอนด้า ' + args.searchText;
+                            if (lower.includes('mazda') && !finalText.includes('มาสด้า')) finalText = 'มาสด้า ' + args.searchText;
+                          }
+                          activeInput.value = finalText;
+                          console.log('AI Voice set edit:', finalText);
+                        }
+                        // FIX v7-9-8 ปัญหา 1: ถ้าเป็นแท็บสินค้าทั่วไป ให้ auto-select ปุ่มหมวดย่อยตาม keyword + กดค้นหาอัตโนมัติ
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
+                          // FIX เพิ่ม: กดค้นหาอัตโนมัติหลังใส่ข้อความ (แก้ปัญหาต้องกดเอง)
+                          setTimeout(()=>{ 
+                            if (typeof window.autoSearchAfterAI === 'function') window.autoSearchAfterAI();
+                            else if (typeof testShowList === 'function') testShowList();
+                          }, 800);
+                        } else {
+                          // แท็บอื่นก็กดค้นหาอัตโนมัติด้วย
+                          setTimeout(()=>{ 
+                            if (typeof testShowList === 'function') testShowList();
+                          }, 600);
                         }
                       }
                       // FIX: ถ้าไม่มี searchText แต่เป็น decor ให้ลอง auto-select จาก tabId เดิม (กรณี AI ส่งแค่หมวด)
@@ -5897,9 +5921,29 @@ function closeLocationModal() {
       AppState.pagination.renderedKeys.clear();
       document.getElementById('resultsContainer').innerHTML = '';
       const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      let searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      // FIX v7-9-8 ปัญหา 2: ขยายคำค้นให้รองรับทั้งไทยและอังกฤษ
+      if (typeof window.expandBilingualSearch === 'function') {
+        const expanded = window.expandBilingualSearch(searchText);
+        const primary = typeof window.getPrimaryThaiBrand === 'function' ? window.getPrimaryThaiBrand(expanded) : expanded;
+        // ถ้าขยายแล้วต่างจากเดิม ให้ใช้แบบขยายเพื่อหาให้เจอทั้ง 2 ภาษา
+        if (primary !== searchText) {
+          console.log('BILINGUAL EXPAND:', searchText, '->', primary);
+          // เก็บค่าไทยไว้ใน input เพื่อแสดงผลให้ user เห็นว่าเจอทั้ง 2 ภาษา
+          // แต่ส่ง primary ที่มีทั้งไทยและอังกฤษไปค้นหา
+          searchText = primary;
+        }
+      }
       fetchDatabase({}, getSelectedCriteria(), true, searchText);
     }
+    // FIX v7-9-8 ปัญหา 1: ฟังก์ชันกดค้นหาอัตโนมัติหลัง AI ใส่ข้อความ
+    window.autoSearchAfterAI = function() {
+      setTimeout(()=> {
+        console.log('AUTO SEARCH AFTER AI - กดค้นหาอัตโนมัติ');
+        if (typeof testShowList === 'function') testShowList();
+      }, 600);
+    };
+
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
       if (AppState.pagination.isLoading) return;
       AppState.pagination.isLoading = true;
@@ -6335,24 +6379,113 @@ function closeLocationModal() {
       'เครื่องจักร': { cat: 'cat10Flyout', btnIndex: 9, value: 'เครื่องจักรและเกษตรกรรม' },
       'เกษตรกรรม': { cat: 'cat10Flyout', btnIndex: 9, value: 'เครื่องจักรและเกษตรกรรม' }
     };
+    // === FIX v7-9-8: Bilingual brand map ===
+    window.BILINGUAL_BRAND_MAP = {
+      'นิสสัน': ['Nissan','NISSAN','nissan'],
+      'โตโยต้า': ['Toyota','TOYOTA'],
+      'ฮอนด้า': ['Honda','HONDA'],
+      'มาสด้า': ['Mazda','MAZDA','CX-3','CX3','CX-5','CX5'],
+      'มิตซูบิชิ': ['Mitsubishi','MITSUBISHI'],
+      'ซูซูกิ': ['Suzuki','SUZUKI'],
+      'อีซูซุ': ['Isuzu','ISUZU','อีซูซู'],
+      'ฟอร์ด': ['Ford','FORD'],
+      'เชฟโรเลต': ['Chevrolet','CHEVROLET'],
+      'บีเอ็มดับเบิลยู': ['BMW','Bmw','bmw'],
+      'เบนซ์': ['Benz','Mercedes','เบนซ์'],
+      'nissan': ['นิสสัน'],
+      'toyota': ['โตโยต้า'],
+      'honda': ['ฮอนด้า'],
+      'mazda': ['มาสด้า','นิสสัน'], // ใส่เผื่อ
+      'mitsubishi': ['มิตซูบิชิ'],
+      'suzuki': ['ซูซูกิ'],
+      'isuzu': ['อีซูซุ','อีซูซู'],
+      'ford': ['ฟอร์ด'],
+      'bmw': ['บีเอ็มดับเบิลยู'],
+      'benz': ['เบนซ์','เบนซ์'],
+      'mercedes': ['เบนซ์']
+    };
+    window.expandBilingualSearch = function(searchText) {
+      if (!searchText) return searchText;
+      let expanded = searchText;
+      const lower = searchText.toLowerCase();
+      for (const th in window.BILINGUAL_BRAND_MAP) {
+        if (lower.includes(th.toLowerCase())) {
+          window.BILINGUAL_BRAND_MAP[th].forEach(en => {
+            if (!expanded.toLowerCase().includes(en.toLowerCase())) {
+              expanded += ' ' + en;
+            }
+          });
+        }
+      }
+      // แยกกรณี English -> Thai
+      for (const th in window.BILINGUAL_BRAND_MAP) {
+        const enList = window.BILINGUAL_BRAND_MAP[th];
+        // th เป็นภาษาอังกฤษ (เช่น nissan) ให้หาไทย
+        if (th.charCodeAt(0) < 128) { // English key
+          if (lower.includes(th)) {
+            const thai = window.BILINGUAL_BRAND_MAP[window.BILINGUAL_BRAND_MAP[th][0]] ? null : null;
+            // หา Thai key ที่ map ไป English นี้
+            for (const thaiKey in window.BILINGUAL_BRAND_MAP) {
+              if (thaiKey.charCodeAt(0) > 128) {
+                const vals = window.BILINGUAL_BRAND_MAP[thaiKey].map(v=>v.toLowerCase());
+                if (vals.includes(th)) {
+                  if (!expanded.includes(thaiKey)) expanded += ' ' + thaiKey;
+                }
+              }
+            }
+          }
+        }
+      }
+      return expanded.trim();
+    };
+    // ดึงตัวแปรหลักของ bilingual (กรณี Nissan -> นิสสัน)
+    window.getPrimaryThaiBrand = function(searchText) {
+      if (!searchText) return searchText;
+      const lower = searchText.toLowerCase();
+      const reverseMap = {
+        'nissan': 'นิสสัน',
+        'toyota': 'โตโยต้า',
+        'honda': 'ฮอนด้า',
+        'mazda': 'มาสด้า',
+        'mitsubishi': 'มิตซูบิชิ',
+        'suzuki': 'ซูซูกิ',
+        'isuzu': 'อีซูซุ',
+        'ford': 'ฟอร์ด',
+        'chevrolet': 'เชฟโรเลต',
+        'bmw': 'บีเอ็มดับเบิลยู',
+        'benz': 'เบนซ์',
+        'mercedes': 'เบนซ์'
+      };
+      for (const en in reverseMap) {
+        if (lower.includes(en)) {
+          if (!searchText.includes(reverseMap[en])) {
+            return searchText + ' ' + reverseMap[en];
+          }
+        }
+      }
+      return searchText;
+    };
     window.autoSelectDecorByKeyword = function(keyword) {
-      if (!keyword) return;
+      if (!keyword) {
+        if (typeof testShowList === 'function') setTimeout(()=> testShowList(), 200);
+        return;
+      }
       const kw = keyword.toLowerCase().trim();
       let matched = null;
       // หา keyword ที่ตรงที่สุด
       for (const key in window.DECOR_CATEGORIES_MAP) {
         if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) {
           matched = window.DECOR_CATEGORIES_MAP[key];
-          // ถ้าตรงเป๊ะ ให้ใช้เลย
           if (key.toLowerCase() === kw) break;
         }
       }
       if (!matched) {
-        // ถ้าไม่เจอ ให้ใช้ keyword ตรงๆ เป็น selectedValue
-        const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
-        if (decorBtns.length > 0) {
-          // เลือกปุ่มตาม btnIndex ถ้ามี
-          console.log('DECOR: ไม่เจอ mapping ใช้ keyword ตรงๆ:', keyword);
+        console.log('DECOR: ไม่เจอ mapping ใช้ keyword ตรงๆ:', keyword, 'แต่จะกดค้นหาให้เลย');
+        if (typeof testShowList === 'function') {
+          setTimeout(()=> { 
+            // FIX ปัญหา 1: กดค้นหาให้เลยแม้ไม่เจอ mapping
+            testShowList(); 
+          }, 300);
         }
         return;
       }
