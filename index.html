@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-8-14-3-del-3  </title>
+  <title> v7-9  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5820,9 +5820,64 @@ function closeLocationModal() {
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
-      console.log('getSelectedCriteria:', criteria);
+
+      // === FIX V14: สินค้าทั่วไป 10 หมวด - ดึงจาก decor-btn ที่เลือกแล้ว ยิงไป marketplace_items ===
+      // MODEL: ใช้ gemini-3.5-flash-lite เสมอ ตามคำสั่ง
+      const GEMINI_MODEL = "gemini-3.5-flash-lite";
+      try {
+        const decorTab = document.getElementById('tab-content-decor');
+        const isDecorActive = decorTab && decorTab.style.display !== 'none';
+        if (isDecorActive) {
+          const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
+          let selectedDecor = null;
+          decorBtns.forEach(btn => {
+            if (btn.dataset.selectedValue) {
+              selectedDecor = btn.dataset.selectedValue.trim();
+            }
+          });
+          if (!selectedDecor) {
+            const anySelected = document.querySelector('#tab-content-decor .decor-btn[data-selected-value]');
+            if (anySelected) selectedDecor = anySelected.dataset.selectedValue;
+          }
+          if (selectedDecor) {
+            const mainCategories = ["เฟอร์นิเจอร์ แต่งบ้าน","โคมไฟ และระบบแสงสว่าง","ประตูหน้าต่าง และวัสดุซ่อมบ้าน","คอมพิวเตอร์ และอิเล็กทรอนิกส์","ยานพาหนะ และอะไหล่","เครื่องใช้ไฟฟ้าภายในบ้าน","แฟชั่น เครื่องแต่งกาย","แม่และเด็ก / สัตว์เลี้ยง","กีฬา และของสะสม","สินค้าอุตสาหกรรม และร้านค้า"];
+            let mainCat = selectedDecor;
+            const keywordToMain = {
+              "โซฟา":"เฟอร์นิเจอร์ แต่งบ้าน","เก้าอี้":"เฟอร์นิเจอร์ แต่งบ้าน","โต๊ะ":"เฟอร์นิเจอร์ แต่งบ้าน","เตียง":"เฟอร์นิเจอร์ แต่งบ้าน","ตู้":"เฟอร์นิเจอร์ แต่งบ้าน","ผ้าม่าน":"เฟอร์นิเจอร์ แต่งบ้าน",
+              "โคมไฟ":"โคมไฟ และระบบแสงสว่าง","หลอดไฟ":"โคมไฟ และระบบแสงสว่าง","LED":"โคมไฟ และระบบแสงสว่าง",
+              "ประตู":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","หน้าต่าง":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","วัสดุซ่อม":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน","ปูน":"ประตูหน้าต่าง และวัสดุซ่อมบ้าน",
+              "คอมพิวเตอร์":"คอมพิวเตอร์ และอิเล็กทรอนิกส์","โน้ตบุ๊ค":"คอมพิวเตอร์ และอิเล็กทรอนิกส์","อิเล็กทรอนิกส์":"คอมพิวเตอร์ และอิเล็กทรอนิกส์",
+              "ยานพาหนะ":"ยานพาหนะ และอะไหล่","รถยนต์":"ยานพาหนะ และอะไหล่","มอเตอร์ไซค์":"ยานพาหนะ และอะไหล่","อะไหล่":"ยานพาหนะ และอะไหล่",
+              "เครื่องใช้ไฟฟ้า":"เครื่องใช้ไฟฟ้าภายในบ้าน","ตู้เย็น":"เครื่องใช้ไฟฟ้าภายในบ้าน","แอร์":"เครื่องใช้ไฟฟ้าภายในบ้าน","ทีวี":"เครื่องใช้ไฟฟ้าภายในบ้าน",
+              "แฟชั่น":"แฟชั่น เครื่องแต่งกาย","เสื้อผ้า":"แฟชั่น เครื่องแต่งกาย","กระเป๋า":"แฟชั่น เครื่องแต่งกาย",
+              "แม่และเด็ก":"แม่และเด็ก / สัตว์เลี้ยง","สัตว์เลี้ยง":"แม่และเด็ก / สัตว์เลี้ยง","ของเล่นเด็ก":"แม่และเด็ก / สัตว์เลี้ยง",
+              "กีฬา":"กีฬา และของสะสม","ฟิตเนส":"กีฬา และของสะสม","ของสะสม":"กีฬา และของสะสม",
+              "อุตสาหกรรม":"สินค้าอุตสาหกรรม และร้านค้า","ร้านค้า":"สินค้าอุตสาหกรรม และร้านค้า","เครื่องจักร":"สินค้าอุตสาหกรรม และร้านค้า"
+            };
+            for (let k in keywordToMain) {
+              if (selectedDecor.includes(k)) { mainCat = keywordToMain[k]; break; }
+            }
+            if (mainCategories.includes(selectedDecor)) mainCat = selectedDecor;
+            
+            criteria.itemType = selectedDecor;
+            criteria.item_type = selectedDecor;
+            criteria.mainCategory = mainCat;
+            criteria.productCategory = mainCat;
+            criteria.table = "marketplace_items";
+            console.log(`[V14 decor] itemType=${selectedDecor} main=${mainCat} -> table=marketplace_items model=${GEMINI_MODEL}`);
+          } else {
+            const activeInput = document.querySelector('#tab-content-decor .custom-edit');
+            if (activeInput || isDecorActive) {
+              criteria.table = "marketplace_items";
+            }
+          }
+        }
+      } catch(e){ console.error('decor criteria error', e); }
+
+      console.log('getSelectedCriteria:', criteria, 'model=gemini-3.5-flash-lite');
       return criteria;
     }
+
     function testShowList() {
       AppState.pagination.offset = 0;
       AppState.pagination.hasMore = true;
