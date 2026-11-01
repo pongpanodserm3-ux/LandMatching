@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-9-4  </title>
+  <title> v7-9-5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4775,6 +4775,9 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       // FIX v13.4: force to front above flood modal (9001) and detail modals (9999)
       locOverlay.style.zIndex = '10010';
       locOverlay.style.display = 'flex';
+      locOverlay.style.pointerEvents = 'auto';
+      // FIX AI-MAP: บังคับให้แผนที่กางออก ไม่ใช่ซ่อนแบบ default
+      locOverlay.style.background = 'rgba(0,0,0,0.3)';
       // ===== คำสั่งใหม่: เบลอปุ่มค้นหาถ้าเปิดจากหน้าลงประกาศ =====
       const searchBtn = document.getElementById('locationSearchBtn');
       if (searchBtn) {
@@ -5047,15 +5050,38 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
     function selectPlaceResult(lat, lon, displayName) {
       const latitude = parseFloat(lat);
       const longitude = parseFloat(lon);
-      
+      // FIX AI-MAP: ถ้าแผนที่ยังไม่เปิด ให้เปิดก่อน (AI เรียก set_location_coordinates โดยตรง)
+      try {
+        const ov = document.getElementById('locationModalOverlay');
+        if (ov && !ov.classList.contains('active')) {
+          if (typeof openLocationModal === 'function') openLocationModal('filter');
+        }
+      } catch(e){}
       document.getElementById('placeSearchInput').value = displayName;
-      document.getElementById('placeSearchResults').style.display = 'none';
+      const rs = document.getElementById('placeSearchResults');
+      if (rs) rs.style.display = 'none';
       setCoordinates(latitude, longitude);
       
       if (leafletMap && mapMarker) {
         const newLatLng = new L.LatLng(latitude, longitude);
         mapMarker.setLatLng(newLatLng);
+        leafletMap.setView([latitude, longitude], 14);
+        // FIX: invalidateSize หลังเปิด modal (แผนที่ใหม่ 50vh จะเทา ถ้าไม่ invalidate)
+        setTimeout(()=>{ try{ leafletMap.invalidateSize(); }catch(e){} }, 150);
         updateRadiusCircle(); 
+      } else {
+        // ถ้า map ยังไม่สร้าง ให้สร้างหลังเปิด modal
+        setTimeout(()=>{
+          try{
+            if (leafletMap && mapMarker) {
+              const newLatLng2 = new L.LatLng(latitude, longitude);
+              mapMarker.setLatLng(newLatLng2);
+              leafletMap.setView([latitude, longitude], 14);
+              leafletMap.invalidateSize();
+              updateRadiusCircle();
+            }
+          }catch(e){}
+        }, 400);
       }
     }
     function setCoordinates(lat, lng) {
@@ -5550,7 +5576,7 @@ function closeLocationModal() {
                     const { name, args, id } = call;
                     let output = { success: true };
                                 if (name === "open_location_modal") {
-                      openLocationModal();
+                      try{ openLocationModal('filter'); }catch(e){ openLocationModal(); }
                     } else if (name === "open_sos_modal") {
                       openSOSModal();
                       output = { success: true, message: "เปิดฟอร์มขอความช่วยเหลือ SOS เรียบร้อย" };
@@ -7096,19 +7122,6 @@ document.addEventListener('fullscreenchange', ()=>{
     }
   }
 });
-    function _old_initSOSMap_temp() {
-      const mapEl = document.getElementById('sosMapPreview');
-      if (!mapEl) return;
-      if (window.sosMap) return;
-      try {
-        window.sosMap = L.map('sosMapPreview').setView([13.7563, 100.5018], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
-        sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
-        window.sosMarkersLayer = sosMarkersLayer;
-        sosMap = window.sosMap;
-      } catch(e){ console.warn('initSOSMap failed', e); }
-      setTimeout(() => window.sosMap.invalidateSize(), 500);
-    }
     
     function updateSOSMapMarkers(list) {
       if (!window.sosMap) initSOSMap();
