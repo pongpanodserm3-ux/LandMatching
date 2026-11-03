@@ -1731,7 +1731,7 @@ window.highlightBoth = function(idStr, type){
 </style>
   <div class="modal-overlay" id="sosModalOverlay" style="z-index: 9000; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="sosDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
-      <span class="close-modal" onclick="closeSOSModal()">×</span>
+      <span class="close-modal" onclick="closeSOSModal()">&times;</span>
       <h3 style="margin-top:0; color: #d70000; font-size: 18px; text-align: center;">🚨 แจ้งขอความช่วยเหลือฉุกเฉิน</h3>
       
       <label style="font-size:12px; font-weight:bold;">1. เลือกประเภทความช่วยเหลือ (SOS Tag List)</label>
@@ -1869,7 +1869,7 @@ window.highlightBoth = function(idStr, type){
   </style>
   <div class="modal-overlay" id="floodWarningModalOverlay" style="z-index: 9001; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 0;">
     <div class="dropdown-modal" id="floodWarningDropdownModal" style="width: 96%; max-width: 440px; padding: 16px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; margin: auto;">
-      <span class="close-modal" onclick="closeFloodWarningModal()">×</span>
+      <span class="close-modal" onclick="closeFloodWarningModal()">&times;</span>
       <h3 style="margin-top:0; color: #d97706; font-size: 18px; text-align: center;">ลงประกาศเตือน</h3>
       
       <label style="font-size:12px; font-weight:bold;">1. ระดับความรุนแรง</label>
@@ -1909,7 +1909,7 @@ window.highlightBoth = function(idStr, type){
       <label style="font-size:12px; font-weight:bold;">3. ระดับน้ำ (ซม.)</label>
       <input type="number" class="flood-input" id="floodWaterLevel" placeholder="เช่น 30, 50, 100">
       <label style="font-size:12px; font-weight:bold;">4. รายละเอียดเพิ่มเติม</label>
-      <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."><\/textarea>
+      <textarea class="flood-input" id="floodDetailText" rows="3" placeholder="เช่น น้ำขึ้นเร็ว รถเล็กผ่านไม่ได้ ต้องการปิดถนน..."></textarea>
       <label style="font-size:12px; font-weight:bold;">5. รัศมีเตือนภัย (เมตร)</label>
       <input type="number" class="flood-input" id="floodRadius" placeholder="ค่าเริ่มต้น 200 เมตร" value="200">
       
@@ -1957,7 +1957,7 @@ window.highlightBoth = function(idStr, type){
   <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModalOverlay">
     <div class="detail-modal">
-      <span class="close-modal" onclick="closeDetailModal()">×</span>
+      <span class="close-modal" onclick="closeDetailModal()">&times;</span>
       <div class="detail-title" id="modalTitle">ภายในรายละเอียดประกาศ</div>
       <div class="detail-price" id="modalPrice">-</div>
       <div class="image-slider" id="modalSlider"></div>
@@ -1970,13 +1970,13 @@ window.highlightBoth = function(idStr, type){
   </div>
   <!-- Lightbox สำหรับดูภาพเต็มจอ แนวตั้ง/แนวนอน -->
   <div class="image-lightbox" id="imageLightbox" onclick="closeImageLightbox()">
-    <span class="close-lightbox" onclick="closeImageLightbox()">×</span>
+    <span class="close-lightbox" onclick="closeImageLightbox()">&times;</span>
     <img id="lightboxImg" src="" alt="full view">
   </div>
   <!-- Post Modal (หน้าต่างลงประกาศ) -->
     <div class="modal-overlay" id="postModalOverlay" style="z-index: 8500; align-items: center;">
       <div class="dropdown-modal" style="width: 95%; max-width: 420px; padding: 15px;">
-      <span class="close-modal" onclick="closePostModal()">×</span>
+      <span class="close-modal" onclick="closePostModal()">&times;</span>
       <span onclick="clearPostModalValues()" style="position: absolute; top: 15px; right: 50px; font-size: 14px; color: red; cursor: pointer; font-weight: bold;">เคลียร์ค่า</span>
       <h3 style="margin-top:0; color: var(--text-main); font-size: 18px; margin-bottom: 12px; text-align: center;">📝 ลงประกาศขายบ้าน</h3>        
         <!-- ใช้ CSS Grid วางดรอปดาวน์ให้เป็นระเบียบและช่องว่างแคบที่สุด (gap: 4px) -->
@@ -2021,7 +2021,7 @@ window.highlightBoth = function(idStr, type){
   <!-- Dropdown Modal -->
   <div class="modal-overlay" id="dropdownModalOverlay">
     <div class="dropdown-modal">
-      <span class="close-modal" onclick="closeDropdownModal()">×</span>
+      <span class="close-modal" onclick="closeDropdownModal()">&times;</span>
       <span onclick="selectDropdownOption(AppState.ui.dropdownTopic, 'เคลียร์ค่า')" style="position: absolute; top: 18px; right: 55px; font-size: 14px; color: red; cursor: pointer; font-weight: bold;">เคลียร์ค่า</span>
       <h3 id="dropdownModalTitle" style="margin-top:0; color: var(--text-main);">เลือกข้อมูล</h3>
       <input type="text" class="dropdown-search-input" id="dropdownSearchInput" placeholder="พิมพ์เพื่อค้นหาตัวเลือก..." oninput="filterDropdownOptions()">
@@ -2641,7 +2641,7 @@ window.highlightBoth = function(idStr, type){
     <div class="chat-container-card">
       <div class="chat-header-bar">
         <span id="chatActiveTitle">💬 ระบบแชทสนทนา</span>
-        <span class="close-chat-modal" onclick="closeUserChatModal()">×</span>
+        <span class="close-chat-modal" onclick="closeUserChatModal()">&times;</span>
       </div>
       <div class="chat-dual-split-body">
         <div class="chat-zone-list expanded" id="chatZoneList" onclick="expandChatZone('list')">
@@ -3338,13 +3338,13 @@ function tryLIFFLoginAgain(){
     function escapeHtml(str){
       if(str==null) return '';
       return String(str)
-        .replace(/&/g,'&')
-        .replace(/</g,'<')
-        .replace(/>/g,'>')
-        .replace(/"/g,'"')
-        .replace(/'/g,''');
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;');
     }
-    function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'`'); }
+    function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'&#96;'); }
 function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       const r = (role||reporter_type||'general').toLowerCase();
       // ตามคำขอ: แสดงแค่ชื่อบทบาทอย่างเดียว เช่น แอดมิน
@@ -4100,7 +4100,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       }
     }
   
-    function getPropValue(item, possibleKeys, defaultVal = '') {
+    window.getPropValue = function getPropValue(item, possibleKeys, defaultVal = '') {
       if (!item) return defaultVal;
       const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
       for (const k of keys) {
@@ -4113,7 +4113,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
     // ==========================================
     // UI, TABS & INTERACTION HANDLERS
     // ==========================================
-    function switchTab(tabId) {
+    window.switchTab = function switchTab(tabId) {
       stopAIVoiceSpeech();
       const aiSection = document.getElementById('ai-section');
       if (aiSection && aiSection.classList.contains('collapsed')) {
@@ -4445,7 +4445,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         box.innerHTML = `
           <img src="${imgUrl}" alt="uploaded-${index}">
           ${index === 0 ? '<span class="cover-label">ภาพปก</span>' : ''}
-          <button class="delete-img-btn" onclick="deleteImage(${index}); event.stopPropagation();">×</button>
+          <button class="delete-img-btn" onclick="deleteImage(${index}); event.stopPropagation();">&times;</button>
         `;
         grid.appendChild(box);
       });
@@ -4771,7 +4771,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         // เก็บระยะไว้ใช้ใน popup ถ้าต้องการ
         sorted = sorted.map(p=>{ 
           const plat=parseFloat(p.latitude||p.lat||''), plng=parseFloat(p.longitude||p.lng||'');
-          if(!isNaN(plat)&&!isNaN(plng)&¢erLat&¢erLng) p._distance = getDist(centerLat,centerLng,plat,plng);
+          if(!isNaN(plat)&&!isNaN(plng)&&centerLat&&centerLng) p._distance = getDist(centerLat,centerLng,plat,plng);
           return p;
         });
       }
@@ -7883,7 +7883,7 @@ function initSOSMap(){
   if(window.sosMap){ try{ setTimeout(()=>window.sosMap.invalidateSize(), 200); }catch(e){} return; }
   try{
     window.sosMap = L.map('sosMapPreview', {zoomControl:true}).setView([13.7563, 100.5018], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(window.sosMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(window.sosMap);
     window.sosMarkersLayer = L.featureGroup().addTo(window.sosMap);
     window.userLocationLayer = L.featureGroup().addTo(window.sosMap);
     window.sosMap.whenReady(()=>{ setTimeout(()=>{ try{ if(!window._lastInvalidateTs || Date.now()-window._lastInvalidateTs>800){ window._lastInvalidateTs=Date.now(); window.sosMap.invalidateSize(); } }catch(e){} }, 400); });
@@ -8214,7 +8214,7 @@ document.addEventListener('fullscreenchange', ()=>{
               ${item.status==='going'?'<span style="background:#bbf7d0;padding:1px 5px;border-radius:6px;font-size:9px;color:#166534;">มีคนรับแล้ว</span>':''}
               ${item.status==='going' ? `<button style="background:#0f172a; color:white; border:none; border-radius:999px; padding:1px 8px; font-size:9px; font-weight:bold; cursor:pointer; margin-left:2px;" onclick="completeSOSFromList('${item.id}', event); event.stopPropagation();">🏁 เสร็จแล้ว</button>` : ''}
               ${item.status==='completed' ? `<span style="background:#e5e7eb; color:#374151; padding:2px 6px; border-radius:8px; font-size:9px;">✅ เสร็จแล้ว</span>` : ''}
-              ${(()=>{ const _fb = (item.fb_url||item.facebook_url||item.fbUrl||'').toString().trim(); if(!_fb) return `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:700; white-space:nowrap;">ไม่มีที่มา</span>`; const _esc = _fb.replace(/'/g, '%27').replace(/"/g, '"'); return `<button style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6;" onclick="event.stopPropagation(); window.open('${_esc}', '_blank', 'noopener');">🔗 ดูที่มาโพสต์</button>`; })()}<button style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:2px;" onclick="event.stopPropagation(); window.viewSOSOnMapFromList(${item.lat}, ${item.lng}, '${item.id}');">📍 ดูบนแผนที่</button>
+              ${(()=>{ const _fb = (item.fb_url||item.facebook_url||item.fbUrl||'').toString().trim(); if(!_fb) return `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:700; white-space:nowrap;">ไม่มีที่มา</span>`; const _esc = _fb.replace(/'/g, '%27').replace(/"/g, '&quot;'); return `<button style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6;" onclick="event.stopPropagation(); window.open('${_esc}', '_blank', 'noopener');">🔗 ดูที่มาโพสต์</button>`; })()}<button style="background:#fff; color:#16a34a; border:1px solid #86efac; border-radius:999px; padding:1px 7px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap; line-height:1.6; margin-left:2px;" onclick="event.stopPropagation(); window.viewSOSOnMapFromList(${item.lat}, ${item.lng}, '${item.id}');">📍 ดูบนแผนที่</button>
             </div>
             ${item.medicine_detail ? `<div style="font-size:11px; color:#d70000; background:white; padding:4px 6px; border-radius:6px;">💊 ${item.medicine_detail}</div>` : ''}
             ${evacDetailHtml}
@@ -9500,7 +9500,7 @@ function renderFloodWarningsList(list){
     // v17.23 ADD - ปุ่มดูที่มาโพสต์ fb_url
     const fbUrlRawW = w.fb_url || w.facebook_url || w.fbUrl || '';
     const fbUrlW = (typeof fbUrlRawW === 'string' ? fbUrlRawW.trim() : '');
-    const fbUrlEscW = fbUrlW.replace(/'/g, "%27").replace(/"/g, """);
+    const fbUrlEscW = fbUrlW.replace(/'/g, "%27").replace(/"/g, "&quot;");
     const sourceBtnHtmlW = fbUrlW
       ? `<button onclick="event.stopPropagation(); window.open('${fbUrlEscW}', '_blank', 'noopener');" style="background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; line-height:1.8;">🔗 ดูที่มาโพสต์</button>`
       : `<span style="background:#f1f5f9; color:#94a3b8; border:1px solid #e2e8f0; border-radius:999px; padding:2px 8px; font-size:10px; font-weight:700; white-space:nowrap; line-height:1.8;">ไม่มีที่มา</span>`;
