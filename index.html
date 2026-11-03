@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-6  </title>
+  <title> i7-11-4-7  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5629,14 +5629,19 @@ function closeLocationModal() {
                     } else if (name === "set_location_coordinates") {
                       selectPlaceResult(args.latitude, args.longitude, args.placeName);
                     }
-                      // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง
+                      // ฟังก์ชันกดยืนยันพิกัดด้วยเสียง - FIX คำสั่งที่ 1: ต้องปิดแผนที่หลังยืนยัน เหมือนกดปุ่ม ยืนยันพิกัด
                       else if (call.name === "confirm_location_action") {
-                        confirmLocation();
+                        if (typeof confirmPostingLocation === 'function') {
+                          confirmPostingLocation();
+                        } else {
+                          confirmLocation();
+                          if (typeof closeLocationModal === 'function') closeLocationModal();
+                        }
                         if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && call.id) {
                           AppState.voice.ws.send(JSON.stringify({
                             toolResponse: {
                               functionResponses: [{
-                                response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว" } },
+                                response: { output: { success: true, message: "ยืนยันพิกัดเรียบร้อยแล้ว ปิดแผนที่แล้ว" } },
                                 id: call.id
                               }]
                             }
