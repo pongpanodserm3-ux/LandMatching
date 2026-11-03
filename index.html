@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-14  </title>
+  <title> i8-14-1-lesslog  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4282,7 +4282,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       testShowList();
     }
     function clearFiltersNoSearch(){
-      console.log('🔄 [v15.24] ล้าง dropdown แบบไม่ค้นหา');
+      console.log('🔄 [CLEAR] ล้าง dropdown');
       const editBox = document.getElementById('customEditBox');
       if (editBox) editBox.value = '';
       const editBoxDecor = document.getElementById('customEditBoxDecor');
@@ -4787,13 +4787,6 @@ function resetAllFilters() {
       return res.dropdownFound.join(' ') + (res.remainingText ? ' ' + res.remainingText : '');
     }
     function applyEditToDropdowns(text) {
-      // v15.25 FIX: เคลียร์ dropdown ทั้งหมดก่อนทุกครั้งที่ AI สั่งค้นหาใหม่ - กันของเก่าค้างแบบ 5 ล้านติดมาจากบางกะปิ
-      try{
-        if(typeof clearFiltersNoSearch==='function'){
-          clearFiltersNoSearch();
-          console.log('[v15.25 CLEAR] เคลียร์ dropdown ทั้งหมดก่อนตั้งใหม่ - raw:', text);
-        }
-      }catch(e){}
       if (!text) return;
       const result = extractDropdownAndRemaining(text);
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
@@ -6017,8 +6010,6 @@ if (name === "switch_tab_category") {
                           }
                           // v15.20 FIX: ถ้าคำไหนอยู่ใน dropdown ให้ไปกด dropdown เลย ไม่ต้องเขียนลง edit (ตามที่สั่ง)
                           const extracted = (typeof extractDropdownAndRemaining === 'function') ? extractDropdownAndRemaining(finalText) : {dropdownFound:[], remainingText: finalText};
-                          // v15.25 FIX: เคลียร์ก่อนทุกครั้ง
-                          try{ if(typeof clearFiltersNoSearch==='function'){ clearFiltersNoSearch(); console.log('[v15.25 CLEAR] เคลียร์ก่อน AI Voice cleaned', extracted?.dropdownFound); } }catch(e){}
                           // 1. กด dropdown ก่อน
                           if (extracted.dropdownFound && extracted.dropdownFound.length) {
                             extracted.dropdownFound.forEach(opt => {
@@ -6033,7 +6024,7 @@ if (name === "switch_tab_category") {
                           }
                           // 2. edit ใส่เฉพาะคำที่ไม่มีใน dropdown เท่านั้น
                           activeInput.value = extracted.remainingText ? extracted.remainingText.trim() : ''; // v15.21 FIX: ลบคำ dropdown ออกจาก edit เกลี้ยง
-                          console.log('[v15.25] AI Voice set edit (cleaned):', activeInput.value, '(raw cleaned:', finalText, ') -> dropdown:', extracted.dropdownFound, 'remaining:', extracted.remainingText);
+                          console.log('AI Voice set edit (cleaned):', activeInput.value, '(raw cleaned:', finalText, ') -> dropdown:', extracted.dropdownFound, 'remaining:', extracted.remainingText);
                         }
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
@@ -6313,7 +6304,7 @@ if (name === "switch_tab_category") {
         else if (id==='re_provinceBtn'||onclick.includes('จังหวัด')) criteria.province=val;
         else if (id==='re_roadBtn'||onclick.includes('ถนน')) criteria.road=val;
       });
-      console.log('[v15.19 CRITERIA READ]', JSON.stringify(criteria));
+      console.log('[CRITERIA]', JSON.stringify(criteria));
       return criteria;
     }
     function setDropdownById(id,value){const btn=document.getElementById(id); if(btn){btn.innerText=value+' ▾'; btn.dataset.selectedValue=value; console.log('[v15.19 SET BY ID] '+id+' -> '+value); return true;} return false;}
@@ -6364,7 +6355,7 @@ if (name === "switch_tab_category") {
             }
           }
         }
-        console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText);
+        // quiet payload
         const payload = {
           action: "searchAll",
           offset: AppState.pagination.offset,
@@ -11839,4 +11830,4 @@ window.viewSOSOnMapFromList = function(lat,lng,id){
 console.log('[v7-7 PATCH v5] ready - stay open until scroll down');
 </script>
 </body>
-</html>
+</html
