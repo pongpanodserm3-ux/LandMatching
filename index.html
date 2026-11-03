@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-4  </title>
+  <title> i7-11-4-5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6828,7 +6828,8 @@ if (name === "switch_tab_category") {
             targetBtn.dataset.selectedValue = matched.value;
             try {
               targetBtn.classList.add('ai-active-glow');
-              // FIX v7-11-9: ไม่ลบแสงอัตโนมัติ ให้ค้างจนกว่าจะเปลี่ยน dropdown อื่น - gemini-3.5-flash-lite
+              // FIX v7-11-10: เลื่อน dropdown ที่ถูกใช้งานมาให้อยู่กลางจอ - gemini-3.5-flash-lite - แก้เฉพาะที่สั่งเคร่งครัด
+              targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             } catch(e){}
           } catch(e){ console.error('reset default error', e); }
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
@@ -6876,7 +6877,8 @@ if (name === "switch_tab_category") {
         resetOtherDropdownsInSameRow(selectedBtn);
         try {
           selectedBtn.classList.add('ai-active-glow');
-          // FIX v7-11-9: ไม่ลบแสงอัตโนมัติ ให้ค้างจนกว่าเปลี่ยน dropdown อื่น
+          // FIX v7-11-10: เลื่อน dropdown ที่ถูกใช้งานมาให้อยู่กลางจอ - gemini-3.5-flash-lite - แก้เฉพาะที่สั่งเคร่งครัด
+          selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         } catch(e){}
       }
     }
