@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-6  </title>
+  <title> i8-7  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4766,19 +4766,15 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       const filterBtns = document.querySelectorAll('.filter-btn');
       
-      // 1. Set Dropdown จากคำที่เจอ
+      // 1. Set Dropdown จากคำที่เจอ - ใช้ setDropdownByTopic แบบตรงๆ
       result.dropdownFound.forEach(foundOpt => {
         topics.forEach(topic => {
           const options = getDropdownOptionsForTopic(topic);
           if (options.includes(foundOpt)) {
-            filterBtns.forEach(btn => {
-              const onClickAttr = btn.getAttribute('onclick') || '';
-              const id = btn.id || '';
-              if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
-                btn.innerText = `${foundOpt} ▾`;
-                console.log(`[v15.16 DROPDOWN SET] ${topic} -> ${foundOpt}`);
-              }
-            });
+            if (typeof setDropdownByTopic === 'function') {
+              setDropdownByTopic(topic, foundOpt);
+            }
+            console.log(`[v15.19 DROPDOWN SET] ${topic} -> ${foundOpt}`);
           }
         });
       });
@@ -6285,202 +6281,40 @@ if (name === "switch_tab_category") {
     // ==========================================
     function getSelectedCriteria() {
       let criteria = {};
-      const editBox = document.getElementById('customEditBox');
-      if (editBox && editBox.value.trim()) {
-        applyEditToDropdowns(editBox.value.trim());
-      }
-      // รองรับทั้งปุ่มเก่า (onclick มีคำไทย) และปุ่มใหม่ (id แบบ re_xxxBtn)
-      const filterBtns = document.querySelectorAll('#tab-content-realestate .filter-btn, #tab-content-decor .filter-btn');
-      const defaultLabels = [
-        "ขาย/เช่า", "คอนโด/บ้าน", "ราคาขาย", "ราคาเช่า", 
-        "จังหวัด", "เขต/อำเภอ", "ถนน", "โครงการ", "ซอย", "เนื้อที่", "ขนาด", "ปรับขนาด",
-        "อื่นๆ", "สถานที่ใกล้เคียง", "สาธารณูปโภคพิเศษ", "พิกัด"
-      ];
-      
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const defaultLabels = ["ขาย/เช่า","คอนโด/บ้าน","ราคาขาย","ราคาเช่า","จังหวัด","เขต/อำเภอ","ถนน","โครงการ","ซอย","เนื้อที่","ขนาด","ปรับขนาด","อื่นๆ","สถานที่ใกล้เคียง","สาธารณูปโภคพิเศษ","พิกัด"];
       filterBtns.forEach(btn => {
-        const text = btn.innerText;
-        if (!text.includes('▾')) return;
-        if (text.includes('เคลียร์ค่า') || text.includes('ล้างค่า')) return;
-        const val = text.replace(' ▾', '').replace('📍 ', '').trim();
-        if (defaultLabels.includes(val)) return;
-        if (val.startsWith("พิกัด") || val.includes("กม.") || val.startsWith("ขาย/เช่า")) return;
-        // ข้ามปุ่มพิเศษของ decor ที่ไม่ใช่ของอสังหา
-        if (btn.id === 'saleTypeBtn' || btn.id === 'coordFilterBtn') return;
-        
-        const onclick = btn.getAttribute('onclick') || '';
-        const id = btn.id || '';
-        // รองรับทั้งระบบเก่า (ดูจาก onclick) และระบบใหม่ (ดูจาก id)
-        if (onclick.includes('ขาย/เช่า') || id.includes('re_saleBtn')) criteria.priceType = val;
-        else if (onclick.includes('คอนโด/บ้าน') || id.includes('re_typeBtn')) criteria.propertyType = val;
-        else if (onclick.includes('ราคาขาย') || id.includes('re_salePriceBtn')) {
-          criteria.priceSale = val;
-          // FIX v15.14 - แปลง ไม่เกิน 5 ล้าน -> ตัวเลข 5000000 ให้หลังบ้าน
-          const mm = val.match(/(\d+(?:,\d+)*)\s*ล้าน/);
-          if (mm) {
-            const num = parseFloat(mm[1].replace(/,/g,''));
-            if (val.includes('ไม่เกิน')) {
-              criteria.priceSaleMax = num * 1000000;
-              criteria.price_sale_max = num * 1000000;
-            } else if (val.includes('ตั้งแต่')) {
-              criteria.priceSaleMin = num * 1000000;
-              criteria.price_sale_min = num * 1000000;
-            }
-          }
-          const mm2 = val.match(/ไม่เกิน\s*(\d+)/);
-          if (mm2 && !val.includes('ล้าน')) {
-            criteria.priceSaleMax = parseInt(mm2[1].replace(/,/g,''),10);
-            criteria.price_sale_max = parseInt(mm2[1].replace(/,/g,''),10);
-          }
-        }
-        else if (onclick.includes('ราคาเช่า') || id.includes('re_rentPriceBtn')) {
-          criteria.priceRent = val;
-          const mr = val.match(/ไม่เกิน\s*(\d+(?:,\d+)*)/);
-          if (mr) {
-            criteria.priceRentMax = parseInt(mr[1].replace(/,/g,''),10);
-            criteria.price_rent_max = parseInt(mr[1].replace(/,/g,''),10);
-          }
-        }
-        else if (onclick.includes('จังหวัด') || id.includes('re_provinceBtn')) criteria.province = val;
-        else if (onclick.includes('เขต/อำเภอ') || id.includes('re_districtBtn')) criteria.district = val;
-        else if (onclick.includes('ถนน') || id.includes('re_roadBtn')) criteria.road = val;
-        else if (onclick.includes('โครงการ') || id.includes('re_projectBtn')) criteria.project = val;
-        else if (onclick.includes('ซอย') || id.includes('re_soiBtn')) criteria.soi = val;
-        else if (onclick.includes('เนื้อที่') || onclick.includes('ขนาด') || onclick.includes('ปรับขนาด') || id.includes('re_areaBtn')) criteria.areaMax = val;
-        else if (id.includes('re_otherBtn')) criteria.other = val;
-        else if (id.includes('re_nearbyBtn')) criteria.nearby = val;
-        else if (id.includes('re_facilityBtn')) criteria.facility = val;
+        const t = (btn.innerText||'').trim();
+        if (!t.includes('▾')) return;
+        if (t.includes('เคลียร์ค่า')||t.includes('ล้างค่า')) return;
+        const val = t.replace(' ▾','').replace('📍 ','').trim();
+        if (!val||defaultLabels.includes(val)) return;
+        if (val.startsWith("พิกัด")||val.includes("กม.")) return;
+        const id=btn.id||''; const onclick=btn.getAttribute('onclick')||'';
+        if (id==='re_saleBtn'||onclick.includes('ขาย/เช่า')) criteria.priceType=val;
+        else if (id==='re_typeBtn'||onclick.includes('คอนโด/บ้าน')) criteria.propertyType=val;
+        else if (id==='re_salePriceBtn'||onclick.includes('ราคาขาย')){criteria.priceSale=val; const mm=val.match(/(\d+(?:,\d+)*)\s*ล้าน/); if(mm){const num=parseFloat(mm[1].replace(/,/g,'')); if(val.includes('ไม่เกิน')){criteria.priceSaleMax=num*1000000; criteria.price_sale_max=num*1000000;}}}
+        else if (id==='re_districtBtn'||onclick.includes('เขต/อำเภอ')) criteria.district=val;
+        else if (id==='re_provinceBtn'||onclick.includes('จังหวัด')) criteria.province=val;
+        else if (id==='re_roadBtn'||onclick.includes('ถนน')) criteria.road=val;
       });
-      // ดึงค่าพิกัดจากระบบใหม่ด้วย
-      if (window.coordFilterData) {
-        if (window.coordFilterData.province) criteria.province = window.coordFilterData.province;
-        if (window.coordFilterData.district) criteria.district = window.coordFilterData.district;
-        if (window.coordFilterData.latlng) {
-          criteria.lat = window.coordFilterData.latlng.lat;
-          criteria.lng = window.coordFilterData.latlng.lng;
-          criteria.radius = selectedRadius || 5;
-        }
-      }
-      if (window.saleFilterData) {
-        criteria.decorSaleType = window.saleFilterData.type;
-      }
-      if (selectedLat && selectedLng) {
-        criteria.lat = selectedLat;
-        criteria.lng = selectedLng;
-        criteria.radius = selectedRadius || 1;
-      }
-            // FIX v14 - 10 ปุ่มยิงไป marketplace_items
-      try {
-        const decorTab = document.getElementById('tab-content-decor');
-        const isDecorActive = decorTab && decorTab.style.display !== 'none';
-        if (isDecorActive) {
-          let selectedDecor = null;
-          const decorBtns = document.querySelectorAll('#decor-filter-row .decor-btn');
-          decorBtns.forEach(function(btn){ if (btn.dataset.selectedValue) selectedDecor = btn.dataset.selectedValue.trim(); });
-          if (!selectedDecor) {
-            const anySelected = document.querySelector('#tab-content-decor .decor-btn[data-selected-value]');
-            if (anySelected) selectedDecor = anySelected.dataset.selectedValue;
-          }
-              // FIX v7-11-2: เก็บทุก dropdown ที่เลือกในสินค้าทั่วไป + แยกคำ + เดาบริบท + 2ภาษา
-          let allDecorValues = [];
-          const decorBtnsAll = document.querySelectorAll('#decor-filter-row .decor-btn, #tab-content-decor .decor-btn');
-          decorBtnsAll.forEach(function(btn){ if (btn.dataset.selectedValue) allDecorValues.push(btn.dataset.selectedValue.trim()); });
-          if (selectedDecor && !allDecorValues.includes(selectedDecor)) allDecorValues.push(selectedDecor);
-          // ลบซ้ำ
-          allDecorValues = [...new Set(allDecorValues)];
-          if (allDecorValues.length > 0) {
-            // รวมทุกค่าที่เลือก
-            let combined = allDecorValues.join(' ');
-            // แยกคำไทย: ตัด และ / , / และช่องว่าง
-            function splitDecorThai(str){
-              if(!str) return [];
-              return str.split(/[\s,\/]+/).join(' ').split(/และ/).map(s=>s.trim()).filter(s=>s && s!=='และ' && s.length>=1);
-            }
-            let tokens = [];
-            allDecorValues.forEach(v=> { tokens.push(...splitDecorThai(v)); });
-            tokens = [...new Set(tokens)];
-            // ขยายด้วย BILINGUAL mapping ที่มีอยู่แล้ว
-            let expandedTokens = [...tokens];
-            if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
-              const expandedStr = window.expandBilingualSearch(tokens.join(' ') + ' ' + combined);
-              expandedTokens = expandedStr.split(/\s+/).filter(Boolean);
-            }
-            // เดาบริบทเพิ่ม (synonym ไทย+อังกฤษ) - ใช้ map เดียวกับ backend
-            const contextualMap = {
-              'โต๊ะ': ['โต๊ะทำงาน','โต๊ะกินข้าว','โต๊ะไม้','table','desk','dining table'],
-              'ตู้': ['ตู้เสื้อผ้า','ตู้โชว์','ตู้ไม้','cabinet','wardrobe','cupboard','closet'],
-              'เก้าอี้': ['เก้าอี้ทำงาน','เก้าอี้กินข้าว','chair','stool','office chair'],
-              'โซฟา': ['โซฟาเบด','sofa','couch','loveseat'],
-              'เตียง': ['เตียงนอน','เตียงไม้','bed','bed frame','mattress'],
-              'เฟอร์นิเจอร์': ['furniture','เฟอร์','built-in'],
-              'ภายนอก': ['outdoor','นอกบ้าน','สวน','garden','patio'],
-              'ของแต่งบ้าน': ['ของแต่งบ้าน','decor','decoration','แต่งบ้าน'],
-              'โคมไฟ': ['โคมไฟเพดาน','โคมไฟตั้งโต๊ะ','lamp','light','chandelier','โคมระย้า','หลอดไฟ'],
-              'แสงสว่าง': ['แสงสว่าง','lighting','LED','ไฟ'],
-              'ประตู': ['ประตูไม้','ประตูเหล็ก','door','บานประตู'],
-              'หน้าต่าง': ['หน้าต่าง','window','บานหน้าต่าง'],
-              'สุขภัณฑ์': ['สุขภัณฑ์','ห้องน้ำ','ชักโครก','อ่างล้างหน้า','toilet','bathroom','sanitary'],
-              'วัสดุ': ['วัสดุก่อสร้าง','ปูน','กระเบื้อง','สีทาบ้าน','material'],
-              'คอมพิวเตอร์': ['คอม','โน้ตบุ๊ก','คอมพิวเตอร์','computer','PC','laptop','notebook'],
-              'อิเล็กทรอนิกส์': ['อิเล็กทรอนิกส์','electronics','gadget'],
-              'ยานพาหนะ': ['รถ','ยานพาหนะ','vehicle'],
-              'รถยนต์': ['รถยนต์','รถเก๋ง','car','automobile','รถมือสอง'],
-              'รถจักรยานยนต์': ['มอเตอร์ไซค์','จักรยานยนต์','motorcycle','มอไซค์'],
-              'อะไหล่': ['อะไหล่','อะไหล่รถ','spare part','ยาง','เครื่องยนต์'],
-              'เครื่องใช้ไฟฟ้า': ['เครื่องใช้ไฟฟ้า','appliance','ตู้เย็น','แอร์','เครื่องซักผ้า'],
-              'ตู้เย็น': ['ตู้เย็น','refrigerator','fridge'],
-              'แอร์': ['แอร์','air conditioner','aircon','เครื่องปรับอากาศ'],
-              'แฟชั่น': ['แฟชั่น','fashion','เสื้อผ้า','clothes'],
-              'เสื้อผ้า': ['เสื้อผ้า','กางเกง','เสื้อ','clothes','shirt','pants'],
-              'รองเท้า': ['รองเท้า','รองเท้าผ้าใบ','shoes','sneakers'],
-              'กระเป๋า': ['กระเป๋า','กระเป๋าสะพาย','bag','handbag'],
-              'แม่และเด็ก': ['แม่และเด็ก','ของเล่นเด็ก','เด็ก','baby','kids'],
-              'สัตว์เลี้ยง': ['สัตว์เลี้ยง','หมา','แมว','อาหารหมา','อาหารแมว','pet','dog','cat'],
-              'กีฬา': ['กีฬา','ฟิตเนส','ออกกำลังกาย','sport','fitness','gym'],
-              'ของสะสม': ['ของสะสม','โมเดล','ฟิกเกอร์','collectible','figure','model'],
-              'อุตสาหกรรม': ['อุตสาหกรรม','โรงงาน','เครื่องจักร','industrial','factory'],
-              'ร้านค้า': ['ร้านค้า','อุปกรณ์ร้าน','shop','store','retail']
-            };
-            tokens.forEach(t=>{
-              if(contextualMap[t]) expandedTokens.push(...contextualMap[t]);
-              // ลองหาคีย์ที่ใกล้เคียง
-              for(const k in contextualMap){ if(t.includes(k) || k.includes(t)){ expandedTokens.push(...contextualMap[k]); } }
-            });
-            expandedTokens = [...new Set(expandedTokens.map(s=>s.trim()).filter(Boolean))];
-            // ส่งเป็น string รวมให้ backend แยกต่อได้
-            criteria.itemType = expandedTokens.join(' ');
-            criteria.item_type = criteria.itemType;
-            criteria.itemTypeTokens = tokens; // ส่ง token ดิบไปด้วยให้ backend ใช้
-            criteria.table = "marketplace_items";
-            console.log('DECOR v7-11-2 EXPANDED:', selectedDecor, '-> tokens:', tokens, '-> expanded:', criteria.itemType);
-          } else {
-            criteria.table = "marketplace_items";
-          }
-        }
-      } catch(e){}
-            // REMOVED: fake log removed per request
+      console.log('[v15.19 CRITERIA READ]', JSON.stringify(criteria));
       return criteria;
     }
+    function setDropdownById(id,value){const btn=document.getElementById(id); if(btn){btn.innerText=value+' ▾'; btn.dataset.selectedValue=value; console.log('[v15.19 SET BY ID] '+id+' -> '+value); return true;} return false;}
+    function setDropdownByTopic(topic,value){const map={'ขาย/เช่า':'re_saleBtn','คอนโด/บ้าน':'re_typeBtn','ราคาขาย':'re_salePriceBtn','ราคาเช่า':'re_rentPriceBtn','จังหวัด':'re_provinceBtn','เขต/อำเภอ':'re_districtBtn','ถนน':'re_roadBtn','โครงการ':'re_projectBtn','ซอย':'re_soiBtn','เนื้อที่':'re_areaBtn'}; const id=map[topic]; if(id) return setDropdownById(id,value); return false;}
     // MODEL: gemini-3.5-flash-lite เสมอ - ไม่เรียก Gemini จริงในค้นหา ใช้แค่ WebSocket เสียง
     function testShowList() {
       AppState.pagination.offset = 0;
       AppState.pagination.hasMore = true;
       AppState.pagination.renderedKeys.clear();
       document.getElementById('resultsContainer').innerHTML = '';
-      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      let searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
-      // FIX v7-9-8 ปัญหา 2: ขยายคำค้นให้รองรับทั้งไทยและอังกฤษ
-      if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
-        const expanded = window.expandBilingualSearch(searchText);
-        const primary = typeof window.getPrimaryThaiBrand === 'function' ? window.getPrimaryThaiBrand(expanded) : expanded;
-        // ถ้าขยายแล้วต่างจากเดิม ให้ใช้แบบขยายเพื่อหาให้เจอทั้ง 2 ภาษา
-        if (primary !== searchText) {
-          console.log('BILINGUAL EXPAND:', searchText, '->', primary);
-          // เก็บค่าไทยไว้ใน input เพื่อแสดงผลให้ user เห็นว่าเจอทั้ง 2 ภาษา
-          // แต่ส่ง primary ที่มีทั้งไทยและอังกฤษไปค้นหา
-          searchText = primary;
-        }
-      }
-      fetchDatabase({}, getSelectedCriteria(), true, searchText);
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+      let searchText = activeInput ? activeInput.value : '';
+      // searchText ตอนนี้คือ remaining edit เท่านั้น (ไม่มีคำ dropdown แล้วตามกฎใหม่)
+      console.log('[v15.19 testShowList] searchText (remaining edit)=', searchText);
+      const criteria = (typeof getSelectedCriteria === 'function') ? getSelectedCriteria() : {};
+      fetchDatabase({}, criteria, true, searchText);
     }
     // FIX v7-9-8 ปัญหา 1: ฟังก์ชันกดค้นหาอัตโนมัติหลัง AI ใส่ข้อความ
     window.autoSearchAfterAI = function() {
