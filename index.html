@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-2  </title>
+  <title> i7-11-4-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1472,7 +1472,23 @@
       right: auto !important;
       z-index: 10 !important;
     }
-    </style> 
+    
+/* FIX v7-11-8: ขอบขาวสว่างเรืองรองเมื่อ dropdown ถูกใช้งานโดย AI Voice - gemini-3.5-flash-lite */
+@keyframes glowWhite {
+  0% { box-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.4); border-color: #fff; }
+  50% { box-shadow: 0 0 15px rgba(255,255,255,1), 0 0 25px rgba(255,255,255,0.7), 0 0 35px rgba(255,255,255,0.4); border-color: #fff; }
+  100% { box-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.4); border-color: #fff; }
+}
+.decor-btn.ai-active-glow {
+  border: 2px solid #fff !important;
+  box-shadow: 0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255,255,255,0.6), 0 0 45px rgba(74,131,204,0.4) !important;
+  animation: glowWhite 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, #e3f2fd, #fff) !important;
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+</style> 
     
 <script>
 // === v14.10 + v13.12 CLEAN - BOTH MARKERS ONLY HIGHLIGHT + AUTO SCROLL (NO MODAL ON PIN) ===
@@ -6786,6 +6802,15 @@ if (name === "switch_tab_category") {
                 }
               });
             }
+            // FIX v7-11-8: ลบขอบเรืองแสงจาก dropdown เดิมทั้งหมดก่อน - gemini-3.5-flash-lite
+            try {
+              const prGlow = targetBtn.closest('.filter-scroll-row');
+              if (prGlow) {
+                prGlow.querySelectorAll('.decor-btn').forEach(b => {
+                  b.classList.remove('ai-active-glow');
+                });
+              }
+            } catch(e){}
             // 2. เรียกฟังก์ชันเดิมเพื่อรีเซ็ตตัวอื่น
             if (typeof resetOtherDropdownsInSameRow === 'function') {
               resetOtherDropdownsInSameRow(targetBtn);
@@ -6799,8 +6824,15 @@ if (name === "switch_tab_category") {
                 });
               }
             }
-            // 3. ย้ำว่า target ถูก set เป็น selected จริง
+            // 3. ย้ำว่า target ถูก set เป็น selected จริง + ใส่ขอบขาวเรืองรอง
             targetBtn.dataset.selectedValue = matched.value;
+            try {
+              targetBtn.classList.add('ai-active-glow');
+              // ลบแสงออกอัตโนมัติหลัง 5 วินาที (แต่ยังคงค่า selected ไว้)
+              setTimeout(()=> {
+                targetBtn.classList.remove('ai-active-glow');
+              }, 5000);
+            } catch(e){}
           } catch(e){ console.error('reset default error', e); }
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
@@ -6810,9 +6842,45 @@ if (name === "switch_tab_category") {
 
     function onFilterSelectedInSameRow(selectedBtn, newValue) {
       if (selectedBtn) {
+        // FIX v7-11-8: ลบแสงเก่า ใส่แสงใหม่ - gemini-3.5-flash-lite
+        try {
+          const pr = selectedBtn.closest('.filter-scroll-row');
+          if (pr) pr.querySelectorAll('.decor-btn').forEach(b=> b.classList.remove('ai-active-glow'));
+        } catch(e){}
         selectedBtn.innerText = newValue + ' ▾';
+        // ใส่ prefix เลขถ้าหาย
+        try {
+          const oc = selectedBtn.getAttribute('onclick') || '';
+          const trueDefaults = {
+            'cat1Flyout': '1. เฟอร์นิเจอร์ แต่งบ้าน',
+            'cat2Flyout': '2. โคมไฟ และระบบแสงสว่าง',
+            'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
+            'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
+            'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
+            'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+            'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
+            'cat8Flyout': '8. แม่และเด็ก',
+            'cat9Flyout': '9. กีฬา และของสะสม',
+            'cat10Flyout': '10. สินค้าอุตสาหกรรม และร้านค้า'
+          };
+          for (const cat in trueDefaults) {
+            if (oc.includes(cat) && !/^\d+\./.test(selectedBtn.innerText)) {
+              selectedBtn.innerText = trueDefaults[cat].replace(/^\d+\.\s*/, '').includes(newValue) ? (trueDefaults[cat].split('. ')[0] + '. ' + newValue + ' ▾') : (selectedBtn.innerText);
+              // Actually keep number
+              const num = trueDefaults[cat].match(/^(\d+\.)/);
+              if (num && !selectedBtn.innerText.startsWith(num[1])) {
+                selectedBtn.innerText = num[1] + ' ' + newValue + ' ▾';
+              }
+              break;
+            }
+          }
+        } catch(e){}
         selectedBtn.dataset.selectedValue = newValue;
         resetOtherDropdownsInSameRow(selectedBtn);
+        try {
+          selectedBtn.classList.add('ai-active-glow');
+          setTimeout(()=> selectedBtn.classList.remove('ai-active-glow'), 5000);
+        } catch(e){}
       }
     }
     
