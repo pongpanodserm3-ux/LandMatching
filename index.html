@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-3 Locked 5 Tabs + buildLocationIndex + Progressive Radius  </title>
+  <title> i8-4 Locked 5 Tabs + buildLocationIndex + Progressive Radius  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2702,14 +2702,29 @@ const DISTRICT_CENTER_V15 = {
   "มีนบุรี": {lat:13.8132,lng:100.7343}, "คันนายาว": {lat:13.8292,lng:100.6838}, "ดอนเมือง": {lat:13.912,lng:100.6},
   "จตุจักร": {lat:13.8223,lng:100.5475}, "บางเขน": {lat:13.873,lng:100.605}
 };
+// FIX v15.13 - แก้บั๊กเลข 5 หาย ทำให้ ไม่เกิน 5 ล้าน หาไม่เจอ
 function cleanVoiceTextV15(raw){
   if(!raw) return "";
-  let words = raw.split(/\s+|,/).map(w=>w.trim()).filter(Boolean);
-  // ลบคำขยะ แต่เก็บคำสถานที่ไว้
-  let cleaned = words.filter(w=> !STOPWORDS_V15.has(w.toLowerCase()) && w.length>=2);
-  // ถ้าเหลือน้อยเกิน เอาคำสถานที่กลับมา
-  if(cleaned.length===0) cleaned = words.filter(w=> w.length>=2);
-  return cleaned.join(' ');
+  // เก็บวลีราคาไว้ก่อน อย่าให้โดน split ทิ้ง
+  const pricePhrases = [];
+  let temp = raw.replace(/ไม่เกิน\s*\d+(?:,\d+)*(?:\.\d+)?\s*ล้าน?|ตั้งแต่\s*\d+\s*ล้าน?/gi, (m)=>{
+    pricePhrases.push(m.trim());
+    return ` __PRICE_${pricePhrases.length-1}__ `;
+  });
+  let words = temp.split(/\s+|,/).map(w=>w.trim()).filter(Boolean);
+  let cleaned = words.filter(w=>{
+    if(w.startsWith('__PRICE_')) return true;
+    if(/^\d+(?:,\d+)*(?:\.\d+)?$/.test(w)) return true;
+    return !STOPWORDS_V15.has(w.toLowerCase()) && w.length>=1;
+  });
+  if(cleaned.length===0) cleaned = words.filter(w=> w.length>=1);
+  let result = cleaned.join(' ');
+  pricePhrases.forEach((p,i)=>{
+    result = result.replace(`__PRICE_${i}__`, p);
+  });
+  // กันกรณีเลขเดี่ยวๆ หลุด เช่น 5 ล้าน -> 5 ล้าน
+  result = result.replace(/\b(\d+)\s+ล้าน\b/g, '$1 ล้าน');
+  return result.trim();
 }
 function getTabModeFromUI(){
   const activeBtn = document.querySelector('.tab-btn.active') || document.querySelector('[class*="tab"].active');
@@ -4653,6 +4668,24 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       const filterBtns = document.querySelectorAll('.filter-btn');
       
+      // FIX v15.13 - รองรับ ไม่เกิน 5 ล้าน แบบยืดหยุ่น
+      const priceSaleMatch = text.match(/ไม่เกิน\s*(\d+(?:,\d+)*)\s*ล้าน/);
+      if (priceSaleMatch) {
+        const num = priceSaleMatch[1].replace(/,/g,'');
+        const targetOpt = `ไม่เกิน ${num} ล้าน`;
+        filterBtns.forEach(btn => {
+          const onClickAttr = btn.getAttribute('onclick') || '';
+          const id = btn.id || '';
+          if (onClickAttr.includes('ราคาขาย') || id.includes('re_salePriceBtn')) {
+            btn.innerText = `${targetOpt} ▾`;
+          }
+        });
+      }
+      const priceRentMatch = text.match(/ไม่เกิน\s*(\d+(?:,\d+)*)\s*(?!ล้าน)/);
+      // สำหรับเช่า ถ้ามีตัวเลขแต่ไม่มีคำว่าล้าน ให้ลองแมตช์ด้วย
+      if (text.match(/ไม่เกิน\s*\d+,?\d*/) && !text.includes('ล้าน')) {
+        // จะถูกจัดการในลูปปกติ
+      }
       topics.forEach(topic => {
         const options = getDropdownOptionsForTopic(topic);
         for (const opt of options) {
@@ -4663,12 +4696,10 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
                 btn.innerText = `${opt} ▾`;
               }
             });
-            break; // เมื่อเจอคำตรงใน Dropdown หัวข้อนี้แล้ว ให้ข้ามไปหัวข้อถัดไป
+            break;
           }
         }
       });
-    
-      // FIX v7-11-4: ไม่ล้าง editBox เพื่อให้ AI ค้นหาได้ - เดิมล้างทำให้ Toyota Corolla หาย
     }
     // ==========================================
     // 4. MAP & LOCATION HANDLERS
