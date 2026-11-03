@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-11-1  </title>
+  <title> v7-11-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6008,10 +6008,78 @@ if (name === "switch_tab_category") {
             const anySelected = document.querySelector('#tab-content-decor .decor-btn[data-selected-value]');
             if (anySelected) selectedDecor = anySelected.dataset.selectedValue;
           }
-          if (selectedDecor) {
-            criteria.itemType = selectedDecor;
-            criteria.item_type = selectedDecor;
+              // FIX v7-11-2: เก็บทุก dropdown ที่เลือกในสินค้าทั่วไป + แยกคำ + เดาบริบท + 2ภาษา
+          let allDecorValues = [];
+          const decorBtnsAll = document.querySelectorAll('#decor-filter-row .decor-btn, #tab-content-decor .decor-btn');
+          decorBtnsAll.forEach(function(btn){ if (btn.dataset.selectedValue) allDecorValues.push(btn.dataset.selectedValue.trim()); });
+          if (selectedDecor && !allDecorValues.includes(selectedDecor)) allDecorValues.push(selectedDecor);
+          // ลบซ้ำ
+          allDecorValues = [...new Set(allDecorValues)];
+          if (allDecorValues.length > 0) {
+            // รวมทุกค่าที่เลือก
+            let combined = allDecorValues.join(' ');
+            // แยกคำไทย: ตัด และ / , / และช่องว่าง
+            function splitDecorThai(str){
+              if(!str) return [];
+              return str.split(/[\s,\/]+/).join(' ').split(/และ/).map(s=>s.trim()).filter(s=>s && s!=='และ' && s.length>=1);
+            }
+            let tokens = [];
+            allDecorValues.forEach(v=> { tokens.push(...splitDecorThai(v)); });
+            tokens = [...new Set(tokens)];
+            // ขยายด้วย BILINGUAL mapping ที่มีอยู่แล้ว
+            let expandedTokens = [...tokens];
+            if (typeof window.expandBilingualSearch === 'function') {
+              const expandedStr = window.expandBilingualSearch(tokens.join(' ') + ' ' + combined);
+              expandedTokens = expandedStr.split(/\s+/).filter(Boolean);
+            }
+            // เดาบริบทเพิ่ม (synonym ไทย+อังกฤษ) - ใช้ map เดียวกับ backend
+            const contextualMap = {
+              'โต๊ะ': ['โต๊ะทำงาน','โต๊ะกินข้าว','โต๊ะไม้','table','desk','dining table'],
+              'ตู้': ['ตู้เสื้อผ้า','ตู้โชว์','ตู้ไม้','cabinet','wardrobe','cupboard','closet'],
+              'เก้าอี้': ['เก้าอี้ทำงาน','เก้าอี้กินข้าว','chair','stool','office chair'],
+              'โซฟา': ['โซฟาเบด','sofa','couch','loveseat'],
+              'เตียง': ['เตียงนอน','เตียงไม้','bed','bed frame','mattress'],
+              'เฟอร์นิเจอร์': ['furniture','เฟอร์','built-in'],
+              'ภายนอก': ['outdoor','นอกบ้าน','สวน','garden','patio'],
+              'ของแต่งบ้าน': ['ของแต่งบ้าน','decor','decoration','แต่งบ้าน'],
+              'โคมไฟ': ['โคมไฟเพดาน','โคมไฟตั้งโต๊ะ','lamp','light','chandelier','โคมระย้า','หลอดไฟ'],
+              'แสงสว่าง': ['แสงสว่าง','lighting','LED','ไฟ'],
+              'ประตู': ['ประตูไม้','ประตูเหล็ก','door','บานประตู'],
+              'หน้าต่าง': ['หน้าต่าง','window','บานหน้าต่าง'],
+              'สุขภัณฑ์': ['สุขภัณฑ์','ห้องน้ำ','ชักโครก','อ่างล้างหน้า','toilet','bathroom','sanitary'],
+              'วัสดุ': ['วัสดุก่อสร้าง','ปูน','กระเบื้อง','สีทาบ้าน','material'],
+              'คอมพิวเตอร์': ['คอม','โน้ตบุ๊ก','คอมพิวเตอร์','computer','PC','laptop','notebook'],
+              'อิเล็กทรอนิกส์': ['อิเล็กทรอนิกส์','electronics','gadget'],
+              'ยานพาหนะ': ['รถ','ยานพาหนะ','vehicle'],
+              'รถยนต์': ['รถยนต์','รถเก๋ง','car','automobile','รถมือสอง'],
+              'รถจักรยานยนต์': ['มอเตอร์ไซค์','จักรยานยนต์','motorcycle','มอไซค์'],
+              'อะไหล่': ['อะไหล่','อะไหล่รถ','spare part','ยาง','เครื่องยนต์'],
+              'เครื่องใช้ไฟฟ้า': ['เครื่องใช้ไฟฟ้า','appliance','ตู้เย็น','แอร์','เครื่องซักผ้า'],
+              'ตู้เย็น': ['ตู้เย็น','refrigerator','fridge'],
+              'แอร์': ['แอร์','air conditioner','aircon','เครื่องปรับอากาศ'],
+              'แฟชั่น': ['แฟชั่น','fashion','เสื้อผ้า','clothes'],
+              'เสื้อผ้า': ['เสื้อผ้า','กางเกง','เสื้อ','clothes','shirt','pants'],
+              'รองเท้า': ['รองเท้า','รองเท้าผ้าใบ','shoes','sneakers'],
+              'กระเป๋า': ['กระเป๋า','กระเป๋าสะพาย','bag','handbag'],
+              'แม่และเด็ก': ['แม่และเด็ก','ของเล่นเด็ก','เด็ก','baby','kids'],
+              'สัตว์เลี้ยง': ['สัตว์เลี้ยง','หมา','แมว','อาหารหมา','อาหารแมว','pet','dog','cat'],
+              'กีฬา': ['กีฬา','ฟิตเนส','ออกกำลังกาย','sport','fitness','gym'],
+              'ของสะสม': ['ของสะสม','โมเดล','ฟิกเกอร์','collectible','figure','model'],
+              'อุตสาหกรรม': ['อุตสาหกรรม','โรงงาน','เครื่องจักร','industrial','factory'],
+              'ร้านค้า': ['ร้านค้า','อุปกรณ์ร้าน','shop','store','retail']
+            };
+            tokens.forEach(t=>{
+              if(contextualMap[t]) expandedTokens.push(...contextualMap[t]);
+              // ลองหาคีย์ที่ใกล้เคียง
+              for(const k in contextualMap){ if(t.includes(k) || k.includes(t)){ expandedTokens.push(...contextualMap[k]); } }
+            });
+            expandedTokens = [...new Set(expandedTokens.map(s=>s.trim()).filter(Boolean))];
+            // ส่งเป็น string รวมให้ backend แยกต่อได้
+            criteria.itemType = expandedTokens.join(' ');
+            criteria.item_type = criteria.itemType;
+            criteria.itemTypeTokens = tokens; // ส่ง token ดิบไปด้วยให้ backend ใช้
             criteria.table = "marketplace_items";
+            console.log('DECOR v7-11-2 EXPANDED:', selectedDecor, '-> tokens:', tokens, '-> expanded:', criteria.itemType);
           } else {
             criteria.table = "marketplace_items";
           }
