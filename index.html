@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-6 - Locked 5 Tabs + AI Voice follow Dropdown  </title>
+  <title> i8-6 Locked 5 Tabs + AI voice follow dropdown </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4663,43 +4663,162 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       testShowList();
     }
     // ฟังก์ชันวิเคราะห์ข้อความจาก Edit Box แล้วอัปเดตปุ่ม Dropdown อัตโนมัติ
+    // FIX v15.15 - AI Voice Follow Dropdown: บังคับให้คำในช่อง edit ต้องเหมือนคำใน dropdown เท่านั้น
+    function normalizeToDropdownWhitelist(rawText) {
+      if (!rawText) return "";
+      const allOptions = (typeof getAllValidDropdownOptions === 'function') ? getAllValidDropdownOptions() : [];
+      const found = [];
+      const lowerRaw = rawText.toLowerCase();
+      // 1. หาคำที่ตรงกับ dropdown เป๊ะๆ ก่อน (เช่น บางกะปิ, ไม่เกิน 5 ล้าน)
+      allOptions.forEach(opt => {
+        if (!opt) return;
+        // ข้ามค่าล้าง
+        if (opt.includes('ล้างค่า')) return;
+        // ใช้ includes แบบ case-insensitive
+        if (lowerRaw.includes(opt.toLowerCase())) {
+          found.push(opt);
+        }
+      });
+      // 2. กรณีพิเศษ: ราคาเขียนยืดหยุ่น เช่น "5 ล้าน", "5ลบ", "ราคาไม่เกิน5ล้าน" -> normalize เป็น "ไม่เกิน 5 ล้าน"
+      const priceLoose = rawText.match(/(\d+)\s*(?:ล้าน|ลบ|m|บาท)?/i);
+      const hasMaiKoen = /ไม่เกิน/i.test(rawText);
+      if (priceLoose && hasMaiKoen) {
+        const num = priceLoose[1];
+        const candidate = `ไม่เกิน ${num} ล้าน`;
+        // เช็คว่ามีใน dropdown จริงไหม (2,5,10,20)
+        if (allOptions.includes(candidate) && !found.includes(candidate)) {
+          found.push(candidate);
+        } else {
+          // ถ้าไม่มีเป๊ะๆ ให้หาใกล้เคียงที่สุด
+          const numInt = parseInt(num,10);
+          if (numInt <= 2) { if(allOptions.includes('ไม่เกิน 2 ล้าน')) found.push('ไม่เกิน 2 ล้าน'); }
+          else if (numInt <= 5) { if(allOptions.includes('ไม่เกิน 5 ล้าน')) found.push('ไม่เกิน 5 ล้าน'); }
+          else if (numInt <= 10) { if(allOptions.includes('ไม่เกิน 10 ล้าน')) found.push('ไม่เกิน 10 ล้าน'); }
+          else if (numInt <= 20) { if(allOptions.includes('ไม่เกิน 20 ล้าน')) found.push('ไม่เกิน 20 ล้าน'); }
+        }
+      }
+      // ลบซ้ำ
+      const unique = [...new Set(found)];
+      // เรียงตามที่ปรากฏใน rawText เพื่อให้ บางกะปิ มาก่อน ราคา จะได้อ่านง่าย
+      unique.sort((a,b) => lowerRaw.indexOf(a.toLowerCase()) - lowerRaw.indexOf(b.toLowerCase()));
+      return unique.join(' ');
+    }
+    
+    // FIX v15.16 - แนวคิดใหม่: ถ้าคำไหนอยู่ใน dropdown ให้เรียกใช้ dropdown เลย และคำนั้นไม่ต้องเขียนลง edit
+    function extractDropdownAndRemaining(rawText) {
+      if (!rawText) return { dropdownFound: [], remainingText: "" };
+      const allOptions = (typeof getAllValidDropdownOptions === 'function') ? getAllValidDropdownOptions() : [];
+      let workingText = rawText;
+      const found = [];
+      // 1. หาคำ dropdown ที่ตรงเป๊ะๆ และตัดออกจาก workingText
+      // เรียงจากยาวไปสั้น เพื่อไม่ให้ "ไม่เกิน 5 ล้าน" โดน "5 ล้าน" แย่งก่อน
+      const sortedOptions = [...allOptions].filter(o=>o && !o.includes('ล้างค่า')).sort((a,b)=>b.length-a.length);
+      sortedOptions.forEach(opt => {
+        if (!opt) return;
+        const lowerOpt = opt.toLowerCase();
+        const lowerWorking = workingText.toLowerCase();
+        if (lowerWorking.includes(lowerOpt)) {
+          found.push(opt);
+          // ตัดคำนี้ออกจาก workingText
+          const regex = new RegExp(opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+          workingText = workingText.replace(regex, ' ');
+        }
+      });
+      // 2. กรณีพิเศษ ราคายืดหยุ่น เช่น "5 ล้าน" "5ลบ" "ราคาไม่เกิน5ล้าน"
+      const priceLooseRegex = /(?:ราคา\s*)?ไม่เกิน\s*(\d+(?:,\d+)*)\s*(?:ล้าน|ลบ|m|บาท)?/gi;
+      let m;
+      while ((m = priceLooseRegex.exec(rawText)) !== null) {
+        const num = m[1].replace(/,/g,'');
+        const candidate = `ไม่เกิน ${num} ล้าน`;
+        if (allOptions.includes(candidate) && !found.includes(candidate)) {
+          found.push(candidate);
+          workingText = workingText.replace(m[0], ' ');
+        } else {
+          // หาใกล้เคียง
+          const numInt = parseInt(num,10);
+          let close = null;
+          if (numInt <= 2) close = 'ไม่เกิน 2 ล้าน';
+          else if (numInt <= 5) close = 'ไม่เกิน 5 ล้าน';
+          else if (numInt <= 10) close = 'ไม่เกิน 10 ล้าน';
+          else if (numInt <= 20) close = 'ไม่เกิน 20 ล้าน';
+          if (close && allOptions.includes(close) && !found.includes(close)) {
+            found.push(close);
+            workingText = workingText.replace(m[0], ' ');
+          }
+        }
+      }
+      // ทำความสะอาด remainingText
+      let remaining = workingText.replace(/\s+/g,' ').trim();
+      // ลบคำขยะทั่วไปที่ไม่มีใน dropdown แต่ไม่ควรเอาไปค้นหา (เช่น ขาย บ้าน)
+      const stopWords = ['ขาย','เช่า','บ้าน','คอนโด','ที่ดิน','ห้อง','หา','แถว','ย่าน','ใกล้','บริเวณ','ราคา','บาท','house','home','village'];
+      remaining = remaining.split(/\s+/).filter(w=> w.length>=2 && !stopWords.includes(w.toLowerCase())).join(' ').trim();
+      const uniqueFound = [...new Set(found)];
+      return { dropdownFound: uniqueFound, remainingText: remaining };
+    }
+    function normalizeToDropdownWhitelist(rawText) {
+      // สำหรับ backward compatibility - ตอนนี้ใช้ extractDropdownAndRemaining แทน
+      const res = extractDropdownAndRemaining(rawText);
+      return res.dropdownFound.join(' ') + (res.remainingText ? ' ' + res.remainingText : '');
+    }
     function applyEditToDropdowns(text) {
       if (!text) return;
+      const result = extractDropdownAndRemaining(text);
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       const filterBtns = document.querySelectorAll('.filter-btn');
       
-      // FIX v15.13 - รองรับ ไม่เกิน 5 ล้าน แบบยืดหยุ่น
-      const priceSaleMatch = text.match(/ไม่เกิน\s*(\d+(?:,\d+)*)\s*ล้าน/);
-      if (priceSaleMatch) {
-        const num = priceSaleMatch[1].replace(/,/g,'');
-        const targetOpt = `ไม่เกิน ${num} ล้าน`;
-        filterBtns.forEach(btn => {
-          const onClickAttr = btn.getAttribute('onclick') || '';
-          const id = btn.id || '';
-          if (onClickAttr.includes('ราคาขาย') || id.includes('re_salePriceBtn')) {
-            btn.innerText = `${targetOpt} ▾`;
+      // 1. Set Dropdown จากคำที่เจอ
+      result.dropdownFound.forEach(foundOpt => {
+        topics.forEach(topic => {
+          const options = getDropdownOptionsForTopic(topic);
+          if (options.includes(foundOpt)) {
+            filterBtns.forEach(btn => {
+              const onClickAttr = btn.getAttribute('onclick') || '';
+              const id = btn.id || '';
+              if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
+                btn.innerText = `${foundOpt} ▾`;
+                console.log(`[v15.16 DROPDOWN SET] ${topic} -> ${foundOpt}`);
+              }
+            });
           }
         });
+      });
+      // 2. เขียนเฉพาะคำที่ไม่มีใน dropdown ลง edit เท่านั้น (ตามที่คุณสั่ง)
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+      if (activeInput) {
+        console.log('[v15.16 EDIT RULE] raw:', text, '-> dropdownFound:', result.dropdownFound, '-> remaining edit:', result.remainingText);
+        activeInput.value = result.remainingText; // ไม่เอาคำ dropdown มาใส่ใน edit แล้ว
       }
-      const priceRentMatch = text.match(/ไม่เกิน\s*(\d+(?:,\d+)*)\s*(?!ล้าน)/);
-      // สำหรับเช่า ถ้ามีตัวเลขแต่ไม่มีคำว่าล้าน ให้ลองแมตช์ด้วย
-      if (text.match(/ไม่เกิน\s*\d+,?\d*/) && !text.includes('ล้าน')) {
-        // จะถูกจัดการในลูปปกติ
-      }
+    }
+function applyEditToDropdowns_UNUSED_OLD(text) {
+      if (!text) return;
+      // ใช้ whitelist version
+      const normalized = normalizeToDropdownWhitelist(text);
+      const effectiveText = normalized || text;
+      const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
       topics.forEach(topic => {
         const options = getDropdownOptionsForTopic(topic);
         for (const opt of options) {
-          if (text.includes(opt)) {
+          if (effectiveText.includes(opt)) {
             filterBtns.forEach(btn => {
               const onClickAttr = btn.getAttribute('onclick') || '';
+              const id = btn.id || '';
               if (onClickAttr.includes(`'${topic}'`) || (topic === 'เนื้อที่' && (onClickAttr.includes("'ขนาด'") || onClickAttr.includes("'ปรับขนาด'")))) {
                 btn.innerText = `${opt} ▾`;
               }
             });
-            break;
+            // ไม่ break เพื่อให้จับได้หลายค่าใน topic เดียวกัน ถ้ามี
           }
         }
       });
+      // FIX v15.15 - สำคัญ: เขียนค่าที่ normalize แล้วกลับลงช่อง edit เพื่อให้มั่นใจว่าคำในช่อง = คำใน dropdown เท่านั้น
+      const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+      if (activeInput && normalized) {
+        // ถ้า normalize ได้ผล ให้ใช้ค่านั้นแทน เช่น บางกะปิ ไม่เกิน 5 ล้าน
+        console.log('[v15.15 WHITELIST] raw:', text, '-> normalized:', normalized);
+        activeInput.value = normalized;
+      }
     }
     // ==========================================
     // 4. MAP & LOCATION HANDLERS
@@ -5865,8 +5984,11 @@ if (name === "switch_tab_category") {
                             finalText = cleanVoiceTextV15(finalText);
                             console.log('AI Voice cleaned:', finalText, 'from', before);
                           }
-                          activeInput.value = finalText;
-                          console.log('AI Voice set edit (cleaned):', finalText);
+                          // v15.15 WHITELIST ENFORCE: บังคับให้ตรง dropdown เท่านั้น
+                          const whitelistText = (typeof normalizeToDropdownWhitelist === 'function') ? normalizeToDropdownWhitelist(finalText) : finalText;
+                          const finalToUse = whitelistText || finalText;
+                          activeInput.value = finalToUse;
+                          console.log('AI Voice set edit (cleaned):', finalToUse, '(raw cleaned:', finalText, ')');
                         }
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
@@ -6190,8 +6312,34 @@ if (name === "switch_tab_category") {
         // รองรับทั้งระบบเก่า (ดูจาก onclick) และระบบใหม่ (ดูจาก id)
         if (onclick.includes('ขาย/เช่า') || id.includes('re_saleBtn')) criteria.priceType = val;
         else if (onclick.includes('คอนโด/บ้าน') || id.includes('re_typeBtn')) criteria.propertyType = val;
-        else if (onclick.includes('ราคาขาย') || id.includes('re_salePriceBtn')) criteria.priceSale = val;
-        else if (onclick.includes('ราคาเช่า') || id.includes('re_rentPriceBtn')) criteria.priceRent = val;
+        else if (onclick.includes('ราคาขาย') || id.includes('re_salePriceBtn')) {
+          criteria.priceSale = val;
+          // FIX v15.14 - แปลง ไม่เกิน 5 ล้าน -> ตัวเลข 5000000 ให้หลังบ้าน
+          const mm = val.match(/(\d+(?:,\d+)*)\s*ล้าน/);
+          if (mm) {
+            const num = parseFloat(mm[1].replace(/,/g,''));
+            if (val.includes('ไม่เกิน')) {
+              criteria.priceSaleMax = num * 1000000;
+              criteria.price_sale_max = num * 1000000;
+            } else if (val.includes('ตั้งแต่')) {
+              criteria.priceSaleMin = num * 1000000;
+              criteria.price_sale_min = num * 1000000;
+            }
+          }
+          const mm2 = val.match(/ไม่เกิน\s*(\d+)/);
+          if (mm2 && !val.includes('ล้าน')) {
+            criteria.priceSaleMax = parseInt(mm2[1].replace(/,/g,''),10);
+            criteria.price_sale_max = parseInt(mm2[1].replace(/,/g,''),10);
+          }
+        }
+        else if (onclick.includes('ราคาเช่า') || id.includes('re_rentPriceBtn')) {
+          criteria.priceRent = val;
+          const mr = val.match(/ไม่เกิน\s*(\d+(?:,\d+)*)/);
+          if (mr) {
+            criteria.priceRentMax = parseInt(mr[1].replace(/,/g,''),10);
+            criteria.price_rent_max = parseInt(mr[1].replace(/,/g,''),10);
+          }
+        }
         else if (onclick.includes('จังหวัด') || id.includes('re_provinceBtn')) criteria.province = val;
         else if (onclick.includes('เขต/อำเภอ') || id.includes('re_districtBtn')) criteria.district = val;
         else if (onclick.includes('ถนน') || id.includes('re_roadBtn')) criteria.road = val;
@@ -6355,6 +6503,19 @@ if (name === "switch_tab_category") {
         document.getElementById('resultsContainer').innerHTML = '';
       }
       try {
+        // FIX v15.17 - log criteria จริง + เตรียม fallback ถ้า server ไม่กรองราคาเป็น
+        // แปลงราคาขายไทย -> ตัวเลขให้แน่ใจอีกชั้น
+        if (criteria.priceSale && !criteria.priceSaleMax) {
+          const mm = String(criteria.priceSale).match(/(\d+(?:,\d+)*)\s*ล้าน/);
+          if (mm) {
+            const num = parseFloat(mm[1].replace(/,/g,''));
+            if (String(criteria.priceSale).includes('ไม่เกิน')) {
+              criteria.priceSaleMax = num*1000000;
+              criteria.price_sale_max = num*1000000;
+            }
+          }
+        }
+        console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText);
         const payload = {
           action: "searchAll",
           offset: AppState.pagination.offset,
@@ -6396,19 +6557,58 @@ if (name === "switch_tab_category") {
       let searchForScoreRaw = activeInputForScore ? activeInputForScore.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
       let searchForScore = (typeof cleanVoiceTextV15==='function') ? cleanVoiceTextV15(searchForScoreRaw) : searchForScoreRaw;
       
-      if (searchForScore && properties && properties.length) {
-        const keywords = searchForScore.split(/\s+/).filter(k=>k.trim().length>=2);
+      // FIX v15.16 - แยกคะแนน Dropdown vs Edit: Dropdown = Filter หลัก, Edit = Booster
+      // ถ้า edit ไม่ตรง DB ให้ปล่อยผ่าน แต่ dropdown ต้องโชว์เสมอ
+      let searchForScore = "";
+      const activeInputForScore = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
+      let searchForScoreRaw = activeInputForScore ? activeInputForScore.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      // searchForScoreRaw ตอนนี้มีเฉพาะคำที่ไม่มีใน dropdown แล้ว (ตามกฎใหม่)
+      searchForScore = searchForScoreRaw.trim();
+      // เก็บ criteria ปัจจุบันไว้ใช้คำนวณ base score
+      const currentCriteria = (typeof getSelectedCriteria === 'function') ? getSelectedCriteria() : {};
+      const hasDropdownFilter = Object.keys(currentCriteria).length > 0;
+      if (properties && properties.length) {
+        const keywords = searchForScore ? searchForScore.split(/\s+/).filter(k=>k.trim().length>=2) : [];
         
         if(isPropertyTab){
-          // อสังหา: ใช้ Hierarchy + ระยะทาง
+          // อสังหา: ใช้ Hierarchy + ระยะทาง + Edit Booster (v15.16)
           const userLat = window._currentUserLat || 13.7648;
           const userLng = window._currentUserLng || 100.6470;
           properties.forEach(p => {
-            // ถ้า server ส่ง _totalScore มาแล้วใช้เลย
-            if (p._totalScore !== undefined) { p._score = p._totalScore; return; }
-            if (p._score !== undefined && p._distance !== undefined) return;
-            const s = (typeof calcHierarchyClient==='function') ? calcHierarchyClient(p, keywords, userLat, userLng) : 0;
-            p._score = s;
+            if (p._totalScore !== undefined) { 
+              // ถ้า server ส่งมาแล้ว ให้บวกโบนัส edit เข้าไป
+              let bonus = 0;
+              if (keywords.length > 0) {
+                const haystack = `${p.title||''} ${p.item_type||''} ${p.details||''} ${p.project||''} ${p.district||''}`.toLowerCase();
+                keywords.forEach(kw => { if (haystack.includes(kw.toLowerCase())) bonus += 50; });
+              }
+              p._score = p._totalScore + bonus;
+              return;
+            }
+            if (p._score !== undefined && p._distance !== undefined) {
+              // บวกโบนัส edit แม้มี score แล้ว
+              let bonus = 0;
+              if (keywords.length > 0) {
+                const haystack = `${p.title||''} ${p.item_type||''} ${p.details||''}`.toLowerCase();
+                keywords.forEach(kw => { if (haystack.includes(kw.toLowerCase())) bonus += 50; });
+              }
+              p._score += bonus;
+              return;
+            }
+            // Base score จาก Hierarchy (มาจาก dropdown)
+            const base = (typeof calcHierarchyClient==='function') ? calcHierarchyClient(p, hasDropdownFilter ? ['__dropdown__'] : [], userLat, userLng) : 100;
+            // Booster จาก edit
+            let editBonus = 0;
+            if (keywords.length > 0) {
+              const haystack = `${p.title||''} ${p.item_type||''} ${p.property_type||''} ${p.details||''} ${p.facebook_name||''} ${p.project||''}`.toLowerCase();
+              keywords.forEach(kw => {
+                if (haystack.includes(kw.toLowerCase())) editBonus += 50;
+              });
+            }
+            // ถ้า edit ไม่ตรงเลย editBonus=0 แต่ base ยังอยู่ ทำให้โชว์ได้ (ตามที่คุณสั่ง)
+            // ถ้า edit ตรงด้วย จะได้ base+bonus ทำให้ขึ้นก่อน (B มาก่อน A)
+            p._score = (isNaN(base)?100:base) + editBonus;
+            if (keywords.length>0) p._editMatched = editBonus>0;
           });
           properties.sort((a,b) => {
             if((b._score||0)!==(a._score||0)) return (b._score||0)-(a._score||0);
@@ -6454,20 +6654,58 @@ if (name === "switch_tab_category") {
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
         if (AppState.pagination.offset === 0) {
-          // FIX i8-3: แก้ SyntaxError จาก <script> ในสตริง + multi-line single quote
-          container.innerHTML = `<div id="v15-fallback"></div><div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข<br><small style="color:#e67e22;">กำลังค้นหาใกล้เคียง 1-50 กม...</small></div>`;
-          // ย้าย logic progressive search ออกมาทำข้างนอก ไม่ใส่ใน innerHTML
-          try {
-            const searchBox=document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
-            const st=(searchBox?searchBox.value:'')||'';
-            const dm=st.match(/บางกะปิ|มีนบุรี|บึงกุ่ม|ลาดพร้าว|ห้วยขวาง|วังทองหลาง|สะพานสูง|คันนายาว|ดอนเมือง/g);
-            let cLat=window._currentUserLat||13.7654, cLng=window._currentUserLng||100.7224;
-            if(dm && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[dm[0]]){ cLat=DISTRICT_CENTER_V15[dm[0]].lat; cLng=DISTRICT_CENTER_V15[dm[0]].lng; }
-            const all=(window._allPropertiesCache||window.AppState?.data?.properties||[]);
-            console.log('[v15.12 FINAL] no results, trying progressive around', dm, cLat, cLng, 'all count', all.length);
-          } catch(e){ console.warn('v15 fallback error', e); }
+          // v15.17 - ถ้า server ส่ง 0 มา ให้ลอง client-side fallback จาก cache ถ้ามี
+          const allCache = (window._allPropertiesCache||window.AppState?.data?.properties||[]);
+          const criteriaNow = (typeof getSelectedCriteria === 'function') ? getSelectedCriteria() : {};
+          console.log('[v15.17 FALLBACK] server 0, trying client filter from cache count', allCache.length, 'criteria', criteriaNow);
+          
+          if (allCache.length > 0) {
+            // กรองด้วย dropdown เอง (เพราะ server อาจกรองไม่เป็น)
+            let filtered = [...allCache];
+            if (criteriaNow.district) {
+              filtered = filtered.filter(p => (p.district||'').includes(criteriaNow.district) || (p.title||'').includes(criteriaNow.district) || (p.details||'').includes(criteriaNow.district));
+            }
+            if (criteriaNow.priceSaleMax || criteriaNow.price_sale_max) {
+              const max = criteriaNow.priceSaleMax || criteriaNow.price_sale_max;
+              filtered = filtered.filter(p => {
+                const price = p.price_sell || p.price || 0;
+                // ถ้าไม่มีราคาใน DB ให้ผ่านไปก่อน (อย่าทำให้หายหมด)
+                if (!price) return true;
+                return parseFloat(price) <= max;
+              });
+            }
+            if (filtered.length > 0) {
+              console.log('[v15.17 FALLBACK] client filtered success', filtered.length, 'showing dropdown results');
+              // ส่ง filtered ไปเรนเดอร์ต่อ แทนที่จะ return
+              properties = filtered;
+            } else {
+              // ถ้ายังไม่มี ให้โชว์ทั้งหมดที่ตรงเขต เพื่อให้ตรงตามคำสั่ง "ต้องหาให้เจอ เพราะ dropdown มันตรง"
+              if (criteriaNow.district) {
+                const districtOnly = allCache.filter(p => (p.district||'').includes(criteriaNow.district) || (p.title||'').includes(criteriaNow.district));
+                if (districtOnly.length > 0) {
+                  console.log('[v15.17 FALLBACK] show district only', districtOnly.length);
+                  properties = districtOnly;
+                }
+              }
+            }
+          }
+          
+          if (!properties || properties.length === 0) {
+            container.innerHTML = `<div id="v15-fallback"></div><div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข<br><small style="color:#e67e22;">กำลังค้นหาใกล้เคียง 1-50 กม... (v15.17 fallback cache ${allCache.length})</small></div>`;
+            try {
+              const searchBox=document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+              const st=(searchBox?searchBox.value:'')||'';
+              const dm=st.match(/บางกะปิ|มีนบุรี|บึงกุ่ม|ลาดพร้าว|ห้วยขวาง|วังทองหลาง|สะพานสูง|คันนายาว|ดอนเมือง/g);
+              let cLat=window._currentUserLat||13.7654, cLng=window._currentUserLng||100.7224;
+              if(dm && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[dm[0]]){ cLat=DISTRICT_CENTER_V15[dm[0]].lat; cLng=DISTRICT_CENTER_V15[dm[0]].lng; }
+              const all=(window._allPropertiesCache||window.AppState?.data?.properties||[]);
+              console.log('[v15.17 FINAL] no results after fallback, trying progressive around', dm, cLat, cLng, 'all count', all.length);
+            } catch(e){ console.warn('v15 fallback error', e); }
+            if (!properties || properties.length === 0) return;
+          }
+        } else {
+          if (!properties || properties.length === 0) return;
         }
-        return;
       }
     
       properties.forEach(item => {
