@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4  </title>
+  <title> i7-11-4-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6760,6 +6760,23 @@ if (name === "switch_tab_category") {
           targetBtn.innerText = prefix + matched.value + ' \u25BE';
           targetBtn.dataset.selectedValue = matched.value;
           console.log('DECOR AUTO-SELECT v7-11-4:', matched.value, 'prefix:', prefix, 'from keyword:', keyword);
+          // FIX v7-11-5: เลือกหมวดเดียวแล้วรีเซ็ตที่เหลือกลับ default - ตามพฤติกรรมเดิม - gemini-3.5-flash-lite
+          try {
+            if (typeof resetOtherDropdownsInSameRow === 'function') {
+              resetOtherDropdownsInSameRow(targetBtn);
+            } else {
+              // fallback: reset manually
+              const parentRow = targetBtn.closest('.filter-scroll-row');
+              if (parentRow) {
+                const otherBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
+                otherBtns.forEach(btn => {
+                  if (btn === targetBtn) return;
+                  if (btn.dataset.default) btn.innerText = btn.dataset.default;
+                  if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
+                });
+              }
+            }
+          } catch(e){}
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
