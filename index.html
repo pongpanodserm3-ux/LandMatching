@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-5  </title>
+  <title> i7-11-4-6  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6716,40 +6716,64 @@ if (name === "switch_tab_category") {
       if (!keyword) { if (typeof testShowList === 'function') setTimeout(()=> testShowList(), 200); return; }
       const kw = keyword.toLowerCase().trim();
       let matched = null;
-      // 1. หาจาก DECOR_CATEGORIES_MAP ก่อน
-      for (const key in window.DECOR_CATEGORIES_MAP) {
-        if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) { matched = window.DECOR_CATEGORIES_MAP[key]; if (key.toLowerCase() === kw) break; }
+      // FIX v7-11-11: แก้บั๊ก เสื้อผ้า -> ตู้เสื้อผ้า - เรียงคีย์ยาวก่อน สั้นทีหลัง และ exact match ก่อน - gemini-3.5-flash-lite
+      const allKeys = Object.keys(window.DECOR_CATEGORIES_MAP).sort((a,b)=> b.length - a.length);
+      // 1. Exact match ก่อน
+      for (const key of allKeys) {
+        if (key.toLowerCase() === kw) { matched = window.DECOR_CATEGORIES_MAP[key]; break; }
       }
-      // 2. FIX v7-11-4: ถ้าไม่เจอ ให้หาใน BILINGUAL_MAPPING_CONFIG ด้วย (เช่น Toyota -> รถยนต์)
+      // 2. ถ้าไม่เจอ exact ให้หาแบบ kw มี key อยู่ (เช่น "เสื้อผ้า clothes" มี "เสื้อผ้า")
+      if (!matched) {
+        for (const key of allKeys) {
+          if (kw.includes(key.toLowerCase())) { matched = window.DECOR_CATEGORIES_MAP[key]; break; }
+        }
+      }
+      // 3. ถ้ายังไม่เจอ ให้หาแบบ key มี kw อยู่ แต่ต้องยาวพอและไม่ใช่ substring สั้นๆที่ทำให้สับสน เช่น "เสื้อผ้า" ไม่ควร match "ตู้เสื้อผ้า" ถ้าใน map ไม่มี "ตู้เสื้อผ้า"
+      // เดิมทำสองทาง ทำให้เสื้อผ้าไปเจอตู้เสื้อผ้าได้ ตอนนี้ตัดออก
+      // 4. FIX v7-11-4: ถ้าไม่เจอ ให้หาใน BILINGUAL_MAPPING_CONFIG ด้วย
       if (!matched && window.BILINGUAL_MAPPING_CONFIG) {
         const cfg = window.BILINGUAL_MAPPING_CONFIG;
-        // ถ้าเป็นยี่ห้อรถ ให้ map ไปรถยนต์
-        for (const cat in cfg) {
+        // ลำดับความสำคัญ: แฟชั่น > คอม > ยานพาหนะ เพื่อกันเสื้อผ้าไปเป็นตู้
+        const priorityCats = ['fashion', 'computer_brands', 'vehicle_brands', 'appliance_brands', 'furniture'];
+        // หา exact ใน bilingual ก่อน
+        for (const cat of priorityCats) {
+          if (!cfg[cat]) continue;
           for (const th in cfg[cat]) {
-            if (kw.includes(th.toLowerCase()) || kw.includes(cfg[cat][th].join(' ').toLowerCase()) || th.toLowerCase().includes(kw)) {
-              // เดาว่าหมวดยานพาหนะ
-              if (cat === 'vehicle_brands' || th.includes('รถ') || th.includes('โตโยต้า') || th.includes('นิสสัน') || th.includes('ฮอนด้า')) {
-                matched = { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' };
+            if (th.toLowerCase() === kw) {
+              if (th.includes('เสื้อผ้า') || th.includes('clothes') || th.includes('กางเกง') || th.includes('shirt')) {
+                matched = { cat: 'cat7Flyout', btnIndex: 6, value: 'เสื้อผ้า' };
                 break;
-              }
-              // เดาว่าหมวดอื่นๆ จาก keyword
-              if (cat === 'computer_brands' || cat === 'appliance_brands') {
-                // หา mapping ที่ใกล้เคียงใน DECOR
-                for (const dKey in window.DECOR_CATEGORIES_MAP) {
-                  if (cfg[cat][th].some(v=> v.toLowerCase().includes(dKey.toLowerCase())) || dKey.toLowerCase().includes(th.toLowerCase())) {
-                    matched = window.DECOR_CATEGORIES_MAP[dKey];
-                    break;
-                  }
-                }
               }
             }
           }
           if (matched) break;
         }
-        // พิเศษ: ถ้า keyword มีคำว่ารถ / toyota / corolla / ยี่ห้อรถใดๆ -> รถยนต์
-        const vehicleKeywords = ['รถ','car','toyota','โตโยต้า','honda','ฮอนด้า','nissan','นิสสัน','mazda','มาสด้า','ford','ฟอร์ด','bmw','benz','เบนซ์','isuzu','อีซูซุ','suzuki','ซูซูกิ','corolla','โคโรลล่า','yaris','ยาริส','hilux','วีออส','vios'];
+        // ถ้ายังไม่เจอ หาแบบ includes
+        if (!matched) {
+          for (const cat in cfg) {
+            for (const th in cfg[cat]) {
+              if (kw.includes(th.toLowerCase())) {
+                if (th.includes('เสื้อผ้า') || th.includes('กางเกง') || th.includes('เสื้อ') && !th.includes('ตู้เสื้อผ้า')) {
+                  matched = { cat: 'cat7Flyout', btnIndex: 6, value: 'เสื้อผ้า' };
+                  break;
+                }
+                if (cat === 'vehicle_brands' || th.includes('โตโยต้า') || th.includes('นิสสัน') || th.includes('ฮอนด้า')) {
+                  matched = { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' };
+                  break;
+                }
+              }
+            }
+            if (matched) break;
+          }
+        }
+        const vehicleKeywords = ['toyota','โตโยต้า','honda','ฮอนด้า','nissan','นิสสัน','mazda','มาสด้า','ford','ฟอร์ด','bmw','benz','เบนซ์','isuzu','อีซูซุ','suzuki','ซูซูกิ','corolla','โคโรลล่า','yaris','ยาริส','hilux','วีออส','vios'];
         if (!matched && vehicleKeywords.some(v=> kw.includes(v))) {
           matched = { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' };
+        }
+        // ถ้าเป็นเสื้อผ้าโดยตรง
+        const clothesKeywords = ['เสื้อผ้า','clothes','กางเกง','shirt','pants','เสื้อยืด','ชุดเดรส','dress'];
+        if (!matched && clothesKeywords.some(v=> kw.includes(v))) {
+          matched = { cat: 'cat7Flyout', btnIndex: 6, value: 'เสื้อผ้า' };
         }
       }
       if (!matched) {
