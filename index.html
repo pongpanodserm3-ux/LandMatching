@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-10  </title>
+  <title> i8-11  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4783,19 +4783,12 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
           }
         });
       });
-      // 2. เขียนเฉพาะคำที่ไม่มีใน dropdown ลง edit เท่านั้น (ตามที่คุณสั่ง)
-      // v15.22 FIX: ล้าง edit ทุกตัวใน DOM ไม่ใช่แค่ตัว active (แก้ race condition)
-      const allEdits = document.querySelectorAll('.custom-edit, #customEditBox, input[id*="Edit"], input[placeholder*="ค้นหา"]');
-      allEdits.forEach(el=>{
-        try{
-          el.value = result.remainingText ? result.remainingText.trim() : '';
-          // trigger input event เพื่อให้ตัวที่ฟังอยู่รู้ว่าว่างแล้ว
-          el.dispatchEvent(new Event('input', {bubbles:true}));
-        }catch(e){}
-      });
+      // 2. เขียนเฉพาะคำที่ไม่มีใน dropdown ลง edit เท่านั้น (ตามที่คุณสั่ง) - v15.22 clear all
+      const allEdits = document.querySelectorAll('.custom-edit, #customEditBox, #customEditBoxDecor');
+      allEdits.forEach(el=>{ try{ el.value = result.remainingText ? result.remainingText.trim() : ''; }catch(e){} });
       const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
       if (activeInput) {
-        console.log('[v15.22 EDIT RULE] raw:', text, '-> dropdownFound:', result.dropdownFound, '-> remaining edit:', result.remainingText, '-> cleared all', allEdits.length, 'edits');
+        console.log('[v15.22 EDIT RULE] raw:', text, '-> dropdownFound:', result.dropdownFound, '-> remaining edit:', result.remainingText, 'cleared', allEdits.length, 'edits');
         activeInput.value = result.remainingText ? result.remainingText.trim() : '';
       }
     }
@@ -6009,14 +6002,6 @@ if (name === "switch_tab_category") {
                             });
                           }
                           // 2. edit ใส่เฉพาะคำที่ไม่มีใน dropdown เท่านั้น
-                          // v15.22 FIX: ล้าง edit ทุกช่อง
-                          const allEdits2 = document.querySelectorAll('.custom-edit, #customEditBox, input[id*="Edit"]');
-                          allEdits2.forEach(el=>{
-                            try{
-                              el.value = extracted.remainingText ? extracted.remainingText.trim() : '';
-                              el.dispatchEvent(new Event('input', {bubbles:true}));
-                            }catch(e){}
-                          });
                           activeInput.value = extracted.remainingText ? extracted.remainingText.trim() : ''; // v15.21 FIX: ลบคำ dropdown ออกจาก edit เกลี้ยง
                           console.log('AI Voice set edit (cleaned):', activeInput.value, '(raw cleaned:', finalText, ') -> dropdown:', extracted.dropdownFound, 'remaining:', extracted.remainingText);
                         }
@@ -6069,49 +6054,15 @@ if (name === "switch_tab_category") {
                         if (typeof testShowList === 'function') testShowList();
                       } catch(e){ console.error('delete error', e); }
                     } else if (summaryText) {
+                      // v15.22 FIX: ลบคำ dropdown ออกจาก edit ก่อน ไม่ใช่เขียนทับกลับ
+                      const res22 = (typeof extractDropdownAndRemaining === 'function') ? extractDropdownAndRemaining(summaryText) : {dropdownFound:[], remainingText: ''};
                       applyEditToDropdowns(summaryText);
                       try {
-                        const activeInput2 = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-                        if (activeInput2) {
-                          let existing = activeInput2.value || '';
-                          let newText = summaryText;
-                          if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
-                            newText = window.expandBilingualSearch(newText);
-                          }
-                          const majorBrandsList2 = ['ไอโฟน','iphone','ซัมซุง','samsung','ออปโป้','oppo','หลังคา','roof'];
-                          const exLow = existing.toLowerCase();
-                          const nwLow = newText.toLowerCase();
-                          const exMaj = majorBrandsList2.filter(mb => exLow.includes(mb));
-                          const nwMaj = majorBrandsList2.filter(mb => nwLow.includes(mb));
-                          const isDiff = exMaj.length>0 && nwMaj.length>0 && !exMaj.some(em=> nwMaj.includes(em));
-                          const cleaned = newText.replace(/ไอโฟน|iphone|มือถือ|mobile/gi,'').trim();
-                          const isOnlyModel2 = /^\s*(\d+|[A-Z]?\d+[A-Za-z]*|Pro|Max|Plus|Ultra|Mini|SE|\s)+$/i.test(cleaned) && /\d/.test(cleaned);
-                          
-                          if (existing.trim()) {
-                            if (isOnlyModel2) {
-                              let merged = existing;
-                              const nums = newText.match(/\b\d+[A-Za-z]*\b|\bS\d+\b|Pro|Max/gi);
-                              if (nums) nums.forEach(n => { if (!merged.toLowerCase().includes(n.toLowerCase())) merged += ' ' + n; });
-                              activeInput2.value = merged.trim();
-                              console.log('SUBMIT APPEND MODEL:', existing, '+', summaryText, '->', merged);
-                            } else if (isDiff) {
-                              activeInput2.value = newText;
-                              console.log('SUBMIT REPLACE DIFF BRAND:', existing, '->', newText);
-                            } else {
-                              const nums = newText.match(/\b\d+\b/g);
-                              if (nums && exMaj.length>0) {
-                                let merged = existing;
-                                nums.forEach(n => { if (!merged.includes(n)) merged += ' ' + n; });
-                                if (merged !== existing) activeInput2.value = merged.trim();
-                                else activeInput2.value = newText;
-                              } else {
-                                activeInput2.value = newText;
-                              }
-                            }
-                          } else {
-                            activeInput2.value = newText;
-                          }
-                        }
+                        const allEdits = document.querySelectorAll('.custom-edit, #customEditBox');
+                        allEdits.forEach(el=>{
+                          try{ el.value = res22.remainingText ? res22.remainingText.trim() : ''; }catch(e){}
+                        });
+                        console.log('v15.22 SUBMIT FIX: summary', summaryText, '-> dropdown', res22.dropdownFound, 'remaining edit', res22.remainingText, 'cleared all edits');
                       } catch(e){ console.error('submit merge error', e); }
                     }
                     
