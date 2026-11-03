@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-1  </title>
+  <title> i7-11-4-2  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6503,22 +6503,25 @@ if (name === "switch_tab_category") {
     }
     // ฟังก์ชันกลางสำหรับ modal อสังหาเรียกเมื่อเลือกค่าเสร็จ
     // === FIX v7-9-6: Auto-select decor category by AI keyword - 10 หมวดจากรูป ===
-    window.DECOR_CATEGORIES_MAP = {
-      // 1. เฟอร์นิเจอร์ แต่งบ้าน
+        window.DECOR_CATEGORIES_MAP = {
+      // 1. เฟอร์นิเจอร์ แต่งบ้าน - เลือกจากช้อยส์ที่มีจริงใน cat1Flyout เท่านั้น
       'เฟอร์นิเจอร์': { cat: 'cat1Flyout', btnIndex: 0, value: 'เฟอร์นิเจอร์ แต่งบ้าน' },
       'เก้าอี้': { cat: 'cat1Flyout', btnIndex: 0, value: 'เก้าอี้และโซฟา' },
       'โซฟา': { cat: 'cat1Flyout', btnIndex: 0, value: 'เก้าอี้และโซฟา' },
       'โต๊ะ': { cat: 'cat1Flyout', btnIndex: 0, value: 'โต๊ะและตู้' },
       'ตู้': { cat: 'cat1Flyout', btnIndex: 0, value: 'โต๊ะและตู้' },
+      'โต๊ะและตู้': { cat: 'cat1Flyout', btnIndex: 0, value: 'โต๊ะและตู้' },
+      'เก้าอี้และโซฟา': { cat: 'cat1Flyout', btnIndex: 0, value: 'เก้าอี้และโซฟา' },
       'เตียง': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
+      'เตียงและห้องนอน': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
       'ห้องนอน': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
       'เฟอร์นิเจอร์ภายนอก': { cat: 'cat1Flyout', btnIndex: 0, value: 'เฟอร์นิเจอร์ภายนอก' },
       'ของแต่งบ้าน': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
-      // 2. โคมไฟ และระบบแสงสว่าง
+      // 2. โคมไฟ และระบบแสงสว่าง - เลือกจากช้อยส์ที่มีจริง
       'โคมไฟ': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟ และระบบแสงสว่าง' },
+      'โคมไฟ และระบบแสงสว่าง': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟ และระบบแสงสว่าง' },
       'โคมไฟตกแต่ง': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
       'โคมไฟเพดาน': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
-      'Chandelier': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟตกแต่ง' },
       'โคมไฟใช้งาน': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟใช้งาน' },
       'หลอดไฟ': { cat: 'cat2Flyout', btnIndex: 1, value: 'หลอดไฟและอุปกรณ์' },
       // 3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน
@@ -6526,51 +6529,43 @@ if (name === "switch_tab_category") {
       'หน้าต่าง': { cat: 'cat3Flyout', btnIndex: 2, value: 'หน้าต่าง' },
       'สุขภัณฑ์': { cat: 'cat3Flyout', btnIndex: 2, value: 'สุขภัณฑ์และห้องน้ำ' },
       'ห้องน้ำ': { cat: 'cat3Flyout', btnIndex: 2, value: 'สุขภัณฑ์และห้องน้ำ' },
-      'วัสดุซ่อมบ้าน': { cat: 'cat3Flyout', btnIndex: 2, value: 'วัสดุและเครื่องมือช่าง' },
-      // 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์
+      // 4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ - เลือกจากช้อยส์ที่มีจริง
       'คอมพิวเตอร์': { cat: 'cat4Flyout', btnIndex: 3, value: 'คอมพิวเตอร์และโน้ตบุ๊ก' },
       'โน้ตบุ๊ก': { cat: 'cat4Flyout', btnIndex: 3, value: 'คอมพิวเตอร์และโน้ตบุ๊ก' },
+      'คอมพิวเตอร์และโน้ตบุ๊ก': { cat: 'cat4Flyout', btnIndex: 3, value: 'คอมพิวเตอร์และโน้ตบุ๊ก' },
       'อุปกรณ์เสริมคอมพิวเตอร์': { cat: 'cat4Flyout', btnIndex: 3, value: 'อุปกรณ์เสริมคอมพิวเตอร์' },
       'สมาร์ทโฟน': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'สมาร์ทโฟนและแท็บเล็ต': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
       'แท็บเล็ต': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'ไอโฟน': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'iPhone': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'มือถือ': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
+      'โทรศัพท์': { cat: 'cat4Flyout', btnIndex: 3, value: 'สมาร์ทโฟนและแท็บเล็ต' },
       'กล้อง': { cat: 'cat4Flyout', btnIndex: 3, value: 'กล้องและอุปกรณ์บันทึก' },
       'เครื่องเสียง': { cat: 'cat4Flyout', btnIndex: 3, value: 'เครื่องเสียงและแกดเจ็ต' },
-      'แกดเจ็ต': { cat: 'cat4Flyout', btnIndex: 3, value: 'เครื่องเสียงและแกดเจ็ต' },
-      // 5. ยานพาหนะ และอะไหล่
+      // 5. ยานพาหนะ และอะไหล่ - เลือกจากช้อยส์ที่มีจริงเท่านั้น
       'ยานพาหนะ': { cat: 'cat5Flyout', btnIndex: 4, value: 'ยานพาหนะ และอะไหล่' },
+      'ยานพาหนะ และอะไหล่': { cat: 'cat5Flyout', btnIndex: 4, value: 'ยานพาหนะ และอะไหล่' },
       'รถยนต์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
       'รถเก๋ง': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
       'รถ SUV': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'โตโยต้า': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Toyota': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Corolla': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'โคโรลล่า': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'ยาริส': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Yaris': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'ฮอนด้า': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Honda': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'นิสสัน': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Nissan': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'มาสด้า': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
+      'Mazda': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' },
       'รถจักรยานยนต์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถจักรยานยนต์' },
       'มอเตอร์ไซค์': { cat: 'cat5Flyout', btnIndex: 4, value: 'รถจักรยานยนต์' },
       'จักรยาน': { cat: 'cat5Flyout', btnIndex: 4, value: 'จักรยานและสกู๊ตเตอร์' },
       'สกู๊ตเตอร์': { cat: 'cat5Flyout', btnIndex: 4, value: 'จักรยานและสกู๊ตเตอร์' },
       'อะไหล่': { cat: 'cat5Flyout', btnIndex: 4, value: 'อะไหล่และอุปกรณ์ตกแต่ง' },
-      // 6. เครื่องใช้ไฟฟ้าภายในบ้าน
-      'เครื่องใช้ไฟฟ้า': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าภายในบ้าน' },
-      'เครื่องใช้ไฟฟ้าใหญ่': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าใหญ่' },
-      'ตู้เย็น': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าใหญ่' },
-      'เครื่องใช้ไฟฟ้าในครัว': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าในครัว' },
-      'เครื่องใช้ไฟฟ้าทำความสะอาด': { cat: 'cat6Flyout', btnIndex: 5, value: 'เครื่องใช้ไฟฟ้าทำความสะอาด' },
-      // 7. แฟชั่น เครื่องแต่งกาย
-      'แฟชั่น': { cat: 'cat7Flyout', btnIndex: 6, value: 'แฟชั่น เครื่องแต่งกาย' },
-      'เสื้อผ้า': { cat: 'cat7Flyout', btnIndex: 6, value: 'เสื้อผ้า' },
-      'รองเท้า': { cat: 'cat7Flyout', btnIndex: 6, value: 'รองเท้าและกระเป๋า' },
-      'กระเป๋า': { cat: 'cat7Flyout', btnIndex: 6, value: 'รองเท้าและกระเป๋า' },
-      'เครื่องประดับ': { cat: 'cat7Flyout', btnIndex: 6, value: 'เครื่องประดับและนาฬิกา' },
-      'นาฬิกา': { cat: 'cat7Flyout', btnIndex: 6, value: 'เครื่องประดับและนาฬิกา' },
-      // 8. แม่และเด็ก / สัตว์เลี้ยง
-      'แม่และเด็ก': { cat: 'cat8Flyout', btnIndex: 7, value: 'แม่และเด็ก' },
-      'เด็ก': { cat: 'cat8Flyout', btnIndex: 7, value: 'แม่และเด็ก' },
-      'สัตว์เลี้ยง': { cat: 'cat8Flyout', btnIndex: 7, value: 'สัตว์เลี้ยง' },
-      // 9. กีฬา และของสะสม
-      'กีฬา': { cat: 'cat9Flyout', btnIndex: 8, value: 'กีฬา และของสะสม' },
-      'อุปกรณ์กีฬา': { cat: 'cat9Flyout', btnIndex: 8, value: 'อุปกรณ์กีฬาและฟิตเนส' },
-      'ฟิตเนส': { cat: 'cat9Flyout', btnIndex: 8, value: 'อุปกรณ์กีฬาและฟิตเนส' },
-      'แคมป์ปิ้ง': { cat: 'cat9Flyout', btnIndex: 8, value: 'การแคมป์ปิ้ง' },
-      'เครื่องดนตรี': { cat: 'cat9Flyout', btnIndex: 8, value: 'เครื่องดนตรี' },
-      'ของสะสม': { cat: 'cat9Flyout', btnIndex: 8, value: 'ของสะสม' },
-      // 10. สินค้าอุตสาหกรรม และร้านค้า
       'อุตสาหกรรม': { cat: 'cat10Flyout', btnIndex: 9, value: 'สินค้าอุตสาหกรรม และร้านค้า' },
       'ร้านค้า': { cat: 'cat10Flyout', btnIndex: 9, value: 'อุปกรณ์ร้านค้า' },
       'อุปกรณ์ร้านค้า': { cat: 'cat10Flyout', btnIndex: 9, value: 'อุปกรณ์ร้านค้า' },
@@ -6760,23 +6755,53 @@ if (name === "switch_tab_category") {
           targetBtn.innerText = prefix + matched.value + ' \u25BE';
           targetBtn.dataset.selectedValue = matched.value;
           console.log('DECOR AUTO-SELECT v7-11-4:', matched.value, 'prefix:', prefix, 'from keyword:', keyword);
-          // FIX v7-11-5: เลือกหมวดเดียวแล้วรีเซ็ตที่เหลือกลับ default - ตามพฤติกรรมเดิม - gemini-3.5-flash-lite
+          // FIX v7-11-7: เลือกหมวดเดียวแล้วรีเซ็ตที่เหลือกลับ default ที่แท้จริง - gemini-3.5-flash-lite
           try {
+            const parentRow = targetBtn.closest('.filter-scroll-row');
+            if (parentRow) {
+              // 1. กำหนด default ที่ถูกต้องพร้อมเลขให้ทุกปุ่ม ถ้า dataset.default หายหรือไม่มีเลข
+              const trueDefaults = {
+                'cat1Flyout': '1. เฟอร์นิเจอร์ แต่งบ้าน',
+                'cat2Flyout': '2. โคมไฟ และระบบแสงสว่าง',
+                'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
+                'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
+                'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
+                'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+                'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
+                'cat8Flyout': '8. แม่และเด็ก',
+                'cat9Flyout': '9. กีฬา และของสะสม',
+                'cat10Flyout': '10. สินค้าอุตสาหกรรม และร้านค้า'
+              };
+              const allBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
+              allBtns.forEach(btn => {
+                const oc = btn.getAttribute('onclick') || '';
+                for (const cat in trueDefaults) {
+                  if (oc.includes(cat)) {
+                    // ถ้า dataset.default ไม่มีเลข ให้ซ่อม
+                    if (!btn.dataset.default || !/^\d+\./.test(btn.dataset.default)) {
+                      btn.dataset.default = trueDefaults[cat] + ' ▾';
+                    }
+                    break;
+                  }
+                }
+              });
+            }
+            // 2. เรียกฟังก์ชันเดิมเพื่อรีเซ็ตตัวอื่น
             if (typeof resetOtherDropdownsInSameRow === 'function') {
               resetOtherDropdownsInSameRow(targetBtn);
             } else {
-              // fallback: reset manually
-              const parentRow = targetBtn.closest('.filter-scroll-row');
-              if (parentRow) {
-                const otherBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
-                otherBtns.forEach(btn => {
+              const pr = targetBtn.closest('.filter-scroll-row');
+              if (pr) {
+                pr.querySelectorAll('.filter-btn, .decor-btn').forEach(btn => {
                   if (btn === targetBtn) return;
                   if (btn.dataset.default) btn.innerText = btn.dataset.default;
                   if (btn.dataset.selectedValue) delete btn.dataset.selectedValue;
                 });
               }
             }
-          } catch(e){}
+            // 3. ย้ำว่า target ถูก set เป็น selected จริง
+            targetBtn.dataset.selectedValue = matched.value;
+          } catch(e){ console.error('reset default error', e); }
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
@@ -6803,28 +6828,51 @@ if (name === "switch_tab_category") {
     document.addEventListener('DOMContentLoaded', initDefaultValues);
     // กันพลาดถ้า script อยู่ท้ายไฟล์แล้ว
     if (document.readyState !== 'loading') initDefaultValues();
-    // ฟังก์ชันรีเซ็ตเฉพาะแถวเดียวกันเท่านั้น!
+    // ฟังก์ชันรีเซ็ตเฉพาะแถวเดียวกันเท่านั้น! - FIX v7-11-7 set default จริง
     function resetOtherDropdownsInSameRow(currentBtn) {
       if (!currentBtn) return;
-      // === แก้ใหม่: ถ้าอยู่ในแท็บอสังหา จะไม่รีเซ็ตปุ่มอื่นเลย ===
       if (currentBtn.closest('#tab-content-realestate')) {
         console.log('realestate tab: skip reset other dropdowns, keep others as is');
         return;
       }
       const parentRow = currentBtn.closest('.filter-scroll-row');
       if (!parentRow) return;
-      
+      // FIX v7-11-7: true defaults พร้อมเลข
+      const trueDefaults = {
+        'cat1Flyout': '1. เฟอร์นิเจอร์ แต่งบ้าน',
+        'cat2Flyout': '2. โคมไฟ และระบบแสงสว่าง',
+        'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
+        'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
+        'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
+        'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+        'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
+        'cat8Flyout': '8. แม่และเด็ก',
+        'cat9Flyout': '9. กีฬา และของสะสม',
+        'cat10Flyout': '10. สินค้าอุตสาหกรรม และร้านค้า'
+      };
       const otherBtns = parentRow.querySelectorAll('.filter-btn, .decor-btn');
       otherBtns.forEach(btn => {
         if (btn === currentBtn) return;
-        if (btn.dataset.default) {
-          btn.innerText = btn.dataset.default;
+        const oc = btn.getAttribute('onclick') || '';
+        let defaultText = btn.dataset.default;
+        // ถ้า default ไม่มีเลข หรือไม่มี ให้ใช้ trueDefaults
+        for (const cat in trueDefaults) {
+          if (oc.includes(cat)) {
+            if (!defaultText || !/^\d+\./.test(defaultText)) {
+              defaultText = trueDefaults[cat] + ' ▾';
+              btn.dataset.default = defaultText;
+            }
+            break;
+          }
+        }
+        if (defaultText) {
+          btn.innerText = defaultText;
         }
         if (btn.dataset.selectedValue) {
           delete btn.dataset.selectedValue;
         }
       });
-      console.log('reset same row:', parentRow, 'except', currentBtn.innerText);
+      console.log('reset same row v7-11-7:', parentRow, 'except', currentBtn.innerText);
     }
     // === Helper สำหรับ Real Estate Flyout ===
     function filterFlyoutOptions(inputEl, menuId) {
