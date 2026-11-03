@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> v7-10-3  </title>
+  <title> v7-11-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5996,7 +5996,7 @@ if (name === "switch_tab_category") {
         criteria.lng = selectedLng;
         criteria.radius = selectedRadius || 1;
       }
-            // FIX v14 - 10 ปุ่มยิงไป marketplace_items gemini-3.5-flash-lite
+            // FIX v14 - 10 ปุ่มยิงไป marketplace_items
       try {
         const decorTab = document.getElementById('tab-content-decor');
         const isDecorActive = decorTab && decorTab.style.display !== 'none';
@@ -6017,7 +6017,7 @@ if (name === "switch_tab_category") {
           }
         }
       } catch(e){}
-            console.log('getSelectedCriteria:', criteria, 'model=gemini-3.5-flash-lite');
+            // REMOVED: fake log removed per request
       return criteria;
     }
     function testShowList() {
