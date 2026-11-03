@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-7  </title>
+  <title> i7-11-4-8  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1562,6 +1562,12 @@ window.highlightBoth = function(idStr, type){
     </div>
     <div id="crisisToggle" style="display:none; text-align:center; margin-bottom:8px;">
       <label style="font-size:12px; background: #fff3f3; padding: 4px 10px; border-radius: 12px; border: 1px solid #ff3b30;"><input type="checkbox" id="crisisModeCheckbox" checked onchange="toggleCrisisMode(this.checked)"> เปิดโหมด SOS (แตะโลโก้ 5 ครั้งเพื่อเปิด/ปิด)</label>
+      <div id="aiVoiceVolumeControl" style="margin-top:8px; background: rgba(255,255,255,0.95); padding: 8px 12px; border-radius: 12px; border: 1px solid #ddd; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+        <span style="font-size:12px; font-weight:bold; color:#333; white-space:nowrap;">🔊 เสียง AI:</span>
+        <input type="range" id="aiVoiceVolumeSlider" min="0" max="100" value="80" style="flex:1; max-width:180px; accent-color:#4a83cc; cursor:pointer;" oninput="updateAIVoiceVolume(this.value)" onchange="updateAIVoiceVolume(this.value)">
+        <span id="aiVoiceVolumeValue" style="font-size:12px; font-weight:bold; color:#4a83cc; min-width:32px; text-align:left;">80%</span>
+        <button onclick="toggleAIVoiceMute()" id="aiVoiceMuteBtn" style="background:#f0f0f0; border:1px solid #ccc; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">🔊</button>
+      </div>
     </div>
     <!-- เนื้อหาแท็บ SOS: ศูนย์ช่วยเหลือฉุกเฉินน้ำท่วม - แท็บแรกสุด -->
     <div class="tab-content" id="tab-content-sos">
@@ -5373,6 +5379,9 @@ function closeLocationModal() {
         }
         try {
           AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+      AppState.voice.gainNode = null;
+      AppState.voice.volume = parseFloat(localStorage.getItem('aiVoiceVolume') || '0.8');
+      AppState.voice.prevVolume = AppState.voice.volume;
           AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
         } catch (e) {
           console.warn("AudioContext blocked by browser policy:", e);
@@ -5417,6 +5426,9 @@ function closeLocationModal() {
           statusText.classList.add('loading-pulse'); 
         }
         AppState.voice.audioOutCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+      AppState.voice.gainNode = null;
+      AppState.voice.volume = parseFloat(localStorage.getItem('aiVoiceVolume') || '0.8');
+      AppState.voice.prevVolume = AppState.voice.volume;
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
         AppState.voice.ws = new WebSocket(CONFIG.BACKEND_WS_URL);
         AppState.voice.ws.onopen = () => {
@@ -5572,12 +5584,23 @@ function closeLocationModal() {
                             criteria: { 
                               type: "OBJECT",
                               properties: {
-                                summary: { type: "STRING", description: "สรุปความต้องการโดยใช้ข้อความที่ตรงเป๊ะกับคำในรายการDropdownเท่านั้น ห้ามคิดคำขึ้นเองนอกเหนือจากDropdown(หากคำไหนไม่อยู่ในรายการ ห้ามส่งคำนั้นมา) คั่นด้วยช่องว่าง เช่น 'ขาย คอนโด ไม่เกิน 2 ล้าน กทม.'" }
+                                summary: { type: "STRING", description: "สรุปความต้องการโดยใช้ข้อความที่ตรงเป๊ะกับคำในรายการDropdownเท่านั้น ห้ามคิดคำขึ้นเองนอกเหนือจากDropdown(หากคำไหนไม่อยู่ในรายการ ห้ามส่งคำนั้นมา) คั่นด้วยช่องว่าง เช่น 'ขาย คอนโด ไม่เกิน 2 ล้าน กทม.' - ถ้าผู้ใช้สั่งลบ ให้ส่งคำว่า 'ลบออก' ใน summary" }
                               },
                               required: ["summary"]
                             }
                           },
                           required: ["userData", "criteria"]
+                        }
+                      },
+                      {
+                        name: "clear_custom_edit",
+                        description: "ลบ/ล้างข้อมูลทั้งหมดในช่องค้นหา customEditBox และรีเซ็ตตัวกรองทั้งหมด เมื่อผู้ใช้สั่ง 'ลบออก', 'ลบข้อมูล', 'ล้าง', 'ลบทั้งหมด'",
+                        parameters: {
+                          type: "OBJECT",
+                          properties: {
+                            reason: { type: "STRING", description: "เหตุผลที่ลบ เช่น ลบออก, ล้างข้อมูล" }
+                          },
+                          required: []
                         }
                       }
                     ]
@@ -5773,7 +5796,30 @@ if (name === "switch_tab_category") {
                     }
           
                     // 2. นำข้อความที่ได้ไปใส่กล่องค้นหาและปรับ Dropdown + FIX v7-9-12: เช็คกลุ่มก่อนต่อท้าย
-                    if (summaryText) {
+                    // FIX คำสั่งที่ 1: รองรับคำสั่งลบข้อมูลออก - ถ้ามีคำว่า ลบออก/ลบ/ล้าง/clear ให้ลบข้อมูลใน edit
+                    const deleteKeywords = ['ลบออก', 'ลบข้อมูล', 'ลบออกให้หมด', 'ล้างข้อมูล', 'ล้าง', 'ลบทั้งหมด', 'clear', 'ลบ'];
+                    const lowerSummary = summaryText ? summaryText.toLowerCase() : '';
+                    const isDeleteCommand = summaryText && deleteKeywords.some(kw => lowerSummary.includes(kw.toLowerCase()) || summaryText.includes(kw));
+                    if (isDeleteCommand) {
+                      try {
+                        const activeInputDel = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+                        if (activeInputDel) {
+                          activeInputDel.value = '';
+                          console.log('DELETE COMMAND: cleared edit box by AI Voice -', summaryText);
+                        }
+                        // ล้าง dropdown ด้วย
+                        if (typeof resetAllFilters === 'function') {
+                          resetAllFilters();
+                        } else {
+                          // fallback clear all filter buttons
+                          document.querySelectorAll('.filter-btn').forEach(btn=>{
+                            const def = btn.dataset.default || btn.getAttribute('data-default');
+                            if(def) btn.innerText = def;
+                          });
+                        }
+                        if (typeof testShowList === 'function') testShowList();
+                      } catch(e){ console.error('delete error', e); }
+                    } else if (summaryText) {
                       applyEditToDropdowns(summaryText);
                       try {
                         const activeInput2 = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
@@ -5824,6 +5870,24 @@ if (name === "switch_tab_category") {
                     setTimeout(() => {
                       testShowList();
                     }, 300);
+                  } else if (name === "clear_custom_edit") {
+                    // FIX คำสั่งที่ 1: Tool ลบข้อมูลโดยตรง
+                    try {
+                      const activeInputDel = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+                      if (activeInputDel) activeInputDel.value = '';
+                      document.querySelectorAll('.tab-content .custom-edit').forEach(el=> el.value = '');
+                      if (typeof resetAllFilters === 'function') resetAllFilters();
+                      document.querySelectorAll('.filter-btn').forEach(btn=>{
+                        const def = btn.dataset.default || btn.getAttribute('data-default');
+                        if(def) btn.innerText = def;
+                        else btn.innerText = btn.dataset.default || '▾';
+                      });
+                      if (typeof testShowList === 'function') testShowList();
+                      output = { success: true, message: "ลบข้อมูลเรียบร้อยแล้วครับ" };
+                      console.log('CLEAR_CUSTOM_EDIT by AI Voice');
+                    } catch(e){
+                      output = { success: false, message: e.message };
+                    }
                   }
             
                     // ส่งสัญญาณตอบกลับยืนยันการทำงานของ Tool ให้ Gemini ทราบ
@@ -5896,6 +5960,47 @@ if (name === "switch_tab_category") {
       while (l--) buf[l] = Math.max(-1, Math.min(1, buffer[l])) * 0x7FFF;
       return buf;
     }
+    // FIX คำสั่งที่ 2: รองรับปรับเสียง AI Voice - ใช้ GainNode
+    function ensureAIVoiceGainNode() {
+      if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return null;
+      if (!AppState.voice.gainNode) {
+        try {
+          AppState.voice.gainNode = AppState.voice.audioOutCtx.createGain();
+          const savedVol = localStorage.getItem('aiVoiceVolume');
+          const vol = savedVol !== null ? parseFloat(savedVol) : 0.8;
+          AppState.voice.gainNode.gain.value = vol;
+          AppState.voice.volume = vol;
+          AppState.voice.gainNode.connect(AppState.voice.audioOutCtx.destination);
+        } catch(e){ console.error('gainNode error', e); return null; }
+      }
+      return AppState.voice.gainNode;
+    }
+    function updateAIVoiceVolume(val) {
+      const vol = parseInt(val,10) / 100;
+      AppState.voice.volume = vol;
+      localStorage.setItem('aiVoiceVolume', vol.toString());
+      if (AppState.voice.gainNode) {
+        try { AppState.voice.gainNode.gain.value = vol; } catch(e){}
+      }
+      const valSpan = document.getElementById('aiVoiceVolumeValue');
+      if (valSpan) valSpan.innerText = val + '%';
+      const muteBtn = document.getElementById('aiVoiceMuteBtn');
+      if (muteBtn) muteBtn.innerText = vol==0 ? '🔇' : vol<0.5 ? '🔉' : '🔊';
+    }
+    function toggleAIVoiceMute() {
+      const slider = document.getElementById('aiVoiceVolumeSlider');
+      if (!slider) return;
+      if (AppState.voice.volume > 0) {
+        AppState.voice.prevVolume = AppState.voice.volume;
+        updateAIVoiceVolume(0);
+        slider.value = 0;
+      } else {
+        const prev = AppState.voice.prevVolume || 0.8;
+        const prevPercent = Math.round(prev*100);
+        updateAIVoiceVolume(prevPercent);
+        slider.value = prevPercent;
+      }
+    }
     function playPCMData(base64Audio) {
       if (AppState.voice.silenced) return;
       if (!AppState.voice.audioOutCtx || AppState.voice.audioOutCtx.state === 'closed') return;
@@ -5909,7 +6014,12 @@ if (name === "switch_tab_category") {
       buffer.getChannelData(0).set(float32);
       const source = AppState.voice.audioOutCtx.createBufferSource();
       source.buffer = buffer;
-      source.connect(AppState.voice.audioOutCtx.destination);
+      const gainNode = ensureAIVoiceGainNode();
+      if (gainNode) {
+        source.connect(gainNode);
+      } else {
+        source.connect(AppState.voice.audioOutCtx.destination);
+      }
       if (AppState.voice.nextPlayTime < AppState.voice.audioOutCtx.currentTime) {
         AppState.voice.nextPlayTime = AppState.voice.audioOutCtx.currentTime;
       }
