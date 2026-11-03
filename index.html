@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-4-8  </title>
+  <title> i8-1 Locked 5 Tabs + buildLocationIndex + Progressive Radius  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1487,7 +1487,6 @@
   transform: scale(1.02);
   transition: all 0.3s ease;
 }
-
 </style> 
     
 <script>
@@ -2687,7 +2686,71 @@ window.highlightBoth = function(idStr, type){
     // ==========================================
     // 1. CONFIGURATION & CONSTANTS
     // ==========================================
-    const CONFIG = {
+    
+// ================= v15.12 PATCH: LOCK 5 TABS 5 MODES + HIERARCHY =================
+const TAB_CONFIG = {
+  "วิกฤตน้ำท่วม": { mode: "SOS", scoring: "distance_time", useProgressive: true, useLocation: true, table: "flood_warnings" },
+  "อสังหา": { mode: "PROPERTY", scoring: "hierarchy", useProgressive: true, useLocation: true, table: "properties", buildIndex: true },
+  "สินค้าทั่วไป": { mode: "MARKETPLACE", scoring: "relevance", useProgressive: false, useLocation: false, table: "marketplace_items" },
+  "ไลฟ์สไตล์&เที่ยว": { mode: "LIFESTYLE", scoring: "hybrid", useProgressive: false, useLocation: "medium", table: "lifestyle_items" },
+  "ช่าง-บริการ": { mode: "SERVICE", scoring: "skill_distance", useProgressive: false, useLocation: "medium", table: "service_items" }
+};
+const STOPWORDS_V15 = new Set(['ขาย','เช่า','บ้าน','คอนโด','ที่ดิน','ห้อง','ทาวน์เฮ้าส์','อาคารพาณิชย์','ขายบ้าน','หาบ้าน','หา','แถว','ย่าน','ใกล้','บริเวณ','house','home','village','sale','rent','condo','some','find']);
+const DISTRICT_CENTER_V15 = {
+  "บางกะปิ": {lat:13.7648,lng:100.6470}, "บึงกุ่ม": {lat:13.8073,lng:100.6690}, "ลาดพร้าว": {lat:13.8036,lng:100.6073},
+  "ห้วยขวาง": {lat:13.7766,lng:100.5731}, "วังทองหลาง": {lat:13.7791,lng:100.6065}, "สะพานสูง": {lat:13.7502,lng:100.6876},
+  "มีนบุรี": {lat:13.8132,lng:100.7343}, "คันนายาว": {lat:13.8292,lng:100.6838}, "ดอนเมือง": {lat:13.912,lng:100.6},
+  "จตุจักร": {lat:13.8223,lng:100.5475}, "บางเขน": {lat:13.873,lng:100.605}
+};
+function cleanVoiceTextV15(raw){
+  if(!raw) return "";
+  let words = raw.split(/\s+|,/).map(w=>w.trim()).filter(Boolean);
+  // ลบคำขยะ แต่เก็บคำสถานที่ไว้
+  let cleaned = words.filter(w=> !STOPWORDS_V15.has(w.toLowerCase()) && w.length>=2);
+  // ถ้าเหลือน้อยเกิน เอาคำสถานที่กลับมา
+  if(cleaned.length===0) cleaned = words.filter(w=> w.length>=2);
+  return cleaned.join(' ');
+}
+function getTabModeFromUI(){
+  const activeBtn = document.querySelector('.tab-btn.active') || document.querySelector('[class*="tab"].active');
+  let tabText = activeBtn ? activeBtn.innerText.trim() : "อสังหา";
+  // normalize
+  for(const key of Object.keys(TAB_CONFIG)){
+    if(tabText.includes(key) || key.includes(tabText.split(/\s+/)[0])) return {name:key, config:TAB_CONFIG[key]};
+  }
+  // fallback check by id
+  if(tabText.includes("อสังหา")) return {name:"อสังหา", config:TAB_CONFIG["อสังหา"]};
+  if(tabText.includes("สินค้า")) return {name:"สินค้าทั่วไป", config:TAB_CONFIG["สินค้าทั่วไป"]};
+  if(tabText.includes("ไลฟ์สไตล์")) return {name:"ไลฟ์สไตล์&เที่ยว", config:TAB_CONFIG["ไลฟ์สไตล์&เที่ยว"]};
+  if(tabText.includes("ช่าง")) return {name:"ช่าง-บริการ", config:TAB_CONFIG["ช่าง-บริการ"]};
+  if(tabText.includes("วิกฤต")) return {name:"วิกฤตน้ำท่วม", config:TAB_CONFIG["วิกฤตน้ำท่วม"]};
+  return {name:"อสังหา", config:TAB_CONFIG["อสังหา"]};
+}
+function calcHierarchyClient(property, keywords, userLat, userLng){
+  let score=0;
+  const rp=(property.province||'').toString();
+  const rd=(property.district||'').toString();
+  const rr=(property.road||'').toString();
+  const hay = `${property.title||''} ${property.property_type||''} ${property.details||''} ${property.project||''} ${property.district||''} ${property.province||''}`.toLowerCase();
+  keywords.forEach(kw=>{
+    const kl=kw.toLowerCase();
+    if(rd.toLowerCase().includes(kl)) score+=500;
+    else if(rp.toLowerCase().includes(kl)) score+=1000;
+    else if(rr.toLowerCase().includes(kl)) score+=300;
+    else if(hay.includes(kl)) score+=10;
+    if(DISTRICT_CENTER_V15[kw]) score+=200; // bonus for known district
+  });
+  if(userLat && property.latitude && property.longitude){
+    const R=6371; const dLat=(property.latitude-userLat)*Math.PI/180; const dLng=(property.longitude-userLng)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2 + Math.cos(userLat*Math.PI/180)*Math.cos(property.latitude*Math.PI/180)*Math.sin(dLng/2)**2;
+    const d=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    property._distance=d;
+    score+=Math.max(0,200-d*8);
+  }
+  return score;
+}
+// ================= END v15.12 PATCH =================
+const CONFIG = {
       BACKEND_WS_URL: "wss://land-matching-backend.onrender.com",
       RENDER_API_URL: "https://land-matching-backend.onrender.com/api/properties",
       GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbx5ll_Srh_K49qO4BUCTP-zsqaYtZg8Ey3vAVctmYpEb-pvZTDsqU65Ki8muKrZgBYL8A/exec",
@@ -2698,7 +2761,6 @@ window.highlightBoth = function(idStr, type){
       sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ แต่ถ้า user พูดถึงสินค้านอกเหนืออสังหาฯ เช่น รถยนต์, มอเตอร์ไซค์, เฟอร์นิเจอร์, คอมพิวเตอร์, เครื่องใช้ไฟฟ้า, เสื้อผ้า, กีฬา ให้เรียก switch_tab_category ไปยังแท็บ decor/lifestyle/others ทันที ห้ามตอบว่าเป็นอสังหาฯ อย่างเดียว",
       decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' สำคัญ: ถ้า user พูดภาษาไทย ให้ตอบและพิมพ์ค้นหาเป็นภาษาไทยเสมอ เช่น user บอก นิสสัน ให้พิมพ์ นิสสัน ห้ามพิมพ์ Nissan อย่างเดียว ถ้า user บอก Toyota ให้พิมพ์ โตโยต้า Toyota เพื่อให้หาเจอทั้ง 2 ภาษา มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
-
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
       others: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ช่างและงานบริการ' ให้คุณรับบทบาทเป็น AI ผู้ช่วยค้นหาและแนะนำช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ และงานบริการต่างๆ ให้คำแนะนำที่ตรงจุดและเชื่อถือได้"
     };
@@ -5701,7 +5763,6 @@ if (name === "switch_tab_category") {
                           if (lowerFinal.includes('toyota') && !finalText.includes('โตโยต้า')) finalText = 'โตโยต้า ' + finalText;
                           if (lowerFinal.includes('honda') && !finalText.includes('ฮอนด้า')) finalText = 'ฮอนด้า ' + finalText;
                           if (lowerFinal.includes('mazda') && !finalText.includes('มาสด้า')) finalText = 'มาสด้า ' + finalText;
-
                           const existingText = activeInput.value || '';
                           
                           function extractBrandsSmart(txt) {
@@ -5767,9 +5828,8 @@ if (name === "switch_tab_category") {
                               }
                             }
                           }
-
                           activeInput.value = finalText;
-                          console.log('AI Voice set edit:', finalText);
+                          console.log('AI Voice set edit:', finalText); if(typeof cleanVoiceTextV15==='function'){ const cleanedV15 = cleanVoiceTextV15(finalText); console.log('AI Voice cleaned:', cleanedV15, 'from', finalText); finalText = cleanedV15; }
                         }
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
@@ -6244,7 +6304,6 @@ if (name === "switch_tab_category") {
         if (typeof testShowList === 'function') testShowList();
       }, 600);
     };
-
     async function fetchDatabase(userData = {}, criteria = {}, isNewSearch = false, searchText = "") {
       if (AppState.pagination.isLoading) return;
       AppState.pagination.isLoading = true;
@@ -6290,33 +6349,53 @@ if (name === "switch_tab_category") {
       }
     }
     function renderProperties(properties) {
-      // FIX v7-10-3: Relevance Ranking - นับจำนวนคำที่เจอใน edit
+      // v15.12: LOCK TAB + HIERARCHY SCORING
+      const tabInfo = (typeof getTabModeFromUI==='function') ? getTabModeFromUI() : {name:'อสังหา', config:{mode:'PROPERTY'}};
+      const isPropertyTab = tabInfo.config.mode === 'PROPERTY';
+      const isMarketplaceTab = tabInfo.config.mode === 'MARKETPLACE';
+      
+      // v15.12: ทำความสะอาดคำค้นก่อนให้คะแนน
       const activeInputForScore = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
-      const searchForScore = activeInputForScore ? activeInputForScore.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      let searchForScoreRaw = activeInputForScore ? activeInputForScore.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
+      let searchForScore = (typeof cleanVoiceTextV15==='function') ? cleanVoiceTextV15(searchForScoreRaw) : searchForScoreRaw;
+      
       if (searchForScore && properties && properties.length) {
         const keywords = searchForScore.split(/\s+/).filter(k=>k.trim().length>=2);
-        // ให้คะแนนแต่ละโพสต์
-        properties.forEach(p => {
-          if (p._score !== undefined) return; // ถ้า server ส่งมาแล้วใช้ของ server
-          const haystack = `${p.title||''} ${p.item_type||''} ${p.property_type||''} ${p.details||''} ${p.facebook_name||''} ${p.project||''}`.toLowerCase();
-          let score = 0;
-          keywords.forEach(kw => {
-            const kwLow = kw.toLowerCase();
-            if (haystack.includes(kwLow)) {
-              // นับจำนวนครั้งที่เจอ + น้ำหนักถ้าเป็นแบรนด์หลัก
-              const count = (haystack.match(new RegExp(kwLow.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
-              score += count;
-              // โบนัส: ถ้าเจอ นิสสัน/Nissan ตรงๆ ให้ +5
-              if (['นิสสัน','nissan','โตโยต้า','toyota','มาสด้า','mazda','ฮอนด้า','honda'].includes(kwLow)) {
-                if (haystack.includes(kwLow)) score += 5;
-              }
-            }
+        
+        if(isPropertyTab){
+          // อสังหา: ใช้ Hierarchy + ระยะทาง
+          const userLat = window._currentUserLat || 13.7648;
+          const userLng = window._currentUserLng || 100.6470;
+          properties.forEach(p => {
+            // ถ้า server ส่ง _totalScore มาแล้วใช้เลย
+            if (p._totalScore !== undefined) { p._score = p._totalScore; return; }
+            if (p._score !== undefined && p._distance !== undefined) return;
+            const s = (typeof calcHierarchyClient==='function') ? calcHierarchyClient(p, keywords, userLat, userLng) : 0;
+            p._score = s;
           });
-          p._score = score;
-        });
-        // เรียงจากคะแนนมากไปน้อย
-        properties.sort((a,b) => (b._score||0) - (a._score||0));
-        console.log('RANKING: keyword=', keywords, 'sorted by _score', properties.slice(0,3).map(p=>({title:(p.title||'').slice(0,30), score:p._score})));
+          properties.sort((a,b) => {
+            if((b._score||0)!==(a._score||0)) return (b._score||0)-(a._score||0);
+            return (a._distance||0)-(b._distance||0);
+          });
+          console.log('[v15.12 PROPERTY] LOCKED MODE', tabInfo.name, 'keyword=', keywords, 'cleaned from', searchForScoreRaw, 'top', properties.slice(0,3).map(p=>({title:(p.title||'').slice(0,20), score:p._score, dist:p._distance})));
+        } else {
+          // สินค้าทั่วไป / ไลฟ์สไตล์ / ช่าง: ใช้ relevance ล้วน ไม่เน้นพิกัด
+          properties.forEach(p => {
+            if (p._score !== undefined) return;
+            const haystack = `${p.title||''} ${p.item_type||''} ${p.property_type||''} ${p.details||''} ${p.facebook_name||''} ${p.project||''}`.toLowerCase();
+            let score = 0;
+            keywords.forEach(kw => {
+              const kwLow = kw.toLowerCase();
+              if (haystack.includes(kwLow)) {
+                const count = (haystack.match(new RegExp(kwLow.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+                score += count;
+              }
+            });
+            p._score = score;
+          });
+          properties.sort((a,b) => (b._score||0) - (a._score||0));
+          console.log('[v15.12 '+tabInfo.config.mode+'] keyword=', keywords, 'sorted by _score', properties.slice(0,3).map(p=>({title:(p.title||'').slice(0,30), score:p._score})));
+        }
       }
       // v7-8-1 sync properties cache for map markers
       if(properties && properties.length){
@@ -6975,8 +7054,6 @@ if (name === "switch_tab_category") {
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
     };
-
-
     function onFilterSelectedInSameRow(selectedBtn, newValue) {
       if (selectedBtn) {
         // FIX v7-11-8: ลบแสงเก่า ใส่แสงใหม่ - gemini-3.5-flash-lite
