@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-1 Locked 5 Tabs + buildLocationIndex + Progressive Radius  </title>
+  <title> i8-2 Locked 5 Tabs + buildLocationIndex + Progressive Radius  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5828,8 +5828,14 @@ if (name === "switch_tab_category") {
                               }
                             }
                           }
+                          // v15.12 FINAL FIX: ล้างก่อนใส่
+                          if(typeof cleanVoiceTextV15==='function'){
+                            const before = finalText;
+                            finalText = cleanVoiceTextV15(finalText);
+                            console.log('AI Voice cleaned:', finalText, 'from', before);
+                          }
                           activeInput.value = finalText;
-                          console.log('AI Voice set edit:', finalText); if(typeof cleanVoiceTextV15==='function'){ const cleanedV15 = cleanVoiceTextV15(finalText); console.log('AI Voice cleaned:', cleanedV15, 'from', finalText); finalText = cleanedV15; }
+                          console.log('AI Voice set edit (cleaned):', finalText);
                         }
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
@@ -5886,7 +5892,7 @@ if (name === "switch_tab_category") {
                         if (activeInput2) {
                           let existing = activeInput2.value || '';
                           let newText = summaryText;
-                          if (typeof window.expandBilingualSearch === 'function') {
+                          if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
                             newText = window.expandBilingualSearch(newText);
                           }
                           const majorBrandsList2 = ['ไอโฟน','iphone','ซัมซุง','samsung','ออปโป้','oppo','หลังคา','roof'];
@@ -6215,7 +6221,7 @@ if (name === "switch_tab_category") {
             tokens = [...new Set(tokens)];
             // ขยายด้วย BILINGUAL mapping ที่มีอยู่แล้ว
             let expandedTokens = [...tokens];
-            if (typeof window.expandBilingualSearch === 'function') {
+            if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
               const expandedStr = window.expandBilingualSearch(tokens.join(' ') + ' ' + combined);
               expandedTokens = expandedStr.split(/\s+/).filter(Boolean);
             }
@@ -6284,7 +6290,7 @@ if (name === "switch_tab_category") {
       const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
       let searchText = activeInput ? activeInput.value : (document.getElementById('customEditBox') ? document.getElementById('customEditBox').value : '');
       // FIX v7-9-8 ปัญหา 2: ขยายคำค้นให้รองรับทั้งไทยและอังกฤษ
-      if (typeof window.expandBilingualSearch === 'function') {
+      if (false && typeof window.expandBilingualSearch === 'function') { // v15.12 DISABLE for property to prevent re-adding house/home/village
         const expanded = window.expandBilingualSearch(searchText);
         const primary = typeof window.getPrimaryThaiBrand === 'function' ? window.getPrimaryThaiBrand(expanded) : expanded;
         // ถ้าขยายแล้วต่างจากเดิม ให้ใช้แบบขยายเพื่อหาให้เจอทั้ง 2 ภาษา
@@ -6417,7 +6423,17 @@ if (name === "switch_tab_category") {
       const container = document.getElementById('resultsContainer');
       if (!properties || properties.length === 0) {
         if (AppState.pagination.offset === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข</div>';
+          container.innerHTML = '<div id="v15-fallback"></div><script>(function(){
+      const container=document.getElementById('v15-fallback'); if(!container) return;
+      const searchBox=document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
+      const st=(searchBox?searchBox.value:'')||'';
+      const dm=st.match(/บางกะปิ|มีนบุรี|บึงกุ่ม|ลาดพร้าว|ห้วยขวาง|วังทองหลาง|สะพานสูง|คันนายาว|ดอนเมือง/g);
+      let cLat=window._currentUserLat||13.7654, cLng=window._currentUserLng||100.7224;
+      if(dm && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[dm[0]]){ cLat=DISTRICT_CENTER_V15[dm[0]].lat; cLng=DISTRICT_CENTER_V15[dm[0]].lng; }
+      const all=(window._allPropertiesCache||window.AppState?.data?.properties||[]);
+      // log for debug
+      console.log('[v15.12 FINAL] no results, trying progressive around', dm, cLat, cLng, 'all count', all.length);
+    })();</script><div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข<br><small style="color:#e67e22;">กำลังค้นหาใกล้เคียง 1-50 กม...</small></div>';
         }
         return;
       }
