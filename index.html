@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i7-11-3  </title>
+  <title> i7-11-4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4584,11 +4584,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
         }
       });
     
-      // --- เพิ่ม 4 บรรทัดนี้ลงไปเพื่อล้างข้อความในกล่อง Edit ทิ้งทันที ---
-      const editBox = document.getElementById('customEditBox');
-      if (editBox) {
-        editBox.value = '';
-      }
+      // FIX v7-11-4: ไม่ล้าง editBox เพื่อให้ AI ค้นหาได้ - เดิมล้างทำให้ Toyota Corolla หาย
     }
     // ==========================================
     // 4. MAP & LOCATION HANDLERS
@@ -6709,8 +6705,41 @@ if (name === "switch_tab_category") {
       if (!keyword) { if (typeof testShowList === 'function') setTimeout(()=> testShowList(), 200); return; }
       const kw = keyword.toLowerCase().trim();
       let matched = null;
+      // 1. หาจาก DECOR_CATEGORIES_MAP ก่อน
       for (const key in window.DECOR_CATEGORIES_MAP) {
         if (kw.includes(key.toLowerCase()) || key.toLowerCase().includes(kw)) { matched = window.DECOR_CATEGORIES_MAP[key]; if (key.toLowerCase() === kw) break; }
+      }
+      // 2. FIX v7-11-4: ถ้าไม่เจอ ให้หาใน BILINGUAL_MAPPING_CONFIG ด้วย (เช่น Toyota -> รถยนต์)
+      if (!matched && window.BILINGUAL_MAPPING_CONFIG) {
+        const cfg = window.BILINGUAL_MAPPING_CONFIG;
+        // ถ้าเป็นยี่ห้อรถ ให้ map ไปรถยนต์
+        for (const cat in cfg) {
+          for (const th in cfg[cat]) {
+            if (kw.includes(th.toLowerCase()) || kw.includes(cfg[cat][th].join(' ').toLowerCase()) || th.toLowerCase().includes(kw)) {
+              // เดาว่าหมวดยานพาหนะ
+              if (cat === 'vehicle_brands' || th.includes('รถ') || th.includes('โตโยต้า') || th.includes('นิสสัน') || th.includes('ฮอนด้า')) {
+                matched = { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' };
+                break;
+              }
+              // เดาว่าหมวดอื่นๆ จาก keyword
+              if (cat === 'computer_brands' || cat === 'appliance_brands') {
+                // หา mapping ที่ใกล้เคียงใน DECOR
+                for (const dKey in window.DECOR_CATEGORIES_MAP) {
+                  if (cfg[cat][th].some(v=> v.toLowerCase().includes(dKey.toLowerCase())) || dKey.toLowerCase().includes(th.toLowerCase())) {
+                    matched = window.DECOR_CATEGORIES_MAP[dKey];
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          if (matched) break;
+        }
+        // พิเศษ: ถ้า keyword มีคำว่ารถ / toyota / corolla / ยี่ห้อรถใดๆ -> รถยนต์
+        const vehicleKeywords = ['รถ','car','toyota','โตโยต้า','honda','ฮอนด้า','nissan','นิสสัน','mazda','มาสด้า','ford','ฟอร์ด','bmw','benz','เบนซ์','isuzu','อีซูซุ','suzuki','ซูซูกิ','corolla','โคโรลล่า','yaris','ยาริส','hilux','วีออส','vios'];
+        if (!matched && vehicleKeywords.some(v=> kw.includes(v))) {
+          matched = { cat: 'cat5Flyout', btnIndex: 4, value: 'รถยนต์' };
+        }
       }
       if (!matched) {
         console.log('DECOR: ไม่เจอ mapping ใช้ keyword ตรงๆ:', keyword, 'แต่จะกดค้นหาให้เลย');
@@ -6722,9 +6751,15 @@ if (name === "switch_tab_category") {
         const targetBtn = decorBtns[matched.btnIndex];
         if (targetBtn) {
           currentFlyoutBtn = targetBtn;
-          targetBtn.innerText = matched.value + ' \u25BE';
+          // FIX v7-11-4: เก็บเลขหน้าดรอปดาวน์ไว้ เช่น "5. " ไม่ให้หาย
+          const originalDefault = targetBtn.dataset.default || targetBtn.innerText;
+          let prefix = '';
+          const numMatch = originalDefault.match(/^(\d+\.\s*)/);
+          if (numMatch) prefix = numMatch[1];
+          // ถ้า original มีเลขอยู่แล้ว ใช้เลขนั้น
+          targetBtn.innerText = prefix + matched.value + ' \u25BE';
           targetBtn.dataset.selectedValue = matched.value;
-          console.log('DECOR AUTO-SELECT:', matched.value, 'from keyword:', keyword);
+          console.log('DECOR AUTO-SELECT v7-11-4:', matched.value, 'prefix:', prefix, 'from keyword:', keyword);
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
