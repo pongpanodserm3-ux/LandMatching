@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-1-LogCorrect  </title>
+  <title>  i15-2-LogFix-FrontendFix </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5350,6 +5350,7 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
     function setCoordinates(lat, lng) {
       selectedLat = parseFloat(lat).toFixed(6);
       selectedLng = parseFloat(lng).toFixed(6);
+      window._currentUserLat = parseFloat(selectedLat); window._currentUserLng = parseFloat(selectedLng); // FRONTEND-FIX: GPS/หมุดต้องจำไว้ให้ค้นหาครั้งถัดไปใช้
       document.getElementById('latInput').value = selectedLat;
       document.getElementById('lngInput').value = selectedLng;
       // FIX v13.4: sync ไปทุกฟอร์มที่เกี่ยวข้อง
@@ -6295,6 +6296,18 @@ if (name === "switch_tab_category") {
     // ==========================================
     // 6. DATABASE & SEARCH FETCHING
     // ==========================================
+    // FRONTEND-FIX: แก้ loc=null - ลำดับพิกัดค้นหา: 1)หมุดที่ยืนยัน 2)พิกัด coord flyout 3)ศูนย์กลางเขตใน dropdown 4)GPS ปัจจุบัน 5)ค่าที่พิมพ์ในช่อง lat/lng
+    // MODEL: gemini-3.5-flash-lite เสมอ
+    function resolveSearchLocation(criteria){
+      const num=(v)=>{ const n=parseFloat(v); return isNaN(n)?null:n; };
+      let lat=num(selectedLat), lng=num(selectedLng);
+      if((lat===null||lng===null) && typeof selectedLatLng!=='undefined' && selectedLatLng){ lat=num(selectedLatLng.lat); lng=num(selectedLatLng.lng); }
+      if((lat===null||lng===null) && criteria && criteria.district && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[criteria.district]){ lat=DISTRICT_CENTER_V15[criteria.district].lat; lng=DISTRICT_CENTER_V15[criteria.district].lng; }
+      if(lat===null||lng===null){ lat=num(window._currentUserLat); lng=num(window._currentUserLng); }
+      if(lat===null||lng===null){ const li=document.getElementById('latInput'), gi=document.getElementById('lngInput'); if(li&&gi){ lat=num(li.value); lng=num(gi.value); } }
+      if(lat!==null&&lng!==null){ window._currentUserLat=lat; window._currentUserLng=lng; if(selectedLat===null||selectedLng===null){ selectedLat=lat; selectedLng=lng; } return {lat,lng,radius:(parseFloat(selectedRadius)||1)}; }
+      return null;
+    }
     function getSelectedCriteria() {
       let criteria = {};
       const filterBtns = document.querySelectorAll('.filter-btn');
@@ -6314,6 +6327,8 @@ if (name === "switch_tab_category") {
         else if (id==='re_provinceBtn'||onclick.includes('จังหวัด')) criteria.province=val;
         else if (id==='re_roadBtn'||onclick.includes('ถนน')) criteria.road=val;
       });
+      const _loc = (typeof resolveSearchLocation==='function') ? resolveSearchLocation(criteria) : null;
+      if (_loc) { criteria.lat=_loc.lat; criteria.lng=_loc.lng; criteria.latitude=_loc.lat; criteria.longitude=_loc.lng; criteria.radius=_loc.radius; }
       console.log('[v15.19 CRITERIA READ]', JSON.stringify(criteria));
       return criteria;
     }
@@ -6407,7 +6422,7 @@ if (name === "switch_tab_category") {
       const searchForScoreRaw = activeInputForScore ? activeInputForScore.value.trim() : '';
       const searchForScore = searchForScoreRaw; // edit ตอนนี้มีเฉพาะคำที่ไม่มีใน dropdown แล้ว
       const currentCriteria = (typeof getSelectedCriteria === 'function') ? getSelectedCriteria() : {};
-      const hasDropdownFilter = Object.keys(currentCriteria).length > 0;
+      const hasDropdownFilter = Object.keys(currentCriteria).filter(k=>!['lat','lng','latitude','longitude','radius'].includes(k)).length > 0; // FRONTEND-FIX: lat/lng/radius ไม่นับเป็น dropdown filter
       if (properties && properties.length) {
         const keywords = searchForScore ? searchForScore.split(/\s+/).filter(k=>k.trim().length>=2) : [];
         
@@ -6483,6 +6498,7 @@ if (name === "switch_tab_category") {
           if(!existing.find(e=> (e.post_id||e.url)===key)) existing.push(p);
         });
         AppState.data.properties = existing;
+        window._allPropertiesCache = existing; // FRONTEND-FIX: cache เดิมไม่เคยถูกเติมเลย ทำให้ fallback cache 0 ตลอด
         // v7-8-2: ฟีดคงลำดับ relevance เดิม (ตรงเงื่อนไขสุดอยู่บน) ไม่เรียงราคา, ส่วนแผนที่เรียงตามใกล้สุดใน renderPropertyMarkersOnMap
         // ถ้าแผนที่เปิดอยู่และเป็นโหมดตามฟีด ให้อัพเดทหมุดตามฟีด/condition
         const overlay = document.getElementById('locationModalOverlay');
@@ -6534,13 +6550,19 @@ if (name === "switch_tab_category") {
           if (!properties || properties.length === 0) {
             container.innerHTML = `<div id="v15-fallback"></div><div style="text-align:center; padding:20px; color:#888;">ไม่พบรายการบ้านที่ตรงกับเงื่อนไข<br><small style="color:#e67e22;">กำลังค้นหาใกล้เคียง 1-50 กม... (v15.17 fallback cache ${allCache.length})</small></div>`;
             try {
-              const searchBox=document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit') || document.getElementById('customEditBox');
-              const st=(searchBox?searchBox.value:'')||'';
-              const dm=st.match(/บางกะปิ|มีนบุรี|บึงกุ่ม|ลาดพร้าว|ห้วยขวาง|วังทองหลาง|สะพานสูง|คันนายาว|ดอนเมือง/g);
-              let cLat=window._currentUserLat||13.7654, cLng=window._currentUserLng||100.7224;
-              if(dm && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[dm[0]]){ cLat=DISTRICT_CENTER_V15[dm[0]].lat; cLng=DISTRICT_CENTER_V15[dm[0]].lng; }
+              const _locNow = (typeof resolveSearchLocation==='function') ? resolveSearchLocation(criteriaNow) : null;
+              const cLat=_locNow?_locNow.lat:(window._currentUserLat||13.7654), cLng=_locNow?_locNow.lng:(window._currentUserLng||100.7224);
               const all=(window._allPropertiesCache||window.AppState?.data?.properties||[]);
-              console.log('[v15.17 FINAL] no results after fallback, trying progressive around', dm, cLat, cLng, 'all count', all.length);
+              console.log('[v15.17 FINAL] no results after fallback, trying progressive around', cLat, cLng, 'all count', all.length);
+              // FRONTEND-FIX: เดิมแค่ log ไม่ได้ค้นหาจริง - ตอนนี้กรอง cache จริง 1->5->10->20->50 กม. แล้วเรียง ตรงเงื่อนไขมากสุด -> ใกล้สุด
+              if(all.length>0 && cLat && cLng){
+                const distKm=(a,b,c,d)=>{ const R=6371, dLa=(c-a)*Math.PI/180, dLo=(d-b)*Math.PI/180, x=Math.sin(dLa/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLo/2)**2; return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)); };
+                const matchScore=(p)=>{ let s=0; if(criteriaNow.district && ((p.district||'').includes(criteriaNow.district)||(p.title||'').includes(criteriaNow.district)||(p.details||'').includes(criteriaNow.district))) s+=2; if(criteriaNow.propertyType && ((p.property_type||'').includes(criteriaNow.propertyType)||(p.title||'').includes(criteriaNow.propertyType))) s+=2; if(criteriaNow.priceType && ((p.price_type||'').includes(criteriaNow.priceType)||(p.sale_rent||'').includes(criteriaNow.priceType))) s+=1; return s; };
+                for(const r of [1,5,10,20,50]){
+                  const cand=all.map(p=>{ const la=parseFloat(p.latitude||p.lat||p.use_lat||p.use), lo=parseFloat(p.longitude||p.lng||p.use2_lng||p.use2); if(isNaN(la)||isNaN(lo)) return null; const d=distKm(cLat,cLng,la,lo); if(d>r) return null; return {...p,_distance:d,_matchScore:matchScore(p)}; }).filter(Boolean);
+                  if(cand.length>0){ cand.sort((a,b)=>(b._matchScore-a._matchScore)||(a._distance-b._distance)); console.log('[v15.17 FINAL] progressive hit radius',r,'count',cand.length); properties=cand; container.innerHTML=''; break; }
+                }
+              }
             } catch(e){ console.warn('v15 fallback error', e); }
             if (!properties || properties.length === 0) return;
           }
@@ -9861,6 +9883,7 @@ window.loadFloodWarnings = async function(){
       navigator.geolocation.getCurrentPosition((pos)=>{
         const {latitude, longitude, accuracy} = pos.coords;
         console.log('📍 ตำแหน่งปัจจุบัน:', latitude, longitude);
+        window._currentUserLat = latitude; window._currentUserLng = longitude; // FRONTEND-FIX: จำ GPS ปัจจุบันไว้ใช้เป็นจุดตั้งต้นค้นหา
         targetMap = ensureSOSMapReady();
         if(!targetMap) return;
         let uLayer = ensureUserLocationLayer(targetMap);
