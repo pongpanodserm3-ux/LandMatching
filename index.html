@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-6  </title>
+  <title> i15-7  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1591,7 +1591,7 @@ window.highlightBoth = function(idStr, type){
     </div>
     <div class="tab-content" id="tab-content-realestate">
       <div class="input-status-row">
-        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กทม." style="flex:1;">
+        <input type="text" class="custom-edit" id="customEditBox" placeholder="สเปกบ้าน เช่น บ้าน 2 ชั้น กรุงเทพมหานคร" style="flex:1;">
       </div>
       
       <div class="filter-scroll-row">
@@ -2144,27 +2144,137 @@ window.highlightBoth = function(idStr, type){
   </div>
   <div class="flyout-menu" id="re_provinceFlyout">
     <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา จังหวัด..." oninput="filterFlyoutOptions(this, 're_provinceFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
-    <div class="flyout-sub-item" data-value="กทม." onclick="selectFlyoutValue(event, 'กทม.')">กทม.</div>
+    <div class="flyout-sub-item" data-value="กรุงเทพมหานคร" onclick="selectFlyoutValue(event, 'กรุงเทพมหานคร')">กรุงเทพมหานคร</div>
+    <div class="flyout-sub-item" data-value="กระบี่" onclick="selectFlyoutValue(event, 'กระบี่')">กระบี่</div>
+    <div class="flyout-sub-item" data-value="กาญจนบุรี" onclick="selectFlyoutValue(event, 'กาญจนบุรี')">กาญจนบุรี</div>
+    <div class="flyout-sub-item" data-value="กาฬสินธุ์" onclick="selectFlyoutValue(event, 'กาฬสินธุ์')">กาฬสินธุ์</div>
+    <div class="flyout-sub-item" data-value="กำแพงเพชร" onclick="selectFlyoutValue(event, 'กำแพงเพชร')">กำแพงเพชร</div>
+    <div class="flyout-sub-item" data-value="ขอนแก่น" onclick="selectFlyoutValue(event, 'ขอนแก่น')">ขอนแก่น</div>
+    <div class="flyout-sub-item" data-value="จันทบุรี" onclick="selectFlyoutValue(event, 'จันทบุรี')">จันทบุรี</div>
+    <div class="flyout-sub-item" data-value="ฉะเชิงเทรา" onclick="selectFlyoutValue(event, 'ฉะเชิงเทรา')">ฉะเชิงเทรา</div>
+    <div class="flyout-sub-item" data-value="ชลบุรี" onclick="selectFlyoutValue(event, 'ชลบุรี')">ชลบุรี</div>
+    <div class="flyout-sub-item" data-value="ชัยนาท" onclick="selectFlyoutValue(event, 'ชัยนาท')">ชัยนาท</div>
+    <div class="flyout-sub-item" data-value="ชัยภูมิ" onclick="selectFlyoutValue(event, 'ชัยภูมิ')">ชัยภูมิ</div>
+    <div class="flyout-sub-item" data-value="ชุมพร" onclick="selectFlyoutValue(event, 'ชุมพร')">ชุมพร</div>
+    <div class="flyout-sub-item" data-value="เชียงราย" onclick="selectFlyoutValue(event, 'เชียงราย')">เชียงราย</div>
+    <div class="flyout-sub-item" data-value="เชียงใหม่" onclick="selectFlyoutValue(event, 'เชียงใหม่')">เชียงใหม่</div>
+    <div class="flyout-sub-item" data-value="ตรัง" onclick="selectFlyoutValue(event, 'ตรัง')">ตรัง</div>
+    <div class="flyout-sub-item" data-value="ตราด" onclick="selectFlyoutValue(event, 'ตราด')">ตราด</div>
+    <div class="flyout-sub-item" data-value="ตาก" onclick="selectFlyoutValue(event, 'ตาก')">ตาก</div>
+    <div class="flyout-sub-item" data-value="นครนายก" onclick="selectFlyoutValue(event, 'นครนายก')">นครนายก</div>
+    <div class="flyout-sub-item" data-value="นครปฐม" onclick="selectFlyoutValue(event, 'นครปฐม')">นครปฐม</div>
+    <div class="flyout-sub-item" data-value="นครพนม" onclick="selectFlyoutValue(event, 'นครพนม')">นครพนม</div>
+    <div class="flyout-sub-item" data-value="นครราชสีมา" onclick="selectFlyoutValue(event, 'นครราชสีมา')">นครราชสีมา</div>
+    <div class="flyout-sub-item" data-value="นครศรีธรรมราช" onclick="selectFlyoutValue(event, 'นครศรีธรรมราช')">นครศรีธรรมราช</div>
+    <div class="flyout-sub-item" data-value="นครสวรรค์" onclick="selectFlyoutValue(event, 'นครสวรรค์')">นครสวรรค์</div>
     <div class="flyout-sub-item" data-value="นนทบุรี" onclick="selectFlyoutValue(event, 'นนทบุรี')">นนทบุรี</div>
+    <div class="flyout-sub-item" data-value="นราธิวาส" onclick="selectFlyoutValue(event, 'นราธิวาส')">นราธิวาส</div>
+    <div class="flyout-sub-item" data-value="น่าน" onclick="selectFlyoutValue(event, 'น่าน')">น่าน</div>
+    <div class="flyout-sub-item" data-value="บึงกาฬ" onclick="selectFlyoutValue(event, 'บึงกาฬ')">บึงกาฬ</div>
+    <div class="flyout-sub-item" data-value="บุรีรัมย์" onclick="selectFlyoutValue(event, 'บุรีรัมย์')">บุรีรัมย์</div>
     <div class="flyout-sub-item" data-value="ปทุมธานี" onclick="selectFlyoutValue(event, 'ปทุมธานี')">ปทุมธานี</div>
+    <div class="flyout-sub-item" data-value="ประจวบคีรีขันธ์" onclick="selectFlyoutValue(event, 'ประจวบคีรีขันธ์')">ประจวบคีรีขันธ์</div>
+    <div class="flyout-sub-item" data-value="ปราจีนบุรี" onclick="selectFlyoutValue(event, 'ปราจีนบุรี')">ปราจีนบุรี</div>
+    <div class="flyout-sub-item" data-value="ปัตตานี" onclick="selectFlyoutValue(event, 'ปัตตานี')">ปัตตานี</div>
+    <div class="flyout-sub-item" data-value="พระนครศรีอยุธยา" onclick="selectFlyoutValue(event, 'พระนครศรีอยุธยา')">พระนครศรีอยุธยา</div>
+    <div class="flyout-sub-item" data-value="พะเยา" onclick="selectFlyoutValue(event, 'พะเยา')">พะเยา</div>
+    <div class="flyout-sub-item" data-value="พังงา" onclick="selectFlyoutValue(event, 'พังงา')">พังงา</div>
+    <div class="flyout-sub-item" data-value="พัทลุง" onclick="selectFlyoutValue(event, 'พัทลุง')">พัทลุง</div>
+    <div class="flyout-sub-item" data-value="พิจิตร" onclick="selectFlyoutValue(event, 'พิจิตร')">พิจิตร</div>
+    <div class="flyout-sub-item" data-value="พิษณุโลก" onclick="selectFlyoutValue(event, 'พิษณุโลก')">พิษณุโลก</div>
+    <div class="flyout-sub-item" data-value="เพชรบุรี" onclick="selectFlyoutValue(event, 'เพชรบุรี')">เพชรบุรี</div>
+    <div class="flyout-sub-item" data-value="เพชรบูรณ์" onclick="selectFlyoutValue(event, 'เพชรบูรณ์')">เพชรบูรณ์</div>
+    <div class="flyout-sub-item" data-value="แพร่" onclick="selectFlyoutValue(event, 'แพร่')">แพร่</div>
+    <div class="flyout-sub-item" data-value="ภูเก็ต" onclick="selectFlyoutValue(event, 'ภูเก็ต')">ภูเก็ต</div>
+    <div class="flyout-sub-item" data-value="มหาสารคาม" onclick="selectFlyoutValue(event, 'มหาสารคาม')">มหาสารคาม</div>
+    <div class="flyout-sub-item" data-value="มุกดาหาร" onclick="selectFlyoutValue(event, 'มุกดาหาร')">มุกดาหาร</div>
+    <div class="flyout-sub-item" data-value="แม่ฮ่องสอน" onclick="selectFlyoutValue(event, 'แม่ฮ่องสอน')">แม่ฮ่องสอน</div>
+    <div class="flyout-sub-item" data-value="ยโสธร" onclick="selectFlyoutValue(event, 'ยโสธร')">ยโสธร</div>
+    <div class="flyout-sub-item" data-value="ยะลา" onclick="selectFlyoutValue(event, 'ยะลา')">ยะลา</div>
+    <div class="flyout-sub-item" data-value="ร้อยเอ็ด" onclick="selectFlyoutValue(event, 'ร้อยเอ็ด')">ร้อยเอ็ด</div>
+    <div class="flyout-sub-item" data-value="ระนอง" onclick="selectFlyoutValue(event, 'ระนอง')">ระนอง</div>
+    <div class="flyout-sub-item" data-value="ระยอง" onclick="selectFlyoutValue(event, 'ระยอง')">ระยอง</div>
+    <div class="flyout-sub-item" data-value="ราชบุรี" onclick="selectFlyoutValue(event, 'ราชบุรี')">ราชบุรี</div>
+    <div class="flyout-sub-item" data-value="ลพบุรี" onclick="selectFlyoutValue(event, 'ลพบุรี')">ลพบุรี</div>
+    <div class="flyout-sub-item" data-value="ลำปาง" onclick="selectFlyoutValue(event, 'ลำปาง')">ลำปาง</div>
+    <div class="flyout-sub-item" data-value="ลำพูน" onclick="selectFlyoutValue(event, 'ลำพูน')">ลำพูน</div>
+    <div class="flyout-sub-item" data-value="เลย" onclick="selectFlyoutValue(event, 'เลย')">เลย</div>
+    <div class="flyout-sub-item" data-value="ศรีสะเกษ" onclick="selectFlyoutValue(event, 'ศรีสะเกษ')">ศรีสะเกษ</div>
+    <div class="flyout-sub-item" data-value="สกลนคร" onclick="selectFlyoutValue(event, 'สกลนคร')">สกลนคร</div>
+    <div class="flyout-sub-item" data-value="สงขลา" onclick="selectFlyoutValue(event, 'สงขลา')">สงขลา</div>
+    <div class="flyout-sub-item" data-value="สตูล" onclick="selectFlyoutValue(event, 'สตูล')">สตูล</div>
     <div class="flyout-sub-item" data-value="สมุทรปราการ" onclick="selectFlyoutValue(event, 'สมุทรปราการ')">สมุทรปราการ</div>
     <div class="flyout-sub-item" data-value="สมุทรสงคราม" onclick="selectFlyoutValue(event, 'สมุทรสงคราม')">สมุทรสงคราม</div>
-    <div class="flyout-sub-item" data-value="เชียงใหม่" onclick="selectFlyoutValue(event, 'เชียงใหม่')">เชียงใหม่</div>
-    <div class="flyout-sub-item" data-value="ภูเก็ต" onclick="selectFlyoutValue(event, 'ภูเก็ต')">ภูเก็ต</div>
-    <div class="flyout-sub-item" data-value="สงขลา" onclick="selectFlyoutValue(event, 'สงขลา')">สงขลา</div>
-    <div class="flyout-sub-item" data-value="ชลบุรี" onclick="selectFlyoutValue(event, 'ชลบุรี')">ชลบุรี</div>
-    <div class="flyout-sub-item" data-value="ระยอง" onclick="selectFlyoutValue(event, 'ระยอง')">ระยอง</div>
+    <div class="flyout-sub-item" data-value="สมุทรสาคร" onclick="selectFlyoutValue(event, 'สมุทรสาคร')">สมุทรสาคร</div>
+    <div class="flyout-sub-item" data-value="สระแก้ว" onclick="selectFlyoutValue(event, 'สระแก้ว')">สระแก้ว</div>
+    <div class="flyout-sub-item" data-value="สระบุรี" onclick="selectFlyoutValue(event, 'สระบุรี')">สระบุรี</div>
+    <div class="flyout-sub-item" data-value="สิงห์บุรี" onclick="selectFlyoutValue(event, 'สิงห์บุรี')">สิงห์บุรี</div>
+    <div class="flyout-sub-item" data-value="สุโขทัย" onclick="selectFlyoutValue(event, 'สุโขทัย')">สุโขทัย</div>
+    <div class="flyout-sub-item" data-value="สุพรรณบุรี" onclick="selectFlyoutValue(event, 'สุพรรณบุรี')">สุพรรณบุรี</div>
+    <div class="flyout-sub-item" data-value="สุราษฎร์ธานี" onclick="selectFlyoutValue(event, 'สุราษฎร์ธานี')">สุราษฎร์ธานี</div>
+    <div class="flyout-sub-item" data-value="สุรินทร์" onclick="selectFlyoutValue(event, 'สุรินทร์')">สุรินทร์</div>
+    <div class="flyout-sub-item" data-value="หนองคาย" onclick="selectFlyoutValue(event, 'หนองคาย')">หนองคาย</div>
+    <div class="flyout-sub-item" data-value="หนองบัวลำภู" onclick="selectFlyoutValue(event, 'หนองบัวลำภู')">หนองบัวลำภู</div>
+    <div class="flyout-sub-item" data-value="อ่างทอง" onclick="selectFlyoutValue(event, 'อ่างทอง')">อ่างทอง</div>
+    <div class="flyout-sub-item" data-value="อำนาจเจริญ" onclick="selectFlyoutValue(event, 'อำนาจเจริญ')">อำนาจเจริญ</div>
+    <div class="flyout-sub-item" data-value="อุดรธานี" onclick="selectFlyoutValue(event, 'อุดรธานี')">อุดรธานี</div>
+    <div class="flyout-sub-item" data-value="อุตรดิตถ์" onclick="selectFlyoutValue(event, 'อุตรดิตถ์')">อุตรดิตถ์</div>
+    <div class="flyout-sub-item" data-value="อุทัยธานี" onclick="selectFlyoutValue(event, 'อุทัยธานี')">อุทัยธานี</div>
+    <div class="flyout-sub-item" data-value="อุบลราชธานี" onclick="selectFlyoutValue(event, 'อุบลราชธานี')">อุบลราชธานี</div>
     <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_provinceBtn', 'จังหวัด ▾')">❌ ล้างค่า จังหวัด</div>
   </div>
   <div class="flyout-menu" id="re_districtFlyout">
     <div style="padding:8px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:1;"><input type="text" placeholder="ค้นหา เขต/อำเภอ..." oninput="filterFlyoutOptions(this, 're_districtFlyout')" style="width:100%; padding:6px 8px; border:1px solid #e5e7eb; border-radius:6px; font-size:12px; box-sizing:border-box;"></div>
+    <div class="flyout-sub-item" data-value="พระนคร" onclick="selectFlyoutValue(event, 'พระนคร')">พระนคร</div>
+    <div class="flyout-sub-item" data-value="ป้อมปราบศัตรูพ่าย" onclick="selectFlyoutValue(event, 'ป้อมปราบศัตรูพ่าย')">ป้อมปราบศัตรูพ่าย</div>
+    <div class="flyout-sub-item" data-value="สัมพันธวงศ์" onclick="selectFlyoutValue(event, 'สัมพันธวงศ์')">สัมพันธวงศ์</div>
+    <div class="flyout-sub-item" data-value="ปทุมวัน" onclick="selectFlyoutValue(event, 'ปทุมวัน')">ปทุมวัน</div>
+    <div class="flyout-sub-item" data-value="บางรัก" onclick="selectFlyoutValue(event, 'บางรัก')">บางรัก</div>
+    <div class="flyout-sub-item" data-value="บางซื่อ" onclick="selectFlyoutValue(event, 'บางซื่อ')">บางซื่อ</div>
+    <div class="flyout-sub-item" data-value="ดุสิต" onclick="selectFlyoutValue(event, 'ดุสิต')">ดุสิต</div>
+    <div class="flyout-sub-item" data-value="พญาไท" onclick="selectFlyoutValue(event, 'พญาไท')">พญาไท</div>
+    <div class="flyout-sub-item" data-value="ราชเทวี" onclick="selectFlyoutValue(event, 'ราชเทวี')">ราชเทวี</div>
+    <div class="flyout-sub-item" data-value="ห้วยขวาง" onclick="selectFlyoutValue(event, 'ห้วยขวาง')">ห้วยขวาง</div>
+    <div class="flyout-sub-item" data-value="ดินแดง" onclick="selectFlyoutValue(event, 'ดินแดง')">ดินแดง</div>
+    <div class="flyout-sub-item" data-value="วัฒนา" onclick="selectFlyoutValue(event, 'วัฒนา')">วัฒนา</div>
+    <div class="flyout-sub-item" data-value="คลองเตย" onclick="selectFlyoutValue(event, 'คลองเตย')">คลองเตย</div>
+    <div class="flyout-sub-item" data-value="สาทร" onclick="selectFlyoutValue(event, 'สาทร')">สาทร</div>
+    <div class="flyout-sub-item" data-value="บางคอแหลม" onclick="selectFlyoutValue(event, 'บางคอแหลม')">บางคอแหลม</div>
+    <div class="flyout-sub-item" data-value="ยานนาวา" onclick="selectFlyoutValue(event, 'ยานนาวา')">ยานนาวา</div>
+    <div class="flyout-sub-item" data-value="ธนบุรี" onclick="selectFlyoutValue(event, 'ธนบุรี')">ธนบุรี</div>
+    <div class="flyout-sub-item" data-value="คลองสาน" onclick="selectFlyoutValue(event, 'คลองสาน')">คลองสาน</div>
+    <div class="flyout-sub-item" data-value="บางกอกใหญ่" onclick="selectFlyoutValue(event, 'บางกอกใหญ่')">บางกอกใหญ่</div>
+    <div class="flyout-sub-item" data-value="บางกอกน้อย" onclick="selectFlyoutValue(event, 'บางกอกน้อย')">บางกอกน้อย</div>
+    <div class="flyout-sub-item" data-value="บางพลัด" onclick="selectFlyoutValue(event, 'บางพลัด')">บางพลัด</div>
+    <div class="flyout-sub-item" data-value="ตลิ่งชัน" onclick="selectFlyoutValue(event, 'ตลิ่งชัน')">ตลิ่งชัน</div>
+    <div class="flyout-sub-item" data-value="บางแค" onclick="selectFlyoutValue(event, 'บางแค')">บางแค</div>
+    <div class="flyout-sub-item" data-value="ภาษีเจริญ" onclick="selectFlyoutValue(event, 'ภาษีเจริญ')">ภาษีเจริญ</div>
+    <div class="flyout-sub-item" data-value="หนองแขม" onclick="selectFlyoutValue(event, 'หนองแขม')">หนองแขม</div>
+    <div class="flyout-sub-item" data-value="บางบอน" onclick="selectFlyoutValue(event, 'บางบอน')">บางบอน</div>
+    <div class="flyout-sub-item" data-value="ทวีวัฒนา" onclick="selectFlyoutValue(event, 'ทวีวัฒนา')">ทวีวัฒนา</div>
+    <div class="flyout-sub-item" data-value="บางขุนเทียน" onclick="selectFlyoutValue(event, 'บางขุนเทียน')">บางขุนเทียน</div>
+    <div class="flyout-sub-item" data-value="จอมทอง" onclick="selectFlyoutValue(event, 'จอมทอง')">จอมทอง</div>
+    <div class="flyout-sub-item" data-value="ราษฎร์บูรณะ" onclick="selectFlyoutValue(event, 'ราษฎร์บูรณะ')">ราษฎร์บูรณะ</div>
+    <div class="flyout-sub-item" data-value="ทุ่งครุ" onclick="selectFlyoutValue(event, 'ทุ่งครุ')">ทุ่งครุ</div>
     <div class="flyout-sub-item" data-value="บางกะปิ" onclick="selectFlyoutValue(event, 'บางกะปิ')">บางกะปิ</div>
     <div class="flyout-sub-item" data-value="บึงกุ่ม" onclick="selectFlyoutValue(event, 'บึงกุ่ม')">บึงกุ่ม</div>
-    <div class="flyout-sub-item" data-value="คลองสามวา" onclick="selectFlyoutValue(event, 'คลองสามวา')">คลองสามวา</div>
+    <div class="flyout-sub-item" data-value="สะพานสูง" onclick="selectFlyoutValue(event, 'สะพานสูง')">สะพานสูง</div>
+    <div class="flyout-sub-item" data-value="วังทองหลาง" onclick="selectFlyoutValue(event, 'วังทองหลาง')">วังทองหลาง</div>
     <div class="flyout-sub-item" data-value="ลาดพร้าว" onclick="selectFlyoutValue(event, 'ลาดพร้าว')">ลาดพร้าว</div>
+    <div class="flyout-sub-item" data-value="คันนายาว" onclick="selectFlyoutValue(event, 'คันนายาว')">คันนายาว</div>
     <div class="flyout-sub-item" data-value="มีนบุรี" onclick="selectFlyoutValue(event, 'มีนบุรี')">มีนบุรี</div>
+    <div class="flyout-sub-item" data-value="หนองจอก" onclick="selectFlyoutValue(event, 'หนองจอก')">หนองจอก</div>
+    <div class="flyout-sub-item" data-value="ลาดกระบัง" onclick="selectFlyoutValue(event, 'ลาดกระบัง')">ลาดกระบัง</div>
+    <div class="flyout-sub-item" data-value="คลองสามวา" onclick="selectFlyoutValue(event, 'คลองสามวา')">คลองสามวา</div>
+    <div class="flyout-sub-item" data-value="สวนหลวง" onclick="selectFlyoutValue(event, 'สวนหลวง')">สวนหลวง</div>
+    <div class="flyout-sub-item" data-value="ประเวศ" onclick="selectFlyoutValue(event, 'ประเวศ')">ประเวศ</div>
     <div class="flyout-sub-item" data-value="บางนา" onclick="selectFlyoutValue(event, 'บางนา')">บางนา</div>
-    <div class="flyout-sub-item" data-value="ห้วยขวาง" onclick="selectFlyoutValue(event, 'ห้วยขวาง')">ห้วยขวาง</div>
+    <div class="flyout-sub-item" data-value="พระโขนง" onclick="selectFlyoutValue(event, 'พระโขนง')">พระโขนง</div>
+    <div class="flyout-sub-item" data-value="จตุจักร" onclick="selectFlyoutValue(event, 'จตุจักร')">จตุจักร</div>
+    <div class="flyout-sub-item" data-value="บางเขน" onclick="selectFlyoutValue(event, 'บางเขน')">บางเขน</div>
+    <div class="flyout-sub-item" data-value="หลักสี่" onclick="selectFlyoutValue(event, 'หลักสี่')">หลักสี่</div>
+    <div class="flyout-sub-item" data-value="ดอนเมือง" onclick="selectFlyoutValue(event, 'ดอนเมือง')">ดอนเมือง</div>
+    <div class="flyout-sub-item" data-value="สายไหม" onclick="selectFlyoutValue(event, 'สายไหม')">สายไหม</div>
     <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_districtBtn', 'เขต/อำเภอ ▾')">❌ ล้างค่า เขต/อำเภอ</div>
   </div>
   <div class="flyout-menu" id="re_roadFlyout">
@@ -2774,7 +2884,7 @@ const CONFIG = {
     };
     // กำหนดชุดคำสั่ง Prompt ประจำแต่ละแท็บ 5 หมวด (รวม SOS น้ำท่วม)
     const TAB_PROMPTS = {
-      sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
+      sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ แต่ถ้า user พูดถึงสินค้านอกเหนืออสังหาฯ เช่น รถยนต์, มอเตอร์ไซค์, เฟอร์นิเจอร์, คอมพิวเตอร์, เครื่องใช้ไฟฟ้า, เสื้อผ้า, กีฬา ให้เรียก switch_tab_category ไปยังแท็บ decor/lifestyle/others ทันที ห้ามตอบว่าเป็นอสังหาฯ อย่างเดียว",
       decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' สำคัญ: ถ้า user พูดภาษาไทย ให้ตอบและพิมพ์ค้นหาเป็นภาษาไทยเสมอ เช่น user บอก นิสสัน ให้พิมพ์ นิสสัน ห้ามพิมพ์ Nissan อย่างเดียว ถ้า user บอก Toyota ให้พิมพ์ โตโยต้า Toyota เพื่อให้หาเจอทั้ง 2 ภาษา มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
@@ -4175,7 +4285,7 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
       if (TAB_PROMPTS[tabId] && AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN) {
         if (tabId === 'sos') {
           const floodCtx = buildFloodContextForAI();
-          sendTextToAI(`${TAB_PROMPTS[tabId]}. ข้อมูลปัจจุบัน: ${floodCtx}. ให้สรุปจำนวนเคสและบอกว่ากำลังช่วยเหลือเท่านั้น ห้ามทำนาย ห้ามแนะนำอพยพ บอกให้ฟังประกาศจาก กทม. เท่านั้น`);
+          sendTextToAI(`${TAB_PROMPTS[tabId]}. ข้อมูลปัจจุบัน: ${floodCtx}. ให้สรุปจำนวนเคสและบอกว่ากำลังช่วยเหลือเท่านั้น ห้ามทำนาย ห้ามแนะนำอพยพ บอกให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้น`);
         } else {
           sendTextToAI(TAB_PROMPTS[tabId]);
         }
@@ -4410,14 +4520,23 @@ function resetAllFilters() {
       }
       testShowList();
     }
-    function getDropdownOptionsForTopic(topic) {
+    // [i15-8] เปลี่ยนตัวย่อจังหวัดทุกจุดที่เหลือในไฟล์เป็น 'กรุงเทพมหานคร' (ตามคำสั่งรอบนี้) — รวม placeholder, aliasMap 'bangkok', และข้อความ AI/ประกาศ
+// [i15-9 DROPDOWN-DATA] สถานะปัจจุบัน: จังหวัด 77 + เขต กรุงเทพมหานคร 50 เท่านั้น — อำเภอ ตจว./ถนน/ซอย ส่วนที่เหลือเก็บไว้ในไฟล์โน้ต NOTES_Dropdown_Expansion_i15-9.txt ยังไม่ใส่ในโค้ด (รอระบบสมบูรณ์)
+// กติการูปแบบ: ไม่มีคำว่า 'จังหวัด' / 'เขต' / 'อำเภอ' / 'ถนน' นำหน้าทุกรายการ เพื่อให้ตรงค่าที่เก็บใน DB (เช่น district='บางกะปิ', road='รามคำแหง')
+// จังหวัด = 77 จังหวัด (ใช้ชื่อเต็ม 'กรุงเทพมหานคร') | เขต/อำเภอ = เฉพาะเขต กรุงเทพมหานคร 50 เขต (อำเภอ ตจว. 335 อำเภอ อยู่ในไฟล์โน้ต)
+// ถนน = 7 สายเดิม (ถนนที่เหลือ 129 สาย อยู่ในไฟล์โน้ต) | ซอย = ตัวเลือกหลอกเดิม (ซอยจริง 116 ซอย อยู่ในไฟล์โน้ต)
+// หมายเหตุ: DISTRICT_CENTER_V15 ไม่ได้ขยายตาม — อำเภอใหม่ที่ไม่มีศูนย์กลางจะ fallback ไปใช้ GPS (พฤติกรรมเดิม) ไม่กระทบการกรอง
+const PROVINCE_OPTIONS_I159 = ["กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"];
+const DISTRICT_OPTIONS_I159 = ["พระนคร", "ป้อมปราบศัตรูพ่าย", "สัมพันธวงศ์", "ปทุมวัน", "บางรัก", "บางซื่อ", "ดุสิต", "พญาไท", "ราชเทวี", "ห้วยขวาง", "ดินแดง", "วัฒนา", "คลองเตย", "สาทร", "บางคอแหลม", "ยานนาวา", "ธนบุรี", "คลองสาน", "บางกอกใหญ่", "บางกอกน้อย", "บางพลัด", "ตลิ่งชัน", "บางแค", "ภาษีเจริญ", "หนองแขม", "บางบอน", "ทวีวัฒนา", "บางขุนเทียน", "จอมทอง", "ราษฎร์บูรณะ", "ทุ่งครุ", "บางกะปิ", "บึงกุ่ม", "สะพานสูง", "วังทองหลาง", "ลาดพร้าว", "คันนายาว", "มีนบุรี", "หนองจอก", "ลาดกระบัง", "คลองสามวา", "สวนหลวง", "ประเวศ", "บางนา", "พระโขนง", "จตุจักร", "บางเขน", "หลักสี่", "ดอนเมือง", "สายไหม"];
+const ROAD_OPTIONS_I159 = ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
+function getDropdownOptionsForTopic(topic) {
       if (topic === 'ขาย/เช่า') return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
       if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ที่ดิน", "ร้านค้า", "ตลาด"];
       if (topic === 'ราคาขาย') return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
       if (topic === 'ราคาเช่า') return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
-      if (topic === 'จังหวัด') return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
-      if (topic === 'เขต/อำเภอ') return ["บางกะปิ", "บึงกุ่ม", "คลองสามวา", "ลาดพร้าว", "มีนบุรี"];
-      if (topic === 'ถนน') return ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
+      if (topic === 'จังหวัด') return PROVINCE_OPTIONS_I159; // [i15-9] 77 จังหวัด (ครบแล้ว)
+      if (topic === 'เขต/อำเภอ') return DISTRICT_OPTIONS_I159; // [i15-9] เฉพาะเขต กรุงเทพมหานคร 50 เขต — อำเภอ ตจว. อยู่ในไฟล์โน้ต
+      if (topic === 'ถนน') return ROAD_OPTIONS_I159; // [i15-9] 7 สายเดิม (แบบมีคำว่า 'ถนน' นำหน้า เหมือนเดิม) — ถนนที่เหลืออยู่ในไฟล์โน้ต
       if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
       return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
     }
@@ -4757,7 +4876,7 @@ function resetAllFilters() {
       // FIX v15.21 - alias อังกฤษ -> ไทย ก่อนเลย
       const aliasMap = {
         'condominium':'คอนโด','condo':'คอนโด','house':'บ้าน','village':'บ้าน','townhome':'ทาวน์โฮม','townhouse':'ทาวน์เฮาส์',
-        'sale':'ขาย','rent':'เช่า','sell':'ขาย','bangkok':'กทม.','bang kapi':'บางกะปิ','bangkapi':'บางกะปิ'
+        'sale':'ขาย','rent':'เช่า','sell':'ขาย','bangkok':'กรุงเทพมหานคร','bang kapi':'บางกะปิ','bangkapi':'บางกะปิ'
       };
       Object.keys(aliasMap).forEach(k=>{
         const re = new RegExp('\\b'+k.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')+'\\b','gi');
@@ -5638,9 +5757,9 @@ function closeLocationModal() {
       const cache = window.sosRequestsCache || sosRequestsCache || [];
       const context = buildFloodContextForAI();
       const criticalCount = cache.filter(r=>r.urgency==='critical' || (r.need_types||[]).includes('evacuate')).length;
-      // FIX ตามคำสั่ง: ห้ามทำนาย ห้ามแนะนำอพยพ ให้ฟังประกาศ กทม. เท่านั้น
-      const prediction = "เราไม่มีหน้าที่คาดเดา ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ";
-      const advice = "หน้าที่ของเราคือช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้นครับ สำหรับเรื่องวิกฤตและการอพยพ ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ";
+      // FIX ตามคำสั่ง: ห้ามทำนาย ห้ามแนะนำอพยพ ให้ฟังประกาศ กรุงเทพมหานคร เท่านั้น
+      const prediction = "เราไม่มีหน้าที่คาดเดา ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ";
+      const advice = "หน้าที่ของเราคือช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้นครับ สำหรับเรื่องวิกฤตและการอพยพ ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ";
       return { context, prediction, advice, total: cache.length, critical: criticalCount };
     }
     // ==========================================
@@ -5763,7 +5882,7 @@ function closeLocationModal() {
                         - **สำหรับแท็บ SOS วิกฤตน้ำท่วม (สำคัญเร่งด่วน - ห้ามคาดเดา):**
                             * เมื่อสลับมาแท็บ sos ให้เรียก 'get_flood_summary' เพื่อดึงสรุปจำนวนเคสปัจจุบันเท่านั้น
                             * ห้ามทำนาย ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนาย 24-48 ชม. ห้ามแนะนำอพยพไปที่ไหนโดยเด็ดขาด
-                            * ทุกคำถามเกี่ยวกับวิกฤต การอพยพ อนาคตจะเป็นอย่างไร ให้ตอบเพียงว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ'
+                            * ทุกคำถามเกี่ยวกับวิกฤต การอพยพ อนาคตจะเป็นอย่างไร ให้ตอบเพียงว่า 'ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ'
                             * หน้าที่ของเราคือช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น ไม่มีหน้าที่คาดเดา
                             * พูดด้วยน้ำเสียงจริงจัง กระชับ ให้กำลังใจ บอกตัวเลขจริง เช่น 'ตอนนี้มี 12 เคสขอความช่วยเหลือ อยู่ระหว่างจัดส่งครับ'
                             * หากผู้ใช้ต้องการขอความช่วยเหลือ ให้เรียก 'open_sos_modal' เพื่อเปิดฟอร์ม
@@ -5831,7 +5950,7 @@ function closeLocationModal() {
                       },
                       {
                         name: "analyze_flood_and_advise",
-                        description: "สรุปจำนวนเคส SOS ปัจจุบันเท่านั้น ห้ามทำนายอนาคต ห้ามแนะนำอพยพ - สำหรับ AI Voice แจ้งจำนวนเคสและบอกให้ฟังประกาศจาก กทม. เท่านั้น",
+                        description: "สรุปจำนวนเคส SOS ปัจจุบันเท่านั้น ห้ามทำนายอนาคต ห้ามแนะนำอพยพ - สำหรับ AI Voice แจ้งจำนวนเคสและบอกให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้น",
                         parameters: {
                           type: "OBJECT",
                           properties: {
@@ -5864,7 +5983,7 @@ function closeLocationModal() {
                             criteria: { 
                               type: "OBJECT",
                               properties: {
-                                summary: { type: "STRING", description: "สรุปความต้องการโดยใช้ข้อความที่ตรงเป๊ะกับคำในรายการDropdownเท่านั้น ห้ามคิดคำขึ้นเองนอกเหนือจากDropdown(หากคำไหนไม่อยู่ในรายการ ห้ามส่งคำนั้นมา) คั่นด้วยช่องว่าง เช่น 'ขาย คอนโด ไม่เกิน 2 ล้าน กทม.' - ถ้าผู้ใช้สั่งลบ ให้ส่งคำว่า 'ลบออก' ใน summary" }
+                                summary: { type: "STRING", description: "สรุปความต้องการโดยใช้ข้อความที่ตรงเป๊ะกับคำในรายการDropdownเท่านั้น ห้ามคิดคำขึ้นเองนอกเหนือจากDropdown(หากคำไหนไม่อยู่ในรายการ ห้ามส่งคำนั้นมา) คั่นด้วยช่องว่าง เช่น 'ขาย คอนโด ไม่เกิน 2 ล้าน กรุงเทพมหานคร' - ถ้าผู้ใช้สั่งลบ ให้ส่งคำว่า 'ลบออก' ใน summary" }
                               },
                               required: ["summary"]
                             }
@@ -5911,7 +6030,7 @@ function closeLocationModal() {
                     } else if (name === "get_flood_summary") {
                       const summaryText = buildFloodContextForAI();
                       output = { success: true, summary: summaryText };
-                      setTimeout(()=>{ sendTextToAI(`ข้อมูลสรุปน้ำท่วมปัจจุบันคือ: ${summaryText}. ให้คุณสรุปจำนวนเคสให้ประชาชนฟังด้วยเสียงทันที กระชับ จริงจัง ให้กำลังใจ ห้ามทำนายอนาคต ห้ามแนะนำอพยพ หากถามเรื่องวิกฤตให้บอกว่า 'ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' หน้าที่เราคือช่วยคน จัดหาของ ส่งของ ส่งคนเท่านั้น`); }, 200);
+                      setTimeout(()=>{ sendTextToAI(`ข้อมูลสรุปน้ำท่วมปัจจุบันคือ: ${summaryText}. ให้คุณสรุปจำนวนเคสให้ประชาชนฟังด้วยเสียงทันที กระชับ จริงจัง ให้กำลังใจ ห้ามทำนายอนาคต ห้ามแนะนำอพยพ หากถามเรื่องวิกฤตให้บอกว่า 'ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ' หน้าที่เราคือช่วยคน จัดหาของ ส่งของ ส่งคนเท่านั้น`); }, 200);
                     } else if (name === "filter_sos_by_need") {
                       const need = args.needType || 'all';
                       const kw = args.locationKeyword || '';
@@ -5926,7 +6045,7 @@ function closeLocationModal() {
                       const analysis = generateFloodAnalysisAndAdvice(focus, advType);
                       output = analysis;
                       setTimeout(()=>{
-                        const aiPrompt = `ข้อมูลปัจจุบัน: ${analysis.context}. กฎสำคัญ: ห้ามทำนายอนาคต ห้ามบอกว่า 24 หรือ 48 ชม.ข้างหน้าจะเป็นอย่างไร ห้ามแนะนำอพยพไปที่ไหนเด็ดขาด หน้าที่เราคือช่วยคน จัดหาของ ส่งของ ส่งคนเท่านั้น ให้คุณพูดสรุปเพียงจำนวนเคสที่มีและบอกว่าเรากำลังช่วยเหลือจัดส่งอยู่ จากนั้นบอกว่า 'สำหรับเรื่องวิกฤตและการอพยพ ขอให้ฟังประกาศจาก กทม. เท่านั้นครับ' พูดกระชับ ให้กำลังใจ ลงท้ายครับ`;
+                        const aiPrompt = `ข้อมูลปัจจุบัน: ${analysis.context}. กฎสำคัญ: ห้ามทำนายอนาคต ห้ามบอกว่า 24 หรือ 48 ชม.ข้างหน้าจะเป็นอย่างไร ห้ามแนะนำอพยพไปที่ไหนเด็ดขาด หน้าที่เราคือช่วยคน จัดหาของ ส่งของ ส่งคนเท่านั้น ให้คุณพูดสรุปเพียงจำนวนเคสที่มีและบอกว่าเรากำลังช่วยเหลือจัดส่งอยู่ จากนั้นบอกว่า 'สำหรับเรื่องวิกฤตและการอพยพ ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ' พูดกระชับ ให้กำลังใจ ลงท้ายครับ`;
                         sendTextToAI(aiPrompt);
                       }, 300);
                     } else if (name === "set_location_coordinates") {
@@ -7393,7 +7512,7 @@ if (name === "switch_tab_category") {
     let selectedDistrict = null;
     let selectedLatLng = null;
     const provinceList = [
-      "กทม.", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
+      "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
       "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด",
       "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์",
       "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์",
@@ -7406,7 +7525,7 @@ if (name === "switch_tab_category") {
       "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
     ];
     const districtMap = {
-      "กทม.": ["เขตพระนคร", "เขตดุสิต", "เขตหนองจอก", "เขตบางรัก", "เขตบางเขน", "เขตบางกะปิ", "เขตปทุมวัน", "เขตป้อมปราบศัตรูพ่าย", "เขตพระโขนง", "เขตมีนบุรี", "เขตลาดกระบัง", "เขตยานนาวา", "เขตสัมพันธวงศ์", "เขตพญาไท", "เขตธนบุรี", "เขตบางกอกใหญ่", "เขตห้วยขวาง", "เขตคลองสาน", "เขตตลิ่งชัน", "เขตบางกอกน้อย", "เขตบางขุนเทียน", "เขตภาษีเจริญ", "เขตหนองแขม", "เขตราษฎร์บูรณะ", "เขตบางพลัด", "เขตดินแดง", "เขตบึงกุ่ม", "เขตสาทร", "เขตบางซื่อ", "เขตจตุจักร", "เขตบางคอแหลม", "เขตประเวศ", "เขตคลองเตย", "เขตสวนหลวง", "เขตจอมทอง", "เขตดอนเมือง", "เขตราชเทวี", "เขตลาดพร้าว", "เขตวัฒนา", "เขตบางแค", "เขตหลักสี่", "เขตสายไหม", "เขตคันนายาว", "เขตสะพานสูง", "เขตวังทองหลาง", "เขตคลองสามวา", "เขตบางนา", "เขตทวีวัฒนา", "เขตทุ่งครุ", "เขตบางบอน"],
+      "กรุงเทพมหานคร": ["พระนคร", "ป้อมปราบศัตรูพ่าย", "สัมพันธวงศ์", "ปทุมวัน", "บางรัก", "บางซื่อ", "ดุสิต", "พญาไท", "ราชเทวี", "ห้วยขวาง", "ดินแดง", "วัฒนา", "คลองเตย", "สาทร", "บางคอแหลม", "ยานนาวา", "ธนบุรี", "คลองสาน", "บางกอกใหญ่", "บางกอกน้อย", "บางพลัด", "ตลิ่งชัน", "บางแค", "ภาษีเจริญ", "หนองแขม", "บางบอน", "ทวีวัฒนา", "บางขุนเทียน", "จอมทอง", "ราษฎร์บูรณะ", "ทุ่งครุ", "บางกะปิ", "บึงกุ่ม", "สะพานสูง", "วังทองหลาง", "ลาดพร้าว", "คันนายาว", "มีนบุรี", "หนองจอก", "ลาดกระบัง", "คลองสามวา", "สวนหลวง", "ประเวศ", "บางนา", "พระโขนง", "จตุจักร", "บางเขน", "หลักสี่", "ดอนเมือง", "สายไหม"],
       "นนทบุรี": ["เมืองนนทบุรี", "บางกรวย", "บางใหญ่", "บางบัวทอง", "ไทรน้อย", "ปากเกร็ด"],
       "ปทุมธานี": ["เมืองปทุมธานี", "คลองหลวง", "ธัญบุรี", "หนองเสือ", "ลาดหลุมแก้ว", "ลำลูกกา", "สามโคก"],
       "สมุทรปราการ": ["เมืองสมุทรปราการ", "บางบ่อ", "บางพลี", "พระประแดง", "พระสมุทรเจดีย์", "บางเสาธง"],
@@ -7415,7 +7534,7 @@ if (name === "switch_tab_category") {
       "ภูเก็ต": ["เมืองภูเก็ต", "กะทู้", "ถลาง"],
       "ขอนแก่น": ["เมืองขอนแก่น", "บ้านฝาง", "พระยืน", "หนองเรือ", "ชุมแพ"],
       "default": ["เมือง", "อำเภอ 1", "อำเภอ 2", "อำเภอ 3"]
-    };
+    }; // [i15-9] เฉพาะ กรุงเทพมหานคร 50 เขต + 7 จังหวัดเดิมของ i15-6 — districtMap ครบ 77 จังหวัดอยู่ในไฟล์โน้ต
     function initCoordFlyout() {
       const submenu = document.getElementById('provinceSubmenu');
       if(!submenu) return;
