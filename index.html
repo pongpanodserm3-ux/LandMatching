@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-4  </title>
+  <title> i15-5  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4282,7 +4282,28 @@ function getSOSRoleBadgeHTML(role, is_trusted, reporter_type){
     function triggerSearchReset() {
       testShowList();
     }
-    function clearFiltersNoSearch(){
+    // [i15-5 NEW-SEARCH] กฎ "ค้นหาครั้งใหม่ = เคลียร์ของเก่าทั้งหมดก่อน แล้วค่อยใส่ของใหม่"
+// เหตุผล: บั๊ก มีนบุรี ค้าง -> พูด "คอนโด จตุจักร" แล้ว มีนบุรี ยังอยู่ เพราะ guard i15-2 ข้ามการเคลียร์เมื่อสกัดได้น้อยกว่าของเดิม
+// นิยาม "ค้นหาครั้งใหม่" ที่ใช้ในไฟล์นี้ มีแค่ 2 จุดเท่านั้น (ดูข้อ 2-3):
+//   (a) AI Voice ได้รับประโยคใหม่ 1 ประโยค = ค้นหาครั้งใหม่ 1 ครั้ง
+//   (b) กด ยืนยันพิกัดบนแผนที่ (confirmLocation) = เปลี่ยนสถานที่ใหม่ = ค้นหาครั้งใหม่แบบ MAP
+// "ไม่ใช่" ค้นหาครั้งใหม่: ผู้ใช้กดเปลี่ยน Dropdown ทีละอันด้วยมือ = แค่ปรับเงื่อนไขเดิม ห้ามเคลียร์อันอื่นทิ้ง
+// ฟังก์ชันนี้เคลียร์แค่ "เงื่อนไขค้นหา" (dropdown + edit + พิกัดค้นหา) ไม่แตะ "พิกัดลงประกาศ" (postingTarget) และไม่แตะฟอร์ม SOS/น้ำท่วม
+function startNewSearchClear(){
+  if (typeof clearFiltersNoSearch === 'function') clearFiltersNoSearch();
+  selectedLat = null;
+  selectedLng = null;
+  selectedRadius = 1;
+  try{
+    const _latEl = document.getElementById('latInput'); if(_latEl) _latEl.value='';
+    const _lngEl = document.getElementById('lngInput'); if(_lngEl) _lngEl.value='';
+    const _rs = document.getElementById('radiusSelect'); if(_rs) _rs.value='1';
+    const _lfb = document.getElementById('locationFilterBtn'); if(_lfb) _lfb.innerText='📍 พิกัด ▾';
+    if (typeof radiusCircle !== 'undefined' && radiusCircle && typeof leafletMap !== 'undefined' && leafletMap) { try{ leafletMap.removeLayer(radiusCircle); }catch(e){} radiusCircle = null; }
+  }catch(e){}
+  console.log('[i15-5 NEW-SEARCH] เคลียร์ dropdown + edit + พิกัดค้นหาเดิมเป็น default แล้ว (ก่อนใส่เงื่อนไขใหม่)');
+}
+function clearFiltersNoSearch(){
       console.log('🔄 [v15.24] ล้าง dropdown แบบไม่ค้นหา');
       const editBox = document.getElementById('customEditBox');
       if (editBox) editBox.value = '';
@@ -5483,6 +5504,9 @@ function closeLocationModal() {
     window.postingTargetLng = (typeof window.postingTargetLng !== 'undefined') ? window.postingTargetLng : null;
     function confirmLocation() {
       window.searchMode = 'MAP'; // [i15-4] กด ✅ค้นหา = โหมดแผนที่
+      // [i15-5 NEW-SEARCH] เปลี่ยนสถานที่ใหม่ = ค้นหาครั้งใหม่แบบ MAP -> เคลียร์ dropdown เก่าทิ้ง (แต่ห้ามเคลียร์ lat/lng ที่เพิ่งยืนยัน)
+      // เหตุผล: ถึง payload โหมด MAP จะไม่ส่ง dropdown ไปเซิร์ฟเวอร์อยู่แล้ว แต่ถ้าปล่อย dropdown เก่าค้างไว้ fallback จะเอามันกลับมากรองอีก
+      if (typeof clearFiltersNoSearch === 'function') clearFiltersNoSearch();
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const radiusSelect = document.getElementById('radiusSelect');
@@ -6034,15 +6058,10 @@ if (name === "switch_tab_category") {
                           }
                           // v15.20 FIX: ถ้าคำไหนอยู่ใน dropdown ให้ไปกด dropdown เลย ไม่ต้องเขียนลง edit (ตามที่สั่ง)
                           const extracted = (typeof extractDropdownAndRemaining === 'function') ? extractDropdownAndRemaining(_rawForDropdown) : {dropdownFound:[], remainingText: finalText};
-                          // v15.25 FIX: เคลียร์ก่อนทุกครั้ง - แต่ถ้ารอบนี้สกัดได้น้อยกว่ารอบก่อน อย่าล้างของเดิมทิ้ง (กัน handler ซ้ำมาทับของที่ SUBMIT FIX ใส่ไว้)
-                          // BUGFIX i15-2: ถ้า extracted รอบนี้เป็น subset ของ dropdown ปัจจุบัน (เช่น มีแค่เขต แต่ปัจจุบันมี ขาย+บ้าน+เขต) ให้ข้ามการเคลียร์
-                          try{
-                            const _cur = (typeof getSelectedCriteria==='function') ? getSelectedCriteria() : {};
-                            const _curVals = [ _cur.priceType, _cur.propertyType, _cur.district, _cur.province, _cur.road ].filter(Boolean);
-                            const _isSubset = extracted?.dropdownFound?.length>0 && extracted.dropdownFound.every(v=>_curVals.includes(v)) && extracted.dropdownFound.length < _curVals.length;
-                            if(_isSubset){ console.log('[i15-2 GUARD] ข้ามเคลียร์ - รอบนี้ได้น้อยกว่าเดิม', extracted.dropdownFound, 'เดิม', _curVals); }
-                            else if(typeof clearFiltersNoSearch==='function'){ clearFiltersNoSearch(); console.log('[v15.25 CLEAR] เคลียร์ก่อน AI Voice cleaned', extracted?.dropdownFound); }
-                          }catch(e){}
+                          // [i15-5 NEW-SEARCH] ลบ guard i15-2 ทิ้งถาวร - guard นี้คือสาเหตุ มีนบุรี ค้าง
+                          // กฎใหม่: AI Voice 1 ประโยค = ค้นหาครั้งใหม่ 1 ครั้ง = เคลียร์ของเก่าทั้งหมดก่อนเสมอ ไม่มีข้อยกเว้น "สกัดได้น้อยกว่าเดิม"
+                          // กัน handler ซ้ำ: ถ้าประโยคเดิมส่งมาซ้ำ การเคลียร์+ใส่ใหม่จะได้ผลเหมือนเดิมอยู่ดี (idempotent) จึงไม่ต้องใช้ guard อีก
+                          if (typeof startNewSearchClear === 'function') startNewSearchClear();
                           // 1. กด dropdown ก่อน
                           if (extracted.dropdownFound && extracted.dropdownFound.length) {
                             extracted.dropdownFound.forEach(opt => {
