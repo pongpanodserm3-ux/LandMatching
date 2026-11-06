@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-7  </title>
+  <title> i15-8  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6761,8 +6761,9 @@ if (name === "switch_tab_category") {
     
         const price = item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
-        // FIX v14.2 - รถยนต์ต้องโชว์ชื่อจริง
-        const isProduct = !!(item.item_id || item.item_type || item.title || item._score !== undefined);
+        // [i15-10] แยกการ์ดอสังหาด้วย item_id/item_type เท่านั้น — เดิมเช็ก title/_score ด้วย
+        // ทำให้โพสต์อสังหาหลุดเข้าสาขาสินค้า แล้ว property_type ('บ้าน') ไปโผล่ทั้งบรรทัด 1 และ 2
+        const isProduct = !!(item.item_id || item.item_type);
         let titleText = '';
         let locExtra = '';
         if (isProduct) {
@@ -6772,8 +6773,13 @@ if (name === "switch_tab_category") {
           const dist = item.district || '';
           locExtra = (cat + ' ' + dist + ' ' + prov).trim();
         } else {
-          titleText = item.project || item.facebook_name || 'ประกาศอสังหาริมทรัพย์';
-          locExtra = ( (item.property_type||'') + ' ' + (item.soi||'') + ' ' + (item.road||'') + ' ' + (item.district||'') + ' ' + (item.province||'') ).trim();
+          // อสังหา — บรรทัด 1: property_type + price_type + project (ตามคำสั่ง)
+          // บรรทัด 2: ที่อยู่ล้วน (ซอย ถนน เขต/อำเภอ จังหวัด) ไม่มี property_type ซ้ำ
+          const typePart = (item.property_type||'').trim();
+          const salePart = (item.price_type || item.sale_rent || '').trim();
+          const projPart = (item.project||'').trim();
+          titleText = [typePart, salePart, projPart].filter(Boolean).join(' ') || item.facebook_name || 'ประกาศอสังหาริมทรัพย์';
+          locExtra = [item.soi, item.road, item.district, item.province].map(v=>(v||'').trim()).filter(Boolean).join(' ');
         }
         // ใช้ locExtra แทนการสร้างใหม่ด้านล่าง
         const _originalLocationBuild = true;
