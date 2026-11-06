@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-3  </title>
+  <title> i15-4  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -4590,8 +4590,10 @@ function resetAllFilters() {
           area: getPostInputValue('เนื้อที่'),
           phone: getPostInputValue('เบอร์โทรศัพท์'),
           line_id: getPostInputValue('ไอดีไลน์'),
-          use_lat: selectedLat || null,
-          use2_lng: selectedLng || null,
+          // [i15-4 POSTING] ใช้พิกัดที่ยืนยันไว้สำหรับลงประกาศโดยเฉพาะก่อน - ถ้าไม่มี (ผู้ใช้ไม่เคยปักหมุด) ค่อย fallback เป็น selectedLat/Lng (พิกัดค้นหาปัจจุบัน)
+          // เดิมอ่าน selectedLat ตรงๆ ทั้งที่ตัวแปรนี้โดนค้นหา/GPS/เสียงเขียนทับได้ตลอด -> ประกาศอาจได้พิกัดผิดหมุดที่ยืนยันไว้
+          use_lat: (window.postingTargetLat ?? selectedLat) || null,
+          use2_lng: (window.postingTargetLng ?? selectedLng) || null,
           details: document.getElementById('DetailEdit')?.value.trim() || '',
           url: getPostInputValue('ลิงก์หรือเว็บไซต์'),
           date: currentDate, // เพิ่มคีย์ date สำหรับบันทึกวันเดือนปี (รูปแบบ DD-MM-YYYY)
@@ -5472,7 +5474,15 @@ function closeLocationModal() {
         alert('กรุณาระบุพิกัด Latitude และ Longitude บนแผนที่ก่อนครับ');
       }
     }
+    // [i15-4 SEARCHMODE] โหมดค้นหา 2 โหมดแยกขาด: 'MAP' = กด ✅ค้นหา บนแผนที่ (ตัดด้วยรัศมีอย่างเดียว, ไม่สน Dropdown)
+    // 'DROPDOWN' = กด 📍ยืนยันพิกัด (แผนที่ปิด, ค้นด้วย Dropdown อย่างเดียว, ห้ามเอารัศมีมาตัด)
+    // [i15-4 POSTING] พิกัดลงประกาศต้องเก็บแยกจากพิกัดค้นหา - เดิม postingTargetLat ถูกเขียนแต่ไม่เคยถูกอ่านเลย (count=1)
+    // submitPost อ่าน selectedLat (ตัวแปรเดียวกับตัวกรองค้นหา) ทำให้กดค้นหาก่อนกดลงประกาศแล้วพิกัดประกาศจะเพี้ยน
+    window.searchMode = window.searchMode || 'DROPDOWN';
+    window.postingTargetLat = (typeof window.postingTargetLat !== 'undefined') ? window.postingTargetLat : null;
+    window.postingTargetLng = (typeof window.postingTargetLng !== 'undefined') ? window.postingTargetLng : null;
     function confirmLocation() {
+      window.searchMode = 'MAP'; // [i15-4] กด ✅ค้นหา = โหมดแผนที่
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const radiusSelect = document.getElementById('radiusSelect');
@@ -5547,6 +5557,7 @@ function closeLocationModal() {
         alert('พิกัดไม่ถูกต้อง');
         return;
       }
+      window.searchMode = 'DROPDOWN'; // [i15-4] กด 📍ยืนยันพิกัด = โหมด Dropdown, แผนที่ปิด
       // ส่งค่าเข้า ตัวแปรหลักที่ใช้กำหนดเป้าหมายหมุดลงประกาศ
       selectedLat = parsedLat;
       selectedLng = parsedLng;
@@ -6391,6 +6402,23 @@ if (name === "switch_tab_category") {
             }
           }
         }
+        // [i15-4 SEARCHMODE] แยกโหมดให้ขาดก่อนส่ง - เดิมส่งพิกัด+Dropdown ปนกันทุกครั้ง เซิร์ฟเวอร์เลยเอาทั้ง 2 อย่างมาตัดพร้อมกันจนได้ 0
+        // MAP (กด ✅ค้นหา บนแผนที่): ส่งแค่ lat/lng/radius + searchMode=MAP, ทิ้ง Dropdown ทั้งหมด
+        // DROPDOWN (กด 📍ยืนยันพิกัด): ส่งแค่ Dropdown + searchMode=DROPDOWN, ห้ามส่ง radius (ส่ง lat/lng ไปได้แค่ไว้เรียงใกล้->ไกล เซิร์ฟเวอร์ห้ามเอามาตัด)
+        criteria = { ...(criteria || {}) };
+        criteria.searchMode = window.searchMode || 'DROPDOWN';
+        if (criteria.searchMode === 'MAP') {
+          const _lat = (typeof selectedLat !== 'undefined' ? selectedLat : null);
+          const _lng = (typeof selectedLng !== 'undefined' ? selectedLng : null);
+          const _r = (typeof selectedRadius !== 'undefined' ? selectedRadius : 1);
+          criteria = { lat: _lat, lng: _lng, latitude: _lat, longitude: _lng, radius: _r, searchMode: 'MAP' };
+          searchText = '';
+        } else {
+          delete criteria.lat; delete criteria.lng; delete criteria.latitude; delete criteria.longitude; delete criteria.radius;
+          criteria.searchMode = 'DROPDOWN';
+          // เก็บพิกัดอ้างอิงไว้ในฟิลด์แยก เพื่อเรียงใกล้->ไกลเท่านั้น - เซิร์ฟเวอร์ห้ามใช้ฟิลด์นี้ตัดทิ้ง
+          if (typeof selectedLat !== 'undefined' && selectedLat) { criteria.refLat = selectedLat; criteria.refLng = selectedLng; }
+        }
         console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText, 'loc=', (typeof selectedLat!=='undefined'?selectedLat:null), (typeof selectedLng!=='undefined'?selectedLng:null), (typeof selectedRadius!=='undefined'?selectedRadius:null)); // LOGFIX: เพิ่มพิกัด/รัศมีในบรรทัดเดียว ไม่เพิ่มบรรทัด log ใหม่
         const payload = {
           action: "searchAll",
@@ -6779,6 +6807,9 @@ if (name === "switch_tab_category") {
         }
       });
     
+      // 3. [i15-4 POSTING] เคลียร์พิกัดลงประกาศด้วย - เดิมไม่เคลียร์ ทำให้ประกาศถัดไปที่ไม่ได้ปักหมุดใหม่จะได้พิกัดของประกาศก่อนหน้า
+      window.postingTargetLat = null;
+      window.postingTargetLng = null;
       // 3. เคลียร์รูปลอย/รูปที่อัปโหลดทั้งหมดในหน่วยความจำ
       window.uploadedFiles = [];
       const fileInput = document.getElementById('fileInput');
