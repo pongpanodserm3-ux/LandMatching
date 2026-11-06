@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-15-1  </title>
+  <title> i15-1-LogCorrect  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -3246,7 +3246,7 @@ function tryLIFFLoginAgain(){
         }
         window.CURRENT_USER_ROLE = roleInfo;
         window.CURRENT_USER_ROLE_CACHE = roleInfo;
-        console.log('[v17.7 RoleBadge] role:', role, 'user_id:', roleInfo.user_id);
+        if (window._lastRoleBadgeLog !== role + ':' + roleInfo.user_id) { window._lastRoleBadgeLog = role + ':' + roleInfo.user_id; console.log('[v17.7 RoleBadge] role:', role, 'user_id:', roleInfo.user_id); } // LOGFIX: log ครั้งเดียวเมื่อ role/user เปลี่ยน ไม่ log ทุก re-render
         return roleInfo;
       }catch(e){
         console.warn('[v17.7 RoleBadge] error', e);
@@ -6365,7 +6365,7 @@ if (name === "switch_tab_category") {
             }
           }
         }
-        console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText);
+        console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText, 'loc=', (typeof selectedLat!=='undefined'?selectedLat:null), (typeof selectedLng!=='undefined'?selectedLng:null), (typeof selectedRadius!=='undefined'?selectedRadius:null)); // LOGFIX: เพิ่มพิกัด/รัศมีในบรรทัดเดียว ไม่เพิ่มบรรทัด log ใหม่
         const payload = {
           action: "searchAll",
           offset: AppState.pagination.offset,
@@ -10630,7 +10630,7 @@ async function autoStep1_DeleteImages_3hr(){
       .limit(20);
     if(err2) console.warn('[FLOW-STEP1] silent query error', err2);
     const list = [...(completedToClean||[]), ...(silentToClean||[])];
-    console.log(`[FLOW-STEP1] เจอ ${list.length} เคสต้องลบรูป (สำเร็จ>3ชม.=${completedToClean?.length||0} / เงียบ>3วัน=${silentToClean?.length||0})`, list);
+    (function(){ const _s=`[FLOW-STEP1] เจอ ${list.length} เคสต้องลบรูป (สำเร็จ>3ชม.=${completedToClean?.length||0} / เงียบ>3วัน=${silentToClean?.length||0})`; if(!_s.includes('เจอ 0 ')) console.log(_s, list); })(); // LOGFIX: เจอ 0 ไม่ log
     if(list.length===0) return;
     for(let item of list){
       const imgs = item.image_urls || item.images || [];
@@ -10669,7 +10669,7 @@ async function autoStep2_ArchiveAndCleanup(){
       .lt('created_at', threeDaysAgo)
       .limit(20);
     const toArchive = [...(completedList||[]), ...(silentList||[])];
-    console.log(`[FLOW-STEP2] เจอ ${toArchive.length} เคสต้อง Archive`, toArchive);
+    (function(){ const _s=`[FLOW-STEP2] เจอ ${toArchive.length} เคสต้อง Archive`; if(!_s.includes('เจอ 0 ')) console.log(_s, toArchive); })(); // LOGFIX: เจอ 0 ไม่ log
     if(toArchive.length===0) return;
     for(let item of toArchive){
       await deleteChatsBySOSId(item.id);
@@ -10844,7 +10844,7 @@ async function autoWarningStep1_HideFromMap_1Day(){
       .lt('created_at', oneDayAgo)
       .limit(30);
     if(error){ console.warn('[WARNING-STEP1] query error', error); return; }
-    console.log(`[WARNING-STEP1] เจอ ${toHide?.length||0} เตือนต้องซ่อนจากแผนที่ (1วัน)`, toHide);
+    (function(){ const _s=`[WARNING-STEP1] เจอ ${toHide?.length||0} เตือนต้องซ่อนจากแผนที่ (1วัน)`; if(!_s.includes('เจอ 0 ')) console.log(_s, toHide); })(); // LOGFIX: เจอ 0 ไม่ log
     if(!toHide || toHide.length===0) return;
     for(let item of toHide){
       const {error: upErr} = await supabaseClient.from('flood_warnings').update({
@@ -10870,7 +10870,7 @@ async function autoWarningStep2_DeleteImages_3Days(){
     if(error){ console.warn('[WARNING-STEP2] query error', error); return; }
     // กรองเฉพาะที่มีรูป
     const withImages = (toClean||[]).filter(x=> (x.images && x.images.length>0) || (x.image_urls && x.image_urls.length>0));
-    console.log(`[WARNING-STEP2] เจอ ${withImages.length} เตือนต้องลบรูป (3วัน)`, withImages);
+    (function(){ const _s=`[WARNING-STEP2] เจอ ${withImages.length} เตือนต้องลบรูป (3วัน)`; if(!_s.includes('เจอ 0 ')) console.log(_s, withImages); })(); // LOGFIX: เจอ 0 ไม่ log
     if(withImages.length===0) return;
     for(let item of withImages){
       const imgs = item.image_urls || item.images || [];
@@ -10900,7 +10900,7 @@ async function autoWarningStep3_DeletePermanently_7Days(){
       .lt('created_at', sevenDaysAgo)
       .limit(30);
     if(error){ console.warn('[WARNING-STEP3] query error', error); return; }
-    console.log(`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`, toDelete);
+    (function(){ const _s=`[WARNING-STEP3] เจอ ${toDelete?.length||0} เตือนต้องลบถาวร (7วัน)`; if(!_s.includes('เจอ 0 ')) console.log(_s, toDelete); })(); // LOGFIX: เจอ 0 ไม่ log
     if(!toDelete || toDelete.length===0) return;
     for(let item of toDelete){
       const imgs = item.image_urls || item.images || [];
