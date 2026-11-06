@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-5  </title>
+  <title> i15-6  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2044,7 +2044,7 @@ window.highlightBoth = function(idStr, type){
         <select id="radiusSelect" onchange="updateRadiusCircle()" style="flex:0 0 62px; padding: 4px 2px; border: 1px solid #ccc; border-radius: 6px; font-size: 11px; height: 30px; box-sizing:border-box;">
           <option value="1">1กม.</option>
           <option value="3">3กม.</option>
-          <option value="5">5กม.</option>
+          <option value="5" selected>5กม.</option> <!-- [i15-6 ข้อ 6b] default radius = 5 กม. -->
           <option value="10">10กม.</option>
           <option value="20">20กม.</option>
           <option value="50">50กม.</option>
@@ -2791,7 +2791,7 @@ const CONFIG = {
     let radiusCircle = null;
     let selectedLat = null;
     let selectedLng = null;
-    let selectedRadius = 1;
+    let selectedRadius = 5; // [i15-6 ข้อ 6b] default radius 1 -> 5 กม.
     let placeSearchDebounceTimer = null;
     let propertyMarkersCluster = null;
     let propertyMarkersLayer = null;
@@ -4293,11 +4293,11 @@ function startNewSearchClear(){
   if (typeof clearFiltersNoSearch === 'function') clearFiltersNoSearch();
   selectedLat = null;
   selectedLng = null;
-  selectedRadius = 1;
+  selectedRadius = 5; // [i15-6 ข้อ 6b] default 5 กม.
   try{
     const _latEl = document.getElementById('latInput'); if(_latEl) _latEl.value='';
     const _lngEl = document.getElementById('lngInput'); if(_lngEl) _lngEl.value='';
-    const _rs = document.getElementById('radiusSelect'); if(_rs) _rs.value='1';
+    const _rs = document.getElementById('radiusSelect'); if(_rs) _rs.value='5'; // [i15-6 ข้อ 6b] เคลียร์ค้นหาใหม่ -> radius กลับ default 5 กม.
     const _lfb = document.getElementById('locationFilterBtn'); if(_lfb) _lfb.innerText='📍 พิกัด ▾';
     if (typeof radiusCircle !== 'undefined' && radiusCircle && typeof leafletMap !== 'undefined' && leafletMap) { try{ leafletMap.removeLayer(radiusCircle); }catch(e){} radiusCircle = null; }
   }catch(e){}
@@ -4880,7 +4880,7 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
     // ==========================================
     function updateRadiusCircle() {
       if (!leafletMap || !selectedLat || !selectedLng) return;
-      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 1;
+      const radiusInKm = parseFloat(document.getElementById('radiusSelect').value) || 5; // [i15-6 ข้อ 6b]
       const radiusInMeters = radiusInKm * 1000;
       const centerLatLng = new L.LatLng(selectedLat, selectedLng);
       if (radiusCircle) {
@@ -5224,7 +5224,7 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
       }
       const radiusSelect = document.getElementById('radiusSelect');
       if (radiusSelect) {
-        radiusSelect.value = String(selectedRadius || 1);
+        radiusSelect.value = String(selectedRadius || 5) // [i15-6 ข้อ 6b];
       }
       
       // FIX v7-8-8: เคารพสถานะ Voice - ถ้าปิดอยู่ไม่ต้องเปิดเอง
@@ -5442,7 +5442,7 @@ function closeLocationModal() {
     function clearLocationFilter() {
       selectedLat = null;
       selectedLng = null;
-      selectedRadius = 1;
+      selectedRadius = 5; // [i15-6 ข้อ 6b] default 5 กม.
       
       if (radiusCircle && leafletMap) {
         leafletMap.removeLayer(radiusCircle);
@@ -5457,7 +5457,7 @@ function closeLocationModal() {
         resultsDiv.innerHTML = '';
       }
       const radiusSelect = document.getElementById('radiusSelect');
-      if (radiusSelect) radiusSelect.value = "1";
+      if (radiusSelect) radiusSelect.value = "5"; // [i15-6 ข้อ 6b] ล้างพิกัด -> radius กลับ default 5 กม.
       
       // 1. คืนค่าปุ่มพิกัดหน้าแรก (ของเดิม)
       document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
@@ -5510,13 +5510,13 @@ function closeLocationModal() {
       const lat = document.getElementById('latInput').value.trim();
       const lng = document.getElementById('lngInput').value.trim();
       const radiusSelect = document.getElementById('radiusSelect');
-      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
+      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 5 // [i15-6 ข้อ 6b];
       
       const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
       if (lat && lng) {
         selectedLat = parseFloat(lat);
         selectedLng = parseFloat(lng);
-        selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
+        selectedRadius = isNaN(radiusVal) ? 5 : radiusVal // [i15-6 ข้อ 6b];
         
         document.getElementById('locationFilterBtn').innerText = `📍 ${selectedLat.toFixed(3)}, ${selectedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
         
@@ -5544,7 +5544,7 @@ function closeLocationModal() {
       } else {
         selectedLat = null;
         selectedLng = null;
-        selectedRadius = 1;
+        selectedRadius = 5; // [i15-6 ข้อ 6b] default 5 กม.
         
         document.getElementById('locationFilterBtn').innerText = '📍 พิกัด ▾';
         
@@ -5604,8 +5604,8 @@ function closeLocationModal() {
       window.postingTargetLng = parsedLng;
       // อัปเดตปุ่มแสดงพิกัด
       const radiusSelect = document.getElementById('radiusSelect');
-      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 1;
-      selectedRadius = isNaN(radiusVal) ? 1 : radiusVal;
+      const radiusVal = radiusSelect ? parseFloat(radiusSelect.value) : 5 // [i15-6 ข้อ 6b];
+      selectedRadius = isNaN(radiusVal) ? 5 : radiusVal // [i15-6 ข้อ 6b];
       const locationFilterBtn = document.getElementById('locationFilterBtn');
       if (locationFilterBtn) locationFilterBtn.innerText = `📍 ${parsedLat.toFixed(3)}, ${parsedLng.toFixed(3)} (${selectedRadius} กม.) ▾`;
       const postLocationBtn = document.querySelector('#postModalOverlay button[onclick*="openLocationModal"]');
@@ -6346,7 +6346,7 @@ if (name === "switch_tab_category") {
       if((lat===null||lng===null) && criteria && criteria.district && typeof DISTRICT_CENTER_V15!=='undefined' && DISTRICT_CENTER_V15[criteria.district]){ lat=DISTRICT_CENTER_V15[criteria.district].lat; lng=DISTRICT_CENTER_V15[criteria.district].lng; }
       if(lat===null||lng===null){ lat=num(window._currentUserLat); lng=num(window._currentUserLng); }
       if(lat===null||lng===null){ const li=document.getElementById('latInput'), gi=document.getElementById('lngInput'); if(li&&gi){ lat=num(li.value); lng=num(gi.value); } }
-      if(lat!==null&&lng!==null){ window._currentUserLat=lat; window._currentUserLng=lng; if(selectedLat===null||selectedLng===null){ selectedLat=lat; selectedLng=lng; } return {lat,lng,radius:(parseFloat(selectedRadius)||1)}; }
+      if(lat!==null&&lng!==null){ window._currentUserLat=lat; window._currentUserLng=lng; if(selectedLat===null||selectedLng===null){ selectedLat=lat; selectedLng=lng; } return {lat,lng,radius:(parseFloat(selectedRadius)||5)}; } // [i15-6 ข้อ 6b]
       return null;
     }
     function getSelectedCriteria() {
@@ -6429,7 +6429,7 @@ if (name === "switch_tab_category") {
         if (criteria.searchMode === 'MAP') {
           const _lat = (typeof selectedLat !== 'undefined' ? selectedLat : null);
           const _lng = (typeof selectedLng !== 'undefined' ? selectedLng : null);
-          const _r = (typeof selectedRadius !== 'undefined' ? selectedRadius : 1);
+          const _r = (typeof selectedRadius !== 'undefined' ? selectedRadius : 5) // [i15-6 ข้อ 6b];
           criteria = { lat: _lat, lng: _lng, latitude: _lat, longitude: _lng, radius: _r, searchMode: 'MAP' };
           searchText = '';
         } else {
