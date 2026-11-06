@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i8-15  </title>
+  <title> i8-15-1  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2121,6 +2121,7 @@ window.highlightBoth = function(idStr, type){
     <div class="flyout-sub-item" data-value="ทาวน์โฮม" onclick="selectFlyoutValue(event, 'ทาวน์โฮม')">ทาวน์โฮม</div>
     <div class="flyout-sub-item" data-value="ตึกแถว" onclick="selectFlyoutValue(event, 'ตึกแถว')">ตึกแถว</div>
     <div class="flyout-sub-item" data-value="อาคารพาณิชย์" onclick="selectFlyoutValue(event, 'อาคารพาณิชย์')">อาคารพาณิชย์</div>
+     <div class="flyout-sub-item" data-value="ที่ดิน" onclick="selectFlyoutValue(event, 'ที่ดิน')">ที่ดิน</div>
     <div class="flyout-sub-item" data-value="ร้านค้า" onclick="selectFlyoutValue(event, 'ร้านค้า')">ร้านค้า</div>
     <div class="flyout-sub-item" data-value="ตลาด" onclick="selectFlyoutValue(event, 'ตลาด')">ตลาด</div>
     <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_typeBtn', 'คอนโด/บ้าน ▾')">❌ ล้างค่า คอนโด/บ้าน</div>
@@ -4390,7 +4391,7 @@ function resetAllFilters() {
     }
     function getDropdownOptionsForTopic(topic) {
       if (topic === 'ขาย/เช่า') return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
-      if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ที่ดิน", "ร้านค้า"];
+      if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ที่ดิน", "ร้านค้า", "ตลาด"];
       if (topic === 'ราคาขาย') return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
       if (topic === 'ราคาเช่า') return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
       if (topic === 'จังหวัด') return ["กทม.", "นนทบุรี", "ปทุมธานี", "สมุทรปราการ", "สมุทรสงคราม", "เชียงใหม่", "ภูเก็ต", "สงขลา"];
