@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>  i15-2-LogFix-FrontendFix </title>
+  <title> i15-3  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6011,6 +6011,10 @@ if (name === "switch_tab_category") {
                               }
                             }
                           }
+                          // BUGFIX i15-2: อย่าเอา cleaned text ไปสกัด dropdown - cleanVoiceTextV15 ตัดคำ 'ขาย/บ้าน/คอนโด' ทิ้งในฐานะ STOPWORDS
+                          // ทำให้ประโยค 'ขาย บ้าน คลองสามวา' เหลือแค่ 'คลองสามวา' แล้ว handler นี้ (ที่วิ่งทีหลัง SUBMIT FIX) มาล้าง dropdown ขาย/บ้านทิ้ง
+                          // วิธีแก้: สกัด dropdown จาก RAW text ก่อน clean, ใช้ cleaned text แค่ทำ remaining edit เท่านั้น
+                          const _rawForDropdown = finalText;
                           // v15.12 FINAL FIX: ล้างก่อนใส่
                           if(typeof cleanVoiceTextV15==='function'){
                             const before = finalText;
@@ -6018,9 +6022,16 @@ if (name === "switch_tab_category") {
                             console.log('AI Voice cleaned:', finalText, 'from', before);
                           }
                           // v15.20 FIX: ถ้าคำไหนอยู่ใน dropdown ให้ไปกด dropdown เลย ไม่ต้องเขียนลง edit (ตามที่สั่ง)
-                          const extracted = (typeof extractDropdownAndRemaining === 'function') ? extractDropdownAndRemaining(finalText) : {dropdownFound:[], remainingText: finalText};
-                          // v15.25 FIX: เคลียร์ก่อนทุกครั้ง
-                          try{ if(typeof clearFiltersNoSearch==='function'){ clearFiltersNoSearch(); console.log('[v15.25 CLEAR] เคลียร์ก่อน AI Voice cleaned', extracted?.dropdownFound); } }catch(e){}
+                          const extracted = (typeof extractDropdownAndRemaining === 'function') ? extractDropdownAndRemaining(_rawForDropdown) : {dropdownFound:[], remainingText: finalText};
+                          // v15.25 FIX: เคลียร์ก่อนทุกครั้ง - แต่ถ้ารอบนี้สกัดได้น้อยกว่ารอบก่อน อย่าล้างของเดิมทิ้ง (กัน handler ซ้ำมาทับของที่ SUBMIT FIX ใส่ไว้)
+                          // BUGFIX i15-2: ถ้า extracted รอบนี้เป็น subset ของ dropdown ปัจจุบัน (เช่น มีแค่เขต แต่ปัจจุบันมี ขาย+บ้าน+เขต) ให้ข้ามการเคลียร์
+                          try{
+                            const _cur = (typeof getSelectedCriteria==='function') ? getSelectedCriteria() : {};
+                            const _curVals = [ _cur.priceType, _cur.propertyType, _cur.district, _cur.province, _cur.road ].filter(Boolean);
+                            const _isSubset = extracted?.dropdownFound?.length>0 && extracted.dropdownFound.every(v=>_curVals.includes(v)) && extracted.dropdownFound.length < _curVals.length;
+                            if(_isSubset){ console.log('[i15-2 GUARD] ข้ามเคลียร์ - รอบนี้ได้น้อยกว่าเดิม', extracted.dropdownFound, 'เดิม', _curVals); }
+                            else if(typeof clearFiltersNoSearch==='function'){ clearFiltersNoSearch(); console.log('[v15.25 CLEAR] เคลียร์ก่อน AI Voice cleaned', extracted?.dropdownFound); }
+                          }catch(e){}
                           // 1. กด dropdown ก่อน
                           if (extracted.dropdownFound && extracted.dropdownFound.length) {
                             extracted.dropdownFound.forEach(opt => {
