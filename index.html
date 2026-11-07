@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-13 </title>
+  <title> i15-14 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6621,6 +6621,13 @@ if (name === "switch_tab_category") {
           // เก็บพิกัดอ้างอิงไว้ในฟิลด์แยก เพื่อเรียงใกล้->ไกลเท่านั้น - เซิร์ฟเวอร์ห้ามใช้ฟิลด์นี้ตัดทิ้ง
           if (typeof selectedLat !== 'undefined' && selectedLat) { criteria.refLat = selectedLat; criteria.refLng = selectedLng; }
         }
+        // [i15-14] แท็บสินค้าทั่วไป -> marketplace_items เท่านั้น: TAB_CONFIG ประกาศ table ไว้แล้วแต่ไม่เคยถูกส่ง จึงใส่ตรงนี้หลังแยก MAP/DROPDOWN เพื่อไม่ให้ MAP ทับทิ้ง - gemini-3.5-flash-lite เสมอ
+        try{
+          if(typeof getTabModeFromUI==='function' && getTabModeFromUI().config && getTabModeFromUI().config.mode==='MARKETPLACE'){
+            criteria.table='marketplace_items';
+            if(!criteria.itemType){ const _db=document.querySelector('#decor-filter-row .decor-btn[data-selected-value]'); if(_db && _db.dataset.selectedValue) criteria.itemType=_db.dataset.selectedValue; }
+          }
+        }catch(e){}
         console.log('[v15.17 PAYLOAD] criteria=', JSON.stringify(criteria), 'searchText=', searchText, 'hasEdit:', !!searchText, 'loc=', (typeof selectedLat!=='undefined'?selectedLat:null), (typeof selectedLng!=='undefined'?selectedLng:null), (typeof selectedRadius!=='undefined'?selectedRadius:null)); // LOGFIX: เพิ่มพิกัด/รัศมีในบรรทัดเดียว ไม่เพิ่มบรรทัด log ใหม่
         const payload = {
           action: "searchAll",
