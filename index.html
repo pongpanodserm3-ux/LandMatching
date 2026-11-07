@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-11 </title>
+  <title> i15-12 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5181,22 +5181,44 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
       if(found) showDetailModal(found);
     }
     // ==================== END v7-8-1 ====================
-    // เปิดแผนที่เดิม (locationModalOverlay) แล้วปักหมุดที่พิกัดของรายการนั้น
+    // เปิดแผนที่เดิม (locationModalOverlay) แล้วปักหมุดที่พิกัดของรายการนั้น — FIX กดครั้งเดียวจบ
+    // สาเหตุเดิม: เรียก openLocationModal ก่อน แล้วค่อย setView หลัง 250ms
+    // แต่ openLocationModal สร้างแผนที่ใน setTimeout 200ms + ถ้า selectedLat ว่างจะเรียก geolocation
+    // มาทับพิกัดทีหลัง -> ครั้งแรกเลยหลุดไปอยู่ GPS/ค่าเดิม, ครั้งที่ 2 selectedLat กลายเป็นพิกัดบ้านแล้วเลยถูก
     function openFeedPropertyMap(lat, lng) {
       if (isNaN(lat) || isNaN(lng)) return;
+      // 1) ตั้งพิกัดเป้าหมาย *ก่อน* เปิดโมดัล — openLocationModal จะได้ใช้พิกัดบ้านนี้เป็น defaultLat/defaultLng
+      //    และจะไม่เข้าเงื่อนไข geolocation (!selectedLat) ที่เคยมาทับพิกัดทีหลัง
+      try { selectedLat = lat; selectedLng = lng; } catch (e) {}
+      window._pendingFeedMapTarget = { lat: lat, lng: lng };
       if (typeof openLocationModal === 'function') openLocationModal('filter');
-      setTimeout(() => {
-        if (typeof setCoordinates === 'function') setCoordinates(lat, lng);
-        if (window.leafletMap) {
-          leafletMap.setView([lat, lng], 16);
-          if (window.mapMarker) mapMarker.setLatLng([lat, lng]);
-          try { leafletMap.invalidateSize(); } catch (e) {}
-          if (typeof updateRadiusCircle === 'function') updateRadiusCircle();
-          if (typeof renderPropertyMarkersOnMap === 'function') {
-            renderPropertyMarkersOnMap(AppState.data.properties || []);
-          }
+      // 2) รอจนแผนที่ + หมุดพร้อมจริง (poll) แล้วค่อย setView — ไม่ใช้ setTimeout ตายตัว 250ms อีก
+      var _tries = 0;
+      var _apply = function () {
+        _tries++;
+        if (!window.leafletMap || !window.mapMarker) {
+          if (_tries < 30) setTimeout(_apply, 100);
+          return;
         }
-      }, 250);
+        var _t = window._pendingFeedMapTarget || { lat: lat, lng: lng };
+        if (typeof setCoordinates === 'function') setCoordinates(_t.lat, _t.lng);
+        leafletMap.setView([_t.lat, _t.lng], 16);
+        mapMarker.setLatLng([_t.lat, _t.lng]);
+        try { leafletMap.invalidateSize(); } catch (e) {}
+        setTimeout(function () { try { leafletMap.invalidateSize(); } catch (e) {} }, 200);
+        if (typeof updateRadiusCircle === 'function') updateRadiusCircle();
+        if (typeof renderPropertyMarkersOnMap === 'function') {
+          renderPropertyMarkersOnMap(AppState.data.properties || []);
+        }
+        // 3) ย้ำอีกครั้งหลัง callback สร้างแผนที่ครั้งแรกทำงานเสร็จ (กันโดนทับ)
+        setTimeout(function () {
+          if (!window.leafletMap || !window.mapMarker) return;
+          leafletMap.setView([_t.lat, _t.lng], 16);
+          mapMarker.setLatLng([_t.lat, _t.lng]);
+          try { leafletMap.invalidateSize(); } catch (e) {}
+        }, 700);
+      };
+      setTimeout(_apply, 50);
     }
     function openLocationModal(isFromFloodOrMode){
       // รองรับโหมดใหม่: 'posting' = จากหน้าลงประกาศ, 'filter' = จากปุ่มพิกัดกรอง
