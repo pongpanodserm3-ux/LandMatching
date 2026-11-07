@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-8  </title>
+  <title> i15-9  </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5017,6 +5017,16 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
     }
     
     // ==================== v7-8-1 PROPERTY MARKERS CLUSTER + PRICE DOT ====================
+    // FIX ขาย-เช่า: โชว์ 2 ราคา - ถ้ามีทั้ง price_sell และ price_rent ให้โชว์ทั้งคู่, ถ้ามีราคาเดียว โชว์แบบเดิม
+    function formatDualPrice(item, fallback){
+      const sell = (item && item.price_sell !== null && item.price_sell !== undefined && String(item.price_sell).trim() !== '') ? String(item.price_sell).trim() : '';
+      const rent = (item && item.price_rent !== null && item.price_rent !== undefined && String(item.price_rent).trim() !== '') ? String(item.price_rent).trim() : '';
+      if (sell && rent) return 'ขาย ' + sell + ' / เช่า ' + rent;
+      if (sell) return sell;
+      if (rent) return rent;
+      if (item && item.price !== null && item.price !== undefined && String(item.price).trim() !== '') return String(item.price).trim();
+      return fallback || 'ไม่ระบุราคา';
+    }
     function parsePriceToShort(raw){
       if(!raw) return '•?';
       const s = String(raw);
@@ -5123,11 +5133,11 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
           if(!bounds.contains([lat,lng])) return;
         }
         const color = getPropertyColor(item);
-        const priceShort = parsePriceToShort(item.price_sell || item.price_rent || item.price);
+        const priceShort = (item.price_sell && item.price_rent) ? (parsePriceToShort(item.price_sell) + ' / ' + parsePriceToShort(item.price_rent)) : parsePriceToShort(item.price_sell || item.price_rent || item.price);
         const html = `<div style="background:${color}; color:#fff; border-radius:10px; padding:2px 6px; font-size:10px; font-weight:800; opacity:0.82; border:1px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.35); white-space:nowrap; line-height:14px;">${priceShort}</div>`;
         const icon = L.divIcon({ className:'prop-price-dot', html: html, iconSize:null, iconAnchor:[20,10] });
         const marker = L.marker([lat,lng], { icon: icon, zIndexOffset: 100 });
-        marker.bindPopup(`<div style="font-size:12px; min-width:120px;"><b>${(item.project||item.facebook_name||'อสังหาฯ').slice(0,30)}</b><br/>💰 ${item.price_sell||item.price_rent||''}<br/>📍 ${item.district||''} ${item.province||''}<br/><button onclick="showDetailModalById('${(item.post_id||item.url||'').replace(/'/g,'')}')" style="margin-top:4px; padding:4px 8px; font-size:11px; border:none; background:#159947; color:#fff; border-radius:6px; cursor:pointer;">ดูรายละเอียด</button></div>`);
+        marker.bindPopup(`<div style="font-size:12px; min-width:120px;"><b>${(item.project||item.facebook_name||'อสังหาฯ').slice(0,30)}</b><br/>💰 ${formatDualPrice(item, '')}<br/>📍 ${item.district||''} ${item.province||''}<br/><button onclick="showDetailModalById('${(item.post_id||item.url||'').replace(/'/g,'')}')" style="margin-top:4px; padding:4px 8px; font-size:11px; border:none; background:#159947; color:#fff; border-radius:6px; cursor:pointer;">ดูรายละเอียด</button></div>`);
         marker.on('click', ()=>{ /* highlight card */ });
         if(propertyMarkersCluster){
           propertyMarkersCluster.addLayer(marker);
@@ -6759,7 +6769,7 @@ if (name === "switch_tab_category") {
         
         card.onclick = () => showDetailModal(item);
     
-        const price = item.price || item.price_sell || item.price_rent || 'ไม่ระบุราคา';
+        const price = formatDualPrice(item, 'ไม่ระบุราคา');
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
         // [i15-10] แยกการ์ดอสังหาด้วย item_id/item_type เท่านั้น — เดิมเช็ก title/_score ด้วย
         // ทำให้โพสต์อสังหาหลุดเข้าสาขาสินค้า แล้ว property_type ('บ้าน') ไปโผล่ทั้งบรรทัด 1 และ 2
@@ -6836,7 +6846,7 @@ if (name === "switch_tab_category") {
     function showDetailModal(item) {
       stopAIVoiceSpeech(); 
       document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = item.price_sell || item.price_rent || 'ไม่ระบุ';
+      document.getElementById('modalPrice').innerText = formatDualPrice(item, 'ไม่ระบุ');
       document.getElementById('modalDesc').innerHTML = item.details || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
       const deepLinkBtn = document.getElementById('modalDeepLink');
