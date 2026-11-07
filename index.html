@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-12 </title>
+  <title> i15-13 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -577,7 +577,11 @@
     .detail-modal {
       background: #fff;
       width: 100%;
-      height: 85vh;
+      /* i15-13: popup รายละเอียดบ้านจากฟีดล่าง สูง 2/3 ของจอ (66.666vh) ด้านบน 1/3 เว้นว่างไว้ */
+      height: 66.666vh;
+      height: 66.666dvh;
+      max-height: 66.666vh;
+      max-height: 66.666dvh;
       border-radius: 30px 30px 0 0;
       padding: 20px; box-sizing: border-box;
       display: flex; flex-direction: column;
