@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-9-  </title>
+  <title> i15-10 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -5020,11 +5020,14 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
     function formatDualPrice(item, fallback){
       const sell = (item && item.price_sell !== null && item.price_sell !== undefined && String(item.price_sell).trim() !== '') ? String(item.price_sell).trim() : '';
       const rent = (item && item.price_rent !== null && item.price_rent !== undefined && String(item.price_rent).trim() !== '') ? String(item.price_rent).trim() : '';
+      const isBoth = (item && item.price_type === 'ขาย-เช่า');
       if (sell && rent) return 'ขาย ' + sell + ' / เช่า ' + rent;
+      if (isBoth && sell && !rent) return 'ขาย ' + sell + ' / เช่า ติดต่อสอบถาม';
+      if (isBoth && rent && !sell) return 'ขาย ติดต่อสอบถาม / เช่า ' + rent;
       if (sell) return sell;
       if (rent) return rent;
       if (item && item.price !== null && item.price !== undefined && String(item.price).trim() !== '') return String(item.price).trim();
-      return fallback || 'ไม่ระบุราคา';
+      return fallback || 'ติดต่อสอบถาม';
     }
     function parsePriceToShort(raw){
       if(!raw) return '•?';
@@ -6768,7 +6771,7 @@ if (name === "switch_tab_category") {
         
         card.onclick = () => showDetailModal(item);
     
-        const price = formatDualPrice(item, 'ไม่ระบุราคา');
+        const price = formatDualPrice(item, 'ติดต่อสอบถาม');
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
         // [i15-10] แยกการ์ดอสังหาด้วย item_id/item_type เท่านั้น — เดิมเช็ก title/_score ด้วย
         // ทำให้โพสต์อสังหาหลุดเข้าสาขาสินค้า แล้ว property_type ('บ้าน') ไปโผล่ทั้งบรรทัด 1 และ 2
@@ -6845,7 +6848,7 @@ if (name === "switch_tab_category") {
     function showDetailModal(item) {
       stopAIVoiceSpeech(); 
       document.getElementById('modalTitle').innerText = item.project || item.facebook_name || 'ประกาศ';
-      document.getElementById('modalPrice').innerText = formatDualPrice(item, 'ไม่ระบุ');
+      document.getElementById('modalPrice').innerText = formatDualPrice(item, 'ติดต่อสอบถาม');
       document.getElementById('modalDesc').innerHTML = item.details || item.description || 'ไม่มีรายละเอียดเพิ่มเติม';
       
       const deepLinkBtn = document.getElementById('modalDeepLink');
