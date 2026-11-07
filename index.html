@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-10 </title>
+  <title> i15-11 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1019,6 +1019,15 @@
       box-shadow: 0 5px 12px rgba(70, 205, 147, 0.6);
     }
     .chat-owner-btn:active { transform: translateY(0); }
+  /* ปุ่มดูแผนที่ในการ์ดฟีดอสังหา — เล็กๆ ต่อท้าย "ห่าง X กม." */
+  .view-map-btn{
+    background:#fff; color:#2563eb; font-size:10px; font-weight:bold;
+    line-height:1; padding:2px 7px; border-radius:999px;
+    border:1px solid #93c5fd; cursor:pointer;
+    display:inline-flex; align-items:center; gap:2px;
+    margin-left:4px; white-space:nowrap; vertical-align:middle;
+  }
+  .view-map-btn:hover{ background:#eff6ff; }
 /* --- สไตล์การ์ดรายการบ้านแบบแนวนอน และสไลเดอร์ภาพทางขวา --- */
     .property-card {
       background: #ffffff;
@@ -5172,6 +5181,23 @@ function applyEditToDropdowns_UNUSED_OLD(text) {
       if(found) showDetailModal(found);
     }
     // ==================== END v7-8-1 ====================
+    // เปิดแผนที่เดิม (locationModalOverlay) แล้วปักหมุดที่พิกัดของรายการนั้น
+    function openFeedPropertyMap(lat, lng) {
+      if (isNaN(lat) || isNaN(lng)) return;
+      if (typeof openLocationModal === 'function') openLocationModal('filter');
+      setTimeout(() => {
+        if (typeof setCoordinates === 'function') setCoordinates(lat, lng);
+        if (window.leafletMap) {
+          leafletMap.setView([lat, lng], 16);
+          if (window.mapMarker) mapMarker.setLatLng([lat, lng]);
+          try { leafletMap.invalidateSize(); } catch (e) {}
+          if (typeof updateRadiusCircle === 'function') updateRadiusCircle();
+          if (typeof renderPropertyMarkersOnMap === 'function') {
+            renderPropertyMarkersOnMap(AppState.data.properties || []);
+          }
+        }
+      }, 250);
+    }
     function openLocationModal(isFromFloodOrMode){
       // รองรับโหมดใหม่: 'posting' = จากหน้าลงประกาศ, 'filter' = จากปุ่มพิกัดกรอง
       let isFromFlood = false;
@@ -6773,6 +6799,13 @@ if (name === "switch_tab_category") {
     
         const price = formatDualPrice(item, 'ติดต่อสอบถาม');
         const distanceText = item._distance !== undefined ? ` | 📍 ห่าง ${item._distance.toFixed(1)} กม.` : '';
+        // ปุ่ม "ดูแผนที่" เล็กๆ — แสดงเฉพาะรายการที่มีพิกัดเท่านั้น
+        const _mapLat = parseFloat(item.latitude || item.lat || item.use_lat || item.use);
+        const _mapLng = parseFloat(item.longitude || item.lng || item.use2_lng || item.use2);
+        const _hasMapCoord = !isNaN(_mapLat) && !isNaN(_mapLng);
+        const mapBtnHTML = _hasMapCoord
+          ? `<button type="button" class="view-map-btn" data-map-lat="${_mapLat}" data-map-lng="${_mapLng}">🗺️ ดูแผนที่</button>`
+          : '';
         // [i15-10] แยกการ์ดอสังหาด้วย item_id/item_type เท่านั้น — เดิมเช็ก title/_score ด้วย
         // ทำให้โพสต์อสังหาหลุดเข้าสาขาสินค้า แล้ว property_type ('บ้าน') ไปโผล่ทั้งบรรทัด 1 และ 2
         const isProduct = !!(item.item_id || item.item_type);
@@ -6814,7 +6847,7 @@ if (name === "switch_tab_category") {
               ${titleText}
             </div>
             <div style="font-size: 12px; color: #555; margin-bottom: 6px;">
-              📍 ${locExtra} ${distanceText}
+              📍 ${locExtra} ${distanceText} ${mapBtnHTML}
             </div>
             <div style="font-size: 15px; font-weight: bold; color: #d9534f;">
               💰 ${price}
@@ -6839,6 +6872,14 @@ if (name === "switch_tab_category") {
         if (chatBtn) {
           chatBtn.onclick = (e) => {
             openOwnerChat(item, e);
+          };
+        }
+        // ปุ่มดูแผนที่ในการ์ดฟีด — stopPropagation กันไม่ให้เด้ง showDetailModal
+        const mapBtn = card.querySelector('.view-map-btn');
+        if (mapBtn) {
+          mapBtn.onclick = (e) => {
+            e.stopPropagation();
+            openFeedPropertyMap(parseFloat(mapBtn.dataset.mapLat), parseFloat(mapBtn.dataset.mapLng));
           };
         }
     
