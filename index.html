@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i17-3 </title>
+  <title> i17-3-1 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6603,7 +6603,17 @@ if (name === "switch_tab_category") {
       });
       const _loc = (typeof resolveSearchLocation==='function') ? resolveSearchLocation(criteria) : null;
       if (_loc) { criteria.lat=_loc.lat; criteria.lng=_loc.lng; criteria.latitude=_loc.lat; criteria.longitude=_loc.lng; criteria.radius=_loc.radius; }
-      console.log('[v15.19 CRITERIA READ]', JSON.stringify(criteria));
+      // FIX i17-4 ข้อ 2: ลบ log ซ้ำออก - log แค่ตอน criteria เปลี่ยนเท่านั้น - gemini-3.5-flash-lite
+      // สาเหตุที่ log ซ้ำ 2 ครั้ง/การค้น 1 ครั้ง: getSelectedCriteria() ถูกเรียก 2 รอบต่อการค้น 1 ครั้ง
+      // (testShowList รอบหนึ่ง + ตอนคิดคะแนน/เรียงผลอีกรอบ) ค่า criteria เท่าเดิมทุกประการ
+      // แก้แค่การ log เท่านั้น: ถ้าค่าเท่าเดิมกับครั้งก่อนหน้า ไม่ต้อง log ซ้ำ - ไม่แตะค่าที่ return ไม่แตะจุดที่เรียก
+      try {
+        const _criteriaKey = JSON.stringify(criteria);
+        if (window._lastCriteriaReadLog !== _criteriaKey) {
+          window._lastCriteriaReadLog = _criteriaKey;
+          console.log('[v15.19 CRITERIA READ]', _criteriaKey);
+        }
+      } catch (e) { console.log('[v15.19 CRITERIA READ]', JSON.stringify(criteria)); }
       return criteria;
     }
     function setDropdownById(id,value){const btn=document.getElementById(id); if(btn){btn.innerText=value+' ▾'; btn.dataset.selectedValue=value; console.log('[v15.19 SET BY ID] '+id+' -> '+value); return true;} return false;}
