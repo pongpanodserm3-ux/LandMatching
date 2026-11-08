@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i17-1 </title>
+  <title> i17-2 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -7417,6 +7417,32 @@ if (name === "switch_tab_category") {
       }
       // 3. ถ้ายังไม่เจอ ให้หาแบบ key มี kw อยู่ แต่ต้องยาวพอและไม่ใช่ substring สั้นๆที่ทำให้สับสน เช่น "เสื้อผ้า" ไม่ควร match "ตู้เสื้อผ้า" ถ้าใน map ไม่มี "ตู้เสื้อผ้า"
       // เดิมทำสองทาง ทำให้เสื้อผ้าไปเจอตู้เสื้อผ้าได้ ตอนนี้ตัดออก
+      // 3.5 FIX i15-16: รายการย่อย (flyout-sub-item) เช่น ผ้าม่าน / วอลเปเปอร์ / มู่ลี่ / พื้นไม้ / กระทะ - gemini-3.5-flash-lite
+      // สาเหตุบั๊ก: DECOR_CATEGORIES_MAP มีแค่ชื่อกลุ่ม (ของแต่งบ้าน / ประตู) ไม่มีชื่อรายการย่อย
+      // ประตูรอดเพราะ "ประตู" เป็นทั้งคีย์ใน map และชื่อกลุ่ม ส่วน "ผ้าม่าน" เป็นแค่รายการย่อยใต้กลุ่ม ของแต่งบ้าน
+      // จึงตกไปถึง log "DECOR: ไม่เจอ mapping" แล้ว itemType ค้างเป็น "ประตู" ตัวเก่า
+      // วิธีแก้ตามหลักการเดิม: สแกนรายการย่อยจริงใน DOM แล้วตั้งปุ่มเป็นชื่อรายการย่อยนั้น + เรืองแสง + selectedValue = รายการย่อย
+      if (!matched) {
+        try {
+          const EN_ALIAS = { 'curtain': 'ผ้าม่าน', 'curtains': 'ผ้าม่าน', 'door': 'ประตู', 'wallpaper': 'วอลเปเปอร์', 'blind': 'มู่ลี่', 'blinds': 'มู่ลี่', 'mosquito': 'ม่านกันยุง', 'floor': 'พื้นไม้', 'pot': 'หม้อ', 'pan': 'กระทะ', 'knife': 'มีด' };
+          let kwNorm = kw;
+          for (const en in EN_ALIAS) { if (kwNorm.includes(en)) kwNorm = kwNorm.replace(en, EN_ALIAS[en]); }
+          const subs = Array.from(document.querySelectorAll('.flyout-menu .flyout-sub-item'))
+            .map(el => ({ el: el, txt: (el.textContent || '').trim() }))
+            .filter(o => o.txt && o.txt.length >= 2)
+            .sort((a, b) => b.txt.length - a.txt.length);
+          for (const o of subs) {
+            if (kwNorm === o.txt.toLowerCase() || kwNorm.includes(o.txt.toLowerCase())) {
+              const menu = o.el.closest('.flyout-menu');
+              if (!menu || !menu.id) continue;
+              const mNum = menu.id.match(/cat(\d+)Flyout/);
+              if (!mNum) continue;
+              matched = { cat: menu.id, btnIndex: parseInt(mNum[1], 10) - 1, value: o.txt };
+              break;
+            }
+          }
+        } catch (e) { console.error('autoSelectDecor sub-item scan error', e); }
+      }
       // 4. FIX v7-11-4: ถ้าไม่เจอ ให้หาใน BILINGUAL_MAPPING_CONFIG ด้วย
       if (!matched && window.BILINGUAL_MAPPING_CONFIG) {
         const cfg = window.BILINGUAL_MAPPING_CONFIG;
