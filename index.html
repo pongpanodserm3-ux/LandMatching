@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i17-2 </title>
+  <title> i17-3 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -6190,6 +6190,12 @@ function closeLocationModal() {
                       //AI สั่งสลับแท็บ ผ่านเสียง(Function Calling / Tool Handling) Function Nameชื่อ"switch_tab_category" - FIX 10 หมวดสินค้าทั่วไป
                       else 
 if (name === "switch_tab_category") {
+                      // FIX i17-3 ข้อ 3: กัน Gemini ส่งคำสั่งเดิมซ้ำภายใน 2 วินาที - gemini-3.5-flash-lite
+                      const _swKey = (args.tabId || '') + '|' + (args.searchText || '');
+                      const _swNow = Date.now();
+                      const _swDup = (window._lastSwitchTabKey === _swKey && (_swNow - (window._lastSwitchTabTime || 0)) < 2000);
+                      if (_swDup) { console.log('SWITCH_TAB DUP SKIP (i17-3):', _swKey); }
+                      else { window._lastSwitchTabKey = _swKey; window._lastSwitchTabTime = _swNow;
                       switchTab(args.tabId);
                       if (args.searchText) {
                         const activeInput = document.querySelector('.tab-content:not([style*="display: none"]) .custom-edit');
@@ -6302,10 +6308,8 @@ if (name === "switch_tab_category") {
                         }
                         if (args.tabId === 'decor' && typeof window.autoSelectDecorByKeyword === 'function') {
                           setTimeout(()=>{ window.autoSelectDecorByKeyword(args.searchText); }, 300);
-                          setTimeout(()=>{ 
-                            if (typeof window.autoSearchAfterAI === 'function') window.autoSearchAfterAI();
-                            else if (typeof testShowList === 'function') testShowList();
-                          }, 800);
+                          // FIX i17-3 ข้อ 1: ตัด autoSearchAfterAI (testShowList ครั้งที่ 2 ที่ 800+600ms) ทิ้ง - gemini-3.5-flash-lite
+                          // autoSelectDecorByKeyword เรียก testShowList ครั้งเดียวตอนจบอยู่แล้ว เหลือค้นครั้งเดียว ไม่กระพริบ 2 รอบ
                         } else {
                           setTimeout(()=>{ 
                             if (typeof testShowList === 'function') testShowList();
@@ -6315,6 +6319,13 @@ if (name === "switch_tab_category") {
                       if (args.tabId === 'decor' && !args.searchText && typeof window.autoSelectDecorByKeyword === 'function') {
                         setTimeout(()=>{ window.autoSelectDecorByKeyword(args.tabId); }, 300);
                       }
+                      } // end if (!_swDup) - FIX i17-3 ข้อ 3
+                      // FIX i17-3 ข้อ 2: ส่ง Tool Response กลับให้ Gemini ทุกครั้ง (รวมเคสซ้ำที่ข้าม) กัน Gemini ส่งคำสั่งเดิมซ้ำ - gemini-3.5-flash-lite
+                      try {
+                        if (AppState.voice.ws && AppState.voice.ws.readyState === WebSocket.OPEN && id) {
+                          AppState.voice.ws.send(JSON.stringify({ toolResponse: { functionResponses: [{ response: { output: { success: true, message: "เปลี่ยนแท็บเรียบร้อยแล้ว" } }, id: id }] } }));
+                        }
+                      } catch (e) { console.error('switch_tab toolResponse error', e); }
                     } else if (name === "submit_user_summary") {
                     // 1. ป้องกัน Error จากกรณี AI ส่งค่า args มาเป็น null หรือโครงสร้างไม่ตรง
                     let summaryText = "";
@@ -7505,10 +7516,16 @@ if (name === "switch_tab_category") {
           const numMatch = originalDefault.match(/^(\d+\.\s*)/);
           if (numMatch) prefix = numMatch[1];
           // ถ้า original มีเลขอยู่แล้ว ใช้เลขนั้น
+          // FIX i17-3 ข้อ 4: จำค่าก่อนตั้ง - ถ้าปุ่มนี้มีค่านี้ + เรืองแสงอยู่แล้ว ไม่ต้องลบ/ใส่ glow + เลื่อนซ้ำ - gemini-3.5-flash-lite
+          const _prevSelected = targetBtn.dataset.selectedValue;
+          const _hadGlow = targetBtn.classList.contains('ai-active-glow');
+          const _alreadyActive = (_prevSelected === matched.value && _hadGlow);
           targetBtn.innerText = prefix + matched.value + ' \u25BE';
           targetBtn.dataset.selectedValue = matched.value;
           console.log('DECOR AUTO-SELECT v7-11-4:', matched.value, 'prefix:', prefix, 'from keyword:', keyword);
           // FIX v7-11-7: เลือกหมวดเดียวแล้วรีเซ็ตที่เหลือกลับ default ที่แท้จริง - gemini-3.5-flash-lite
+          // FIX i17-3 ข้อ 4: ถ้า _alreadyActive ให้ข้ามทั้งบล็อกนี้ (ลบ glow + reset ทั้งแถว + ใส่ glow + scroll) กันกระพริบ
+          if (!_alreadyActive) {
           try {
             const parentRow = targetBtn.closest('.filter-scroll-row');
             if (parentRow) {
@@ -7569,6 +7586,7 @@ if (name === "switch_tab_category") {
               targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             } catch(e){}
           } catch(e){ console.error('reset default error', e); }
+          } // end if (!_alreadyActive) - FIX i17-3 ข้อ 4
           if (typeof testShowList === 'function') { setTimeout(()=> testShowList(), 200); }
         }
       } catch(e){ console.error('autoSelectDecor error', e); }
