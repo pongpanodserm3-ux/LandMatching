@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i15-14 </title>
+  <title> i17-1 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -1646,7 +1646,7 @@ window.highlightBoth = function(idStr, type){
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat3Flyout')">3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat4Flyout')">4. คอมพิวเตอร์ และอิเล็กทรอนิกส์ ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat5Flyout')">5. ยานพาหนะ และอะไหล่ ▾</button>
-        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat6Flyout')">6. เครื่องใช้ไฟฟ้าภายในบ้าน ▾</button>
+        <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat6Flyout')">6. เครื่องใช้ในบ้านและห้องครัว ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat7Flyout')">7. แฟชั่น เครื่องแต่งกาย ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat8Flyout')">8. แม่และเด็ก / สัตว์เลี้ยง ▾</button>
         <button class="filter-btn decor-btn" onclick="openMultiFlyout(event, 'cat9Flyout')">9. กีฬา และของสะสม ▾</button>
@@ -2439,17 +2439,33 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
     <div class="flyout-group">
-      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เฟอร์นิเจอร์ภายนอก')">เฟอร์นิเจอร์ภายนอก</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อุปกรณ์ภายนอกบ้าน')">อุปกรณ์ภายนอกบ้าน</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ชุดโต๊ะสนาม')">ชุดโต๊ะสนาม</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ชิงช้า')">ชิงช้า</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ร่มสนาม')">ร่มสนาม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หญ้าเทียม')">หญ้าเทียม</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หินตกแต่งสวน')">หินตกแต่งสวน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('น้ำพุ')">น้ำพุ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สายยาง')">สายยาง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('สปริงเกอร์')">สปริงเกอร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ไฟสวน')">ไฟสวน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('จอบ')">จอบ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เสียม')">เสียม</div>
       </div>
     </div>
     <div class="flyout-group">
       <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'ของแต่งบ้าน')">ของแต่งบ้าน</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
       <div class="flyout-submenu">
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ผ้าม่าน')">ผ้าม่าน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('วอลเปเปอร์')">วอลเปเปอร์</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('แผ่นติดผนัง')">แผ่นติดผนัง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระเบื้องผนัง')">กระเบื้องผนัง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ระแนงไม้')">ระแนงไม้</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ฟิล์มติดกระจก')">ฟิล์มติดกระจก</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ม่านกันยุง')">ม่านกันยุง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ม่านปรับแสง')">ม่านปรับแสง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('มู่ลี่')">มู่ลี่</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('พรม')">พรม</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('กระจกแต่งบ้าน')">กระจกแต่งบ้าน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ภาพแขวน')">ภาพแขวน</div>
@@ -2524,6 +2540,17 @@ window.highlightBoth = function(idStr, type){
         <div class="flyout-sub-item" onclick="selectFlyoutValue('สีทาบ้าน')">สีทาบ้าน</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เคมีภัณฑ์กันซึม')">เคมีภัณฑ์กันซึม</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('ปั๊มน้ำ/ถังเก็บน้ำ')">ปั๊มน้ำ/ถังเก็บน้ำ</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'พื้นและวัสดุปูพื้น')">พื้นและวัสดุปูพื้น</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พื้นไม้')">พื้นไม้</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พื้นลามิเนต')">พื้นลามิเนต</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พื้นไวนิล SPC')">พื้นไวนิล SPC</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระเบื้องปูพื้น')">กระเบื้องปูพื้น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('พรมปูพื้น')">พรมปูพื้น</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('บัวพื้น')">บัวพื้น</div>
       </div>
     </div>
   </div>
@@ -2614,7 +2641,7 @@ window.highlightBoth = function(idStr, type){
       </div>
     </div>
   </div>
-  <!-- หมวดที่ 6. เครื่องใช้ไฟฟ้าภายในบ้าน -->
+  <!-- หมวดที่ 6. เครื่องใช้ในบ้านและห้องครัว -->
   <div class="flyout-menu" id="cat6Flyout">
     <div class="flyout-group">
       <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'เครื่องใช้ไฟฟ้าใหญ่')">เครื่องใช้ไฟฟ้าใหญ่</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
@@ -2642,6 +2669,18 @@ window.highlightBoth = function(idStr, type){
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องดูดฝุ่น')">เครื่องดูดฝุ่น</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องกรองอากาศ')">เครื่องกรองอากาศ</div>
         <div class="flyout-sub-item" onclick="selectFlyoutValue('เครื่องกรองน้ำ')">เครื่องกรองน้ำ</div>
+      </div>
+    </div>
+    <div class="flyout-group">
+      <div class="flyout-item"><span class="flyout-label" onclick="selectFlyoutValue(event, 'อุปกรณ์ครัว')">อุปกรณ์ครัว</span><span class="flyout-arrow-btn" onclick="toggleSubFlyout(event, this)"><span class="arrow">▸</span></span></div>
+      <div class="flyout-submenu">
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('หม้อ')">หม้อ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กระทะ')">กระทะ</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('มีด')">มีด</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('เขียง')">เขียง</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('กล่องเก็บอาหาร')">กล่องเก็บอาหาร</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('อ่างล้างจาน')">อ่างล้างจาน</div>
+        <div class="flyout-sub-item" onclick="selectFlyoutValue('ที่คว่ำจาน')">ที่คว่ำจาน</div>
       </div>
     </div>
   </div>
@@ -2898,7 +2937,7 @@ const CONFIG = {
     const TAB_PROMPTS = {
       sos: "ตอนนี้ผู้ใช้อยู่ที่แท็บ '🚨 วิกฤตน้ำท่วม' คุณคือ AI เจ้าหน้าที่ศูนย์ช่วยเหลือ มีหน้าที่เพียงช่วยคน จัดหาของ ส่งของ ส่งคน และช่วยเหลือเท่านั้น หน้าที่: สรุปจำนวนเคสขอความช่วยเหลือที่มีในระบบแบบกระชับ(ไม่ลงรายละเอียดแต่ละเคสจนกว่า user จะถาม) ห้ามวิเคราะห์พื้นที่เสี่ยง ห้ามทำนายแนวโน้ม 24-48 ชม.ข้างหน้าโดยเด็ดขาด ห้ามแนะนำว่าควรอพยพไปที่ไหน ห้ามคาดคะเนอนาคตว่าจะเป็นอย่างไรโดยเด็ดขาด ทุกเรื่องเกี่ยวกับวิกฤตหรือการอพยพ ให้พูดเพียงว่า 'ขอให้ฟังประกาศจาก กรุงเทพมหานคร เท่านั้นครับ' เราไม่มีหน้าที่คาดเดาใดๆ ทั้งสิ้น พูดกระชับ จริงจัง ให้กำลังใจ ลงท้ายครับ ใช้ข้อมูลจริงจากระบบเท่านั้น",
       realestate: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'อสังหาริมทรัพย์' ให้คุณรับบทบาทเป็น AI ผู้เชี่ยวชาญด้านอสังหาริมทรัพย์ ค้นหาบ้าน คอนโด ที่ดิน ราคาเช่า/ซื้อ และตอบคำถามเกี่ยวกับอสังหาฯ อย่างเป็นกันเองและกระชับ แต่ถ้า user พูดถึงสินค้านอกเหนืออสังหาฯ เช่น รถยนต์, มอเตอร์ไซค์, เฟอร์นิเจอร์, คอมพิวเตอร์, เครื่องใช้ไฟฟ้า, เสื้อผ้า, กีฬา ให้เรียก switch_tab_category ไปยังแท็บ decor/lifestyle/others ทันที ห้ามตอบว่าเป็นอสังหาฯ อย่างเดียว",
-      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' สำคัญ: ถ้า user พูดภาษาไทย ให้ตอบและพิมพ์ค้นหาเป็นภาษาไทยเสมอ เช่น user บอก นิสสัน ให้พิมพ์ นิสสัน ห้ามพิมพ์ Nissan อย่างเดียว ถ้า user บอก Toyota ให้พิมพ์ โตโยต้า Toyota เพื่อให้หาเจอทั้ง 2 ภาษา มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ไฟฟ้าภายในบ้าน 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
+      decor: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'สินค้าทั่วไปและของแต่งบ้าน' สำคัญ: ถ้า user พูดภาษาไทย ให้ตอบและพิมพ์ค้นหาเป็นภาษาไทยเสมอ เช่น user บอก นิสสัน ให้พิมพ์ นิสสัน ห้ามพิมพ์ Nissan อย่างเดียว ถ้า user บอก Toyota ให้พิมพ์ โตโยต้า Toyota เพื่อให้หาเจอทั้ง 2 ภาษา มี 10 หมวดหลัก: 1.เฟอร์นิเจอร์ แต่งบ้าน (เก้าอี้ โซฟา โต๊ะ ตู้ เตียง) 2.โคมไฟ และระบบแสงสว่าง 3.ประตูหน้าต่าง และวัสดุซ่อมบ้าน 4.คอมพิวเตอร์ และอิเล็กทรอนิกส์ 5.ยานพาหนะ และอะไหล่ (รถยนต์ รถจักรยานยนต์ จักรยาน อะไหล่) 6.เครื่องใช้ในบ้านและห้องครัว 7.แฟชั่น เครื่องแต่งกาย 8.แม่และเด็ก / สัตว์เลี้ยง 9.กีฬา และของสะสม 10.สินค้าอุตสาหกรรม และร้านค้า เมื่อ user บอกสินค้าใน 10 หมวดนี้ ให้เรียก switch_tab_category(tabId='decor', searchText=ชื่อสินค้า) และระบบจะ auto-select หมวดย่อยให้เอง",
       lifestyle: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ไลฟ์สไตล์และท่องเที่ยว' ให้คุณรับบทบาทเป็น AI ผู้ช่วยแนะนำไลฟ์สไตล์ ร้านอาหาร คาเฟ่ และสถานที่ท่องเที่ยวใกล้เคียงอย่างเป็นมิตรและน่าสนใจ",
       others: "ตอนนี้ผู้ใช้เปลี่ยนมาที่แท็บ 'ช่างและงานบริการ' ให้คุณรับบทบาทเป็น AI ผู้ช่วยค้นหาและแนะนำช่างซ่อมบ้าน ช่างไฟ ช่างแอร์ และงานบริการต่างๆ ให้คำแนะนำที่ตรงจุดและเชื่อถือได้"
     };
@@ -7146,8 +7185,41 @@ if (name === "switch_tab_category") {
       'เตียง': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
       'เตียงและห้องนอน': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
       'ห้องนอน': { cat: 'cat1Flyout', btnIndex: 0, value: 'เตียงและห้องนอน' },
-      'เฟอร์นิเจอร์ภายนอก': { cat: 'cat1Flyout', btnIndex: 0, value: 'เฟอร์นิเจอร์ภายนอก' },
+      'อุปกรณ์ภายนอกบ้าน': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
       'ของแต่งบ้าน': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'วอลเปเปอร์': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'วอลเปเปอร์และผนัง': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'แผ่นติดผนัง': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'กระเบื้องผนัง': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'ระแนงไม้': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'ฟิล์มติดกระจก': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'ม่านกันยุง': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'ม่านปรับแสง': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'มู่ลี่': { cat: 'cat1Flyout', btnIndex: 0, value: 'ของแต่งบ้าน' },
+      'อุปกรณ์ภายนอกบ้าน': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'หญ้าเทียม': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'หินตกแต่งสวน': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'น้ำพุ': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'สายยาง': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'สปริงเกอร์': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'ไฟสวน': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'จอบ': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'เสียม': { cat: 'cat1Flyout', btnIndex: 0, value: 'อุปกรณ์ภายนอกบ้าน' },
+      'พื้นและวัสดุปูพื้น': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'พื้นไม้': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'พื้นลามิเนต': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'พื้นไวนิล SPC': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'กระเบื้องปูพื้น': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'พรมปูพื้น': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'บัวพื้น': { cat: 'cat3Flyout', btnIndex: 2, value: 'พื้นและวัสดุปูพื้น' },
+      'อุปกรณ์ครัว': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'หม้อ': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'กระทะ': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'มีด': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'เขียง': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'กล่องเก็บอาหาร': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'อ่างล้างจาน': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
+      'ที่คว่ำจาน': { cat: 'cat6Flyout', btnIndex: 5, value: 'อุปกรณ์ครัว' },
       // 2. โคมไฟ และระบบแสงสว่าง - เลือกจากช้อยส์ที่มีจริง
       'โคมไฟ': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟ และระบบแสงสว่าง' },
       'โคมไฟ และระบบแสงสว่าง': { cat: 'cat2Flyout', btnIndex: 1, value: 'โคมไฟ และระบบแสงสว่าง' },
@@ -7421,7 +7493,7 @@ if (name === "switch_tab_category") {
                 'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
                 'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
                 'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
-                'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+                'cat6Flyout': '6. เครื่องใช้ในบ้านและห้องครัว',
                 'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
                 'cat8Flyout': '8. แม่และเด็ก',
                 'cat9Flyout': '9. กีฬา และของสะสม',
@@ -7492,7 +7564,7 @@ if (name === "switch_tab_category") {
             'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
             'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
             'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
-            'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+            'cat6Flyout': '6. เครื่องใช้ในบ้านและห้องครัว',
             'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
             'cat8Flyout': '8. แม่และเด็ก',
             'cat9Flyout': '9. กีฬา และของสะสม',
@@ -7548,7 +7620,7 @@ if (name === "switch_tab_category") {
         'cat3Flyout': '3. ประตูหน้าต่าง และวัสดุซ่อมบ้าน',
         'cat4Flyout': '4. คอมพิวเตอร์ และอิเล็กทรอนิกส์',
         'cat5Flyout': '5. ยานพาหนะ และอะไหล่',
-        'cat6Flyout': '6. เครื่องใช้ไฟฟ้าภายในบ้าน',
+        'cat6Flyout': '6. เครื่องใช้ในบ้านและห้องครัว',
         'cat7Flyout': '7. แฟชั่น เครื่องแต่งกาย',
         'cat8Flyout': '8. แม่และเด็ก',
         'cat9Flyout': '9. กีฬา และของสะสม',
