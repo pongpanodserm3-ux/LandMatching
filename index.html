@@ -4,7 +4,7 @@
   <link rel="shortcut icon" href="#"> 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title> i17-5 </title>
+  <title> i20-1 </title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -2131,12 +2131,11 @@ window.highlightBoth = function(idStr, type){
     <div class="flyout-sub-item" data-value="บ้าน" onclick="selectFlyoutValue(event, 'บ้าน')">บ้าน</div>
     <div class="flyout-sub-item" data-value="คอนโด" onclick="selectFlyoutValue(event, 'คอนโด')">คอนโด</div>
     <div class="flyout-sub-item" data-value="ทาวน์เฮาส์" onclick="selectFlyoutValue(event, 'ทาวน์เฮาส์')">ทาวน์เฮาส์</div>
-    <div class="flyout-sub-item" data-value="ทาวน์โฮม" onclick="selectFlyoutValue(event, 'ทาวน์โฮม')">ทาวน์โฮม</div>
-    <div class="flyout-sub-item" data-value="ตึกแถว" onclick="selectFlyoutValue(event, 'ตึกแถว')">ตึกแถว</div>
     <div class="flyout-sub-item" data-value="อาคารพาณิชย์" onclick="selectFlyoutValue(event, 'อาคารพาณิชย์')">อาคารพาณิชย์</div>
      <div class="flyout-sub-item" data-value="ที่ดิน" onclick="selectFlyoutValue(event, 'ที่ดิน')">ที่ดิน</div>
     <div class="flyout-sub-item" data-value="ร้านค้า" onclick="selectFlyoutValue(event, 'ร้านค้า')">ร้านค้า</div>
     <div class="flyout-sub-item" data-value="ที่พักให้เช่า" onclick="selectFlyoutValue(event, 'ที่พักให้เช่า')">ที่พักให้เช่า</div>
+    <div class="flyout-sub-item" data-value="อื่นๆ" onclick="selectFlyoutValue(event, 'อื่นๆ')">อื่นๆ</div>
     <div class="flyout-sub-item" style="color:#ef4444; font-weight:bold; border-top:1px solid #f0f0f0; margin-top:4px;" onclick="clearSingleFilter(event, 're_typeBtn', 'คอนโด/บ้าน ▾')">❌ ล้างค่า คอนโด/บ้าน</div>
   </div>
   <div class="flyout-menu" id="re_salePriceFlyout">
@@ -4583,7 +4582,7 @@ const DISTRICT_OPTIONS_I159 = ["พระนคร", "ป้อมปราบ�
 const ROAD_OPTIONS_I159 = ["ถนนศรีนครินทร์", "ถนนลาดพร้าว", "ถนนรามอินทรา", "ถนนสุขุมวิท", "ถนนพหลโยธิน", "ถนนรัชดาภิเษก", "ถนนเพชรบุรี"];
 function getDropdownOptionsForTopic(topic) {
       if (topic === 'ขาย/เช่า') return ["ขาย", "เช่า", "ขาย-เช่า", "เช่า-ซื้อ", "เซ้ง", "หาซื้อ", "หาเช่า"];
-      if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "ทาวน์โฮม", "ตึกแถว", "อาคารพาณิชย์", "ที่ดิน", "ร้านค้า", "ที่พักให้เช่า"]; // FIX e18-13: เปลี่ยนชื่อ ห้องเช่า -> ที่พักให้เช่า ต่อจาก ร้านค้า (ตรงกับ fb-ingest e18-13)
+      if (topic === 'คอนโด/บ้าน') return ["บ้าน", "คอนโด", "ทาวน์เฮาส์", "อาคารพาณิชย์", "ที่ดิน", "ร้านค้า", "ที่พักให้เช่า", "อื่นๆ"]; // FIX i17-6: ลิสต์ 8 ค่า ตรงกับ fb-ingest ALLOWED_PROPERTY_TYPE - ตัด ทาวน์โฮม/ตึกแถว (คำพ้อง) + เพิ่ม อื่นๆ
       if (topic === 'ราคาขาย') return ["ไม่เกิน 2 ล้าน", "ไม่เกิน 5 ล้าน", "ไม่เกิน 10 ล้าน", "ไม่เกิน 20 ล้าน", "ตั้งแต่ 20 ล้านเป็นต้นไป"];
       if (topic === 'ราคาเช่า') return ["ไม่เกิน 5,000", "ไม่เกิน 10,000", "ไม่เกิน 15,000", "ไม่เกิน 20,000", "ตั้งแต่ 20,000 เป็นต้นไป"];
       if (topic === 'จังหวัด') return PROVINCE_OPTIONS_I159; // [i15-9] 77 จังหวัด (ครบแล้ว)
@@ -4592,6 +4591,10 @@ function getDropdownOptionsForTopic(topic) {
       if (topic === 'เนื้อที่' || topic === 'ขนาด' || topic === 'ปรับขนาด') return ["ไม่เกิน 100 ตารางวา", "ไม่เกิน 400 ตารางวา", "ไม่เกิน 10 ไร่", "มากกว่า 10 ไร่ เป็นต้นไป"];
       return [`ตัวเลือก ${topic} ที่ 1`, `ตัวเลือก ${topic} ที่ 2`, `ตัวเลือก ${topic} ที่ 3`];
     }
+    // FIX i17-6: แปลงคำพ้องเก่า -> คำมาตรฐาน 8 ค่า ก่อนส่งให้ server (กัน cache/เสียงเก่าค้าง)
+    const PROP_SYNONYMS_INDEX = {'บ้านเดี่ยว':'บ้าน','บ้านแฝด':'บ้าน','บ้านทาวน์เฮาส์':'บ้าน','พูลวิลล่า':'บ้าน','บ้านพัก':'บ้าน','บ้านพักตากอากาศ':'บ้าน','คฤหาสน์':'บ้าน','ห้องชุด':'คอนโด','คอนโดมิเนียม':'คอนโด','คอนโดฯ':'คอนโด','ห้องพักคอนโด':'คอนโด','ที่ดินเปล่า':'ที่ดิน','ที่ดินเปล่าถมแล้ว':'ที่ดิน','ที่ดินพร้อมสิ่งปลูกสร้าง':'ที่ดิน','ทาวน์โฮม':'ทาวน์เฮาส์','ทาวน์เฮ้าส์':'ทาวน์เฮาส์','ทาวน์เฮาส':'ทาวน์เฮาส์','ห้องเช่า':'ที่พักให้เช่า','หอพัก':'ที่พักให้เช่า','อพาร์ทเมนต์':'ที่พักให้เช่า','อพาร์ทเม้นท์':'ที่พักให้เช่า','อพาร์ตเม้นท์':'ที่พักให้เช่า','แมนชั่น':'ที่พักให้เช่า','รีสอร์ท':'ที่พักให้เช่า','โรงแรม':'ที่พักให้เช่า','เกสต์เฮาส์':'ที่พักให้เช่า','ตึกแถว':'อาคารพาณิชย์','อาคารพานิชย์':'อาคารพาณิชย์','โฮมออฟฟิศ':'อาคารพาณิชย์','ออฟฟิศ':'อาคารพาณิชย์','คลังสินค้า':'อาคารพาณิชย์','โกดัง':'อาคารพาณิชย์','โรงงานผลิต':'อาคารพาณิชย์','โรงงาน':'อาคารพาณิชย์'};
+    const ALLOWED_PROPERTY_TYPE_INDEX = ['บ้าน','คอนโด','ทาวน์เฮาส์','อาคารพาณิชย์','ที่ดิน','ร้านค้า','ที่พักให้เช่า','อื่นๆ'];
+    function normalizePropertyTypeIndex(v){ const s=(v||'').toString().trim(); if(!s) return s; if(ALLOWED_PROPERTY_TYPE_INDEX.includes(s)) return s; if(PROP_SYNONYMS_INDEX[s]) return PROP_SYNONYMS_INDEX[s]; return 'อื่นๆ'; }
     function getAllValidDropdownOptions() {
       const topics = ['ขาย/เช่า', 'คอนโด/บ้าน', 'ราคาขาย', 'ราคาเช่า', 'จังหวัด', 'เขต/อำเภอ', 'ถนน', 'โครงการ', 'ซอย', 'เนื้อที่', 'อื่นๆ', 'สถานที่ใกล้เคียง', 'สาธารณูปโภคพิเศษ'];
       let allOptions = [];
@@ -4771,7 +4774,7 @@ function getDropdownOptionsForTopic(topic) {
         const postPayload = {
           user_id: userId,
           price_type: getPostDropdownValue('ขาย/เช่า'),
-          property_type: getPostDropdownValue('คอนโด/บ้าน'),
+          property_type: normalizePropertyTypeIndex(getPostDropdownValue('คอนโด/บ้าน')),
           price_sell: getPostInputValue('ราคาขาย') ? parseInt(getPostInputValue('ราคาขาย'), 10) : null,
           price_rent: getPostInputValue('ราคาเช่า') ? parseInt(getPostInputValue('ราคาเช่า'), 10) : null,
           province: getPostDropdownValue('จังหวัด'),
@@ -4927,7 +4930,7 @@ function getDropdownOptionsForTopic(topic) {
       let workingText = rawText;
       // FIX v15.21 - alias อังกฤษ -> ไทย ก่อนเลย
       const aliasMap = {
-        'condominium':'คอนโด','condo':'คอนโด','house':'บ้าน','village':'บ้าน','townhome':'ทาวน์โฮม','townhouse':'ทาวน์เฮาส์',
+        'condominium':'คอนโด','condo':'คอนโด','house':'บ้าน','village':'บ้าน','townhome':'ทาวน์เฮาส์','townhouse':'ทาวน์เฮาส์',
         'sale':'ขาย','rent':'เช่า','sell':'ขาย','bangkok':'กรุงเทพมหานคร','bang kapi':'บางกะปิ','bangkapi':'บางกะปิ'
       };
       Object.keys(aliasMap).forEach(k=>{
@@ -6596,7 +6599,7 @@ if (name === "switch_tab_category") {
         if (val.startsWith("พิกัด")||val.includes("กม.")) return;
         const id=btn.id||''; const onclick=btn.getAttribute('onclick')||'';
         if (id==='re_saleBtn'||onclick.includes('ขาย/เช่า')) criteria.priceType=val;
-        else if (id==='re_typeBtn'||onclick.includes('คอนโด/บ้าน')) criteria.propertyType=val;
+        else if (id==='re_typeBtn'||onclick.includes('คอนโด/บ้าน')) criteria.propertyType=normalizePropertyTypeIndex(val);
         else if (id==='re_salePriceBtn'||onclick.includes('ราคาขาย')){criteria.priceSale=val; const mm=val.match(/(\d+(?:,\d+)*)\s*ล้าน/); if(mm){const num=parseFloat(mm[1].replace(/,/g,'')); if(val.includes('ไม่เกิน')){criteria.priceSaleMax=num*1000000; criteria.price_sale_max=num*1000000;}}}
         else if (id==='re_districtBtn'||onclick.includes('เขต/อำเภอ')) criteria.district=val;
         else if (id==='re_provinceBtn'||onclick.includes('จังหวัด')) criteria.province=val;
